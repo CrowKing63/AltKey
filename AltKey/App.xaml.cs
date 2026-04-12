@@ -11,24 +11,32 @@ public partial class App : System.Windows.Application
 
     protected override void OnStartup(StartupEventArgs e)
     {
-        var services = new ServiceCollection();
+        try
+        {
+            var services = new ServiceCollection();
 
-        services.AddSingleton<ConfigService>();
-        services.AddSingleton<LayoutService>();
-        services.AddSingleton<InputService>();
-        services.AddSingleton<WindowService>();
-        services.AddSingleton<ProfileService>();
-        services.AddSingleton<TrayService>();
+            services.AddSingleton<ConfigService>();
+            services.AddSingleton<LayoutService>();
+            services.AddSingleton<InputService>();
+            services.AddSingleton<WindowService>();
+            services.AddSingleton<ProfileService>();
+            services.AddSingleton<TrayService>();
 
-        services.AddSingleton<MainViewModel>();
-        services.AddSingleton<KeyboardViewModel>();
-        services.AddTransient<SettingsViewModel>();
+            services.AddSingleton<MainViewModel>();
+            services.AddSingleton<KeyboardViewModel>();
+            services.AddTransient<SettingsViewModel>();
 
-        services.AddSingleton<MainWindow>();
+            services.AddSingleton<MainWindow>();
 
-        Services = services.BuildServiceProvider();
+            Services = services.BuildServiceProvider();
 
-        var window = Services.GetRequiredService<MainWindow>();
-        window.Show();
+            var window = Services.GetRequiredService<MainWindow>();
+            window.Show();
+        }
+        catch (Exception ex)
+        {
+            System.Windows.MessageBox.Show(ex.ToString(), "AltKey Startup Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            Shutdown();
+        }
     }
 }

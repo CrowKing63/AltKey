@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet *)",
+      "Bash(dir *)",
+      "Bash(\"c:\\users\\uitaek\\altkey\\altkey\\bin\\debug\\net8.0-windows\\altkey.exe\")",
+      "Bash(tasklist)",
+      "Bash(findstr *)",
+      "Bash(start *)",
+      "Bash(taskkill *)"
+    ]
+  },
+  "$version": 3
+}

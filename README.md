@@ -10,7 +10,7 @@ WPF 기반 키보드 레이아웃 커스터마이징 도구
 ## 개발
 
 ```bash
-cd AltKey
+cd AltKey/AltKey
 dotnet run
 ```
 
