@@ -78,6 +78,10 @@ public partial class App : System.Windows.Application
             // T-6.6: 첫 창 표시까지 걸린 시간 (Debug 로그)
             var elapsed = Environment.TickCount64 - _startTick;
             Debug.WriteLine($"[AltKey] Startup time: {elapsed}ms");
+
+            // T-6.6: 메모리 사용량 로그
+            var memMb = GC.GetTotalMemory(false) / (1024.0 * 1024.0);
+            Debug.WriteLine($"[AltKey] Initial managed memory: {memMb:F1} MB");
         }
         catch (Exception ex)
         {

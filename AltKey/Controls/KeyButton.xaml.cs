@@ -118,16 +118,19 @@ public class KeyButton : System.Windows.Controls.Button
     protected override void OnMouseEnter(System.Windows.Input.MouseEventArgs e)
     {
         base.OnMouseEnter(e);
+        System.Diagnostics.Debug.WriteLine($"[KeyButton] OnMouseEnter - DwellEnabled={DwellEnabled}, Slot={Slot?.Slot.Label}");
         if (!DwellEnabled) return;
 
         _dwellStart  = DateTime.UtcNow;
         _dwellTimer  = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) };
         _dwellTimer.Tick += DwellTick;
         _dwellTimer.Start();
+        System.Diagnostics.Debug.WriteLine($"[KeyButton] Dwell timer started");
     }
 
     protected override void OnMouseLeave(System.Windows.Input.MouseEventArgs e)
     {
+        System.Diagnostics.Debug.WriteLine($"[KeyButton] OnMouseLeave - DwellEnabled={DwellEnabled}");
         base.OnMouseLeave(e);
         CancelDwell();
     }
@@ -137,10 +140,20 @@ public class KeyButton : System.Windows.Controls.Button
         var elapsed = (DateTime.UtcNow - _dwellStart).TotalMilliseconds;
         DwellProgress = elapsed / DwellTime; // 0.0 ~ 1.0
 
+        if (elapsed >= 100) // 100ms마다 로그
+            System.Diagnostics.Debug.WriteLine($"[KeyButton] Dwell progress: {DwellProgress:P0}");
+
         if (elapsed >= DwellTime)
         {
+            System.Diagnostics.Debug.WriteLine($"[KeyButton] DWELL CLICK - Slot={Slot?.Slot.Label}");
             CancelDwell();
-            RaiseEvent(new RoutedEventArgs(ClickEvent)); // 클릭 이벤트 발생
+            
+            // Command 직접 실행 (RaiseEvent는 Command를 트리거하지 않음)
+            if (Command?.CanExecute(CommandParameter) == true)
+            {
+                System.Diagnostics.Debug.WriteLine($"[KeyButton] Executing command...");
+                Command.Execute(CommandParameter);
+            }
         }
     }
 

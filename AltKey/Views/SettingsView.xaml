@@ -20,9 +20,8 @@
                 <Button HorizontalAlignment="Right"
                         Background="Transparent" BorderThickness="0"
                         Foreground="#AAFFFFFF" FontSize="16" Cursor="Hand"
-                        Command="{Binding DataContext.ToggleSettingsCommand,
-                            RelativeSource={RelativeSource AncestorType=UserControl}}"
-                        ToolTip="닫기">
+                        Click="CloseButton_Click"
+                        ToolTip="닫기 (Esc)">
                     <TextBlock Text="✕"/>
                 </Button>
             </Grid>

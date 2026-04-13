@@ -157,8 +157,9 @@
 
         <!-- T-5.10: 설정 패널 오버레이 -->
         <views:SettingsView
+            x:Name="SettingsPanel"
             DataContext="{Binding Settings}"
-            Visibility="{Binding IsSettingsOpen,
+            Visibility="{Binding DataContext.IsSettingsOpen,
                 RelativeSource={RelativeSource AncestorType=UserControl},
                 Converter={StaticResource BoolToVis}}"
             Panel.ZIndex="10"

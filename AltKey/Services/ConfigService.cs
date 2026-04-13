@@ -8,6 +8,9 @@ public class ConfigService
 {
     public AppConfig Current { get; private set; } = new();
 
+    /// <summary>설정 변경 시 발생하는 이벤트</summary>
+    public event Action<string?>? ConfigChanged; // null = 전체, 아니면 특정 속성명
+
     public ConfigService()
     {
         Directory.CreateDirectory(Path.GetDirectoryName(PathResolver.ConfigPath)!);
@@ -36,5 +39,6 @@ public class ConfigService
     {
         updater(Current);
         Save();
+        ConfigChanged?.Invoke(null);
     }
 }

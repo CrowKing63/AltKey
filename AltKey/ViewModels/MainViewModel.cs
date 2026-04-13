@@ -31,10 +31,26 @@ public partial class MainViewModel : ObservableObject
     private bool isSettingsOpen;
 
     /// T-5.1: 체류 클릭 활성화 (KeyButton 바인딩용)
-    public bool DwellEnabled => _configService.Current.DwellEnabled;
+    public bool DwellEnabled
+    {
+        get => _configService.Current.DwellEnabled;
+        set
+        {
+            _configService.Current.DwellEnabled = value;
+            OnPropertyChanged();
+        }
+    }
 
     /// T-5.1: 체류 클릭 시간 ms (KeyButton 바인딩용)
-    public int DwellTimeMs => _configService.Current.DwellTimeMs;
+    public int DwellTimeMs
+    {
+        get => _configService.Current.DwellTimeMs;
+        set
+        {
+            _configService.Current.DwellTimeMs = value;
+            OnPropertyChanged();
+        }
+    }
 
     public MainViewModel(
         ConfigService    configService,
@@ -52,6 +68,16 @@ public partial class MainViewModel : ObservableObject
 
         // T-5.4: 포그라운드 앱 변경 → 자동 레이아웃 전환
         _profileService.ForegroundAppChanged += OnForegroundAppChanged;
+
+        // 체류 클릭 설정 변경 시 UI에 알림
+        _configService.ConfigChanged += OnConfigChanged;
+    }
+
+    private void OnConfigChanged(string? propertyName)
+    {
+        // Dwell 관련 속성 변경 알림
+        OnPropertyChanged(nameof(DwellEnabled));
+        OnPropertyChanged(nameof(DwellTimeMs));
     }
 
     public Task InitializeAsync()
