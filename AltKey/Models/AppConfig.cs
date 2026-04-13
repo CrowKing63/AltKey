@@ -2,8 +2,8 @@ namespace AltKey.Models;
 
 public class WindowConfig
 {
-    public double Left   { get; set; } = 100;
-    public double Top    { get; set; } = 700;
+    public double Left   { get; set; } = -1;   // -1 = 미설정, RestoreWindowPosition에서 화면 중앙 하단으로 계산
+    public double Top    { get; set; } = -1;
     public double Width  { get; set; } = 900;
     public double Height { get; set; } = 320;
 }

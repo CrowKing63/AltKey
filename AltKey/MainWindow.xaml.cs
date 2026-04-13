@@ -120,14 +120,37 @@ public partial class MainWindow : Window
         base.OnClosing(e);
     }
 
-    // T-1.6: 창 위치/크기 복원
+    // T-1.6: 창 위치/크기 복원 (화면 경계 밖이면 중앙 하단으로 초기화)
     private void RestoreWindowPosition()
     {
         var cfg = _configService.Current.Window;
-        Left   = cfg.Left;
-        Top    = cfg.Top;
-        Width  = cfg.Width;
-        Height = cfg.Height;
+
+        Width  = Math.Max(400, cfg.Width);
+        Height = Math.Max(200, cfg.Height);
+
+        // 화면 작업 영역 (가상 스크린 전체)
+        var screen = System.Windows.SystemParameters.WorkArea;
+
+        double left = cfg.Left;
+        double top  = cfg.Top;
+
+        // -1이거나 화면 밖이면 화면 중앙 하단으로 초기화
+        bool offScreen = left < 0 || top < 0
+            || left + Width  > screen.Right  + 200   // 일부 걸쳐 있으면 허용
+            || top  + Height > screen.Bottom + 200
+            || left < screen.Left - 200
+            || top  < screen.Top  - 200;
+
+        if (offScreen)
+        {
+            Left = screen.Left + (screen.Width  - Width)  / 2;
+            Top  = screen.Top  + (screen.Height - Height) * 0.75; // 화면 하단 쪽
+        }
+        else
+        {
+            Left = left;
+            Top  = top;
+        }
     }
 
     // T-1.7: 자동 페이딩
