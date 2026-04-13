@@ -21,6 +21,7 @@ public partial class App : System.Windows.Application
             services.AddSingleton<WindowService>();
             services.AddSingleton<ProfileService>();
             services.AddSingleton<TrayService>();
+            services.AddSingleton<ThemeService>();
 
             services.AddSingleton<MainViewModel>();
             services.AddSingleton<KeyboardViewModel>();
@@ -29,6 +30,11 @@ public partial class App : System.Windows.Application
             services.AddSingleton<MainWindow>();
 
             Services = services.BuildServiceProvider();
+
+            // 시스템 테마에 맞춰 초기 테마 적용
+            var themeService = Services.GetRequiredService<ThemeService>();
+            var config = Services.GetRequiredService<ConfigService>();
+            themeService.Apply(config.Current.Theme);
 
             var window = Services.GetRequiredService<MainWindow>();
             window.Show();

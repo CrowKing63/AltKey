@@ -1,0 +1,91 @@
+{
+  "name": "QWERTY 한국어",
+  "language": "ko",
+  "rows": [
+    {
+      "keys": [
+        { "label": "`", "shift_label": "~",  "action": { "type": "SendKey", "vk": "VK_OEM_3" },    "width": 1.0 },
+        { "label": "1", "shift_label": "!",  "action": { "type": "SendKey", "vk": "VK_1" },        "width": 1.0 },
+        { "label": "2", "shift_label": "@",  "action": { "type": "SendKey", "vk": "VK_2" },        "width": 1.0 },
+        { "label": "3", "shift_label": "#",  "action": { "type": "SendKey", "vk": "VK_3" },        "width": 1.0 },
+        { "label": "4", "shift_label": "$",  "action": { "type": "SendKey", "vk": "VK_4" },        "width": 1.0 },
+        { "label": "5", "shift_label": "%",  "action": { "type": "SendKey", "vk": "VK_5" },        "width": 1.0 },
+        { "label": "6", "shift_label": "^",  "action": { "type": "SendKey", "vk": "VK_6" },        "width": 1.0 },
+        { "label": "7", "shift_label": "&",  "action": { "type": "SendKey", "vk": "VK_7" },        "width": 1.0 },
+        { "label": "8", "shift_label": "*",  "action": { "type": "SendKey", "vk": "VK_8" },        "width": 1.0 },
+        { "label": "9", "shift_label": "(",  "action": { "type": "SendKey", "vk": "VK_9" },        "width": 1.0 },
+        { "label": "0", "shift_label": ")",  "action": { "type": "SendKey", "vk": "VK_0" },        "width": 1.0 },
+        { "label": "-", "shift_label": "_",  "action": { "type": "SendKey", "vk": "VK_OEM_MINUS" },"width": 1.0 },
+        { "label": "=", "shift_label": "+",  "action": { "type": "SendKey", "vk": "VK_OEM_PLUS" }, "width": 1.0 },
+        { "label": "⌫",                      "action": { "type": "SendKey", "vk": "VK_BACK" },     "width": 2.0 }
+      ]
+    },
+    {
+      "keys": [
+        { "label": "Tab",                     "action": { "type": "SendKey", "vk": "VK_TAB" },      "width": 1.5 },
+        { "label": "Q", "shift_label": "ㅂ",  "action": { "type": "SendKey", "vk": "VK_Q" },        "width": 1.0 },
+        { "label": "W", "shift_label": "ㅈ",  "action": { "type": "SendKey", "vk": "VK_W" },        "width": 1.0 },
+        { "label": "E", "shift_label": "ㄷ",  "action": { "type": "SendKey", "vk": "VK_E" },        "width": 1.0 },
+        { "label": "R", "shift_label": "ㄱ",  "action": { "type": "SendKey", "vk": "VK_R" },        "width": 1.0 },
+        { "label": "T", "shift_label": "ㅅ",  "action": { "type": "SendKey", "vk": "VK_T" },        "width": 1.0 },
+        { "label": "Y", "shift_label": "ㅛ",  "action": { "type": "SendKey", "vk": "VK_Y" },        "width": 1.0 },
+        { "label": "U", "shift_label": "ㅕ",  "action": { "type": "SendKey", "vk": "VK_U" },        "width": 1.0 },
+        { "label": "I", "shift_label": "ㅑ",  "action": { "type": "SendKey", "vk": "VK_I" },        "width": 1.0 },
+        { "label": "O", "shift_label": "ㅐ",  "action": { "type": "SendKey", "vk": "VK_O" },        "width": 1.0 },
+        { "label": "P", "shift_label": "ㅔ",  "action": { "type": "SendKey", "vk": "VK_P" },        "width": 1.0 },
+        { "label": "[", "shift_label": "{",   "action": { "type": "SendKey", "vk": "VK_OEM_4" },    "width": 1.0 },
+        { "label": "]", "shift_label": "}",   "action": { "type": "SendKey", "vk": "VK_OEM_6" },    "width": 1.0 },
+        { "label": "\\","shift_label": "|",   "action": { "type": "SendKey", "vk": "VK_OEM_5" },    "width": 1.5 }
+      ]
+    },
+    {
+      "keys": [
+        { "label": "CapsLock",                "action": { "type": "SendKey", "vk": "VK_CAPITAL" },  "width": 1.75 },
+        { "label": "A", "shift_label": "ㅁ",  "action": { "type": "SendKey", "vk": "VK_A" },        "width": 1.0 },
+        { "label": "S", "shift_label": "ㄴ",  "action": { "type": "SendKey", "vk": "VK_S" },        "width": 1.0 },
+        { "label": "D", "shift_label": "ㅇ",  "action": { "type": "SendKey", "vk": "VK_D" },        "width": 1.0 },
+        { "label": "F", "shift_label": "ㄹ",  "action": { "type": "SendKey", "vk": "VK_F" },        "width": 1.0 },
+        { "label": "G", "shift_label": "ㅎ",  "action": { "type": "SendKey", "vk": "VK_G" },        "width": 1.0 },
+        { "label": "H", "shift_label": "ㅗ",  "action": { "type": "SendKey", "vk": "VK_H" },        "width": 1.0 },
+        { "label": "J", "shift_label": "ㅓ",  "action": { "type": "SendKey", "vk": "VK_J" },        "width": 1.0 },
+        { "label": "K", "shift_label": "ㅏ",  "action": { "type": "SendKey", "vk": "VK_K" },        "width": 1.0 },
+        { "label": "L", "shift_label": "ㅣ",  "action": { "type": "SendKey", "vk": "VK_L" },        "width": 1.0 },
+        { "label": ";", "shift_label": ":",   "action": { "type": "SendKey", "vk": "VK_OEM_1" },    "width": 1.0 },
+        { "label": "'", "shift_label": "\"",  "action": { "type": "SendKey", "vk": "VK_OEM_7" },    "width": 1.0 },
+        { "label": "Enter",                   "action": { "type": "SendKey", "vk": "VK_RETURN" },   "width": 2.25 }
+      ]
+    },
+    {
+      "keys": [
+        { "label": "Shift",                   "action": { "type": "ToggleSticky", "vk": "VK_SHIFT" },"width": 2.25 },
+        { "label": "Z", "shift_label": "ㅋ",  "action": { "type": "SendKey", "vk": "VK_Z" },        "width": 1.0 },
+        { "label": "X", "shift_label": "ㅌ",  "action": { "type": "SendKey", "vk": "VK_X" },        "width": 1.0 },
+        { "label": "C", "shift_label": "ㅊ",  "action": { "type": "SendKey", "vk": "VK_C" },        "width": 1.0 },
+        { "label": "V", "shift_label": "ㅍ",  "action": { "type": "SendKey", "vk": "VK_V" },        "width": 1.0 },
+        { "label": "B", "shift_label": "ㅠ",  "action": { "type": "SendKey", "vk": "VK_B" },        "width": 1.0 },
+        { "label": "N", "shift_label": "ㅜ",  "action": { "type": "SendKey", "vk": "VK_N" },        "width": 1.0 },
+        { "label": "M", "shift_label": "ㅡ",  "action": { "type": "SendKey", "vk": "VK_M" },        "width": 1.0 },
+        { "label": ",", "shift_label": "<",   "action": { "type": "SendKey", "vk": "VK_OEM_COMMA" },"width": 1.0 },
+        { "label": ".", "shift_label": ">",   "action": { "type": "SendKey", "vk": "VK_OEM_PERIOD" },"width": 1.0 },
+        { "label": "/", "shift_label": "?",   "action": { "type": "SendKey", "vk": "VK_OEM_2" },    "width": 1.0 },
+        { "label": "Shift",                   "action": { "type": "ToggleSticky", "vk": "VK_SHIFT" },"width": 2.75 }
+      ]
+    },
+    {
+      "keys": [
+        { "label": "Ctrl",  "action": { "type": "ToggleSticky", "vk": "VK_CONTROL" }, "width": 1.25 },
+        { "label": "Win",   "action": { "type": "SendKey",      "vk": "VK_LWIN" },    "width": 1.25 },
+        { "label": "Alt",   "action": { "type": "ToggleSticky", "vk": "VK_MENU" },    "width": 1.25 },
+        { "label": "한/영", "action": { "type": "SendKey",      "vk": "VK_HANGUL" },  "width": 1.5  },
+        { "label": "Space", "action": { "type": "SendKey",      "vk": "VK_SPACE" },   "width": 6.0  },
+        { "label": "한자",  "action": { "type": "SendKey",      "vk": "VK_HANJA" },   "width": 1.5  },
+        { "label": "Alt",   "action": { "type": "ToggleSticky", "vk": "VK_MENU" },    "width": 1.25 },
+        { "label": "Ctrl",  "action": { "type": "ToggleSticky", "vk": "VK_CONTROL" }, "width": 1.25 },
+        { "label": "←",    "action": { "type": "SendKey",      "vk": "VK_LEFT" },    "width": 1.0  },
+        { "label": "↑",    "action": { "type": "SendKey",      "vk": "VK_UP" },      "width": 1.0  },
+        { "label": "↓",    "action": { "type": "SendKey",      "vk": "VK_DOWN" },    "width": 1.0  },
+        { "label": "→",    "action": { "type": "SendKey",      "vk": "VK_RIGHT" },   "width": 1.0  }
+      ]
+    }
+  ]
+}

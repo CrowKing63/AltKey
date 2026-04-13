@@ -1,3 +1,12 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <SolidColorBrush x:Key="KeyboardBg"   Color="#CCFFFFFF"/>
+    <SolidColorBrush x:Key="KeyBg"        Color="#E6FFFFFF"/>
+    <SolidColorBrush x:Key="KeyBgHover"   Color="#F0E6E6E6"/>
+    <SolidColorBrush x:Key="KeyBgPressed" Color="#FFC8C8C8"/>
+    <SolidColorBrush x:Key="KeyBgSticky"  Color="#4D3B82F6"/>
+    <SolidColorBrush x:Key="KeyFg"        Color="#FF1A1A1A"/>
+    <SolidColorBrush x:Key="KeyFgSticky"  Color="#FF1D4ED8"/>
+    <SolidColorBrush x:Key="KeyBorder"    Color="#14000000"/>
+    <SolidColorBrush x:Key="KeyShadow"    Color="#1E000000"/>
 </ResourceDictionary>

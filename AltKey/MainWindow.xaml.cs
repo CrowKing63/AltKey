@@ -15,6 +15,8 @@ public partial class MainWindow : Window
     private readonly ConfigService _configService;
     private DispatcherTimer _fadeTimer = null!;
 
+    private readonly MainViewModel _viewModel;
+
     public MainWindow(WindowService windowService, ConfigService configService, MainViewModel viewModel)
     {
         InitializeComponent();
@@ -22,6 +24,17 @@ public partial class MainWindow : Window
 
         _windowService = windowService;
         _configService = configService;
+        _viewModel = viewModel;
+
+        Loaded += async (_, _) =>
+        {
+            await _viewModel.InitializeAsync();
+            PlayOpenAnimation();
+        };
+
+        // T-4.10: 창 크기 변경 → 반응형 키 크기
+        SizeChanged += (_, e) =>
+            _viewModel.Keyboard.OnWindowSizeChanged(e.NewSize.Width);
     }
 
     protected override void OnSourceInitialized(EventArgs e)
@@ -111,5 +124,32 @@ public partial class MainWindow : Window
         var config = _configService.Current;
         BeginAnimation(OpacityProperty,
             new DoubleAnimation(config.OpacityIdle, TimeSpan.FromMilliseconds(400)));
+    }
+
+    // T-4.9: 진입 애니메이션 (슬라이드 업 + 페이드 인)
+    private void PlayOpenAnimation()
+    {
+        Opacity = 0;
+        RenderTransform = new System.Windows.Media.TranslateTransform(0, 24);
+
+        var sb = new Storyboard();
+
+        var fadeIn = new DoubleAnimation(0, 1,
+            new Duration(TimeSpan.FromMilliseconds(280)));
+        Storyboard.SetTarget(fadeIn, this);
+        Storyboard.SetTargetProperty(fadeIn, new PropertyPath(OpacityProperty));
+
+        var slideUp = new DoubleAnimation(24, 0,
+            new Duration(TimeSpan.FromMilliseconds(300)))
+        {
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+        };
+        Storyboard.SetTarget(slideUp, this);
+        Storyboard.SetTargetProperty(slideUp,
+            new PropertyPath("RenderTransform.(TranslateTransform.Y)"));
+
+        sb.Children.Add(fadeIn);
+        sb.Children.Add(slideUp);
+        sb.Begin();
     }
 }

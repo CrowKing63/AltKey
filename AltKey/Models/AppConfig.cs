@@ -14,4 +14,6 @@ public class AppConfig
     public double OpacityIdle { get; set; } = 0.4;
     public int FadeDelaySeconds { get; set; } = 5;
     public bool IsTopmost { get; set; } = true;
+    public string DefaultLayout { get; set; } = "qwerty-ko";
+    public string Theme { get; set; } = "system";
 }

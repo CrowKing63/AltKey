@@ -1,3 +1,24 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+    <ResourceDictionary.MergedDictionaries>
+        <!-- KeyButton 컨트롤 스타일 -->
+        <ResourceDictionary Source="/AltKey;component/Controls/KeyButton.xaml"/>
+    </ResourceDictionary.MergedDictionaries>
+
+    <!-- ── 크기 ─────────────────────────────────────────────────────────── -->
+    <sys:Double x:Key="KeyUnit">48</sys:Double>
+    <sys:Double x:Key="KeyGap">4</sys:Double>
+    <CornerRadius x:Key="KeyRadius">8</CornerRadius>
+    <CornerRadius x:Key="KeyboardRadius">16</CornerRadius>
+    <Thickness x:Key="KeyboardPadding">12</Thickness>
+
+    <!-- ── 폰트 ─────────────────────────────────────────────────────────── -->
+    <FontFamily x:Key="KeyFont">Segoe UI Variable, Segoe UI, sans-serif</FontFamily>
+    <sys:Double x:Key="KeyFontSize">13</sys:Double>
+    <sys:Double x:Key="KeyFontSizeSmall">10</sys:Double>
+
+    <!-- ── 애니메이션 시간 ────────────────────────────────────────────────── -->
+    <Duration x:Key="TransitionFast">0:0:0.12</Duration>
+    <Duration x:Key="TransitionNormal">0:0:0.20</Duration>
 </ResourceDictionary>

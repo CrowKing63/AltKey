@@ -33,8 +33,11 @@ internal static class Win32
         IntPtr hWnd, uint crKey, byte bAlpha, uint dwFlags);
 
     // SendInput (Phase 2에서 사용)
-    [DllImport("user32.dll")]
+    [DllImport("user32.dll", SetLastError = true)]
     public static extern uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
+
+    [DllImport("user32.dll")]
+    public static extern short GetKeyState(int nVirtKey);
 
     // RegisterHotKey (Phase 5에서 사용)
     [DllImport("user32.dll")]
@@ -148,6 +151,9 @@ internal static class Win32
 
     // 상수 (Phase 2)
     public const uint INPUT_KEYBOARD = 1;
-    public const uint KEYEVENTF_KEYUP = 0x0002;
+    public const uint KEYEVENTF_KEYUP       = 0x0002;
+    public const uint KEYEVENTF_UNICODE     = 0x0004;
     public const uint KEYEVENTF_EXTENDEDKEY = 0x0001;
+
+    public const int ERROR_ACCESS_DENIED = 5;
 }
