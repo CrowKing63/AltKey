@@ -23,7 +23,7 @@
 
   <!-- 포터블 모드 트리거용 config.json + 레이아웃 파일을 출력 폴더로 복사 -->
   <ItemGroup>
-    <Content Include="config.json">
+    <Content Include="config.json" Condition="Exists('config.json')">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="layouts\*.json">

@@ -1,0 +1,22 @@
+{
+  "Version": "1.0.0",
+  "Language": "ko",
+  "DefaultLayout": "qwerty-ko",
+  "AlwaysOnTop": true,
+  "OpacityIdle": 0.4,
+  "OpacityActive": 1.0,
+  "FadeDelayMs": 5000,
+  "DwellEnabled": false,
+  "DwellTimeMs": 800,
+  "StickyKeysEnabled": true,
+  "Theme": "system",
+  "GlobalHotkey": "Ctrl+Alt+K",
+  "AutoProfileSwitch": true,
+  "Profiles": {},
+  "Window": {
+    "Left": -1,
+    "Top": -1,
+    "Width": 900,
+    "Height": 320
+  }
+}

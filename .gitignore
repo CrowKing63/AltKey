@@ -481,8 +481,5 @@ $RECYCLE.BIN/
 # Vim temporary swap files
 *.swp
 
-# User-specific config (personal settings)
-config.json
-
 # Custom user layouts (keep default layouts in layouts/)
 layouts/custom*.json
