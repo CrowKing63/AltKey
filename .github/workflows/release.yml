@@ -17,7 +17,7 @@ jobs:
           dotnet-version: '8.0.x'
 
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore AltKey/AltKey.csproj
 
       - name: Publish portable single-file
         run: dotnet publish AltKey/AltKey.csproj -p:PublishProfile=portable -o dist/publish
