@@ -25,10 +25,23 @@ jobs:
         run: dotnet restore AltKey/AltKey.csproj
 
       - name: Publish portable single-file
-        run: dotnet publish AltKey/AltKey.csproj -p:PublishProfile=portable -o dist/publish
+        run: >
+          dotnet publish AltKey/AltKey.csproj
+          -c Release
+          -r win-x64
+          --self-contained true
+          -p:PublishSingleFile=true
+          -p:PublishReadyToRun=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
+          -p:EnableCompressionInSingleFile=true
+          -o dist/publish
 
       - name: Package portable ZIP
-        run: powershell -ExecutionPolicy Bypass -File scripts/package-portable.ps1 -Version ${{ github.ref_name }}
+        run: >
+          powershell -ExecutionPolicy Bypass
+          -File scripts/package-portable.ps1
+          -Version ${{ github.ref_name }}
+          -BuildDir dist/publish
 
       - name: Upload Release Asset
         uses: softprops/action-gh-release@v2

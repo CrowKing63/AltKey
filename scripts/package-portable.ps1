@@ -1,4 +1,8 @@
-param([string]$Version = "0.1.0")
+param(
+    [string]$Version  = "0.1.0",
+    # CI에서는 이미 publish된 폴더를 넘겨줌. 없으면 직접 빌드.
+    [string]$BuildDir = ""
+)
 
 $ErrorActionPreference = "Stop"
 $root = Split-Path $PSScriptRoot -Parent
@@ -6,22 +10,30 @@ $out  = Join-Path $root "dist/altkey-portable-v$Version"
 
 New-Item -ItemType Directory -Force $out | Out-Null
 
-# 빌드
-Write-Host "Building portable single-file..." -ForegroundColor Cyan
-Push-Location (Join-Path $root "AltKey")
-dotnet publish -p:PublishProfile=portable -o $out
-Pop-Location
+if ($BuildDir -and (Test-Path $BuildDir)) {
+    # CI 경로: 이미 publish된 결과물 복사
+    Write-Host "Copying from pre-built: $BuildDir" -ForegroundColor Cyan
+    Copy-Item -Recurse "$BuildDir/*" "$out/" -Force
+} else {
+    # 로컬 경로: pubxml 프로파일로 직접 빌드
+    Write-Host "Building portable single-file..." -ForegroundColor Cyan
+    Push-Location (Join-Path $root "AltKey")
+    dotnet publish `
+        -c Release `
+        -r win-x64 `
+        --self-contained true `
+        -p:PublishSingleFile=true `
+        -p:PublishReadyToRun=true `
+        -p:IncludeNativeLibrariesForSelfExtract=true `
+        -p:EnableCompressionInSingleFile=true `
+        -o $out
+    Pop-Location
+}
 
 # 레이아웃 에셋 복사
 $layoutsSrc = Join-Path $root "AltKey/layouts"
 if (Test-Path $layoutsSrc) {
     Copy-Item -Recurse $layoutsSrc "$out/layouts" -Force
-}
-
-# 테마 에셋 복사 (있는 경우)
-$themesSrc = Join-Path $root "AltKey/Themes"
-if (Test-Path $themesSrc) {
-    Copy-Item -Recurse $themesSrc "$out/themes" -Force -ErrorAction SilentlyContinue
 }
 
 # 포터블 모드 트리거용 config.json 생성 (exe 옆에 존재해야 포터블 모드)
