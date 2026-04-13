@@ -7,7 +7,8 @@
       "Bash(tasklist)",
       "Bash(findstr *)",
       "Bash(start *)",
-      "Bash(taskkill *)"
+      "Bash(taskkill *)",
+      "Bash(powershell *)"
     ]
   },
   "$version": 3

@@ -8,6 +8,7 @@ namespace AltKey.Services;
 public class ThemeService
 {
     private readonly ConfigService _configService;
+    private ResourceDictionary? _currentThemeDict;
 
     public ThemeService(ConfigService configService)
     {
@@ -28,15 +29,14 @@ public class ThemeService
     public void Apply(string theme)
     {
         var resolved = theme == "system" ? DetectSystemTheme() : theme;
-        var uri = new Uri($"pack://application:,,,/Themes/{resolved}Theme.xaml",
+        var uri = new Uri($"pack://application:,,,/AltKey;component/Themes/{resolved}Theme.xaml",
                           UriKind.Absolute);
         var dict = new ResourceDictionary { Source = uri };
 
         var merged = WpfApp.Current.Resources.MergedDictionaries;
-        var existing = merged.FirstOrDefault(
-            d => d.Source?.ToString().Contains("Theme") == true);
-        if (existing is not null)
-            merged.Remove(existing);
+        if (_currentThemeDict is not null)
+            merged.Remove(_currentThemeDict);
+        _currentThemeDict = dict;
         merged.Add(dict);
     }
 

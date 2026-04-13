@@ -1,14 +1,17 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:controls="clr-namespace:AltKey.Controls">
+                    xmlns:controls="clr-namespace:AltKey.Controls"
+                    xmlns:themes="clr-namespace:AltKey.Themes">
 
+    <themes:ProgressToOffsetConverter x:Key="ProgressToOffsetConverter"/>
+    
     <Style TargetType="{x:Type controls:KeyButton}">
-        <Setter Property="Background"       Value="{StaticResource KeyBg}"/>
-        <Setter Property="Foreground"       Value="{StaticResource KeyFg}"/>
-        <Setter Property="BorderBrush"      Value="{StaticResource KeyBorder}"/>
+        <Setter Property="Background"       Value="{DynamicResource KeyBg}"/>
+        <Setter Property="Foreground"       Value="{DynamicResource KeyFg}"/>
+        <Setter Property="BorderBrush"      Value="{DynamicResource KeyBorder}"/>
         <Setter Property="BorderThickness"  Value="1"/>
-        <Setter Property="FontFamily"       Value="{StaticResource KeyFont}"/>
-        <Setter Property="FontSize"         Value="{StaticResource KeyFontSize}"/>
+        <Setter Property="FontFamily"       Value="{DynamicResource KeyFont}"/>
+        <Setter Property="FontSize"         Value="{DynamicResource KeyFontSize}"/>
         <Setter Property="Margin"           Value="2"/>
         <Setter Property="Cursor"           Value="Hand"/>
         <Setter Property="Template">
@@ -19,7 +22,7 @@
                                 Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="{StaticResource KeyRadius}"
+                                CornerRadius="{DynamicResource KeyRadius}"
                                 SnapsToDevicePixels="True"
                                 RenderTransformOrigin="0.5,0.5">
                             <Border.RenderTransform>
@@ -44,7 +47,7 @@
                         <!-- T-5.2: 체류 클릭 프로그레스 링 -->
                         <Ellipse x:Name="DwellRing"
                                  Width="36" Height="36"
-                                 Stroke="{StaticResource KeyFgSticky}"
+                                 Stroke="{DynamicResource KeyFgSticky}"
                                  StrokeThickness="3"
                                  StrokeDashArray="100"
                                  StrokeDashOffset="{Binding DwellProgress,
@@ -58,7 +61,7 @@
                         <!-- Hover: 살짝 확대 -->
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="Root" Property="Background"
-                                    Value="{StaticResource KeyBgHover}"/>
+                                    Value="{DynamicResource KeyBgHover}"/>
                             <Trigger.EnterActions>
                                 <BeginStoryboard>
                                     <Storyboard>
@@ -88,7 +91,7 @@
                         <!-- Pressed: 눌리는 효과 -->
                         <Trigger Property="IsPressed" Value="True">
                             <Setter TargetName="Root" Property="Background"
-                                    Value="{StaticResource KeyBgPressed}"/>
+                                    Value="{DynamicResource KeyBgPressed}"/>
                             <Trigger.EnterActions>
                                 <BeginStoryboard>
                                     <Storyboard>
@@ -123,17 +126,17 @@
                         <!-- T-4.7: Sticky 상태 (고정) -->
                         <Trigger Property="controls:KeyButton.IsSticky" Value="True">
                             <Setter TargetName="Root" Property="Background"
-                                    Value="{StaticResource KeyBgSticky}"/>
+                                    Value="{DynamicResource KeyBgSticky}"/>
                             <Setter Property="Foreground"
-                                    Value="{StaticResource KeyFgSticky}"/>
+                                    Value="{DynamicResource KeyFgSticky}"/>
                         </Trigger>
 
                         <!-- T-4.7: Locked 상태 (잠금) -->
                         <Trigger Property="controls:KeyButton.IsLocked" Value="True">
                             <Setter TargetName="Root" Property="Background"
-                                    Value="{StaticResource KeyBgSticky}"/>
+                                    Value="{DynamicResource KeyBgSticky}"/>
                             <Setter Property="Foreground"
-                                    Value="{StaticResource KeyFgSticky}"/>
+                                    Value="{DynamicResource KeyFgSticky}"/>
                             <Setter TargetName="LockIcon" Property="Visibility"
                                     Value="Visible"/>
                         </Trigger>

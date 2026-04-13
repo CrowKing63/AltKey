@@ -16,16 +16,21 @@ public partial class App : System.Windows.Application
 
     protected override void OnStartup(StartupEventArgs e)
     {
-        // T-6.7: 전역 미처리 예외 핸들러
+        // T-6.7: 전역 미처리 예외 핸들러 (동일 타입 에러는 한 번만 팝업)
+        var _shownErrors = new System.Collections.Generic.HashSet<string>();
         DispatcherUnhandledException += (s, args) =>
         {
             LogError(args.Exception);
-            System.Windows.MessageBox.Show(
-                $"예기치 않은 오류가 발생했습니다:\n{args.Exception.Message}\n\n로그: altkey-error.log",
-                "AltKey 오류",
-                System.Windows.MessageBoxButton.OK,
-                System.Windows.MessageBoxImage.Error);
             args.Handled = true;
+            var key = args.Exception.GetType().FullName + args.Exception.Message;
+            if (_shownErrors.Add(key))
+            {
+                System.Windows.MessageBox.Show(
+                    $"예기치 않은 오류가 발생했습니다:\n{args.Exception.Message}\n\n로그: altkey-error.log",
+                    "AltKey 오류",
+                    System.Windows.MessageBoxButton.OK,
+                    System.Windows.MessageBoxImage.Error);
+            }
         };
 
         AppDomain.CurrentDomain.UnhandledException += (s, args) =>

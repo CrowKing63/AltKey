@@ -184,30 +184,11 @@ public partial class MainWindow : Window
             new DoubleAnimation(config.OpacityIdle, TimeSpan.FromMilliseconds(400)));
     }
 
-    // T-4.9: 진입 애니메이션
+    // T-4.9: 진입 애니메이션 (Window는 RenderTransform 미지원 → 페이드인만)
     private void PlayOpenAnimation()
     {
-        Opacity         = 0;
-        RenderTransform = new System.Windows.Media.TranslateTransform(0, 24);
-
-        var sb = new Storyboard();
-
-        var fadeIn = new DoubleAnimation(0, 1,
-            new Duration(TimeSpan.FromMilliseconds(280)));
-        Storyboard.SetTarget(fadeIn, this);
-        Storyboard.SetTargetProperty(fadeIn, new PropertyPath(OpacityProperty));
-
-        var slideUp = new DoubleAnimation(24, 0,
-            new Duration(TimeSpan.FromMilliseconds(300)))
-        {
-            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
-        };
-        Storyboard.SetTarget(slideUp, this);
-        Storyboard.SetTargetProperty(slideUp,
-            new PropertyPath("RenderTransform.(TranslateTransform.Y)"));
-
-        sb.Children.Add(fadeIn);
-        sb.Children.Add(slideUp);
-        sb.Begin();
+        Opacity = 0;
+        BeginAnimation(OpacityProperty,
+            new DoubleAnimation(0, 1, new Duration(TimeSpan.FromMilliseconds(280))));
     }
 }

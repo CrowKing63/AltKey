@@ -51,26 +51,37 @@ public partial class SettingsViewModel : ObservableObject
         LoadFromConfig();
     }
 
+    private bool _isLoading;
+
     private void LoadFromConfig()
     {
-        var c = _configService.Current;
-        ThemeMode      = c.Theme;
-        AlwaysOnTop    = c.AlwaysOnTop;
-        OpacityIdle    = c.OpacityIdle;
-        FadeDelaySec   = c.FadeDelayMs / 1000;
-        DwellEnabled   = c.DwellEnabled;
-        DwellTimeMs    = c.DwellTimeMs;
-        SelectedLayout = c.DefaultLayout;
-        GlobalHotkey   = c.GlobalHotkey;
+        _isLoading = true;
+        try
+        {
+            var c = _configService.Current;
+            ThemeMode      = c.Theme;
+            AlwaysOnTop    = c.AlwaysOnTop;
+            OpacityIdle    = c.OpacityIdle;
+            FadeDelaySec   = c.FadeDelayMs / 1000;
+            DwellEnabled   = c.DwellEnabled;
+            DwellTimeMs    = c.DwellTimeMs;
+            SelectedLayout = c.DefaultLayout;
+            GlobalHotkey   = c.GlobalHotkey;
 
-        AvailableLayouts = new ObservableCollection<string>(
-            _layoutService.GetAvailableLayouts());
+            AvailableLayouts = new ObservableCollection<string>(
+                _layoutService.GetAvailableLayouts());
+        }
+        finally
+        {
+            _isLoading = false;
+        }
     }
 
     // ── 속성 변경 시 자동 저장 ───────────────────────────────────────────────
 
     partial void OnThemeModeChanged(string value)
     {
+        if (_isLoading) return;
         _themeService.Apply(value);
         _configService.Update(c => c.Theme = value);
         OnPropertyChanged(nameof(ThemeIsSystem));
