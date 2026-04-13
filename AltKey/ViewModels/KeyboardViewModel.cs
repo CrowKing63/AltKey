@@ -25,12 +25,12 @@ public class KeySlotVm(KeySlot slot) : ObservableObject
 
     /// 이 슬롯의 ToggleSticky VK 코드 (없으면 null)
     public VirtualKeyCode? StickyVk =>
-        slot.Action is ToggleStickyAction ta &&
+        Slot.Action is ToggleStickyAction ta &&
         Enum.TryParse<VirtualKeyCode>(ta.Vk, ignoreCase: true, out var vk)
             ? vk : null;
 
     public string GetLabel(bool upperCase) =>
-        upperCase && slot.ShiftLabel is { } s ? s : slot.Label;
+        upperCase && Slot.ShiftLabel is { } s ? s : Slot.Label;
 }
 
 // ── KeyboardViewModel ───────────────────────────────────────────────────────
