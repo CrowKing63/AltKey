@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media.Animation;
+using AltKey.Services;
 using AltKey.ViewModels;
 using WpfRect = System.Windows.Shapes.Rectangle;
 
@@ -10,9 +12,42 @@ namespace AltKey.Views;
 
 public partial class KeyboardView : System.Windows.Controls.UserControl
 {
+    private string _releaseUrl = string.Empty;
+
     public KeyboardView()
     {
         InitializeComponent();
+        Loaded += OnLoaded;
+    }
+
+    // T-6.4: 로드 시 업데이트 체크
+    private async void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var svc = new UpdateService();
+            var (hasUpdate, version, url) = await svc.CheckAsync();
+            if (hasUpdate)
+            {
+                _releaseUrl             = url;
+                UpdateVersionText.Text  = version;
+                UpdateBanner.Visibility = Visibility.Visible;
+            }
+        }
+        catch { /* 업데이트 체크 실패 — 무시 */ }
+    }
+
+    // T-6.4: 다운로드 버튼
+    private void OpenReleasePage_Click(object sender, RoutedEventArgs e)
+    {
+        if (!string.IsNullOrEmpty(_releaseUrl))
+            Process.Start(new ProcessStartInfo(_releaseUrl) { UseShellExecute = true });
+    }
+
+    // T-6.4: 배너 닫기
+    private void DismissUpdate_Click(object sender, RoutedEventArgs e)
+    {
+        UpdateBanner.Visibility = Visibility.Collapsed;
     }
 
     // T-1.5: 창 드래그 이동

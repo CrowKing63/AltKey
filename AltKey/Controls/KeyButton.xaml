@@ -40,6 +40,19 @@
                                            IsHitTestVisible="False"/>
                             </Grid>
                         </Border>
+
+                        <!-- T-5.2: 체류 클릭 프로그레스 링 -->
+                        <Ellipse x:Name="DwellRing"
+                                 Width="36" Height="36"
+                                 Stroke="{StaticResource KeyFgSticky}"
+                                 StrokeThickness="3"
+                                 StrokeDashArray="100"
+                                 StrokeDashOffset="{Binding DwellProgress,
+                                     RelativeSource={RelativeSource TemplatedParent},
+                                     Converter={StaticResource ProgressToOffsetConverter}}"
+                                 Opacity="{Binding DwellProgress,
+                                     RelativeSource={RelativeSource TemplatedParent}}"
+                                 IsHitTestVisible="False"/>
                     </Grid>
                     <ControlTemplate.Triggers>
                         <!-- Hover: 살짝 확대 -->

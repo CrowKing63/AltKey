@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
@@ -11,20 +11,38 @@ namespace AltKey;
 
 public partial class MainWindow : Window
 {
-    private readonly WindowService _windowService;
-    private readonly ConfigService _configService;
+    private readonly WindowService  _windowService;
+    private readonly ConfigService  _configService;
+    private readonly TrayService    _trayService;
+    private readonly HotkeyService  _hotkeyService;
+    private readonly MainViewModel  _viewModel;
+
     private DispatcherTimer _fadeTimer = null!;
 
-    private readonly MainViewModel _viewModel;
+    /// T-5.6: 실제 종료(Shutdown) 여부 플래그
+    public bool IsShuttingDown { get; set; }
 
-    public MainWindow(WindowService windowService, ConfigService configService, MainViewModel viewModel)
+    /// T-5.6: 트레이 풍선 알림이 이미 표시됐는지
+    private bool _trayNotified;
+
+    public MainWindow(
+        WindowService  windowService,
+        ConfigService  configService,
+        TrayService    trayService,
+        HotkeyService  hotkeyService,
+        MainViewModel  viewModel)
     {
         InitializeComponent();
         DataContext = viewModel;
 
         _windowService = windowService;
         _configService = configService;
-        _viewModel = viewModel;
+        _trayService   = trayService;
+        _hotkeyService = hotkeyService;
+        _viewModel     = viewModel;
+
+        // T-5.5: 트레이 초기화
+        _trayService.Initialize(this);
 
         Loaded += async (_, _) =>
         {
@@ -32,7 +50,6 @@ public partial class MainWindow : Window
             PlayOpenAnimation();
         };
 
-        // T-4.10: 창 크기 변경 → 반응형 키 크기
         SizeChanged += (_, e) =>
             _viewModel.Keyboard.OnWindowSizeChanged(e.NewSize.Width);
     }
@@ -46,61 +63,80 @@ public partial class MainWindow : Window
         // T-1.3: WS_EX_NOACTIVATE 적용
         _windowService.ApplyNoActivate(hwnd);
 
-        // T-1.4: 배경 설정 (반투명 단색, Acrylic은 추후)
+        // T-1.4: 배경 설정
         _windowService.ApplyBackground(this);
 
         // T-1.6: 창 위치/크기 복원
         RestoreWindowPosition();
 
-        // T-1.7: 자동 페이딩 타이머 설정
+        // T-1.7: 자동 페이딩 타이머
         SetupFadeTimer();
 
-        // 마우스 진입/이탈 이벤트 등록
         MouseEnter += MainWindow_MouseEnter;
         MouseLeave += MainWindow_MouseLeave;
+
+        // T-5.7: 전역 단축키 등록
+        var (mods, vk) = HotkeyService.ParseHotkey(_configService.Current.GlobalHotkey);
+        _hotkeyService.Register(hwnd, mods, vk);
+        _hotkeyService.HotkeyPressed += () => _trayService.ToggleVisibility();
     }
 
-    // Esc 키로 닫기
+    // Esc 키로 닫기 → 트레이로
     protected override void OnKeyDown(System.Windows.Input.KeyEventArgs e)
     {
         if (e.Key == System.Windows.Input.Key.Escape)
-        {
             Close();
-        }
         base.OnKeyDown(e);
+    }
+
+    // T-1.6 / T-5.6: 창 닫기 처리
+    protected override void OnClosing(CancelEventArgs e)
+    {
+        if (!IsShuttingDown)
+        {
+            // 트레이로 숨기기
+            e.Cancel = true;
+            Hide();
+
+            // 첫 번째 숨김 시 풍선 알림 (한 번만)
+            if (!_trayNotified)
+            {
+                _trayService.ShowBalloon("AltKey가 트레이에서 실행 중입니다.");
+                _trayNotified = true;
+            }
+        }
+        else
+        {
+            // 실제 종료 — 설정 저장
+            _configService.Update(c =>
+            {
+                c.Window.Left   = Left;
+                c.Window.Top    = Top;
+                c.Window.Width  = Width;
+                c.Window.Height = Height;
+            });
+        }
+
+        base.OnClosing(e);
     }
 
     // T-1.6: 창 위치/크기 복원
     private void RestoreWindowPosition()
     {
         var cfg = _configService.Current.Window;
-        Left = cfg.Left;
-        Top = cfg.Top;
-        Width = cfg.Width;
+        Left   = cfg.Left;
+        Top    = cfg.Top;
+        Width  = cfg.Width;
         Height = cfg.Height;
     }
 
-    // T-1.6: 창 위치/크기 저장
-    protected override void OnClosing(CancelEventArgs e)
-    {
-        _configService.Update(c =>
-        {
-            c.Window.Left = (int)Left;
-            c.Window.Top = (int)Top;
-            c.Window.Width = (int)Width;
-            c.Window.Height = (int)Height;
-        });
-
-        base.OnClosing(e);
-    }
-
-    // T-1.7: 자동 페이딩 타이머 설정
+    // T-1.7: 자동 페이딩
     private void SetupFadeTimer()
     {
         var config = _configService.Current;
         _fadeTimer = new DispatcherTimer
         {
-            Interval = TimeSpan.FromSeconds(config.FadeDelaySeconds)
+            Interval = TimeSpan.FromMilliseconds(config.FadeDelayMs)
         };
         _fadeTimer.Tick += FadeTimer_Tick;
     }
@@ -108,7 +144,6 @@ public partial class MainWindow : Window
     private void MainWindow_MouseEnter(object? sender, System.Windows.Input.MouseEventArgs e)
     {
         _fadeTimer.Stop();
-        // 즉시 복귀 (애니메이션)
         BeginAnimation(OpacityProperty,
             new DoubleAnimation(1.0, TimeSpan.FromMilliseconds(150)));
     }
@@ -126,10 +161,10 @@ public partial class MainWindow : Window
             new DoubleAnimation(config.OpacityIdle, TimeSpan.FromMilliseconds(400)));
     }
 
-    // T-4.9: 진입 애니메이션 (슬라이드 업 + 페이드 인)
+    // T-4.9: 진입 애니메이션
     private void PlayOpenAnimation()
     {
-        Opacity = 0;
+        Opacity         = 0;
         RenderTransform = new System.Windows.Media.TranslateTransform(0, 24);
 
         var sb = new Storyboard();

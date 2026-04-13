@@ -1,4 +1,121 @@
 <UserControl x:Class="AltKey.Views.SettingsView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:AltKey.ViewModels">
+
+    <Border Background="#EE141420"
+            CornerRadius="12"
+            Padding="24,20">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- 헤더 -->
+            <Grid Grid.Row="0" Margin="0,0,0,16">
+                <TextBlock Text="설정"
+                           FontSize="16" FontWeight="SemiBold"
+                           Foreground="#EEFFFFFF"/>
+                <Button HorizontalAlignment="Right"
+                        Background="Transparent" BorderThickness="0"
+                        Foreground="#AAFFFFFF" FontSize="16" Cursor="Hand"
+                        Command="{Binding DataContext.ToggleSettingsCommand,
+                            RelativeSource={RelativeSource AncestorType=UserControl}}"
+                        ToolTip="닫기">
+                    <TextBlock Text="✕"/>
+                </Button>
+            </Grid>
+
+            <!-- 설정 항목 -->
+            <ScrollViewer Grid.Row="1"
+                          VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled">
+                <StackPanel>
+
+                    <!-- ── 테마 ─────────────────────────────────────────────── -->
+                    <TextBlock Text="테마" Foreground="#AAFFFFFF" FontSize="11" Margin="0,0,0,6"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                        <RadioButton Content="시스템 따라" Foreground="#EEFFFFFF"
+                                     IsChecked="{Binding ThemeIsSystem}" Margin="0,0,12,0"/>
+                        <RadioButton Content="라이트"     Foreground="#EEFFFFFF"
+                                     IsChecked="{Binding ThemeIsLight}"  Margin="0,0,12,0"/>
+                        <RadioButton Content="다크"       Foreground="#EEFFFFFF"
+                                     IsChecked="{Binding ThemeIsDark}"/>
+                    </StackPanel>
+
+                    <!-- ── 항상 위 ─────────────────────────────────────────── -->
+                    <CheckBox Content="항상 위에 표시"
+                              Foreground="#EEFFFFFF"
+                              IsChecked="{Binding AlwaysOnTop}"
+                              Margin="0,0,0,16"/>
+
+                    <!-- ── 유휴 투명도 ─────────────────────────────────────── -->
+                    <TextBlock Foreground="#AAFFFFFF" FontSize="11" Margin="0,0,0,4">
+                        <Run Text="유휴 투명도: "/>
+                        <Run Text="{Binding OpacityIdle, StringFormat=P0}"/>
+                    </TextBlock>
+                    <Slider Minimum="0.1" Maximum="1.0" TickFrequency="0.05"
+                            IsSnapToTickEnabled="True"
+                            Value="{Binding OpacityIdle}"
+                            Foreground="{StaticResource KeyFgSticky}"
+                            Margin="0,0,0,16"/>
+
+                    <!-- ── 페이딩 딜레이 ───────────────────────────────────── -->
+                    <TextBlock Foreground="#AAFFFFFF" FontSize="11" Margin="0,0,0,4">
+                        <Run Text="페이딩 딜레이: "/>
+                        <Run Text="{Binding FadeDelaySec, StringFormat={}{0}초}"/>
+                    </TextBlock>
+                    <Slider Minimum="1" Maximum="30" TickFrequency="1"
+                            IsSnapToTickEnabled="True"
+                            Value="{Binding FadeDelaySec}"
+                            Foreground="{StaticResource KeyFgSticky}"
+                            Margin="0,0,0,16"/>
+
+                    <!-- ── 체류 클릭 ───────────────────────────────────────── -->
+                    <CheckBox Content="체류 클릭 (Dwell Click)"
+                              Foreground="#EEFFFFFF"
+                              IsChecked="{Binding DwellEnabled}"
+                              Margin="0,0,0,8"/>
+                    <TextBlock Foreground="#AAFFFFFF" FontSize="11" Margin="16,0,0,4">
+                        <Run Text="체류 시간: "/>
+                        <Run Text="{Binding DwellTimeMs, StringFormat={}{0}ms}"/>
+                    </TextBlock>
+                    <Slider Minimum="200" Maximum="3000" TickFrequency="100"
+                            IsSnapToTickEnabled="True"
+                            Value="{Binding DwellTimeMs}"
+                            IsEnabled="{Binding DwellEnabled}"
+                            Foreground="{StaticResource KeyFgSticky}"
+                            Margin="16,0,0,16"/>
+
+                    <!-- ── 레이아웃 ─────────────────────────────────────────── -->
+                    <TextBlock Text="기본 레이아웃" Foreground="#AAFFFFFF" FontSize="11" Margin="0,0,0,4"/>
+                    <ComboBox ItemsSource="{Binding AvailableLayouts}"
+                              SelectedItem="{Binding SelectedLayout}"
+                              Height="28" Margin="0,0,0,16"/>
+
+                    <!-- ── 전역 단축키 ─────────────────────────────────────── -->
+                    <TextBlock Text="전역 단축키" Foreground="#AAFFFFFF" FontSize="11" Margin="0,0,0,4"/>
+                    <TextBox Text="{Binding GlobalHotkey, UpdateSourceTrigger=LostFocus}"
+                             Height="28" Margin="0,0,0,16"
+                             Background="#33FFFFFF" Foreground="#EEFFFFFF"
+                             BorderBrush="#55FFFFFF" Padding="6,4"/>
+
+                    <Separator Background="#33FFFFFF" Margin="0,0,0,16"/>
+
+                    <!-- ── T-5.12: 관리자 권한으로 재시작 ─────────────────── -->
+                    <Border Background="#33FFA500" CornerRadius="6" Padding="12,8" Margin="0,0,0,8">
+                        <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="#FFEEAA"
+                                   Text="⚠️ 관리자 앱에 입력하려면 관리자 권한으로 재시작하세요."/>
+                    </Border>
+                    <Button Content="관리자 권한으로 재시작"
+                            Command="{Binding RestartAsAdminCommand}"
+                            Height="32" Cursor="Hand"
+                            Background="#553B82F6" Foreground="#EEFFFFFF"
+                            BorderThickness="0"/>
+
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </Border>
 </UserControl>

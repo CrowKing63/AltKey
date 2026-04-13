@@ -35,12 +35,41 @@ public class LayoutService
         if (!File.Exists(path))
             throw new FileNotFoundException($"레이아웃 파일 없음: {path}");
 
-        var json = File.ReadAllText(path);
-        var layout = JsonSerializer.Deserialize<LayoutConfig>(json, JsonOptions.Default)
-            ?? throw new InvalidDataException($"레이아웃 파싱 실패: {name}");
+        string json;
+        try
+        {
+            json = File.ReadAllText(path);
+        }
+        catch (IOException ex)
+        {
+            throw new InvalidDataException($"레이아웃 파일 읽기 실패: {name}", ex);
+        }
+
+        LayoutConfig layout;
+        try
+        {
+            layout = JsonSerializer.Deserialize<LayoutConfig>(json, JsonOptions.Default)
+                ?? throw new InvalidDataException($"레이아웃 파싱 결과 null: {name}");
+        }
+        catch (JsonException ex)
+        {
+            // T-6.7: 잘못된 JSON → 구체적인 예외 메시지로 래핑
+            throw new InvalidDataException($"레이아웃 JSON 파싱 실패: {name} — {ex.Message}", ex);
+        }
 
         _cache[name] = layout;
         return layout;
+    }
+
+    /// <summary>T-6.7: 레이아웃 로드를 시도하고 실패 시 null 반환 (UI에서 폴백 처리)</summary>
+    public LayoutConfig? TryLoad(string name, Action<Exception>? onError = null)
+    {
+        try { return Load(name); }
+        catch (Exception ex)
+        {
+            onError?.Invoke(ex);
+            return null;
+        }
     }
 
     /// <summary>config 변경 시 캐시 무효화</summary>

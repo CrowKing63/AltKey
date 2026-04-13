@@ -1,4 +1,3 @@
-using System;
 using System.IO;
 using System.Text.Json;
 using AltKey.Models;
@@ -7,52 +6,35 @@ namespace AltKey.Services;
 
 public class ConfigService
 {
-    private readonly string _configPath;
-    private AppConfig _config = new();
-
-    public AppConfig Current => _config;
+    public AppConfig Current { get; private set; } = new();
 
     public ConfigService()
     {
-        var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-        var dir = Path.Combine(appData, "AltKey");
-        Directory.CreateDirectory(dir);
-        _configPath = Path.Combine(dir, "config.json");
+        Directory.CreateDirectory(Path.GetDirectoryName(PathResolver.ConfigPath)!);
         Load();
     }
 
-    private void Load()
+    public void Load()
     {
-        if (File.Exists(_configPath))
+        if (!File.Exists(PathResolver.ConfigPath)) { Save(); return; }
+        try
         {
-            try
-            {
-                var json = File.ReadAllText(_configPath);
-                var loaded = JsonSerializer.Deserialize<AppConfig>(json);
-                if (loaded != null)
-                {
-                    _config = loaded;
-                }
-            }
-            catch
-            {
-                _config = new AppConfig();
-            }
+            var json = File.ReadAllText(PathResolver.ConfigPath);
+            Current = JsonSerializer.Deserialize<AppConfig>(json, JsonOptions.Default) ?? new();
+        }
+        catch
+        {
+            Current = new AppConfig();
         }
     }
 
-    public void Save()
-    {
-        var json = JsonSerializer.Serialize(_config, new JsonSerializerOptions
-        {
-            WriteIndented = true
-        });
-        File.WriteAllText(_configPath, json);
-    }
+    public void Save() =>
+        File.WriteAllText(PathResolver.ConfigPath,
+            JsonSerializer.Serialize(Current, JsonOptions.Default));
 
-    public void Update(Action<AppConfig> mutator)
+    public void Update(Action<AppConfig> updater)
     {
-        mutator(_config);
+        updater(Current);
         Save();
     }
 }

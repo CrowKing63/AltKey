@@ -1,1 +1,32 @@
+using System.Globalization;
+using System.Windows.Data;
+
 namespace AltKey.Themes;
+
+/// T-5.2: 체류 진행도(0.0~1.0) → StrokeDashOffset 변환
+/// StrokeDashArray="100" 기준 → progress=0 시 offset=100(비어있음), progress=1 시 offset=0(가득 참)
+[ValueConversion(typeof(double), typeof(double))]
+public class ProgressToOffsetConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        double progress = value is double d ? d : 0.0;
+        return 100.0 * (1.0 - Math.Clamp(progress, 0.0, 1.0));
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
+/// bool → Visibility 변환 (App.xaml에 이미 있지만 테마 파일에서도 사용 가능하도록 제공)
+[ValueConversion(typeof(bool), typeof(System.Windows.Visibility))]
+public class BoolToVisibilityConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        => value is true
+            ? System.Windows.Visibility.Visible
+            : System.Windows.Visibility.Collapsed;
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => value is System.Windows.Visibility.Visible;
+}

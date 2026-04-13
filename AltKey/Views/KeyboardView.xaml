@@ -5,6 +5,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:AltKey.ViewModels"
              xmlns:controls="clr-namespace:AltKey.Controls"
+             xmlns:views="clr-namespace:AltKey.Views"
              mc:Ignorable="d"
              d:DesignWidth="900" d:DesignHeight="320">
     <UserControl.Resources>
@@ -12,6 +13,25 @@
     </UserControl.Resources>
 
     <Grid>
+        <!-- T-6.4: 업데이트 알림 배너 -->
+        <Border x:Name="UpdateBanner"
+                VerticalAlignment="Top"
+                Background="#FF2563EB"
+                Padding="8,4"
+                Visibility="Collapsed"
+                Panel.ZIndex="20">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="새 버전이 있습니다: " Foreground="White" VerticalAlignment="Center"/>
+                <TextBlock x:Name="UpdateVersionText" Foreground="White" FontWeight="Bold" VerticalAlignment="Center"/>
+                <Button Content="다운로드" Click="OpenReleasePage_Click"
+                        Margin="8,0,0,0" Padding="6,2"
+                        Background="#1D4ED8" Foreground="White" BorderThickness="0" Cursor="Hand"/>
+                <Button Content="✕" Click="DismissUpdate_Click"
+                        Margin="4,0,0,0" Padding="4,2"
+                        Background="Transparent" Foreground="White" BorderThickness="0" Cursor="Hand"/>
+            </StackPanel>
+        </Border>
+
         <!-- 상단 드래그 핸들 (T-1.5, T-4.8) -->
         <Border x:Name="DragHandle"
                 Height="22"
@@ -38,7 +58,7 @@
 
                 <!-- T-3.10: 레이아웃 전환 드롭다운 -->
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
-                            Margin="0,0,36,0" VerticalAlignment="Center">
+                            Margin="0,0,68,0" VerticalAlignment="Center">
                     <ComboBox x:Name="LayoutComboBox"
                               ItemsSource="{Binding AvailableLayouts}"
                               SelectedItem="{Binding CurrentLayoutName, Mode=OneWay}"
@@ -48,6 +68,17 @@
                 </StackPanel>
             </Grid>
         </Border>
+
+        <!-- T-5.10: 기어(설정) 버튼 -->
+        <Button x:Name="SettingsButton" Width="32" Height="28"
+                HorizontalAlignment="Right" VerticalAlignment="Top"
+                Margin="0,0,32,0"
+                Background="Transparent" Foreground="#CCC"
+                BorderThickness="0" Cursor="Hand"
+                Command="{Binding ToggleSettingsCommand}"
+                ToolTip="설정">
+            <TextBlock Text="⚙" FontSize="14"/>
+        </Button>
 
         <!-- 우상단 닫기 버튼 -->
         <Button x:Name="CloseButton" Width="32" Height="28"
@@ -91,6 +122,10 @@
                                             IsLocked="{Binding IsLocked}"
                                             KeyUnit="{Binding DataContext.Keyboard.KeyUnit,
                                                 RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            DwellEnabled="{Binding DataContext.DwellEnabled,
+                                                RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            DwellTime="{Binding DataContext.DwellTimeMs,
+                                                RelativeSource={RelativeSource AncestorType=UserControl}}"
                                             Command="{Binding DataContext.Keyboard.KeyPressedCommand,
                                                 RelativeSource={RelativeSource AncestorType=UserControl}}"
                                             CommandParameter="{Binding Slot}"/>
@@ -119,5 +154,14 @@
                 </ControlTemplate>
             </Thumb.Template>
         </Thumb>
+
+        <!-- T-5.10: 설정 패널 오버레이 -->
+        <views:SettingsView
+            DataContext="{Binding Settings}"
+            Visibility="{Binding IsSettingsOpen,
+                RelativeSource={RelativeSource AncestorType=UserControl},
+                Converter={StaticResource BoolToVis}}"
+            Panel.ZIndex="10"
+            Margin="8,4,8,4"/>
     </Grid>
 </UserControl>
