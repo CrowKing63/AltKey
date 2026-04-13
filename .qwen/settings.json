@@ -8,7 +8,9 @@
       "Bash(findstr *)",
       "Bash(start *)",
       "Bash(taskkill *)",
-      "Bash(powershell *)"
+      "Bash(powershell *)",
+      "Bash(git add *)",
+      "Bash(git commit *)"
     ]
   },
   "$version": 3
