@@ -5,8 +5,10 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$root = Split-Path $PSScriptRoot -Parent
-$out  = Join-Path $root "dist/altkey-portable-v$Version"
+$root    = Split-Path $PSScriptRoot -Parent
+# 태그에서 앞의 'v'를 제거 (v0.1.0 → 0.1.0)
+$Version = $Version.TrimStart('v')
+$out     = Join-Path $root "dist/altkey-portable-v$Version"
 
 New-Item -ItemType Directory -Force $out | Out-Null
 
