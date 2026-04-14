@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using AltKey.Models;
 using WpfApp = System.Windows.Application;
@@ -36,6 +37,17 @@ public partial class MainViewModel : ObservableObject
     /// T-5.10: 설정 패널 표시 여부
     [ObservableProperty]
     private bool isSettingsOpen;
+
+    // T-9.5: 업데이트 배너 바인딩용 속성
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasUpdate))]
+    private string? updateVersion;
+
+    [ObservableProperty]
+    private string? updateUrl;
+
+    /// 업데이트 배너 표시 여부 (BoolToVis 바인딩용)
+    public bool HasUpdate => UpdateVersion is not null;
 
     /// T-5.1: 체류 클릭 활성화 (KeyButton 바인딩용)
     public bool DwellEnabled
@@ -161,6 +173,21 @@ public partial class MainViewModel : ObservableObject
         {
             _isSwitching = false;
         }
+    }
+
+    // T-9.5: 업데이트 배너 커맨드
+    [RelayCommand]
+    private void DismissUpdate()
+    {
+        UpdateVersion = null;
+        UpdateUrl = null;
+    }
+
+    [RelayCommand]
+    private void OpenReleasePage()
+    {
+        if (!string.IsNullOrEmpty(UpdateUrl))
+            Process.Start(new ProcessStartInfo(UpdateUrl) { UseShellExecute = true });
     }
 
     [RelayCommand]

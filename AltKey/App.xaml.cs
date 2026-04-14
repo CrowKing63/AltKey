@@ -55,6 +55,7 @@ public partial class App : System.Windows.Application
             services.AddSingleton<StartupService>();
             services.AddSingleton<SoundService>();
             services.AddSingleton<ClipboardService>();
+            services.AddSingleton<UpdateService>();
 
             // ViewModel
             services.AddSingleton<KeyboardViewModel>();
@@ -79,6 +80,22 @@ public partial class App : System.Windows.Application
 
             var window = Services.GetRequiredService<MainWindow>();
             window.Show();
+
+            // T-9.5: 백그라운드 업데이트 확인 (창 표시 후 비동기 실행)
+            _ = Task.Run(async () =>
+            {
+                var updateSvc = Services.GetRequiredService<UpdateService>();
+                var (hasUpdate, version, url) = await updateSvc.CheckAsync();
+                if (hasUpdate)
+                {
+                    Dispatcher.Invoke(() =>
+                    {
+                        var vm = Services.GetRequiredService<ViewModels.MainViewModel>();
+                        vm.UpdateVersion = version;
+                        vm.UpdateUrl = url;
+                    });
+                }
+            });
 
             // T-6.6: 첫 창 표시까지 걸린 시간 (Debug 로그)
             var elapsed = Environment.TickCount64 - _startTick;

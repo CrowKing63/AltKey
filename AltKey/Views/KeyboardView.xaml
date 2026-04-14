@@ -19,20 +19,21 @@
         <!-- 메인 레이아웃: DockPanel (패널 영역 → 키보드 순으로 위에서 아래로) -->
         <DockPanel LastChildFill="True">
 
-            <!-- T-6.4: 업데이트 알림 배너 -->
-            <Border x:Name="UpdateBanner"
-                    DockPanel.Dock="Top"
+            <!-- T-9.5: 업데이트 알림 배너 (ViewModel 바인딩) -->
+            <Border DockPanel.Dock="Top"
                     Background="#FF2563EB"
                     Padding="8,4"
-                    Visibility="Collapsed"
+                    Visibility="{Binding HasUpdate, Converter={StaticResource BoolToVis}}"
                     Panel.ZIndex="20">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="새 버전이 있습니다: " Foreground="White" VerticalAlignment="Center"/>
-                    <TextBlock x:Name="UpdateVersionText" Foreground="White" FontWeight="Bold" VerticalAlignment="Center"/>
-                    <Button Content="다운로드" Click="OpenReleasePage_Click"
+                    <TextBlock Text="{Binding UpdateVersion}" Foreground="White" FontWeight="Bold" VerticalAlignment="Center"/>
+                    <Button Content="다운로드"
+                            Command="{Binding OpenReleasePageCommand}"
                             Margin="8,0,0,0" Padding="6,2"
                             Background="#1D4ED8" Foreground="White" BorderThickness="0" Cursor="Hand"/>
-                    <Button Content="✕" Click="DismissUpdate_Click"
+                    <Button Content="✕"
+                            Command="{Binding DismissUpdateCommand}"
                             Margin="4,0,0,0" Padding="4,2"
                             Background="Transparent" Foreground="White" BorderThickness="0" Cursor="Hand"/>
                 </StackPanel>
