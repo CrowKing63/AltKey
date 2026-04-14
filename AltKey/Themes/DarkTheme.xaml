@@ -4,9 +4,14 @@
     <SolidColorBrush x:Key="KeyBg"        Color="#CC3C3C3C"/>
     <SolidColorBrush x:Key="KeyBgHover"   Color="#CC505050"/>
     <SolidColorBrush x:Key="KeyBgPressed" Color="#FF2D2D2D"/>
-    <SolidColorBrush x:Key="KeyBgSticky"  Color="#663B82F6"/>
+    <!-- Sticky: 다크에서 지나치게 튀지 않도록 채도 낮춤 (40%→29%) -->
+    <SolidColorBrush x:Key="KeyBgSticky"  Color="#4A4A7FCC"/>
     <SolidColorBrush x:Key="KeyFg"        Color="#FFE4E4E4"/>
     <SolidColorBrush x:Key="KeyFgSticky"  Color="#FF93C5FD"/>
     <SolidColorBrush x:Key="KeyBorder"    Color="#0FFFFFFF"/>
     <SolidColorBrush x:Key="KeyShadow"    Color="#66000000"/>
+    <!-- 제목/버튼용: 다크 배경에서 충분히 보이는 중간 회색 -->
+    <SolidColorBrush x:Key="TitleFg"      Color="#FFB8B8B8"/>
+    <!-- 전체 창 배경: 다크는 투명 유지 (기존 외관 보존) -->
+    <SolidColorBrush x:Key="WindowBg"     Color="#00000000"/>
 </ResourceDictionary>

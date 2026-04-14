@@ -25,9 +25,16 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
         Loaded += OnLoaded;
     }
 
-    // T-6.4: 로드 시 업데이트 체크
+    // T-6.4: 로드 시 업데이트 체크 + T-4.10: 반응형 KeyUnit 초기화
     private async void OnLoaded(object sender, RoutedEventArgs e)
     {
+        // T-4.10: 창 크기 변화에 맞게 KeyUnit 동적 계산
+        if (Window.GetWindow(this) is { } window)
+        {
+            UpdateKeyUnit(window.Width, window.Height);
+            window.SizeChanged += OnWindowSizeChanged;
+        }
+
         try
         {
             var svc = new UpdateService();
@@ -40,6 +47,34 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
             }
         }
         catch { /* 업데이트 체크 실패 — 무시 */ }
+    }
+
+    // T-4.10: 창 크기 변경 시 KeyUnit 재계산
+    private void OnWindowSizeChanged(object sender, SizeChangedEventArgs e)
+        => UpdateKeyUnit(e.NewSize.Width, e.NewSize.Height);
+
+    // T-4.10: KeyUnit = min(가로 기준, 세로 기준) — Stretch=Uniform 동작 재현
+    // KeyboardBorder: Margin="0,28,0,8" Padding="6,4"
+    // 가장 넓은 행(Row1/2): 14개 키, 15단위 → 가로 = 15K + 14×4
+    // 행 수: 5행, 각 1단위 높이 → 세로 = 5K + 5×4
+    private void UpdateKeyUnit(double windowWidth, double windowHeight)
+    {
+        if (DataContext is not MainViewModel vm) return;
+
+        const double hPad  = 6 + 6;          // Border Padding 좌+우
+        const double vOver = 28 + 8 + 4 + 4; // Margin 상+하 + Padding 상+하
+        const double units = 15.0;            // 가장 넓은 행의 단위 합계
+        const double wKeys = 14.0;            // 가장 넓은 행의 키 개수
+        const double rows  = 5.0;            // 행 수
+        const double mKey  = 4.0;            // 키 한 개당 마진 총합 (Margin="2")
+
+        double availW = windowWidth  - hPad;
+        double availH = windowHeight - vOver;
+
+        double kW = (availW - wKeys * mKey) / units;  // 가로 기준 KeyUnit
+        double kH = (availH - rows  * mKey) / rows;   // 세로 기준 KeyUnit
+
+        vm.Keyboard.KeyUnit = Math.Max(18, Math.Min(80, Math.Min(kW, kH)));
     }
 
     // T-6.4: 다운로드 버튼
