@@ -117,6 +117,31 @@ public class InputService
         ReleaseTransientModifiers();
     }
 
+    // ── T-8.3: 유니코드 문자 전송 (이모지 지원) ─────────────────────────────
+    public void SendUnicode(string text)
+    {
+        var inputs = new List<Win32.INPUT>();
+        foreach (var ch in text)
+        {
+            inputs.Add(MakeUnicodeKeyDown(ch));
+            inputs.Add(MakeUnicodeKeyUp(ch));
+        }
+        Win32.SendInput((uint)inputs.Count, inputs.ToArray(), Marshal.SizeOf<Win32.INPUT>());
+        ReleaseTransientModifiers();
+    }
+
+    private static Win32.INPUT MakeUnicodeKeyDown(char ch) => new()
+    {
+        Type = Win32.INPUT_KEYBOARD,
+        U = new() { Ki = new() { WVk = 0, WScan = ch, DwFlags = Win32.KEYEVENTF_UNICODE } }
+    };
+
+    private static Win32.INPUT MakeUnicodeKeyUp(char ch) => new()
+    {
+        Type = Win32.INPUT_KEYBOARD,
+        U = new() { Ki = new() { WVk = 0, WScan = ch, DwFlags = Win32.KEYEVENTF_UNICODE | Win32.KEYEVENTF_KEYUP } }
+    };
+
     // ── 내부 헬퍼 ────────────────────────────────────────────────────────────
     private static Win32.INPUT MakeKeyDown(ushort vk) => new()
     {

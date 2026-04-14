@@ -26,6 +26,17 @@ dotnet build AltKey/AltKey.csproj 2>&1
 dotnet publish AltKey/AltKey.csproj -c Release -r win-x64 --self-contained -p:PublishSingleFile=true
 ```
 
+## Githup Actions를 사용한 자동 빌드 및 배포
+
+<AssemblyVersion>X.Y.Z.0</AssemblyVersion>
+<FileVersion>X.Y.Z.0</FileVersion>
+<Version>X.Y.Z</Version>
+
+```bash
+git tag vX.Y.Z
+git push --tags
+```
+
 ## 알려진 제약
 
 - SendInput API 사용 시 권한 제약으로 일부 앱/게임에서 키 입력 미작동

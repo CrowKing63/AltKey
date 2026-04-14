@@ -25,4 +25,14 @@ public class AppConfig
     public bool   AutoProfileSwitch { get; set; } = true;
     public Dictionary<string, string> Profiles { get; set; } = [];
     public WindowConfig Window      { get; set; } = new();
+
+    // T-8.1: 윈도우 시작 시 자동 실행
+    public bool RunOnStartup        { get; set; } = false;
+
+    // T-8.2: 키 클릭 사운드 (기본 ON — Assets/Sounds/ 폴더의 WAV 파일 자동 사용)
+    public bool SoundEnabled        { get; set; } = true;
+    public string? SoundFilePath    { get; set; } = null;
+
+    // T-8.4: 클립보드 히스토리 패널
+    public bool ClipboardPanelEnabled { get; set; } = false;
 }

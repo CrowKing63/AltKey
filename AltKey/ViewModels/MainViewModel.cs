@@ -22,8 +22,10 @@ public partial class MainViewModel : ObservableObject
     // SwitchLayout 재진입 방지 플래그
     private bool _isSwitching;
 
-    public KeyboardViewModel  Keyboard { get; }
-    public SettingsViewModel  Settings { get; }
+    public KeyboardViewModel   Keyboard { get; }
+    public SettingsViewModel   Settings { get; }
+    public EmojiViewModel      Emoji    { get; }
+    public ClipboardViewModel  Clipboard { get; }
 
     [ObservableProperty]
     private string currentLayoutName = "";
@@ -58,18 +60,22 @@ public partial class MainViewModel : ObservableObject
     }
 
     public MainViewModel(
-        ConfigService    configService,
-        LayoutService    layoutService,
+        ConfigService     configService,
+        LayoutService     layoutService,
         KeyboardViewModel keyboardViewModel,
-        ProfileService   profileService,
-        SettingsViewModel settingsViewModel)
+        ProfileService    profileService,
+        SettingsViewModel settingsViewModel,
+        EmojiViewModel    emojiViewModel,
+        ClipboardViewModel clipboardViewModel)
     {
         _configService  = configService;
         _layoutService  = layoutService;
         _profileService = profileService;
 
-        Keyboard = keyboardViewModel;
-        Settings = settingsViewModel;
+        Keyboard  = keyboardViewModel;
+        Settings  = settingsViewModel;
+        Emoji     = emojiViewModel;
+        Clipboard = clipboardViewModel;
 
         // T-5.4: 포그라운드 앱 변경 → 자동 레이아웃 전환
         _profileService.ForegroundAppChanged += OnForegroundAppChanged;
@@ -159,6 +165,12 @@ public partial class MainViewModel : ObservableObject
 
     [RelayCommand]
     private void ToggleSettings() => IsSettingsOpen = !IsSettingsOpen;
+
+    [RelayCommand]
+    private void ToggleEmojiPanel() => Emoji.IsVisible = !Emoji.IsVisible;
+
+    [RelayCommand]
+    private void ToggleClipboardPanel() => Clipboard.IsVisible = !Clipboard.IsVisible;
 
     // T-5.4: 앱 프로필 자동 전환
     private void OnForegroundAppChanged(string processName)

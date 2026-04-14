@@ -14,4 +14,8 @@
     <SolidColorBrush x:Key="TitleFg"      Color="#FFB8B8B8"/>
     <!-- 전체 창 배경: 다크는 투명 유지 (기존 외관 보존) -->
     <SolidColorBrush x:Key="WindowBg"     Color="#00000000"/>
+    <!-- 이모지/클립보드 패널 배경: 설정 패널과 유사한 어두운 계열 -->
+    <SolidColorBrush x:Key="PanelBg"      Color="#EE1E1E2E"/>
+    <SolidColorBrush x:Key="PanelFg"      Color="#FFE4E4E4"/>
+    <SolidColorBrush x:Key="PanelBorder"  Color="#33FFFFFF"/>
 </ResourceDictionary>

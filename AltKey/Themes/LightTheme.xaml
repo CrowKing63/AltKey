@@ -17,4 +17,8 @@
     <SolidColorBrush x:Key="TitleFg"      Color="#FF505050"/>
     <!-- 전체 창 배경: 상단/하단 바가 하얗고 투명하게 보이도록 -->
     <SolidColorBrush x:Key="WindowBg"     Color="#AAFFFFFF"/>
+    <!-- 이모지/클립보드 패널 배경: 라이트 키보드 배경과 어울리는 밝은 계열 -->
+    <SolidColorBrush x:Key="PanelBg"      Color="#EEF0F0F4"/>
+    <SolidColorBrush x:Key="PanelFg"      Color="#FF1A1A1A"/>
+    <SolidColorBrush x:Key="PanelBorder"  Color="#33000000"/>
 </ResourceDictionary>

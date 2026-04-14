@@ -13,144 +13,165 @@
     </UserControl.Resources>
 
     <Grid>
-        <!-- 전체 창 배경: 라이트에서 상단/하단 바를 반투명 흰색으로, 다크는 투명 유지 -->
-        <Border Background="{DynamicResource WindowBg}"
-                IsHitTestVisible="False"/>
+        <!-- 전체 창 배경 -->
+        <Border Background="{DynamicResource WindowBg}" IsHitTestVisible="False"/>
 
-        <!-- T-6.4: 업데이트 알림 배너 -->
-        <Border x:Name="UpdateBanner"
-                VerticalAlignment="Top"
-                Background="#FF2563EB"
-                Padding="8,4"
-                Visibility="Collapsed"
-                Panel.ZIndex="20">
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Text="새 버전이 있습니다: " Foreground="White" VerticalAlignment="Center"/>
-                <TextBlock x:Name="UpdateVersionText" Foreground="White" FontWeight="Bold" VerticalAlignment="Center"/>
-                <Button Content="다운로드" Click="OpenReleasePage_Click"
-                        Margin="8,0,0,0" Padding="6,2"
-                        Background="#1D4ED8" Foreground="White" BorderThickness="0" Cursor="Hand"/>
-                <Button Content="✕" Click="DismissUpdate_Click"
-                        Margin="4,0,0,0" Padding="4,2"
-                        Background="Transparent" Foreground="White" BorderThickness="0" Cursor="Hand"/>
-            </StackPanel>
-        </Border>
+        <!-- 메인 레이아웃: DockPanel (패널 영역 → 키보드 순으로 위에서 아래로) -->
+        <DockPanel LastChildFill="True">
 
-        <!-- 상단 드래그 핸들 (T-1.5, T-4.8) -->
-        <Border x:Name="DragHandle"
-                Height="22"
-                VerticalAlignment="Top"
-                Background="Transparent"
-                Cursor="SizeAll"
-                MouseLeftButtonDown="DragHandle_MouseLeftButtonDown"
-                MouseEnter="DragHandle_MouseEnter"
-                MouseLeave="DragHandle_MouseLeave">
-            <Grid>
-                <!-- T-4.8: 중앙 pill 인디케이터 -->
-                <Rectangle x:Name="DragPill"
-                           Width="36" Height="4"
-                           Fill="{DynamicResource TitleFg}"
-                           Opacity="0.4"
-                           RadiusX="2" RadiusY="2"
-                           HorizontalAlignment="Center" VerticalAlignment="Center"
-                           IsHitTestVisible="False"/>
+            <!-- T-6.4: 업데이트 알림 배너 -->
+            <Border x:Name="UpdateBanner"
+                    DockPanel.Dock="Top"
+                    Background="#FF2563EB"
+                    Padding="8,4"
+                    Visibility="Collapsed"
+                    Panel.ZIndex="20">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="새 버전이 있습니다: " Foreground="White" VerticalAlignment="Center"/>
+                    <TextBlock x:Name="UpdateVersionText" Foreground="White" FontWeight="Bold" VerticalAlignment="Center"/>
+                    <Button Content="다운로드" Click="OpenReleasePage_Click"
+                            Margin="8,0,0,0" Padding="6,2"
+                            Background="#1D4ED8" Foreground="White" BorderThickness="0" Cursor="Hand"/>
+                    <Button Content="✕" Click="DismissUpdate_Click"
+                            Margin="4,0,0,0" Padding="4,2"
+                            Background="Transparent" Foreground="White" BorderThickness="0" Cursor="Hand"/>
+                </StackPanel>
+            </Border>
 
-                <TextBlock Text="AltKey" HorizontalAlignment="Left" VerticalAlignment="Center"
-                           Margin="12,0,0,0" Foreground="{DynamicResource TitleFg}"
-                           FontSize="11"
-                           IsHitTestVisible="False"/>
+            <!-- 상단 헤더 바: 드래그 핸들 + 버튼들 (T-1.5, T-4.8, T-7.2) -->
+            <Grid DockPanel.Dock="Top" Height="28">
+                <!-- 드래그 핸들 (배경 영역 전체) -->
+                <Border x:Name="DragHandle"
+                        Background="Transparent"
+                        Cursor="SizeAll"
+                        MouseLeftButtonDown="DragHandle_MouseLeftButtonDown"
+                        MouseEnter="DragHandle_MouseEnter"
+                        MouseLeave="DragHandle_MouseLeave">
+                    <Grid>
+                        <!-- T-4.8: 중앙 pill 인디케이터 -->
+                        <Rectangle x:Name="DragPill"
+                                   Width="36" Height="4"
+                                   Fill="{DynamicResource TitleFg}"
+                                   Opacity="0.25"
+                                   RadiusX="2" RadiusY="2"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   IsHitTestVisible="False"/>
+                        <TextBlock Text="AltKey" HorizontalAlignment="Left" VerticalAlignment="Center"
+                                   Margin="12,0,0,0" Foreground="{DynamicResource TitleFg}"
+                                   FontSize="11" IsHitTestVisible="False"/>
+                    </Grid>
+                </Border>
 
+                <!-- T-5.10 / T-7.2: 기어(설정) 버튼 -->
+                <Button x:Name="SettingsButton" Width="32" Height="28"
+                        HorizontalAlignment="Right" Margin="0,0,96,0"
+                        Background="Transparent" Foreground="{DynamicResource TitleFg}"
+                        BorderThickness="0" Cursor="Hand"
+                        Command="{Binding ToggleSettingsCommand}"
+                        ToolTip="설정">
+                    <TextBlock Text="⚙" FontSize="14"/>
+                </Button>
+
+                <!-- T-8.3: 이모지 패널 토글 버튼 -->
+                <Button Width="32" Height="28"
+                        HorizontalAlignment="Right" Margin="0,0,128,0"
+                        Background="Transparent" Foreground="{DynamicResource TitleFg}"
+                        BorderThickness="0" Cursor="Hand"
+                        Command="{Binding ToggleEmojiPanelCommand}"
+                        ToolTip="이모지 패널">
+                    <TextBlock Text="😊" FontSize="14"/>
+                </Button>
+
+                <!-- T-8.4: 클립보드 패널 토글 버튼 -->
+                <Button Width="32" Height="28"
+                        HorizontalAlignment="Right" Margin="0,0,160,0"
+                        Background="Transparent" Foreground="{DynamicResource TitleFg}"
+                        BorderThickness="0" Cursor="Hand"
+                        Command="{Binding ToggleClipboardPanelCommand}"
+                        ToolTip="클립보드 패널">
+                    <TextBlock Text="📋" FontSize="14"/>
+                </Button>
+
+                <!-- T-7.2: 접기/펼치기 버튼 -->
+                <Button x:Name="CollapseButton" Width="32" Height="28"
+                        HorizontalAlignment="Right" Margin="0,0,32,0"
+                        Background="Transparent" Foreground="{DynamicResource TitleFg}"
+                        BorderThickness="0" Cursor="Hand"
+                        Click="CollapseButton_Click"
+                        ToolTip="접기 / 펼치기">
+                    <TextBlock x:Name="CollapseIcon" Text="▲" FontSize="10"/>
+                </Button>
+
+                <!-- T-7.2: 닫기 버튼 → 트레이로 숨기기 -->
+                <Button x:Name="CloseButton" Width="32" Height="28"
+                        HorizontalAlignment="Right"
+                        Background="Transparent" Foreground="{DynamicResource TitleFg}"
+                        BorderThickness="0" Cursor="Hand"
+                        Click="CloseButton_Click"
+                        ToolTip="닫기 (트레이로 숨김)">
+                    <TextBlock Text="✕" FontSize="14"/>
+                </Button>
             </Grid>
-        </Border>
 
-        <!-- T-5.10 / T-7.2: 기어(설정) 버튼 -->
-        <Button x:Name="SettingsButton" Width="32" Height="28"
-                HorizontalAlignment="Right" VerticalAlignment="Top"
-                Margin="0,0,64,0"
-                Background="Transparent" Foreground="{DynamicResource TitleFg}"
-                BorderThickness="0" Cursor="Hand"
-                Command="{Binding ToggleSettingsCommand}"
-                ToolTip="설정">
-            <TextBlock Text="⚙" FontSize="14"/>
-        </Button>
+            <!-- T-2.10: UAC 권한 경고 배너 (Auto 높이, 숨김 시 공간 없음) -->
+            <Border DockPanel.Dock="Top"
+                    Background="#FFFACD" CornerRadius="4"
+                    Padding="12,6"
+                    Visibility="{Binding Keyboard.ShowElevatedWarning, Converter={StaticResource BoolToVis}}">
+                <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="#7A6000"
+                           Text="현재 앱은 관리자 권한으로 실행 중이어서 입력이 전달되지 않습니다. AltKey를 관리자 권한으로 실행하세요."/>
+            </Border>
 
-        <!-- T-7.2: 접기/펼치기 버튼 -->
-        <Button x:Name="CollapseButton" Width="32" Height="28"
-                HorizontalAlignment="Right" VerticalAlignment="Top"
-                Margin="0,0,32,0"
-                Background="Transparent" Foreground="{DynamicResource TitleFg}"
-                BorderThickness="0" Cursor="Hand"
-                Click="CollapseButton_Click"
-                ToolTip="접기 / 펼치기">
-            <TextBlock x:Name="CollapseIcon" Text="▲" FontSize="10"/>
-        </Button>
+            <!-- T-3.7 / T-4.10: 키보드 렌더링 (나머지 공간 채우기) -->
+            <Border x:Name="KeyboardBorder"
+                    Background="{DynamicResource KeyboardBg}"
+                    CornerRadius="0,0,8,8" Padding="6,4"
+                    SizeChanged="KeyboardBorder_SizeChanged">
+                <ItemsControl ItemsSource="{Binding Keyboard.Rows}"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type vm:KeyRowVm}">
+                            <ItemsControl ItemsSource="{Binding Keys}"
+                                          HorizontalAlignment="Center">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal"/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type vm:KeySlotVm}">
+                                        <controls:KeyButton
+                                            Slot="{Binding}"
+                                            ShowUpperCase="{Binding DataContext.Keyboard.ShowUpperCase,
+                                                RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            IsSticky="{Binding IsSticky}"
+                                            IsLocked="{Binding IsLocked}"
+                                            KeyUnit="{Binding DataContext.Keyboard.KeyUnit,
+                                                RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            DwellEnabled="{Binding DataContext.DwellEnabled,
+                                                RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            DwellTime="{Binding DataContext.DwellTimeMs,
+                                                RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            Command="{Binding DataContext.Keyboard.KeyPressedCommand,
+                                                RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding Slot}"/>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Border>
 
-        <!-- T-7.2: 닫기 버튼 → 트레이로 숨기기 -->
-        <Button x:Name="CloseButton" Width="32" Height="28"
-                HorizontalAlignment="Right" VerticalAlignment="Top"
-                Background="Transparent" Foreground="{DynamicResource TitleFg}"
-                BorderThickness="0" Cursor="Hand"
-                Click="CloseButton_Click"
-                ToolTip="닫기 (트레이로 숨김)">
-            <TextBlock Text="✕" FontSize="14"/>
-        </Button>
+        </DockPanel>
 
-        <!-- T-2.10: UAC 권한 경고 배너 -->
-        <Border x:Name="ElevatedWarningBanner"
-                VerticalAlignment="Top" Margin="0,28,0,0"
-                Background="#FFFACD" CornerRadius="4"
-                Padding="12,6"
-                Visibility="{Binding Keyboard.ShowElevatedWarning, Converter={StaticResource BoolToVis}}">
-            <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="#7A6000"
-                       Text="현재 앱은 관리자 권한으로 실행 중이어서 입력이 전달되지 않습니다. AltKey를 관리자 권한으로 실행하세요."/>
-        </Border>
-
-        <!-- T-3.7 / T-4.10: 키보드 렌더링 — KeyUnit을 창 크기에 맞게 동적 계산 -->
-        <Border x:Name="KeyboardBorder"
-                Margin="0,28,0,8" Background="{DynamicResource KeyboardBg}"
-                CornerRadius="0,0,8,8" Padding="6,4">
-            <ItemsControl ItemsSource="{Binding Keyboard.Rows}"
-                          HorizontalAlignment="Center"
-                          VerticalAlignment="Center">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate DataType="{x:Type vm:KeyRowVm}">
-                        <ItemsControl ItemsSource="{Binding Keys}"
-                                      HorizontalAlignment="Center">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <StackPanel Orientation="Horizontal"/>
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate DataType="{x:Type vm:KeySlotVm}">
-                                    <controls:KeyButton
-                                        Slot="{Binding}"
-                                        ShowUpperCase="{Binding DataContext.Keyboard.ShowUpperCase,
-                                            RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                        IsSticky="{Binding IsSticky}"
-                                        IsLocked="{Binding IsLocked}"
-                                        KeyUnit="{Binding DataContext.Keyboard.KeyUnit,
-                                            RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                        DwellEnabled="{Binding DataContext.DwellEnabled,
-                                            RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                        DwellTime="{Binding DataContext.DwellTimeMs,
-                                            RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                        Command="{Binding DataContext.Keyboard.KeyPressedCommand,
-                                            RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                        CommandParameter="{Binding Slot}"/>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </Border>
-
-        <!-- 우하단 리사이즈 그립 (T-1.9) -->
+        <!-- 우하단 리사이즈 그립 (T-1.9) — Grid에 직접 배치해 항상 최상단에 표시 -->
         <Thumb x:Name="ResizeGrip"
                Width="20" Height="20"
                HorizontalAlignment="Right" VerticalAlignment="Bottom"
                Cursor="SizeNWSE"
+               Panel.ZIndex="5"
                DragStarted="ResizeGrip_DragStarted"
                DragDelta="ResizeGrip_DragDelta">
             <Thumb.Template>
@@ -164,7 +185,25 @@
             </Thumb.Template>
         </Thumb>
 
-        <!-- T-5.10: 설정 패널 오버레이 -->
+        <!-- T-8.3: 이모지 패널 오버레이 (헤더 바 바로 아래, 키보드 위에 표시) -->
+        <views:EmojiPanel
+            DataContext="{Binding Emoji}"
+            Visibility="{Binding IsVisible, Converter={StaticResource BoolToVis}}"
+            VerticalAlignment="Top"
+            Margin="0,28,0,0"
+            Panel.ZIndex="6"/>
+
+        <!-- T-8.4: 클립보드 패널 오버레이 (헤더 바 바로 아래, 좌측 배치) -->
+        <views:ClipboardPanel
+            DataContext="{Binding Clipboard}"
+            Visibility="{Binding IsVisible, Converter={StaticResource BoolToVis}}"
+            VerticalAlignment="Top"
+            HorizontalAlignment="Left"
+            Width="240"
+            Margin="0,28,0,0"
+            Panel.ZIndex="6"/>
+
+        <!-- T-5.10: 설정 패널 오버레이 (키보드 전체 위에 표시) -->
         <views:SettingsView
             x:Name="SettingsPanel"
             DataContext="{Binding Settings}"
@@ -173,5 +212,6 @@
                 Converter={StaticResource BoolToVis}}"
             Panel.ZIndex="10"
             Margin="8,4,8,4"/>
+
     </Grid>
 </UserControl>

@@ -52,9 +52,14 @@ public partial class App : System.Windows.Application
             services.AddSingleton<TrayService>();
             services.AddSingleton<ThemeService>();
             services.AddSingleton<HotkeyService>();
+            services.AddSingleton<StartupService>();
+            services.AddSingleton<SoundService>();
+            services.AddSingleton<ClipboardService>();
 
             // ViewModel
             services.AddSingleton<KeyboardViewModel>();
+            services.AddSingleton<EmojiViewModel>();
+            services.AddSingleton<ClipboardViewModel>();
             services.AddSingleton<SettingsViewModel>();
             services.AddSingleton<MainViewModel>();
 

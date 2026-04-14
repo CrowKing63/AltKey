@@ -56,6 +56,7 @@ public class KeySlotVm(KeySlot slot) : ObservableObject
 public partial class KeyboardViewModel : ObservableObject
 {
     private readonly InputService _inputService;
+    private readonly SoundService _soundService;
 
     // T-2.7: 100ms 주기 폴링으로 CapsLock 상태 동기화
     private readonly DispatcherTimer _capsLockTimer;
@@ -78,9 +79,10 @@ public partial class KeyboardViewModel : ObservableObject
 
 
     // ── 생성자 ──────────────────────────────────────────────────────────────
-    public KeyboardViewModel(InputService inputService)
+    public KeyboardViewModel(InputService inputService, SoundService soundService)
     {
         _inputService = inputService;
+        _soundService = soundService;
         _inputService.StickyStateChanged += UpdateModifierState;
         _inputService.ElevatedAppDetected += OnElevatedAppDetected;
 
@@ -104,6 +106,9 @@ public partial class KeyboardViewModel : ObservableObject
     [RelayCommand]
     private void KeyPressed(KeySlot slot)
     {
+        // T-8.2: 키 클릭 사운드 재생
+        _soundService.Play();
+
         if (slot.Action is not null)
             _inputService.HandleAction(slot.Action);
 

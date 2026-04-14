@@ -31,7 +31,7 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
         // T-4.10: 창 크기 변화에 맞게 KeyUnit 동적 계산
         if (Window.GetWindow(this) is { } window)
         {
-            UpdateKeyUnit(window.Width, window.Height);
+            UpdateKeyUnit(window.Width);
             window.SizeChanged += OnWindowSizeChanged;
         }
 
@@ -51,25 +51,31 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
 
     // T-4.10: 창 크기 변경 시 KeyUnit 재계산
     private void OnWindowSizeChanged(object sender, SizeChangedEventArgs e)
-        => UpdateKeyUnit(e.NewSize.Width, e.NewSize.Height);
+        => UpdateKeyUnit(e.NewSize.Width);
+
+    // T-4.10: KeyboardBorder 크기 변경 시 재계산 (이모지/클립보드 패널 토글 포함)
+    private void KeyboardBorder_SizeChanged(object sender, SizeChangedEventArgs e)
+        => UpdateKeyUnit(Window.GetWindow(this)?.Width ?? ActualWidth);
 
     // T-4.10: KeyUnit = min(가로 기준, 세로 기준) — Stretch=Uniform 동작 재현
-    // KeyboardBorder: Margin="0,28,0,8" Padding="6,4"
     // 가장 넓은 행(Row1/2): 14개 키, 15단위 → 가로 = 15K + 14×4
     // 행 수: 5행, 각 1단위 높이 → 세로 = 5K + 5×4
-    private void UpdateKeyUnit(double windowWidth, double windowHeight)
+    // KeyboardBorder.ActualHeight 를 직접 사용하므로 패널 토글 시에도 자동으로 재조정됨
+    private void UpdateKeyUnit(double windowWidth)
     {
         if (DataContext is not MainViewModel vm) return;
 
-        const double hPad  = 6 + 6;          // Border Padding 좌+우
-        const double vOver = 28 + 8 + 4 + 4; // Margin 상+하 + Padding 상+하
-        const double units = 15.0;            // 가장 넓은 행의 단위 합계
-        const double wKeys = 14.0;            // 가장 넓은 행의 키 개수
-        const double rows  = 5.0;            // 행 수
-        const double mKey  = 4.0;            // 키 한 개당 마진 총합 (Margin="2")
+        const double hPad  = 6 + 6;   // KeyboardBorder Padding 좌+우
+        const double kPad  = 4 + 4;   // KeyboardBorder Padding 상+하
+        const double units = 15.0;    // 가장 넓은 행의 단위 합계
+        const double wKeys = 14.0;    // 가장 넓은 행의 키 개수
+        const double rows  = 5.0;     // 행 수
+        const double mKey  = 4.0;     // 키 한 개당 마진 총합 (Margin="2")
 
-        double availW = windowWidth  - hPad;
-        double availH = windowHeight - vOver;
+        double availW = windowWidth - hPad;
+        double availH = KeyboardBorder.ActualHeight - kPad;
+
+        if (availH < 1) return; // 레이아웃 완료 전 무시
 
         double kW = (availW - wKeys * mKey) / units;  // 가로 기준 KeyUnit
         double kH = (availH - rows  * mKey) / rows;   // 세로 기준 KeyUnit
