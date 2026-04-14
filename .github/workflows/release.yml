@@ -43,13 +43,17 @@ jobs:
           -Version ${{ github.ref_name }}
           -BuildDir dist/publish
 
-      # T-9.5: Inno Setup 인스톨러 빌드 (태그에서 버전 추출: v0.1.5 → 0.1.5)
+      # T-9.5: Inno Setup 인스톨러 빌드 (태그에서 버전 직접 치환: v0.1.5 → 0.1.5)
       - name: Build Installer (Inno Setup)
         run: |
           choco install innosetup --no-progress -y
           $env:PATH = [System.Environment]::GetEnvironmentVariable("PATH", "Machine") + ";" + $env:PATH
           $version = "${{ github.ref_name }}".TrimStart('v')
-          iscc installer/AltKey.iss /DAppVersion=$version
+          # .iss 파일의 AppVersion 줄을 태그 버전으로 직접 치환
+          (Get-Content installer/AltKey.iss) `
+            -replace '#define AppVersion\s+"[^"]+"', "#define AppVersion `"$version`"" |
+            Set-Content installer/AltKey.iss
+          iscc installer/AltKey.iss
         shell: pwsh
 
       - name: Upload Release Asset
@@ -58,5 +62,7 @@ jobs:
           files: |
             dist/AltKey-Portable-*.zip
             dist/AltKey-Setup-*.exe
+          fail_on_unmatched_files: true
+          overwrite: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
