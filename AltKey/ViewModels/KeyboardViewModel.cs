@@ -29,8 +29,26 @@ public class KeySlotVm(KeySlot slot) : ObservableObject
         Enum.TryParse<VirtualKeyCode>(ta.Vk, ignoreCase: true, out var vk)
             ? vk : null;
 
-    public string GetLabel(bool upperCase) =>
-        upperCase && Slot.ShiftLabel is { } s ? s : Slot.Label;
+    /// 메인 레이블 (영문 기준). Shift/CapsLock 상태에 따라 대소문자·기호 전환.
+    public string GetLabel(bool upperCase)
+    {
+        // 기호 키: shift_label 우선
+        if (upperCase && Slot.ShiftLabel is { } s)
+            return s;
+
+        // 알파벳: 자동 대소문자
+        bool isAlphaKey = Slot.Label.Length == 1 && char.IsLetter(Slot.Label[0]);
+        return isAlphaKey
+            ? (upperCase ? Slot.Label.ToUpperInvariant() : Slot.Label.ToLowerInvariant())
+            : Slot.Label;
+    }
+
+    /// 서브 레이블 (한글 자모). 통합 레이아웃에서 키 우상단에 항상 표시.
+    public string GetSubLabel(bool upperCase)
+    {
+        if (Slot.HangulLabel is null) return "";
+        return upperCase && Slot.HangulShiftLabel is { } hs ? hs : Slot.HangulLabel;
+    }
 }
 
 // ── KeyboardViewModel ───────────────────────────────────────────────────────
@@ -58,6 +76,7 @@ public partial class KeyboardViewModel : ObservableObject
     [ObservableProperty]
     private double keyUnit = 48.0;
 
+
     // ── 생성자 ──────────────────────────────────────────────────────────────
     public KeyboardViewModel(InputService inputService)
     {
@@ -78,6 +97,7 @@ public partial class KeyboardViewModel : ObservableObject
                 r.Keys.Select(k => new KeySlotVm(k)).ToList()
             ))
         );
+
     }
 
     // ── 커맨드 ──────────────────────────────────────────────────────────────
@@ -110,21 +130,16 @@ public partial class KeyboardViewModel : ObservableObject
                     slotVm.IsSticky = _inputService.StickyKeys.Contains(vk);
                     slotVm.IsLocked = _inputService.LockedKeys.Contains(vk);
                 }
+
+                // T-7.3: CapsLock 키 슬롯 강조
+                if (slotVm.Slot.Action is SendKeyAction { Vk: "VK_CAPITAL" })
+                {
+                    slotVm.IsLocked = _inputService.IsCapsLockOn;
+                }
             }
         }
     }
 
-    // T-4.10: 창 너비 변경 시 KeyUnit 재계산
-    public void OnWindowSizeChanged(double newWidth)
-    {
-        const double minUnit  = 32.0;
-        const double maxUnit  = 64.0;
-        const double baseWidth = 900.0;
-        const double baseUnit  = 48.0;
-
-        var unit = baseUnit * (newWidth / baseWidth);
-        KeyUnit = Math.Clamp(unit, minUnit, maxUnit);
-    }
 
     private void OnElevatedAppDetected()
     {

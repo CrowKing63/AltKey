@@ -17,6 +17,11 @@ public partial class MainViewModel : ObservableObject
     private readonly LayoutService  _layoutService;
     private readonly ProfileService _profileService;
 
+    // 표시명 → 파일명 매핑 (T-7.1: AvailableLayouts가 표시명을 저장)
+    private readonly Dictionary<string, string> _displayToFileName = [];
+    // SwitchLayout 재진입 방지 플래그
+    private bool _isSwitching;
+
     public KeyboardViewModel  Keyboard { get; }
     public SettingsViewModel  Settings { get; }
 
@@ -82,45 +87,74 @@ public partial class MainViewModel : ObservableObject
 
     public Task InitializeAsync()
     {
-        AvailableLayouts = new ObservableCollection<string>(
-            _layoutService.GetAvailableLayouts());
+        // T-7.1: 파일명 → 표시명 매핑 구성, AvailableLayouts에 표시명 저장
+        _displayToFileName.Clear();
+        var fileNames    = _layoutService.GetAvailableLayouts();
+        var displayNames = new List<string>();
+        foreach (var fn in fileNames)
+        {
+            var l = _layoutService.TryLoad(fn);
+            var display = l?.Name ?? fn;
+            _displayToFileName[display] = fn;
+            displayNames.Add(display);
+        }
+        AvailableLayouts = new ObservableCollection<string>(displayNames);
 
         var defaultName = _configService.Current.DefaultLayout;
         SwitchLayout(defaultName);
         return Task.CompletedTask;
     }
 
+    // T-7.1: 드롭다운 TwoWay 바인딩 → 선택 변경 시 레이아웃 전환
+    partial void OnCurrentLayoutNameChanged(string value)
+    {
+        if (_isSwitching || string.IsNullOrEmpty(value)) return;
+        SwitchLayout(value);
+    }
+
     [RelayCommand]
     public void SwitchLayout(string name)
     {
-        // T-6.7: 레이아웃 로드 실패 시 에러 로그 + 폴백
-        var layout = _layoutService.TryLoad(name, ex =>
+        _isSwitching = true;
+        try
         {
-            App.LogError(ex);
+            // 표시명 → 파일명 해석 (파일명 직접 전달 시 폴백)
+            var fileName = _displayToFileName.TryGetValue(name, out var fn) ? fn : name;
 
-            // 첫 번째로 사용 가능한 다른 레이아웃으로 폴백
-            var fallback = AvailableLayouts.FirstOrDefault(l => l != name);
-            if (fallback is not null)
+            // T-6.7: 레이아웃 로드 실패 시 에러 로그 + 폴백
+            var layout = _layoutService.TryLoad(fileName, ex =>
             {
-                var fb = _layoutService.TryLoad(fallback);
-                if (fb is not null)
+                App.LogError(ex);
+
+                // 첫 번째로 사용 가능한 다른 레이아웃으로 폴백
+                var fallbackDisplay = AvailableLayouts.FirstOrDefault(l => l != name);
+                if (fallbackDisplay is not null
+                    && _displayToFileName.TryGetValue(fallbackDisplay, out var fbFile))
                 {
-                    Keyboard.LoadLayout(fb);
-                    CurrentLayoutName = fb.Name;
+                    var fb = _layoutService.TryLoad(fbFile);
+                    if (fb is not null)
+                    {
+                        Keyboard.LoadLayout(fb);
+                        CurrentLayoutName = fb.Name;
+                    }
                 }
-            }
 
-            WpfApp.Current.Dispatcher.BeginInvoke(() =>
-                WpfMsgBox.Show(
-                    $"레이아웃 '{name}'을 불러오지 못했습니다.\n{ex.Message}\n\n기본 레이아웃으로 전환합니다.",
-                    "레이아웃 오류",
-                    WpfMsgBoxButton.OK,
-                    WpfMsgBoxImage.Warning));
-        });
+                WpfApp.Current.Dispatcher.BeginInvoke(() =>
+                    WpfMsgBox.Show(
+                        $"레이아웃 '{name}'을 불러오지 못했습니다.\n{ex.Message}\n\n기본 레이아웃으로 전환합니다.",
+                        "레이아웃 오류",
+                        WpfMsgBoxButton.OK,
+                        WpfMsgBoxImage.Warning));
+            });
 
-        if (layout is null) return;
-        Keyboard.LoadLayout(layout);
-        CurrentLayoutName = layout.Name;
+            if (layout is null) return;
+            Keyboard.LoadLayout(layout);
+            CurrentLayoutName = layout.Name; // 표시명으로 저장 → ComboBox 일치
+        }
+        finally
+        {
+            _isSwitching = false;
+        }
     }
 
     [RelayCommand]

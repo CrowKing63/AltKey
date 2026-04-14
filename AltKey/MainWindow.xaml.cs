@@ -50,8 +50,6 @@ public partial class MainWindow : Window
             PlayOpenAnimation();
         };
 
-        SizeChanged += (_, e) =>
-            _viewModel.Keyboard.OnWindowSizeChanged(e.NewSize.Width);
     }
 
     protected override void OnSourceInitialized(EventArgs e)
@@ -125,8 +123,8 @@ public partial class MainWindow : Window
     {
         var cfg = _configService.Current.Window;
 
-        Width  = Math.Max(400, cfg.Width);
-        Height = Math.Max(200, cfg.Height);
+        Width  = Math.Max(432, cfg.Width);
+        Height = Math.Max(250, cfg.Height);
 
         // 화면 작업 영역 (가상 스크린 전체)
         var screen = System.Windows.SystemParameters.WorkArea;

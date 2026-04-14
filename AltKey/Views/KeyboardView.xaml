@@ -56,23 +56,13 @@
                            Opacity="0.5" FontSize="11"
                            IsHitTestVisible="False"/>
 
-                <!-- T-3.10: 레이아웃 전환 드롭다운 -->
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
-                            Margin="0,0,68,0" VerticalAlignment="Center">
-                    <ComboBox x:Name="LayoutComboBox"
-                              ItemsSource="{Binding AvailableLayouts}"
-                              SelectedItem="{Binding CurrentLayoutName, Mode=OneWay}"
-                              SelectionChanged="OnLayoutSelectionChanged"
-                              Width="120" Height="20"
-                              FontSize="11"/>
-                </StackPanel>
             </Grid>
         </Border>
 
-        <!-- T-5.10: 기어(설정) 버튼 -->
+        <!-- T-5.10 / T-7.2: 기어(설정) 버튼 -->
         <Button x:Name="SettingsButton" Width="32" Height="28"
                 HorizontalAlignment="Right" VerticalAlignment="Top"
-                Margin="0,0,32,0"
+                Margin="0,0,64,0"
                 Background="Transparent" Foreground="#CCC"
                 BorderThickness="0" Cursor="Hand"
                 Command="{Binding ToggleSettingsCommand}"
@@ -80,13 +70,24 @@
             <TextBlock Text="⚙" FontSize="14"/>
         </Button>
 
-        <!-- 우상단 닫기 버튼 -->
+        <!-- T-7.2: 접기/펼치기 버튼 -->
+        <Button x:Name="CollapseButton" Width="32" Height="28"
+                HorizontalAlignment="Right" VerticalAlignment="Top"
+                Margin="0,0,32,0"
+                Background="Transparent" Foreground="#CCC"
+                BorderThickness="0" Cursor="Hand"
+                Click="CollapseButton_Click"
+                ToolTip="접기 / 펼치기">
+            <TextBlock x:Name="CollapseIcon" Text="▲" FontSize="10"/>
+        </Button>
+
+        <!-- T-7.2: 닫기 버튼 → 트레이로 숨기기 -->
         <Button x:Name="CloseButton" Width="32" Height="28"
                 HorizontalAlignment="Right" VerticalAlignment="Top"
                 Background="Transparent" Foreground="#CCC"
                 BorderThickness="0" Cursor="Hand"
                 Click="CloseButton_Click"
-                ToolTip="닫기 (Esc)">
+                ToolTip="닫기 (트레이로 숨김)">
             <TextBlock Text="✕" FontSize="14"/>
         </Button>
 
@@ -100,16 +101,18 @@
                        Text="현재 앱은 관리자 권한으로 실행 중이어서 입력이 전달되지 않습니다. AltKey를 관리자 권한으로 실행하세요."/>
         </Border>
 
-        <!-- T-3.7: 키보드 렌더링 (ItemsControl) -->
+        <!-- T-3.7: 키보드 렌더링 (Viewbox로 비율 고정 스케일링) -->
         <Border Margin="0,28,0,16" Background="#CC1A1A1A" CornerRadius="0,0,8,8" Padding="6,4">
-            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <!-- Viewbox: 레이아웃이 어떤 모양이든 창에 맞게 비율 유지하며 통째로 스케일 -->
+            <Viewbox Stretch="Uniform">
                 <ItemsControl ItemsSource="{Binding Keyboard.Rows}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate DataType="{x:Type vm:KeyRowVm}">
                             <ItemsControl ItemsSource="{Binding Keys}">
                                 <ItemsControl.ItemsPanel>
                                     <ItemsPanelTemplate>
-                                        <WrapPanel Orientation="Horizontal"/>
+                                        <!-- StackPanel: Viewbox 내부에서 WrapPanel과 달리 절대 줄바꿈 없음 -->
+                                        <StackPanel Orientation="Horizontal"/>
                                     </ItemsPanelTemplate>
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
@@ -135,7 +138,7 @@
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
-            </ScrollViewer>
+            </Viewbox>
         </Border>
 
         <!-- 우하단 리사이즈 그립 (T-1.9) -->
@@ -143,6 +146,7 @@
                Width="20" Height="20"
                HorizontalAlignment="Right" VerticalAlignment="Bottom"
                Cursor="SizeNWSE"
+               DragStarted="ResizeGrip_DragStarted"
                DragDelta="ResizeGrip_DragDelta">
             <Thumb.Template>
                 <ControlTemplate>

@@ -73,14 +73,12 @@
     },
     {
       "keys": [
-        { "label": "Ctrl",  "action": { "type": "ToggleSticky", "vk": "VK_CONTROL" }, "width": 1.25 },
-        { "label": "Win",   "action": { "type": "SendKey",      "vk": "VK_LWIN" },    "width": 1.25 },
-        { "label": "Alt",   "action": { "type": "ToggleSticky", "vk": "VK_MENU" },    "width": 1.25 },
+        { "label": "Ctrl",  "action": { "type": "ToggleSticky", "vk": "VK_CONTROL" }, "width": 1.5  },
+        { "label": "Win",   "action": { "type": "SendKey",      "vk": "VK_LWIN" },    "width": 1.0  },
         { "label": "Alt",   "action": { "type": "ToggleSticky", "vk": "VK_MENU" },    "width": 1.5  },
-        { "label": "Space", "action": { "type": "SendKey",      "vk": "VK_SPACE" },   "width": 6.0  },
+        { "label": "Space", "action": { "type": "SendKey",      "vk": "VK_SPACE" },   "width": 4.0  },
         { "label": "Alt",   "action": { "type": "ToggleSticky", "vk": "VK_MENU" },    "width": 1.5  },
-        { "label": "Alt",   "action": { "type": "ToggleSticky", "vk": "VK_MENU" },    "width": 1.25 },
-        { "label": "Ctrl",  "action": { "type": "ToggleSticky", "vk": "VK_CONTROL" }, "width": 1.25 },
+        { "label": "Ctrl",  "action": { "type": "ToggleSticky", "vk": "VK_CONTROL" }, "width": 1.5  },
         { "label": "←",    "action": { "type": "SendKey",      "vk": "VK_LEFT" },    "width": 1.0  },
         { "label": "↑",    "action": { "type": "SendKey",      "vk": "VK_UP" },      "width": 1.0  },
         { "label": "↓",    "action": { "type": "SendKey",      "vk": "VK_DOWN" },    "width": 1.0  },

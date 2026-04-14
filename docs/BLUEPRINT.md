@@ -271,12 +271,15 @@ altkey/                     # 실행 파일과 같은 폴더 (포터블)
 
 ## 8. 태스크 파일 인덱스
 
-| 파일 | Phase | 태스크 수 |
-|------|-------|----------|
-| [TASKS-00-setup.md](./TASKS-00-setup.md) | 0 - 프로젝트 초기화 | 8 |
-| [TASKS-01-window.md](./TASKS-01-window.md) | 1 - 핵심 윈도우 관리 | 10 |
-| [TASKS-02-input.md](./TASKS-02-input.md) | 2 - 입력 엔진 | 11 |
-| [TASKS-03-layout.md](./TASKS-03-layout.md) | 3 - 레이아웃 시스템 | 11 |
-| [TASKS-04-ui.md](./TASKS-04-ui.md) | 4 - UI/UX 디자인 | 10 |
-| [TASKS-05-features.md](./TASKS-05-features.md) | 5 - 고급 기능 | 12 |
-| [TASKS-06-distribution.md](./TASKS-06-distribution.md) | 6 - 배포 및 최적화 | 8 |
+| 파일 | Phase | 난이도 | 태스크 수 |
+|------|-------|--------|----------|
+| [TASKS-00-setup.md](./TASKS-00-setup.md) | 0 - 프로젝트 초기화 | ★☆☆ | 8 |
+| [TASKS-01-window.md](./TASKS-01-window.md) | 1 - 핵심 윈도우 관리 | ★☆☆ | 10 |
+| [TASKS-02-input.md](./TASKS-02-input.md) | 2 - 입력 엔진 | ★☆☆ | 11 |
+| [TASKS-03-layout.md](./TASKS-03-layout.md) | 3 - 레이아웃 시스템 | ★☆☆ | 11 |
+| [TASKS-04-ui.md](./TASKS-04-ui.md) | 4 - UI/UX 디자인 | ★☆☆ | 10 |
+| [TASKS-05-features.md](./TASKS-05-features.md) | 5 - 고급 기능 | ★★☆ | 12 |
+| [TASKS-06-distribution.md](./TASKS-06-distribution.md) | 6 - 배포 및 최적화 | ★★☆ | 8 |
+| [TASKS-07-bugfixes.md](./TASKS-07-bugfixes.md) | 7 - 버그 수정 | ★☆☆ | 7 |
+| [TASKS-08-improvements.md](./TASKS-08-improvements.md) | 8 - UX 개선 | ★★☆ | 5 |
+| [TASKS-09-advanced.md](./TASKS-09-advanced.md) | 9 - 고급 기능 | ★★★ | 5 |

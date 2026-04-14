@@ -17,13 +17,13 @@ dotnet run
 ## 빌드
 
 ```bash
-dotnet build -c Release
+dotnet build AltKey/AltKey.csproj 2>&1
 ```
 
 ## 배포
 
 ```bash
-dotnet publish -c Release -r win-x64 --self-contained -p:PublishSingleFile=true
+dotnet publish AltKey/AltKey.csproj -c Release -r win-x64 --self-contained -p:PublishSingleFile=true
 ```
 
 ## 알려진 제약

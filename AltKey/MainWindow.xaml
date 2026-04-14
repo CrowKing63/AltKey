@@ -12,7 +12,7 @@
         Topmost="True"
         ShowInTaskbar="False"
         ResizeMode="NoResize"
-        Width="900" Height="320">
+        Width="900" Height="350">
 
     <Grid>
         <views:KeyboardView />

@@ -27,6 +27,12 @@ public class KeyButton : System.Windows.Controls.Button
             nameof(ShowUpperCase), typeof(bool), typeof(KeyButton),
             new PropertyMetadata(false, OnShowUpperCaseChanged));
 
+    // 한글 서브 레이블 (통합 레이아웃: 키 우상단에 항상 표시)
+    public static readonly DependencyProperty SubLabelProperty =
+        DependencyProperty.Register(
+            nameof(SubLabel), typeof(string), typeof(KeyButton),
+            new PropertyMetadata(""));
+
     // T-4.7: Sticky / Locked 상태 DependencyProperty
     public static readonly DependencyProperty IsStickyProperty =
         DependencyProperty.Register(
@@ -72,6 +78,12 @@ public class KeyButton : System.Windows.Controls.Button
     {
         get => (bool)GetValue(ShowUpperCaseProperty);
         set => SetValue(ShowUpperCaseProperty, value);
+    }
+
+    public string SubLabel
+    {
+        get => (string)GetValue(SubLabelProperty);
+        set => SetValue(SubLabelProperty, value);
     }
 
     public bool IsSticky
@@ -170,14 +182,21 @@ public class KeyButton : System.Windows.Controls.Button
     {
         if (d is not KeyButton kb || e.NewValue is not KeySlotVm slot) return;
         kb.UpdateSize();
-        kb.Content = slot.GetLabel(kb.ShowUpperCase);
+        kb.UpdateLabel();
         ToolTipService.SetToolTip(kb, slot.Slot.StyleKey is { Length: > 0 } sk ? sk : null);
     }
 
     private static void OnShowUpperCaseChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        if (d is KeyButton kb && kb.Slot is { } slot)
-            kb.Content = slot.GetLabel((bool)e.NewValue);
+        if (d is KeyButton kb)
+            kb.UpdateLabel();
+    }
+
+    private void UpdateLabel()
+    {
+        if (Slot is null) return;
+        Content  = Slot.GetLabel(ShowUpperCase);
+        SubLabel = Slot.GetSubLabel(ShowUpperCase);
     }
 
     private static void OnKeyUnitChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)

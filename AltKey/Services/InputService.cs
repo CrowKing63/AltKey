@@ -20,9 +20,8 @@ public class InputService
     /// SendInput이 ERROR_ACCESS_DENIED를 반환했을 때 발생 (T-2.10)
     public event Action? ElevatedAppDetected;
 
-    // ── T-2.7: Caps Lock / T-2.8: 한/영 상태 조회 ─────────────────────────
-    public bool IsCapsLockOn  => (Win32.GetKeyState((int)VirtualKeyCode.VK_CAPITAL) & 0x0001) != 0;
-    public bool IsHangulOn    => (Win32.GetKeyState((int)VirtualKeyCode.VK_HANGUL)  & 0x0001) != 0;
+    // ── T-2.7: Caps Lock 상태 조회 ──────────────────────────────────────────
+    public bool IsCapsLockOn => (Win32.GetKeyState((int)VirtualKeyCode.VK_CAPITAL) & 0x0001) != 0;
 
     // ── T-2.4: 단일 키 전송 ──────────────────────────────────────────────────
     public void SendKeyPress(VirtualKeyCode vk)

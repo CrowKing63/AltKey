@@ -62,6 +62,50 @@ internal static class Win32
     [DllImport("user32.dll")]
     public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
 
+    // T-7.5a: 포그라운드 창 조회
+    [DllImport("user32.dll")]
+    public static extern IntPtr GetForegroundWindow();
+
+    // ── 전역 저수준 키보드 훅 (WH_KEYBOARD_LL) ────────────────────────────
+    public const int WH_KEYBOARD_LL  = 13;
+    public const int WM_KEYDOWN      = 0x0100;
+    public const int WM_SYSKEYDOWN   = 0x0104;
+
+    public delegate IntPtr LowLevelKeyboardProc(int nCode, IntPtr wParam, IntPtr lParam);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    public static extern IntPtr SetWindowsHookEx(
+        int idHook, LowLevelKeyboardProc lpfn, IntPtr hmod, uint dwThreadId);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    public static extern bool UnhookWindowsHookEx(IntPtr hhk);
+
+    [DllImport("user32.dll")]
+    public static extern IntPtr CallNextHookEx(IntPtr hhk, int nCode, IntPtr wParam, IntPtr lParam);
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct KBDLLHOOKSTRUCT
+    {
+        public uint   vkCode;
+        public uint   scanCode;
+        public uint   flags;
+        public uint   time;
+        public IntPtr dwExtraInfo;
+    }
+
+    // IMM32: 포그라운드 창의 IME 변환 모드 직접 조회 (동일 프로세스 창 전용)
+    [DllImport("imm32.dll")]
+    public static extern IntPtr ImmGetContext(IntPtr hwnd);
+
+    [DllImport("imm32.dll")]
+    public static extern bool ImmReleaseContext(IntPtr hwnd, IntPtr hIMC);
+
+    [DllImport("imm32.dll")]
+    public static extern bool ImmGetConversionStatus(IntPtr hIMC, out uint lpConversion, out uint lpSentence);
+
+    /// IME_CMODE_NATIVE: 한국어/중국어/일본어 입력 모드 (한글 ON)
+    public const uint IME_CMODE_NATIVE = 0x0001;
+
     // Acrylic 효과 (T-1.3 / T-1.4에서 사용)
     [DllImport("user32.dll")]
     public static extern int SetWindowCompositionAttribute(
