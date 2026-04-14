@@ -84,6 +84,8 @@ Filename: "taskkill.exe"; Parameters: "/f /im {#AppExeName}"; Flags: runhidden; 
 [Code]
 // 설치 전 실행 중인 AltKey 종료
 procedure CurStepChanged(CurStep: TSetupStep);
+var
+  ResultCode: Integer;
 begin
   if CurStep = ssInstall then
     Exec('taskkill.exe', '/f /im {#AppExeName}', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
