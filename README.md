@@ -34,7 +34,7 @@ dotnet publish AltKey/AltKey.csproj -c Release -r win-x64 --self-contained -p:Pu
 
 ```bash
 git tag vX.Y.Z
-git push --tags
+git push origin --tags
 ```
 
 ## 알려진 제약
