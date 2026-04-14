@@ -483,3 +483,22 @@ $RECYCLE.BIN/
 
 # Custom user layouts (keep default layouts in layouts/)
 layouts/custom*.json
+
+# Testing
+TESTING.md
+
+# Scripts
+scripts/package-portable.ps1
+
+# AltKey bin
+.bin/
+.obj/
+
+# AltKey dist
+dist/
+
+# agent
+.agent/
+.claude/
+.gemini/
+.qwen/
