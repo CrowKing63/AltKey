@@ -47,7 +47,10 @@ jobs:
       - name: Build Installer (Inno Setup)
         run: |
           choco install innosetup --no-progress -y
+          # chocolatey 설치 후 PATH 갱신
+          $env:PATH = [System.Environment]::GetEnvironmentVariable("PATH", "Machine") + ";" + $env:PATH
           iscc installer/AltKey.iss
+        shell: pwsh
 
       - name: Upload Release Asset
         uses: softprops/action-gh-release@v2

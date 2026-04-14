@@ -1,14 +1,19 @@
 ; AltKey Inno Setup 설치 스크립트 (T-9.5)
-; 빌드 전 먼저 실행:
-;   dotnet publish AltKey/AltKey.csproj -c Release -r win-x64 --self-contained true
-;              -p:PublishSingleFile=true -o AltKey/bin/Release/net8.0-windows/win-x64/publish
+;
+; [로컬 빌드] 먼저 퍼블리시 후 iscc 실행:
+;   dotnet publish AltKey/AltKey.csproj -c Release -r win-x64 --self-contained true ^
+;     -p:PublishSingleFile=true -o dist/publish
+;   iscc installer\AltKey.iss
+;
+; [CI] release.yml에서 자동 실행 (BuildDir은 CI 퍼블리시 경로와 동일)
 
 #define AppName    "AltKey"
 #define AppVersion "0.1.3"
 #define AppPublisher "CrowKing63"
 #define AppURL     "https://github.com/CrowKing63/altkey"
 #define AppExeName "AltKey.exe"
-#define BuildDir   "..\AltKey\bin\Release\net8.0-windows\win-x64\publish"
+; CI/로컬 모두 dist/publish 로 퍼블리시한다고 가정
+#define BuildDir   "..\dist\publish"
 
 [Setup]
 AppId={{E3A7F1D2-4B8C-4E9A-A2F5-1C3D6B0E7A94}
