@@ -28,9 +28,11 @@ dotnet publish AltKey/AltKey.csproj -c Release -r win-x64 --self-contained -p:Pu
 
 ## Githup Actions를 사용한 자동 빌드 및 배포
 
+```xml
 <AssemblyVersion>X.Y.Z.0</AssemblyVersion>
 <FileVersion>X.Y.Z.0</FileVersion>
 <Version>X.Y.Z</Version>
+```
 
 ```bash
 git tag vX.Y.Z
