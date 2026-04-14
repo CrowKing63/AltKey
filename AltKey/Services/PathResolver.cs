@@ -17,7 +17,6 @@ public static class PathResolver
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
             "AltKey");
 
-    /// 레이아웃은 앱 리소스이므로 포터블/설치 모드 모두 exe 옆 layouts\ 폴더를 사용
-    public static string LayoutsDir => Path.Combine(_exeDir, "layouts");
+    public static string LayoutsDir => Path.Combine(DataDir, "layouts");
     public static string ConfigPath  => Path.Combine(DataDir, "config.json");
 }
