@@ -8,7 +8,7 @@ $ErrorActionPreference = "Stop"
 $root    = Split-Path $PSScriptRoot -Parent
 # 태그에서 앞의 'v'를 제거 (v0.1.0 → 0.1.0)
 $Version = $Version.TrimStart('v')
-$out     = Join-Path $root "dist/altkey-portable-v$Version"
+$out     = Join-Path $root "dist/AltKey-Portable-v$Version"
 
 New-Item -ItemType Directory -Force $out | Out-Null
 
@@ -47,8 +47,8 @@ $defaultConfig = @{
 $defaultConfig | Out-File -Encoding UTF8 "$out/config.json"
 
 # ZIP 압축
-$zipPath = Join-Path $root "dist/altkey-portable-v$Version.zip"
+$zipPath = Join-Path $root "dist/AltKey-Portable-v$Version.zip"
 Write-Host "Compressing to $zipPath ..." -ForegroundColor Cyan
 Compress-Archive -Path "$out/*" -DestinationPath $zipPath -Force
 
-Write-Host "✅ dist/altkey-portable-v$Version.zip 생성 완료" -ForegroundColor Green
+Write-Host "✅ dist/AltKey-Portable-v$Version.zip 생성 완료" -ForegroundColor Green

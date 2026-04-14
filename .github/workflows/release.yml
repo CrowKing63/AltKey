@@ -43,20 +43,20 @@ jobs:
           -Version ${{ github.ref_name }}
           -BuildDir dist/publish
 
-      # T-9.5: Inno Setup 인스톨러 빌드
+      # T-9.5: Inno Setup 인스톨러 빌드 (태그에서 버전 추출: v0.1.5 → 0.1.5)
       - name: Build Installer (Inno Setup)
         run: |
           choco install innosetup --no-progress -y
-          # chocolatey 설치 후 PATH 갱신
           $env:PATH = [System.Environment]::GetEnvironmentVariable("PATH", "Machine") + ";" + $env:PATH
-          iscc installer/AltKey.iss
+          $version = "${{ github.ref_name }}".TrimStart('v')
+          iscc installer/AltKey.iss /DAppVersion=$version
         shell: pwsh
 
       - name: Upload Release Asset
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            dist/altkey-portable-*.zip
+            dist/AltKey-Portable-*.zip
             dist/AltKey-Setup-*.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

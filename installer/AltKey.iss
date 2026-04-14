@@ -28,7 +28,7 @@ DefaultGroupName={#AppName}
 AllowNoIcons=yes
 ; 출력 파일
 OutputDir=..\dist
-OutputBaseFilename=AltKey-Setup-{#AppVersion}
+OutputBaseFilename=AltKey-Setup-v{#AppVersion}
 ; 압축
 Compression=lzma2/ultra64
 SolidCompression=yes
