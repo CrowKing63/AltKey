@@ -8,9 +8,6 @@
              xmlns:views="clr-namespace:AltKey.Views"
              mc:Ignorable="d"
              d:DesignWidth="900" d:DesignHeight="320">
-    <UserControl.Resources>
-        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
-    </UserControl.Resources>
 
     <Grid>
         <!-- 전체 창 배경 -->
@@ -26,16 +23,54 @@
                     Visibility="{Binding HasUpdate, Converter={StaticResource BoolToVis}}"
                     Panel.ZIndex="20">
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="새 버전이 있습니다: " Foreground="White" VerticalAlignment="Center"/>
-                    <TextBlock Text="{Binding UpdateVersion}" Foreground="White" FontWeight="Bold" VerticalAlignment="Center"/>
-                    <Button Content="다운로드"
-                            Command="{Binding OpenReleasePageCommand}"
+                    <!-- 기본 업데이트 메시지 -->
+                    <TextBlock x:Name="UpdateMessageText"
+                               Text="{Binding UpdateVersion, StringFormat='새 버전이 있습니다: {0}'}"
+                               Foreground="White" VerticalAlignment="Center"
+                               Visibility="{Binding IsDownloading, Converter={StaticResource BoolToVis}, ConverterParameter=Inverse}"/>
+                    
+                    <!-- 다운로드 버튼 (다운로드 중이 아닐 때만 표시) -->
+                    <Button Content="자동 설치"
+                            Command="{Binding DownloadAndInstallUpdateCommand}"
                             Margin="8,0,0,0" Padding="6,2"
-                            Background="#1D4ED8" Foreground="White" BorderThickness="0" Cursor="Hand"/>
+                            Background="#1D4ED8" Foreground="White" BorderThickness="0" Cursor="Hand"
+                            Visibility="{Binding IsDownloading, Converter={StaticResource BoolToVis}, ConverterParameter=Inverse}"/>
+                    
+                    <!-- GitHub 다운로드 버튼 -->
+                    <Button Content="GitHub"
+                            Command="{Binding OpenReleasePageCommand}"
+                            Margin="4,0,0,0" Padding="6,2"
+                            Background="#1D4ED8" Foreground="White" BorderThickness="0" Cursor="Hand"
+                            Visibility="{Binding IsDownloading, Converter={StaticResource BoolToVis}, ConverterParameter=Inverse}"/>
+                    
+                    <!-- 닫기 버튼 -->
                     <Button Content="✕"
                             Command="{Binding DismissUpdateCommand}"
                             Margin="4,0,0,0" Padding="4,2"
-                            Background="Transparent" Foreground="White" BorderThickness="0" Cursor="Hand"/>
+                            Background="Transparent" Foreground="White" BorderThickness="0" Cursor="Hand"
+                            Visibility="{Binding IsDownloading, Converter={StaticResource BoolToVis}, ConverterParameter=Inverse}"/>
+
+                    <!-- 다운로드 진행률 표시 -->
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
+                                Visibility="{Binding IsDownloading, Converter={StaticResource BoolToVis}}">
+                        <TextBlock Text="{Binding UpdateStatusMessage}" Foreground="White" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <ProgressBar Width="150" Height="16" 
+                                     Value="{Binding DownloadProgress}"
+                                     Minimum="0" Maximum="1"/>
+                        <TextBlock Text="{Binding DownloadProgress, StringFormat={}{0:P0}}" 
+                                   Foreground="White" VerticalAlignment="Center" Margin="4,0,0,0"/>
+                        <Button Content="취소"
+                                Command="{Binding CancelDownloadCommand}"
+                                Margin="8,0,0,0" Padding="4,2"
+                                Background="Transparent" Foreground="White" BorderThickness="0" Cursor="Hand"/>
+                    </StackPanel>
+
+                    <!-- 설치 중 표시 -->
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
+                                Visibility="{Binding IsInstalling, Converter={StaticResource BoolToVis}}">
+                        <TextBlock Text="설치 중... 앱이 자동으로 종료됩니다." 
+                                   Foreground="White" VerticalAlignment="Center"/>
+                    </StackPanel>
                 </StackPanel>
             </Border>
 

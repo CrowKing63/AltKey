@@ -2,7 +2,8 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:AltKey"
-             xmlns:themes="clr-namespace:AltKey.Themes">
+             xmlns:themes="clr-namespace:AltKey.Themes"
+             xmlns:converters="clr-namespace:AltKey.Converters">
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -14,6 +15,9 @@
 
             <!-- T-5.2: 체류 클릭 프로그레스 링 컨버터 -->
             <themes:ProgressToOffsetConverter x:Key="ProgressToOffsetConverter"/>
+            
+            <!-- T-9.5: Bool ↔ Visibility 컨버터 (Inverse 지원) -->
+            <converters:BoolToVisibilityConverter x:Key="BoolToVis"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

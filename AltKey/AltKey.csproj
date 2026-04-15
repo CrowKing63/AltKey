@@ -1,5 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
@@ -9,19 +8,17 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
-    <AssemblyVersion>0.1.6.0</AssemblyVersion>
-    <FileVersion>0.1.6.0</FileVersion>
-    <Version>0.1.6</Version>
+    <AssemblyVersion>0.1.7.0</AssemblyVersion>
+    <FileVersion>0.1.7.0</FileVersion>
+    <Version>0.1.7</Version>
     <ApplicationIcon>Assets\icon.ico</ApplicationIcon>
   </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.*" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.*" />
     <PackageReference Include="WPF-UI" Version="3.*" />
   </ItemGroup>
-
-  <!-- 포터블 모드 트리거용 config.json + 레이아웃 파일을 출력 폴더로 복사 -->
+  <!-- ?ы꽣釉?紐⑤뱶 ?몃━嫄곗슜 config.json + ?덉씠?꾩썐 ?뚯씪??異쒕젰 ?대뜑濡?蹂듭궗 -->
   <ItemGroup>
     <Content Include="config.json" Condition="Exists('config.json')">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -30,8 +27,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
-
-  <!-- T-6.3: 아이콘 에셋 -->
+  <!-- T-6.3: ?꾩씠肄??먯뀑 -->
   <ItemGroup>
     <Content Include="Assets\icon.ico" Condition="Exists('Assets\icon.ico')">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -42,10 +38,9 @@
     <Content Include="Assets\emoji.json" Condition="Exists('Assets\emoji.json')">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <!-- T-8.2: 사운드 파일을 출력 폴더로 복사 (Assets\Sounds\ → bin\...\Assets\Sounds\) -->
+    <!-- T-8.2: ?ъ슫???뚯씪??異쒕젰 ?대뜑濡?蹂듭궗 (Assets\Sounds\ ??bin\...\Assets\Sounds\) -->
     <Content Include="Assets\Sounds\click.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
-
 </Project>

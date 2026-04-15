@@ -56,6 +56,9 @@ public partial class App : System.Windows.Application
             services.AddSingleton<SoundService>();
             services.AddSingleton<ClipboardService>();
             services.AddSingleton<UpdateService>();
+            // T-9.5: 자동 업데이트 서비스
+            services.AddSingleton<DownloadService>();
+            services.AddSingleton<InstallerService>();
             // T-9.3: 자동 완성 서비스
             services.AddSingleton<WordFrequencyStore>();
             services.AddSingleton<AutoCompleteService>();
@@ -97,7 +100,7 @@ public partial class App : System.Windows.Application
             _ = Task.Run(async () =>
             {
                 var updateSvc = Services.GetRequiredService<UpdateService>();
-                var (hasUpdate, version, url) = await updateSvc.CheckAsync();
+                var (hasUpdate, version, url, installerUrl) = await updateSvc.CheckAsync();
                 if (hasUpdate)
                 {
                     Dispatcher.Invoke(() =>
@@ -105,6 +108,7 @@ public partial class App : System.Windows.Application
                         var vm = Services.GetRequiredService<ViewModels.MainViewModel>();
                         vm.UpdateVersion = version;
                         vm.UpdateUrl = url;
+                        vm.UpdateInstallerUrl = installerUrl;
                     });
                 }
             });

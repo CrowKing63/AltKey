@@ -10,7 +10,7 @@ public class UpdateService
     private const string ApiUrl =
         "https://api.github.com/repos/CrowKing63/altkey/releases/latest";
 
-    public async Task<(bool HasUpdate, string Version, string Url)> CheckAsync()
+    public async Task<(bool HasUpdate, string Version, string Url, string InstallerUrl)> CheckAsync()
     {
         try
         {
@@ -27,11 +27,38 @@ public class UpdateService
                           ?? new Version(0, 1, 0);
             var remote  = Version.Parse(tag.TrimStart('v'));
 
-            return (remote > current, tag, url);
+            // T-9.5: 설치형 앱을 위한 인스톨러 URL 추출
+            var installerUrl = ExtractInstallerUrl(doc.RootElement);
+
+            return (remote > current, tag, url, installerUrl);
         }
         catch
         {
-            return (false, string.Empty, string.Empty);
+            return (false, string.Empty, string.Empty, string.Empty);
         }
+    }
+
+    /// <summary>GitHub 릴리즈 assets에서 인스톨러(.exe) URL 추출</summary>
+    private static string ExtractInstallerUrl(JsonElement root)
+    {
+        try
+        {
+            if (root.TryGetProperty("assets", out var assets))
+            {
+                foreach (var asset in assets.EnumerateArray())
+                {
+                    var name = asset.GetProperty("name").GetString() ?? "";
+                    if (name.StartsWith("AltKey-Setup-") && name.EndsWith(".exe"))
+                    {
+                        return asset.GetProperty("browser_download_url").GetString()!;
+                    }
+                }
+            }
+        }
+        catch
+        {
+            // 파싱 실패 시 빈 문자열 반환
+        }
+        return string.Empty;
     }
 }
