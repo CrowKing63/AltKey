@@ -93,6 +93,9 @@ public partial class App : System.Windows.Application
             var autoComplete = Services.GetRequiredService<AutoCompleteService>();
             inputService.SetAutoComplete(autoComplete);
 
+            // T-2.10b: ProfileService → InputService 관리자 권한 알림 연결
+            profileService.ElevatedAppDetected += () => inputService.NotifyElevatedApp();
+
             var window = Services.GetRequiredService<MainWindow>();
             window.Show();
 

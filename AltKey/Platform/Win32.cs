@@ -66,6 +66,68 @@ internal static class Win32
     [DllImport("user32.dll")]
     public static extern IntPtr GetForegroundWindow();
 
+    // T-2.10b: 프로세스 핸들 및 무결성 수준 조회
+    [DllImport("kernel32.dll")]
+    public static extern IntPtr OpenProcess(uint dwDesiredAccess, bool bInheritHandle, uint dwProcessId);
+
+    [DllImport("kernel32.dll")]
+    public static extern bool CloseHandle(IntPtr hObject);
+
+    [DllImport("advapi32.dll")]
+    public static extern bool OpenProcessToken(IntPtr ProcessHandle, uint DesiredAccess, out IntPtr TokenHandle);
+
+    [DllImport("advapi32.dll", SetLastError = true)]
+    public static extern bool GetTokenInformation(
+        IntPtr TokenHandle,
+        TOKEN_INFORMATION_CLASS TokenInformationClass,
+        IntPtr TokenInformation,
+        uint TokenInformationLength,
+        out uint ReturnLength);
+
+    [DllImport("advapi32.dll")]
+    public static extern IntPtr GetSidSubAuthority(IntPtr pSid, uint subAuthorityIndex);
+
+    [DllImport("advapi32.dll")]
+    public static extern IntPtr GetSidSubAuthorityCount(IntPtr pSid);
+
+    public const uint PROCESS_QUERY_INFORMATION = 0x0400;
+    public const uint TOKEN_QUERY = 0x0008;
+    public const int SECURITY_MANDATORY_MEDIUM_RID = 0x2000; // 중간 무결성 수준
+
+    public enum TOKEN_INFORMATION_CLASS
+    {
+        TokenUser = 1,
+        TokenGroups,
+        TokenPrivileges,
+        TokenOwner,
+        TokenPrimaryGroup,
+        TokenDefaultDacl,
+        TokenSource,
+        TokenType,
+        TokenImpersonationLevel,
+        TokenStatistics,
+        TokenRestrictedSids,
+        TokenSessionId,
+        TokenGroupsAndPrivileges,
+        TokenSessionReference,
+        TokenSandBoxInert,
+        TokenAuditPolicy,
+        TokenIntegrityLevel = 25
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct TOKEN_MANDATORY_LABEL
+    {
+        public SID_AND_ATTRIBUTES Label;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct SID_AND_ATTRIBUTES
+    {
+        public IntPtr Sid;
+        public uint Attributes;
+    }
+
     // ── 전역 저수준 키보드 훅 (WH_KEYBOARD_LL) ────────────────────────────
     public const int WH_KEYBOARD_LL  = 13;
     public const int WM_KEYDOWN      = 0x0100;

@@ -29,6 +29,9 @@ public class InputService
     /// SendInput이 ERROR_ACCESS_DENIED를 반환했을 때 발생 (T-2.10)
     public event Action? ElevatedAppDetected;
 
+    /// T-2.10b: 외부에서 관리자 권한 앱 감지를 알릴 때 호출
+    public void NotifyElevatedApp() => ElevatedAppDetected?.Invoke();
+
     // ── T-2.7: Caps Lock 상태 조회 ──────────────────────────────────────────
     public bool IsCapsLockOn => (Win32.GetKeyState((int)VirtualKeyCode.VK_CAPITAL) & 0x0001) != 0;
 
@@ -187,7 +190,7 @@ public class InputService
             inputs.Add(MakeUnicodeKeyDown(ch));
             inputs.Add(MakeUnicodeKeyUp(ch));
         }
-        Win32.SendInput((uint)inputs.Count, inputs.ToArray(), Marshal.SizeOf<Win32.INPUT>());
+        DispatchInput(inputs.ToArray());
         ReleaseTransientModifiers();
     }
 
