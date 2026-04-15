@@ -65,6 +65,36 @@
     }
     .nav-links a:hover { color: var(--text); }
 
+    /* ── Language Switcher ── */
+    .lang-switcher {
+      display: flex;
+      gap: 0.4rem;
+      margin-left: 1rem;
+      background: var(--surface2);
+      padding: 3px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+    }
+    .lang-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .lang-btn.active {
+      background: var(--accent);
+      color: #fff;
+    }
+    .lang-btn:hover:not(.active) {
+      color: var(--text);
+    }
+
+
     /* ── Hero ── */
     .hero {
       display: flex;
@@ -423,35 +453,39 @@
 <nav>
   <a class="nav-logo" href="#">⌨ AltKey</a>
   <div class="nav-links">
-    <a href="#features">기능</a>
-    <a href="#actions">액션</a>
-    <a href="#layout">레이아웃</a>
-    <a href="#download">다운로드</a>
+    <a href="#features" data-i18n="nav-features">기능</a>
+    <a href="#actions" data-i18n="nav-actions">액션</a>
+    <a href="#layout" data-i18n="nav-layout">레이아웃</a>
+    <a href="#download" data-i18n="nav-download">다운로드</a>
     <a href="https://github.com/CrowKing63/AltKey">GitHub</a>
+    <div class="lang-switcher">
+      <button onclick="setLanguage('ko')" class="lang-btn" id="lang-ko">KO</button>
+      <button onclick="setLanguage('en')" class="lang-btn" id="lang-en">EN</button>
+    </div>
   </div>
 </nav>
 
 <!-- Hero -->
 <section class="hero">
-  <div class="hero-badge">
+  <div class="hero-badge" data-i18n="hero-badge">
     <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
       <circle cx="5" cy="5" r="4" fill="#2563eb"/>
     </svg>
     Windows 10 / 11 · .NET 8 · 무설치 포터블
   </div>
-  <h1>마우스 하나로 완성하는<br><span>화상 키보드</span></h1>
-  <p>macOS 손쉬운 사용 키보드에서 영감을 받은,
+  <h1 data-i18n="hero-title">마우스 하나로 완성하는<br><span>화상 키보드</span></h1>
+  <p data-i18n="hero-desc">macOS 손쉬운 사용 키보드에서 영감을 받은,
      가볍고 아름다운 Windows용 커스터마이징 화상 키보드.
      JSON 레이아웃, Sticky Keys, 체류 클릭, Acrylic 블러까지.</p>
   <div class="hero-actions">
-    <a class="btn btn-primary" href="https://github.com/CrowKing63/AltKey/releases/latest">
+    <a class="btn btn-primary" href="https://github.com/CrowKing63/AltKey/releases/latest" data-i18n="hero-download">
       ⬇ 최신 버전 다운로드
     </a>
     <a class="btn btn-secondary" href="https://github.com/CrowKing63/AltKey">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
         <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
       </svg>
-      GitHub에서 보기
+      <span data-i18n="hero-github">GitHub에서 보기</span>
     </a>
   </div>
 </section>
@@ -551,65 +585,65 @@
 
 <!-- Features -->
 <section class="section" id="features">
-  <div class="section-label">Features</div>
-  <h2 class="section-title">필요한 기능은 모두 담았습니다</h2>
-  <p class="section-desc">
+  <div class="section-label" data-i18n="features-label">Features</div>
+  <h2 class="section-title" data-i18n="features-title">필요한 기능은 모두 담았습니다</h2>
+  <p class="section-desc" data-i18n="features-desc">
     접근성부터 생산성 자동화까지, AltKey 하나로 해결하세요.
   </p>
 
   <div class="feature-grid">
     <div class="feature-card">
       <div class="feature-icon">🔒</div>
-      <h3>Sticky Keys</h3>
-      <p>Shift·Ctrl·Alt·Win을 한 번 탭하면 일회성 고정, 두 번 탭하면 영구 잠금.
+      <h3 data-i18n="feature-sticky-title">Sticky Keys</h3>
+      <p data-i18n="feature-sticky-desc">Shift·Ctrl·Alt·Win을 한 번 탭하면 일회성 고정, 두 번 탭하면 영구 잠금.
          한 손 조작이나 접근성 환경에 최적화되어 있습니다.</p>
     </div>
     <div class="feature-card">
       <div class="feature-icon">⏱</div>
-      <h3>체류 클릭 (Dwell Click)</h3>
-      <p>키 위에 마우스를 올려놓으면 설정한 시간 후 자동 클릭.
+      <h3 data-i18n="feature-dwell-title">체류 클릭 (Dwell Click)</h3>
+      <p data-i18n="feature-dwell-desc">키 위에 마우스를 올려놓으면 설정한 시간 후 자동 클릭.
          물리적 클릭이 어려운 사용자를 위한 접근성 기능입니다.</p>
     </div>
     <div class="feature-card">
       <div class="feature-icon">🎨</div>
-      <h3>JSON 레이아웃</h3>
-      <p>원하는 키 배치를 JSON으로 정의하고, GUI 레이아웃 에디터로 쉽게 편집하세요.
+      <h3 data-i18n="feature-json-title">JSON 레이아웃</h3>
+      <p data-i18n="feature-json-desc">원하는 키 배치를 JSON으로 정의하고, GUI 레이아웃 에디터로 쉽게 편집하세요.
          한글 음운 이중 레이블도 완벽 지원합니다.</p>
     </div>
     <div class="feature-card">
       <div class="feature-icon">🔄</div>
-      <h3>앱별 레이아웃 프로필</h3>
-      <p>게임, 크리에이티브 툴, 오피스 앱마다 레이아웃을 자동으로 전환합니다.
+      <h3 data-i18n="feature-profile-title">앱별 레이아웃 프로필</h3>
+      <p data-i18n="feature-profile-desc">게임, 크리에이티브 툴, 오피스 앱마다 레이아웃을 자동으로 전환합니다.
          WinEventHook 기반으로 포그라운드 앱을 감지합니다.</p>
     </div>
     <div class="feature-card">
       <div class="feature-icon">🪟</div>
-      <h3>Acrylic 블러 UI</h3>
-      <p>Windows 11 Acrylic 블러 효과와 다크/라이트/시스템 테마를 지원합니다.
+      <h3 data-i18n="feature-acrylic-title">Acrylic 블러 UI</h3>
+      <p data-i18n="feature-acrylic-desc">Windows 11 Acrylic 블러 효과와 다크/라이트/시스템 테마를 지원합니다.
          미사용 시 자동으로 반투명 상태로 전환됩니다.</p>
     </div>
     <div class="feature-card">
       <div class="feature-icon">🧲</div>
-      <h3>화면 가장자리 이동</h3>
-      <p>헤더 중앙의 ← ↑ ↓ → 버튼 한 번으로 키보드를 화면 끝에 즉시 붙입니다.
+      <h3 data-i18n="feature-edge-title">화면 가장자리 이동</h3>
+      <p data-i18n="feature-edge-desc">헤더 중앙의 ← ↑ ↓ → 버튼 한 번으로 키보드를 화면 끝에 즉시 붙입니다.
          자주 쓰는 위치에 빠르게 고정하세요.</p>
     </div>
     <div class="feature-card">
       <div class="feature-icon">😊</div>
-      <h3>이모지 패널</h3>
-      <p>이모지 패널로 자주 쓰는 이모지를 빠르게 입력하세요.
+      <h3 data-i18n="feature-emoji-title">이모지 패널</h3>
+      <p data-i18n="feature-emoji-desc">이모지 패널로 자주 쓰는 이모지를 빠르게 입력하세요.
          유니코드 직접 입력으로 모든 환경에서 동작합니다.</p>
     </div>
     <div class="feature-card">
       <div class="feature-icon">📋</div>
-      <h3>클립보드 히스토리</h3>
-      <p>최근 복사한 항목을 패널에서 빠르게 다시 붙여넣기.
+      <h3 data-i18n="feature-clipboard-title">클립보드 히스토리</h3>
+      <p data-i18n="feature-clipboard-desc">최근 복사한 항목을 패널에서 빠르게 다시 붙여넣기.
          반복 작업을 효율적으로 처리하세요.</p>
     </div>
     <div class="feature-card">
       <div class="feature-icon">🔔</div>
-      <h3>자동 업데이트 알림</h3>
-      <p>GitHub Releases와 연동해 새 버전이 있을 때 앱 상단 배너로 알려줍니다.
+      <h3 data-i18n="feature-update-title">자동 업데이트 알림</h3>
+      <p data-i18n="feature-update-desc">GitHub Releases와 연동해 새 버전이 있을 때 앱 상단 배너로 알려줍니다.
          설정 없이 항상 최신 버전을 유지하세요.</p>
     </div>
   </div>
@@ -617,9 +651,9 @@
 
 <!-- Actions -->
 <section class="section" id="actions" style="padding-top: 0;">
-  <div class="section-label">Actions</div>
-  <h2 class="section-title">키 하나에 무엇이든</h2>
-  <p class="section-desc">
+  <div class="section-label" data-i18n="actions-label">Actions</div>
+  <h2 class="section-title" data-i18n="actions-title">키 하나에 무엇이든</h2>
+  <p class="section-desc" data-i18n="actions-desc">
     단순한 키 전송을 넘어, 앱 실행·상용구 입력·볼륨 조절까지
     모든 액션을 키에 연결할 수 있습니다.
   </p>
@@ -629,63 +663,63 @@
       <span class="action-chip-icon">⌨</span>
       <div>
         <div class="action-chip-name">SendKey</div>
-        <div class="action-chip-desc">가상 키코드 단일 전송</div>
+        <div class="action-chip-desc" data-i18n="action-sendkey-desc">가상 키코드 단일 전송</div>
       </div>
     </div>
     <div class="action-chip">
       <span class="action-chip-icon">🔗</span>
       <div>
         <div class="action-chip-name">SendCombo</div>
-        <div class="action-chip-desc">키 조합 전송 (Ctrl+C 등)</div>
+        <div class="action-chip-desc" data-i18n="action-sendcombo-desc">키 조합 전송 (Ctrl+C 등)</div>
       </div>
     </div>
     <div class="action-chip">
       <span class="action-chip-icon">📌</span>
       <div>
         <div class="action-chip-name">ToggleSticky</div>
-        <div class="action-chip-desc">수식자 키 Sticky 상태 토글</div>
+        <div class="action-chip-desc" data-i18n="action-sticky-desc">수식자 키 Sticky 상태 토글</div>
       </div>
     </div>
     <div class="action-chip">
       <span class="action-chip-icon">🔀</span>
       <div>
         <div class="action-chip-name">SwitchLayout</div>
-        <div class="action-chip-desc">다른 레이아웃으로 즉시 전환</div>
+        <div class="action-chip-desc" data-i18n="action-switch-desc">다른 레이아웃으로 즉시 전환</div>
       </div>
     </div>
     <div class="action-chip">
       <span class="action-chip-icon">🚀</span>
       <div>
         <div class="action-chip-name">RunApp</div>
-        <div class="action-chip-desc">앱 또는 파일 실행 (경로 + 인수)</div>
+        <div class="action-chip-desc" data-i18n="action-runapp-desc">앱 또는 파일 실행 (경로 + 인수)</div>
       </div>
     </div>
     <div class="action-chip">
       <span class="action-chip-icon">📝</span>
       <div>
         <div class="action-chip-name">Boilerplate</div>
-        <div class="action-chip-desc">상용구 텍스트 유니코드 직접 입력</div>
+        <div class="action-chip-desc" data-i18n="action-boilerplate-desc">상용구 텍스트 유니코드 직접 입력</div>
       </div>
     </div>
     <div class="action-chip">
       <span class="action-chip-icon">💻</span>
       <div>
         <div class="action-chip-name">ShellCommand</div>
-        <div class="action-chip-desc">CMD / PowerShell 명령 실행</div>
+        <div class="action-chip-desc" data-i18n="action-shell-desc">CMD / PowerShell 명령 실행</div>
       </div>
     </div>
     <div class="action-chip">
       <span class="action-chip-icon">🔊</span>
       <div>
         <div class="action-chip-name">VolumeControl</div>
-        <div class="action-chip-desc">볼륨 올리기·내리기·음소거</div>
+        <div class="action-chip-desc" data-i18n="action-volume-desc">볼륨 올리기·내리기·음소거</div>
       </div>
     </div>
     <div class="action-chip">
       <span class="action-chip-icon">📋</span>
       <div>
         <div class="action-chip-name">ClipboardPaste</div>
-        <div class="action-chip-desc">텍스트를 클립보드 복사 후 붙여넣기</div>
+        <div class="action-chip-desc" data-i18n="action-paste-desc">텍스트를 클립보드 복사 후 붙여넣기</div>
       </div>
     </div>
   </div>
@@ -693,9 +727,9 @@
 
 <!-- Layout JSON -->
 <section class="code-section" id="layout">
-  <div class="section-label">Layout</div>
-  <h2 class="section-title" style="font-size:clamp(1.5rem,3vw,2.2rem); font-weight:800; letter-spacing:-0.5px; margin-bottom:0.75rem;">JSON으로 레이아웃 정의</h2>
-  <p style="color:var(--text-muted); margin-bottom:1.5rem;">
+  <div class="section-label" data-i18n="layout-label">Layout</div>
+  <h2 class="section-title" style="font-size:clamp(1.5rem,3vw,2.2rem); font-weight:800; letter-spacing:-0.5px; margin-bottom:0.75rem;" data-i18n="layout-title">JSON으로 레이아웃 정의</h2>
+  <p style="color:var(--text-muted); margin-bottom:1.5rem;" data-i18n="layout-desc">
     <code>layouts/</code> 폴더의 JSON 파일 하나가 키보드 레이아웃 하나입니다.
     GUI 에디터로 편집하거나 직접 파일을 수정하세요.
   </p>
@@ -740,44 +774,203 @@
 <!-- Download -->
 <div class="download-section" id="download">
   <div class="download-inner">
-    <div class="section-label" style="text-align:center">Download</div>
-    <h2 class="section-title">지금 바로 사용해보세요</h2>
-    <p style="color:var(--text-muted); font-size:1rem">
+    <div class="section-label" style="text-align:center" data-i18n="download-label">Download</div>
+    <h2 class="section-title" data-i18n="download-title">지금 바로 사용해보세요</h2>
+    <p style="color:var(--text-muted); font-size:1rem" data-i18n="download-desc">
       Windows 10 22H2 이상 · .NET 8 런타임 별도 설치 불필요
     </p>
     <div class="download-cards">
       <a class="download-card" href="https://github.com/CrowKing63/AltKey/releases/latest">
-        <span class="tag tag-installer">설치 프로그램 (권장)</span>
+        <span class="tag tag-installer" data-i18n="download-installer-tag">설치 프로그램 (권장)</span>
         <h3>AltKey-Setup.exe</h3>
-        <p>시작 메뉴 등록, 시작프로그램 설정 포함.<br>일반 사용자에게 권장합니다.</p>
+        <p data-i18n="download-installer-desc">시작 메뉴 등록, 시작프로그램 설정 포함.<br>일반 사용자에게 권장합니다.</p>
       </a>
       <a class="download-card" href="https://github.com/CrowKing63/AltKey/releases/latest">
-        <span class="tag tag-portable">포터블</span>
+        <span class="tag tag-portable" data-i18n="download-portable-tag">포터블</span>
         <h3>AltKey-Portable.zip</h3>
-        <p>압축 해제 후 바로 실행.<br>설치 없이 USB에 넣어 어디서든 사용하세요.</p>
+        <p data-i18n="download-portable-desc">압축 해제 후 바로 실행.<br>설치 없이 USB에 넣어 어디서든 사용하세요.</p>
       </a>
     </div>
-    <p style="margin-top:2rem; color:var(--text-muted); font-size:0.85rem">
-      소스 코드 및 이전 버전은
-      <a href="https://github.com/CrowKing63/AltKey/releases">GitHub Releases</a>
-      에서 확인하세요.
+    <p style="margin-top:2rem; color:var(--text-muted); font-size:0.85rem" id="download-footer">
+      <!-- Translated via script -->
     </p>
   </div>
 </div>
 
 <!-- Footer -->
-<footer>
-  <p>
-    Made with ♥ by <a href="https://github.com/CrowKing63">CrowKing63</a>
-    &nbsp;·&nbsp;
-    <a href="https://github.com/CrowKing63/AltKey">GitHub</a>
-    &nbsp;·&nbsp;
-    <a href="https://github.com/CrowKing63/AltKey/blob/main/LICENSE">MIT License</a>
-  </p>
-  <p style="margin-top:0.5rem; font-size:0.75rem">
-    © 2025 AltKey Contributors
-  </p>
-</footer>
+  <footer>
+    <p id="footer-made-by">
+      <!-- Translated via script -->
+    </p>
+    <div style="display:flex; gap:10px; justify-content:center; margin-top:0.5rem;">
+        <a href="https://github.com/CrowKing63/AltKey">GitHub</a>
+        <span style="color:var(--border)">·</span>
+        <a href="https://github.com/CrowKing63/AltKey/blob/main/LICENSE">MIT License</a>
+    </div>
+    <p style="margin-top:0.5rem; font-size:0.75rem" data-i18n="footer-copyright">
+      © 2025 AltKey Contributors
+    </p>
+  </footer>
+
+  <script>
+    const translations = {
+      ko: {
+        "title": "AltKey — Windows 화상 키보드",
+        "description": "macOS 손쉬운 사용 키보드에서 영감을 받은, 가볍고 아름다운 Windows용 커스터마이징 화상 키보드",
+        "nav-features": "기능",
+        "nav-actions": "액션",
+        "nav-layout": "레이아웃",
+        "nav-download": "다운로드",
+        "hero-badge": `<svg width="10" height="10" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="4" fill="#2563eb"/></svg> Windows 10 / 11 · .NET 8 · 무설치 포터블`,
+        "hero-title": "마우스 하나로 완성하는<br><span>화상 키보드</span>",
+        "hero-desc": "macOS 손쉬운 사용 키보드에서 영감을 받은, 가볍고 아름다운 Windows용 커스터마이징 화상 키보드. JSON 레이아웃, Sticky Keys, 체류 클릭, Acrylic 블러까지.",
+        "hero-download": "⬇ 최신 버전 다운로드",
+        "hero-github": "GitHub에서 보기",
+        "features-label": "Features",
+        "features-title": "필요한 기능은 모두 담았습니다",
+        "features-desc": "접근성부터 생산성 자동화까지, AltKey 하나로 해결하세요.",
+        "feature-sticky-title": "Sticky Keys",
+        "feature-sticky-desc": "Shift·Ctrl·Alt·Win을 한 번 탭하면 일회성 고정, 두 번 탭하면 영구 잠금. 한 손 조작이나 접근성 환경에 최적화되어 있습니다.",
+        "feature-dwell-title": "체류 클릭 (Dwell Click)",
+        "feature-dwell-desc": "키 위에 마우스를 올려놓으면 설정한 시간 후 자동 클릭. 물리적 클릭이 어려운 사용자를 위한 접근성 기능입니다.",
+        "feature-json-title": "JSON 레이아웃",
+        "feature-json-desc": "원하는 키 배치를 JSON으로 정의하고, GUI 레이아웃 에디터로 쉽게 편집하세요. 한글 음운 이중 레이블도 완벽 지원합니다.",
+        "feature-profile-title": "앱별 레이아웃 프로필",
+        "feature-profile-desc": "게임, 크리에이티브 툴, 오피스 앱마다 레이아웃을 자동으로 전환합니다. WinEventHook 기반으로 포그라운드 앱을 감지합니다.",
+        "feature-acrylic-title": "Acrylic 블러 UI",
+        "feature-acrylic-desc": "Windows 11 Acrylic 블러 효과와 다크/라이트/시스템 테마를 지원합니다. 미사용 시 자동으로 반투명 상태로 전환됩니다.",
+        "feature-edge-title": "화면 가장자리 이동",
+        "feature-edge-desc": "헤더 중앙의 ← ↑ ↓ → 버튼 한 번으로 키보드를 화면 끝에 즉시 붙입니다. 자주 쓰는 위치에 빠르게 고정하세요.",
+        "feature-emoji-title": "이모지 패널",
+        "feature-emoji-desc": "이모지 패널로 자주 쓰는 이모지를 빠르게 입력하세요. 유니코드 직접 입력으로 모든 환경에서 동작합니다.",
+        "feature-clipboard-title": "클립보드 히스토리",
+        "feature-clipboard-desc": "최근 복사한 항목을 패널에서 빠르게 다시 붙여넣기. 반복 작업을 효율적으로 처리하세요.",
+        "feature-update-title": "자동 업데이트 알림",
+        "feature-update-desc": "GitHub Releases와 연동해 새 버전이 있을 때 앱 상단 배너로 알려줍니다. 설정 없이 항상 최신 버전을 유지하세요.",
+        "actions-label": "Actions",
+        "actions-title": "키 하나에 무엇이든",
+        "actions-desc": "단순한 키 전송을 넘어, 앱 실행·상용구 입력·볼륨 조절까지 모든 액션을 키에 연결할 수 있습니다.",
+        "action-sendkey-desc": "가상 키코드 단일 전송",
+        "action-sendcombo-desc": "키 조합 전송 (Ctrl+C 등)",
+        "action-sticky-desc": "수식자 키 Sticky 상태 토글",
+        "action-switch-desc": "다른 레이아웃으로 즉시 전환",
+        "action-runapp-desc": "앱 또는 파일 실행 (경로 + 인수)",
+        "action-boilerplate-desc": "상용구 텍스트 유니코드 직접 입력",
+        "action-shell-desc": "CMD / PowerShell 명령 실행",
+        "action-volume-desc": "볼륨 올리기·내리기·음소거",
+        "action-paste-desc": "텍스트를 클립보드 복사 후 붙여넣기",
+        "layout-label": "Layout",
+        "layout-title": "JSON으로 레이아웃 정의",
+        "layout-desc": "<code>layouts/</code> 폴더의 JSON 파일 하나가 키보드 레이아웃 하나입니다. GUI 에디터로 편집하거나 직접 파일을 수정하세요.",
+        "download-label": "Download",
+        "download-title": "지금 바로 사용해보세요",
+        "download-desc": "Windows 10 22H2 이상 · .NET 8 런타임 별도 설치 불필요",
+        "download-installer-tag": "설치 프로그램 (권장)",
+        "download-installer-desc": "시작 메뉴 등록, 시작프로그램 설정 포함.<br>일반 사용자에게 권장합니다.",
+        "download-portable-tag": "포터블",
+        "download-portable-desc": "압축 해제 후 바로 실행.<br>설치 없이 USB에 넣어 어디서든 사용하세요.",
+        "download-footer": `소스 코드 및 이전 버전은 <a href="https://github.com/CrowKing63/AltKey/releases">GitHub Releases</a> 에서 확인하세요.`,
+        "footer-made-by": `Made with ♥ by <a href="https://github.com/CrowKing63">CrowKing63</a>`,
+        "footer-copyright": "© 2025 AltKey Contributors"
+      },
+      en: {
+        "title": "AltKey — Windows On-Screen Keyboard",
+        "description": "A lightweight, beautiful, and customizable on-screen keyboard for Windows, inspired by macOS Accessibility Keyboard.",
+        "nav-features": "Features",
+        "nav-actions": "Actions",
+        "nav-layout": "Layout",
+        "nav-download": "Download",
+        "hero-badge": `<svg width="10" height="10" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="4" fill="#2563eb"/></svg> Windows 10 / 11 · .NET 8 · Portable`,
+        "hero-title": "Complete Control with<br><span>On-Screen Keyboard</span>",
+        "hero-desc": "A lightweight and beautiful customizable on-screen keyboard for Windows, inspired by macOS Accessibility Keyboard. Supports JSON layouts, Sticky Keys, Dwell Click, and Acrylic blur.",
+        "hero-download": "⬇ Download Latest",
+        "hero-github": "View on GitHub",
+        "features-label": "Features",
+        "features-title": "Everything You Need",
+        "features-desc": "From accessibility to productivity automation, AltKey has you covered.",
+        "feature-sticky-title": "Sticky Keys",
+        "feature-sticky-desc": "Tap Shift·Ctrl·Alt·Win once for one-time lock, twice for permanent lock. Optimized for one-handed use and accessibility.",
+        "feature-dwell-title": "Dwell Click",
+        "feature-dwell-desc": "Hover over a key to automatically click after a set time. An essential feature for users with physical clicking difficulties.",
+        "feature-json-title": "JSON Layouts",
+        "feature-json-desc": "Define your keyboard layout in JSON and edit it easily with the built-in GUI editor. Fully supports dual labels (e.g. Korean letters).",
+        "feature-profile-title": "App-Specific Profiles",
+        "feature-profile-desc": "Automatically switch layouts for games, creative tools, or office apps. Detects foreground apps via WinEventHook.",
+        "feature-acrylic-title": "Acrylic Blur UI",
+        "feature-acrylic-desc": "Supports Windows 11 Acrylic blur effects with Dark/Light/System themes. Automatically dims when not in use.",
+        "feature-edge-title": "Snap to Edges",
+        "feature-edge-desc": "Instantly move the keyboard to screen edges with ← ↑ ↓ → buttons in the header. Quick positioning for your workflow.",
+        "feature-emoji-title": "Emoji Panel",
+        "feature-emoji-desc": "Quickly type your favorite emojis using the Emoji Panel. Uses Unicode input to work across all applications.",
+        "feature-clipboard-title": "Clipboard History",
+        "feature-clipboard-desc": "Quickly paste recently copied items from the panel. Boost your repetitive tasks efficiency.",
+        "feature-update-title": "Auto Update Notifications",
+        "feature-update-desc": "Integrated with GitHub Releases to notify you via a top banner when a new version is available.",
+        "actions-label": "Actions",
+        "actions-title": "Power in Every Key",
+        "actions-desc": "Connect any action to a key, from launching apps and boilerplate text to volume control.",
+        "action-sendkey-desc": "Send single virtual keycodes",
+        "action-sendcombo-desc": "Send key combinations (Ctrl+C, etc.)",
+        "action-sticky-desc": "Toggle Modifier Key Sticky State",
+        "action-switch-desc": "Switch layouts instantly",
+        "action-runapp-desc": "Run app or file (Path + Args)",
+        "action-boilerplate-desc": "Enter boilerplate text via Unicode",
+        "action-shell-desc": "Run CMD / PowerShell commands",
+        "action-volume-desc": "Volume Up/Down/Mute",
+        "action-paste-desc": "Copy text to clipboard and paste",
+        "layout-label": "Layout",
+        "layout-title": "Define Layouts with JSON",
+        "layout-desc": "Each JSON file in the <code>layouts/</code> folder is a keyboard layout. Edit with the GUI or modify directly.",
+        "download-label": "Download",
+        "download-title": "Get Started Today",
+        "download-desc": "Windows 10 22H2+ · No separate .NET 8 runtime needed",
+        "download-installer-tag": "Installer (Recommended)",
+        "download-installer-desc": "Includes Start menu shortcuts and startup settings. Recommended for most users.",
+        "download-portable-tag": "Portable",
+        "download-portable-desc": "Run instantly after unzipping. Take your settings anywhere on a USB drive.",
+        "download-footer": `Check <a href="https://github.com/CrowKing63/AltKey/releases">GitHub Releases</a> for source code and older versions.`,
+        "footer-made-by": `Made with ♥ by <a href="https://github.com/CrowKing63">CrowKing63</a>`,
+        "footer-copyright": "© 2025 AltKey Contributors"
+      }
+    };
+
+    function setLanguage(lang) {
+      localStorage.setItem('altkey-lang', lang);
+      document.documentElement.lang = lang;
+      
+      const t = translations[lang];
+      
+      // Update Title & Meta
+      document.title = t.title;
+      document.querySelector('meta[name="description"]').setAttribute('content', t.description);
+      document.querySelector('meta[property="og:title"]').setAttribute('content', t.title);
+      document.querySelector('meta[property="og:description"]').setAttribute('content', t.description);
+
+      // Simple translation by data-i18n
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (t[key]) {
+          if (t[key].includes('<')) {
+            el.innerHTML = t[key];
+          } else {
+            el.textContent = t[key];
+          }
+        }
+      });
+
+      // Special cases
+      document.getElementById('download-footer').innerHTML = t['download-footer'];
+      document.getElementById('footer-made-by').innerHTML = t['footer-made-by'];
+
+      // Update Switcher UI
+      document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
+      document.getElementById(`lang-${lang}`).classList.add('active');
+    }
+
+    // Init language
+    const savedLang = localStorage.getItem('altkey-lang') || (navigator.language.startsWith('ko') ? 'ko' : 'en');
+    setLanguage(savedLang);
+  </script>
 
 </body>
 </html>
