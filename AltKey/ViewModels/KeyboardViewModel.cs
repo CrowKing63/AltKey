@@ -102,6 +102,9 @@ public partial class KeyboardViewModel : ObservableObject
 
     }
 
+    /// 키가 눌릴 때 발생하는 이벤트 (패널 자동 닫기 등 외부 연동용)
+    public event Action? KeyTapped;
+
     // ── 커맨드 ──────────────────────────────────────────────────────────────
     [RelayCommand]
     private void KeyPressed(KeySlot slot)
@@ -113,6 +116,7 @@ public partial class KeyboardViewModel : ObservableObject
             _inputService.HandleAction(slot.Action);
 
         UpdateModifierState();
+        KeyTapped?.Invoke();
     }
 
     // ── 내부 메서드 ──────────────────────────────────────────────────────────

@@ -14,12 +14,13 @@ namespace AltKey.ViewModels;
 /// T-5.10 / T-5.12 / T-8: 설정 패널 ViewModel
 public partial class SettingsViewModel : ObservableObject
 {
-    private readonly ConfigService  _configService;
-    private readonly ThemeService   _themeService;
-    private readonly LayoutService  _layoutService;
-    private readonly HotkeyService  _hotkeyService;
-    private readonly StartupService _startupService;
-    private readonly SoundService   _soundService;
+    private readonly ConfigService        _configService;
+    private readonly ThemeService         _themeService;
+    private readonly LayoutService        _layoutService;
+    private readonly HotkeyService        _hotkeyService;
+    private readonly StartupService       _startupService;
+    private readonly SoundService         _soundService;
+    private readonly LayoutEditorViewModel _layoutEditorVm;
 
     // ── Observable 속성 ─────────────────────────────────────────────────────
 
@@ -57,19 +58,21 @@ public partial class SettingsViewModel : ObservableObject
     // ── 생성자 ──────────────────────────────────────────────────────────────
 
     public SettingsViewModel(
-        ConfigService configService,
-        ThemeService  themeService,
-        LayoutService layoutService,
-        HotkeyService hotkeyService,
-        StartupService startupService,
-        SoundService soundService)
+        ConfigService        configService,
+        ThemeService         themeService,
+        LayoutService        layoutService,
+        HotkeyService        hotkeyService,
+        StartupService       startupService,
+        SoundService         soundService,
+        LayoutEditorViewModel layoutEditorViewModel)
     {
-        _configService = configService;
-        _themeService  = themeService;
-        _layoutService = layoutService;
-        _hotkeyService = hotkeyService;
+        _configService  = configService;
+        _themeService   = themeService;
+        _layoutService  = layoutService;
+        _hotkeyService  = hotkeyService;
         _startupService = startupService;
-        _soundService = soundService;
+        _soundService   = soundService;
+        _layoutEditorVm = layoutEditorViewModel;
 
         LoadFromConfig();
     }
@@ -236,6 +239,18 @@ public partial class SettingsViewModel : ObservableObject
             c.Profiles = Profiles
                 .Where(p => !string.IsNullOrWhiteSpace(p.ProcessName))
                 .ToDictionary(p => p.ProcessName.ToLower(), p => p.LayoutName));
+    }
+
+    // ── T-9.4: 레이아웃 편집기 열기 ──────────────────────────────────────────
+
+    [RelayCommand]
+    private void OpenLayoutEditor()
+    {
+        var win = new AltKey.Views.LayoutEditorWindow(_layoutEditorVm)
+        {
+            Owner = WpfApp.Current.MainWindow
+        };
+        win.Show();
     }
 
     // ── T-5.12: 관리자 권한으로 재시작 ──────────────────────────────────────

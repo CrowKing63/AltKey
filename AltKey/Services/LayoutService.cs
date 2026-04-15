@@ -72,6 +72,15 @@ public class LayoutService
         }
     }
 
+    /// <summary>T-9.2: 레이아웃을 JSON 파일로 저장하고 캐시 무효화</summary>
+    public void Save(string name, LayoutConfig config)
+    {
+        var path = Path.Combine(_layoutsDir, name + ".json");
+        var json = JsonSerializer.Serialize(config, JsonOptions.Default);
+        File.WriteAllText(path, json);
+        InvalidateCache();
+    }
+
     /// <summary>config 변경 시 캐시 무효화</summary>
     public void InvalidateCache() => _cache.Clear();
 }

@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Windows;
 using System.Windows.Data;
 
 namespace AltKey.Themes;
@@ -19,14 +20,36 @@ public class ProgressToOffsetConverter : IValueConverter
 }
 
 /// bool → Visibility 변환 (App.xaml에 이미 있지만 테마 파일에서도 사용 가능하도록 제공)
-[ValueConversion(typeof(bool), typeof(System.Windows.Visibility))]
+[ValueConversion(typeof(bool), typeof(Visibility))]
 public class BoolToVisibilityConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        => value is true
-            ? System.Windows.Visibility.Visible
-            : System.Windows.Visibility.Collapsed;
+        => value is true ? Visibility.Visible : Visibility.Collapsed;
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-        => value is System.Windows.Visibility.Visible;
+        => value is Visibility.Visible;
+}
+
+/// T-9.4: bool 반전 후 Visibility 변환 (false → Visible)
+[ValueConversion(typeof(bool), typeof(Visibility))]
+public class InverseBoolToVisibilityConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        => value is true ? Visibility.Collapsed : Visibility.Visible;
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => value is Visibility.Collapsed;
+}
+
+/// T-9.4: EditWidth(double) → 픽셀 폭(double) 변환. 기준 단위 = 50px
+[ValueConversion(typeof(double), typeof(double))]
+public class WidthToPixelConverter : IValueConverter
+{
+    private const double Unit = 50.0;
+
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        => value is double w ? Math.Max(Unit * w, 30.0) : 50.0;
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
 }

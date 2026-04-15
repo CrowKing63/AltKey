@@ -1,11 +1,20 @@
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using AltKey.Models;
 using AltKey.Platform;
+using WpfApp = System.Windows.Application;
+using WpfClipboard = System.Windows.Clipboard;
 
 namespace AltKey.Services;
 
 public class InputService
 {
+    // ── T-9.3: 자동 완성 서비스 (옵셔널) ────────────────────────────────────
+    private AutoCompleteService? _autoComplete;
+
+    /// 자동 완성 서비스를 연결한다 (App.xaml.cs 초기화 이후 DI 에서 주입).
+    public void SetAutoComplete(AutoCompleteService svc) => _autoComplete = svc;
+
     // ── Sticky / Lock 상태 ────────────────────────────────────────────────────
     private readonly HashSet<VirtualKeyCode> _stickyKeys = [];
     private readonly HashSet<VirtualKeyCode> _lockedKeys = [];
@@ -89,6 +98,8 @@ public class InputService
             case SendKeyAction { Vk: var vkStr }:
                 if (Enum.TryParse<VirtualKeyCode>(vkStr, out var vk))
                 {
+                    // T-9.3: 자동 완성 서비스에 키 입력 알림
+                    _autoComplete?.OnKeyInput(vk);
                     SendKeyPress(vk);
                     ReleaseTransientModifiers();
                 }
@@ -107,7 +118,57 @@ public class InputService
                 if (Enum.TryParse<VirtualKeyCode>(vkStr2, out var modVk))
                     ToggleModifier(modVk);
                 break;
+
+            // ── T-9.1 신규 액션 핸들러 ───────────────────────────────────────
+
+            case RunAppAction { Path: var path, Args: var args }:
+                try { Process.Start(new ProcessStartInfo(path, args) { UseShellExecute = true }); }
+                catch (Exception ex) { Debug.WriteLine($"[RunApp] 실패: {path} — {ex.Message}"); }
+                break;
+
+            case BoilerplateAction { Text: var bText }:
+                SendUnicode(bText);
+                break;
+
+            case ShellCommandAction { Command: var cmd, Shell: var shell, Hidden: var hidden }:
+                var shellExe = shell == "powershell" ? "powershell.exe" : "cmd.exe";
+                var shellArg = shell == "powershell" ? $"-Command \"{cmd}\"" : $"/c \"{cmd}\"";
+                var psi = new ProcessStartInfo(shellExe, shellArg)
+                {
+                    UseShellExecute = false,
+                    CreateNoWindow  = hidden
+                };
+                try { Process.Start(psi); }
+                catch (Exception ex) { Debug.WriteLine($"[ShellCommand] 실패: {cmd} — {ex.Message}"); }
+                break;
+
+            case VolumeControlAction { Direction: var dir, Step: var step }:
+                HandleVolumeControl(dir, step);
+                break;
+
+            case ClipboardPasteAction { Text: var pasteText }:
+                WpfApp.Current.Dispatcher.Invoke(() => WpfClipboard.SetText(pasteText));
+                SendCombo([VirtualKeyCode.VK_CONTROL, VirtualKeyCode.VK_V]);
+                break;
         }
+    }
+
+    // ── T-9.1: 볼륨 제어 (VK_VOLUME_UP / DOWN / MUTE 반복 전송) ────────────
+    private void HandleVolumeControl(string direction, int step)
+    {
+        var vk = direction switch
+        {
+            "up"   => (ushort)0xAF, // VK_VOLUME_UP
+            "down" => (ushort)0xAE, // VK_VOLUME_DOWN
+            "mute" => (ushort)0xAD, // VK_VOLUME_MUTE
+            _      => (ushort)0
+        };
+        if (vk == 0) return;
+
+        // step/2 횟수만큼 반복 전송 (볼륨 키는 보통 2씩 변화)
+        int repeat = Math.Max(1, step / 2);
+        for (int i = 0; i < repeat; i++)
+            SendKeyPress((VirtualKeyCode)vk);
     }
 
     private void SendCombo(List<VirtualKeyCode> keys)

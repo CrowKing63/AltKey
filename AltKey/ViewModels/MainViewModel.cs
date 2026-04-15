@@ -23,10 +23,11 @@ public partial class MainViewModel : ObservableObject
     // SwitchLayout 재진입 방지 플래그
     private bool _isSwitching;
 
-    public KeyboardViewModel   Keyboard { get; }
-    public SettingsViewModel   Settings { get; }
-    public EmojiViewModel      Emoji    { get; }
-    public ClipboardViewModel  Clipboard { get; }
+    public KeyboardViewModel       Keyboard    { get; }
+    public SettingsViewModel       Settings    { get; }
+    public EmojiViewModel          Emoji       { get; }
+    public ClipboardViewModel      Clipboard   { get; }
+    public SuggestionBarViewModel  AutoComplete { get; }
 
     [ObservableProperty]
     private string currentLayoutName = "";
@@ -72,28 +73,37 @@ public partial class MainViewModel : ObservableObject
     }
 
     public MainViewModel(
-        ConfigService     configService,
-        LayoutService     layoutService,
-        KeyboardViewModel keyboardViewModel,
-        ProfileService    profileService,
-        SettingsViewModel settingsViewModel,
-        EmojiViewModel    emojiViewModel,
-        ClipboardViewModel clipboardViewModel)
+        ConfigService          configService,
+        LayoutService          layoutService,
+        KeyboardViewModel      keyboardViewModel,
+        ProfileService         profileService,
+        SettingsViewModel      settingsViewModel,
+        EmojiViewModel         emojiViewModel,
+        ClipboardViewModel     clipboardViewModel,
+        SuggestionBarViewModel suggestionBarViewModel)
     {
         _configService  = configService;
         _layoutService  = layoutService;
         _profileService = profileService;
 
-        Keyboard  = keyboardViewModel;
-        Settings  = settingsViewModel;
-        Emoji     = emojiViewModel;
-        Clipboard = clipboardViewModel;
+        Keyboard     = keyboardViewModel;
+        Settings     = settingsViewModel;
+        Emoji        = emojiViewModel;
+        Clipboard    = clipboardViewModel;
+        AutoComplete = suggestionBarViewModel;
 
         // T-5.4: 포그라운드 앱 변경 → 자동 레이아웃 전환
         _profileService.ForegroundAppChanged += OnForegroundAppChanged;
 
         // 체류 클릭 설정 변경 시 UI에 알림
         _configService.ConfigChanged += OnConfigChanged;
+
+        // 키 입력 시 이모지/클립보드 패널 자동 닫기
+        Keyboard.KeyTapped += () =>
+        {
+            Emoji.IsVisible     = false;
+            Clipboard.IsVisible = false;
+        };
     }
 
     private void OnConfigChanged(string? propertyName)

@@ -11,7 +11,7 @@
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
     </UserControl.Resources>
 
-    <Border Background="#EE141420"
+    <Border Background="{DynamicResource SettingsBg}"
             CornerRadius="12"
             Padding="24,20">
         <Grid>
@@ -24,10 +24,10 @@
             <Grid Grid.Row="0" Margin="0,0,0,16">
                 <TextBlock Text="설정"
                            FontSize="16" FontWeight="SemiBold"
-                           Foreground="#EEFFFFFF"/>
+                           Foreground="{DynamicResource SettingsFg}"/>
                 <Button HorizontalAlignment="Right"
                         Background="Transparent" BorderThickness="0"
-                        Foreground="#AAFFFFFF" FontSize="16" Cursor="Hand"
+                        Foreground="{DynamicResource SettingsFgSub}" FontSize="16" Cursor="Hand"
                         Click="CloseButton_Click"
                         ToolTip="닫기 (Esc)">
                     <TextBlock Text="✕"/>
@@ -41,24 +41,24 @@
                 <StackPanel>
 
                     <!-- ── 테마 ─────────────────────────────────────────────── -->
-                    <TextBlock Text="테마" Foreground="#AAFFFFFF" FontSize="11" Margin="0,0,0,6"/>
+                    <TextBlock Text="테마" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,6"/>
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
-                        <RadioButton Content="시스템 따라" Foreground="#EEFFFFFF"
+                        <RadioButton Content="시스템 따라" Foreground="{DynamicResource SettingsFg}"
                                      IsChecked="{Binding ThemeIsSystem}" Margin="0,0,12,0"/>
-                        <RadioButton Content="라이트"     Foreground="#EEFFFFFF"
+                        <RadioButton Content="라이트"     Foreground="{DynamicResource SettingsFg}"
                                      IsChecked="{Binding ThemeIsLight}"  Margin="0,0,12,0"/>
-                        <RadioButton Content="다크"       Foreground="#EEFFFFFF"
+                        <RadioButton Content="다크"       Foreground="{DynamicResource SettingsFg}"
                                      IsChecked="{Binding ThemeIsDark}"/>
                     </StackPanel>
 
                     <!-- ── 항상 위 ─────────────────────────────────────────── -->
                     <CheckBox Content="항상 위에 표시"
-                              Foreground="#EEFFFFFF"
+                              Foreground="{DynamicResource SettingsFg}"
                               IsChecked="{Binding AlwaysOnTop}"
                               Margin="0,0,0,16"/>
 
                     <!-- ── 유휴 투명도 ─────────────────────────────────────── -->
-                    <TextBlock Foreground="#AAFFFFFF" FontSize="11" Margin="0,0,0,4">
+                    <TextBlock Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4">
                         <Run Text="유휴 투명도: "/>
                         <Run Text="{Binding OpacityIdle, StringFormat=P0}"/>
                     </TextBlock>
@@ -69,7 +69,7 @@
                             Margin="0,0,0,16"/>
 
                     <!-- ── 페이딩 딜레이 ───────────────────────────────────── -->
-                    <TextBlock Foreground="#AAFFFFFF" FontSize="11" Margin="0,0,0,4">
+                    <TextBlock Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4">
                         <Run Text="페이딩 딜레이: "/>
                         <Run Text="{Binding FadeDelaySec, StringFormat={}{0}초}"/>
                     </TextBlock>
@@ -81,10 +81,10 @@
 
                     <!-- ── 체류 클릭 ───────────────────────────────────────── -->
                     <CheckBox Content="체류 클릭 (Dwell Click)"
-                              Foreground="#EEFFFFFF"
+                              Foreground="{DynamicResource SettingsFg}"
                               IsChecked="{Binding DwellEnabled}"
                               Margin="0,0,0,8"/>
-                    <TextBlock Foreground="#AAFFFFFF" FontSize="11" Margin="16,0,0,4">
+                    <TextBlock Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="16,0,0,4">
                         <Run Text="체류 시간: "/>
                         <Run Text="{Binding DwellTimeMs, StringFormat={}{0}ms}"/>
                     </TextBlock>
@@ -96,27 +96,34 @@
                             Margin="16,0,0,16"/>
 
                     <!-- ── 레이아웃 ─────────────────────────────────────────── -->
-                    <TextBlock Text="기본 레이아웃" Foreground="#AAFFFFFF" FontSize="11" Margin="0,0,0,4"/>
+                    <TextBlock Text="기본 레이아웃" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
                     <ComboBox ItemsSource="{Binding AvailableLayouts}"
                               SelectedItem="{Binding SelectedLayout}"
-                              Height="28" Margin="0,0,0,16"/>
+                              Height="28" Margin="0,0,0,8"/>
+
+                    <!-- T-9.4: 레이아웃 편집기 -->
+                    <Button Content="레이아웃 편집기 열기"
+                            Command="{Binding OpenLayoutEditorCommand}"
+                            Height="30" Margin="0,0,0,16"
+                            Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}"
+                            BorderThickness="0" Cursor="Hand"/>
 
                     <!-- ── 전역 단축키 ─────────────────────────────────────── -->
-                    <TextBlock Text="전역 단축키" Foreground="#AAFFFFFF" FontSize="11" Margin="0,0,0,4"/>
+                    <TextBlock Text="전역 단축키" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
                     <TextBox Text="{Binding GlobalHotkey, UpdateSourceTrigger=LostFocus}"
                              Height="28" Margin="0,0,0,16"
-                             Background="#33FFFFFF" Foreground="#EEFFFFFF"
-                             BorderBrush="#55FFFFFF" Padding="6,4"/>
+                             Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}"
+                             BorderBrush="{DynamicResource SettingsBorder}" Padding="6,4"/>
 
                     <!-- ── T-8.1: 자동 실행 ───────────────────────────────── -->
                     <CheckBox Content="Windows 시작 시 자동 실행"
-                              Foreground="#EEFFFFFF"
+                              Foreground="{DynamicResource SettingsFg}"
                               IsChecked="{Binding RunOnStartup}"
                               Margin="0,0,0,16"/>
 
                     <!-- ── T-8.2: 키 클릭 사운드 ─────────────────────────── -->
                     <CheckBox Content="키 클릭 사운드"
-                              Foreground="#EEFFFFFF"
+                              Foreground="{DynamicResource SettingsFg}"
                               IsChecked="{Binding SoundEnabled}"
                               Margin="0,0,0,8"/>
                     <StackPanel Orientation="Horizontal"
@@ -125,9 +132,9 @@
                         <TextBlock Text="사운드 파일:"
                                    VerticalAlignment="Center"
                                    Margin="0,0,6,0"
-                                   Foreground="#AAFFFFFF"/>
+                                   Foreground="{DynamicResource SettingsFgSub}"/>
                         <TextBlock VerticalAlignment="Center" Opacity="0.7"
-                                   MaxWidth="140" Foreground="#EEFFFFFF"
+                                   MaxWidth="140" Foreground="{DynamicResource SettingsFg}"
                                    TextTrimming="CharacterEllipsis">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
@@ -144,31 +151,31 @@
                                 Command="{Binding BrowseSoundFileCommand}"
                                 Margin="6,0,0,0"
                                 Padding="6,2"
-                                Background="#33FFFFFF"
-                                Foreground="#EEFFFFFF"
+                                Background="{DynamicResource SettingsHighlight}"
+                                Foreground="{DynamicResource SettingsFg}"
                                 BorderThickness="0"
                                 Cursor="Hand"/>
                         <Button Content="초기화"
                                 Command="{Binding ResetSoundFileCommand}"
                                 Margin="4,0,0,0"
                                 Padding="6,2"
-                                Background="#33FFFFFF"
-                                Foreground="#EEFFFFFF"
+                                Background="{DynamicResource SettingsHighlight}"
+                                Foreground="{DynamicResource SettingsFg}"
                                 BorderThickness="0"
                                 Cursor="Hand"/>
                     </StackPanel>
 
                     <!-- ── T-8.4: 클립보드 패널 ──────────────────────────── -->
                     <CheckBox Content="클립보드 히스토리 패널"
-                              Foreground="#EEFFFFFF"
+                              Foreground="{DynamicResource SettingsFg}"
                               IsChecked="{Binding ClipboardPanelEnabled}"
                               Margin="0,0,0,16"/>
 
-                    <Separator Background="#33FFFFFF" Margin="0,0,0,16"/>
+                    <Separator Background="{DynamicResource SettingsHighlight}" Margin="0,0,0,16"/>
 
                     <!-- ── T-8.5: 앱별 레이아웃 ──────────────────────────── -->
                     <TextBlock Text="앱별 레이아웃"
-                               Foreground="#AAFFFFFF"
+                               Foreground="{DynamicResource SettingsFgSub}"
                                FontSize="12"
                                FontWeight="SemiBold"
                                Margin="0,0,0,8"/>
@@ -183,16 +190,16 @@
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
                                     <TextBox Text="{Binding ProcessName, UpdateSourceTrigger=PropertyChanged}"
-                                             Background="#33FFFFFF"
-                                             Foreground="#EEFFFFFF"
-                                             BorderBrush="#55FFFFFF"
+                                             Background="{DynamicResource SettingsHighlight}"
+                                             Foreground="{DynamicResource SettingsFg}"
+                                             BorderBrush="{DynamicResource SettingsBorder}"
                                              Padding="4,2"
                                              Grid.Column="0"
                                              Margin="0,0,4,0">
                                         <TextBox.Resources>
                                             <VisualBrush x:Key="Hint" Stretch="None" AlignmentX="Left" AlignmentY="Center">
                                                 <VisualBrush.Visual>
-                                                    <TextBlock Text="예: code.exe" Foreground="#66FFFFFF" Margin="6,0,0,0"/>
+                                                    <TextBlock Text="예: code.exe" Foreground="{DynamicResource SettingsFgHint}" Margin="6,0,0,0"/>
                                                 </VisualBrush.Visual>
                                             </VisualBrush>
                                         </TextBox.Resources>
@@ -210,11 +217,11 @@
                                                Grid.Column="1"
                                                VerticalAlignment="Center"
                                                Margin="0,0,4,0"
-                                               Foreground="#AAFFFFFF"/>
+                                               Foreground="{DynamicResource SettingsFgSub}"/>
                                     <TextBox Text="{Binding LayoutName, UpdateSourceTrigger=PropertyChanged}"
-                                             Background="#33FFFFFF"
-                                             Foreground="#EEFFFFFF"
-                                             BorderBrush="#55FFFFFF"
+                                             Background="{DynamicResource SettingsHighlight}"
+                                             Foreground="{DynamicResource SettingsFg}"
+                                             BorderBrush="{DynamicResource SettingsBorder}"
                                              Padding="4,2"
                                              Grid.Column="2"
                                              Margin="0,0,4,0"/>
@@ -235,8 +242,8 @@
                             Command="{Binding AddProfileCommand}"
                             Margin="0,0,0,4"
                             Padding="8,4"
-                            Background="#33FFFFFF"
-                            Foreground="#EEFFFFFF"
+                            Background="{DynamicResource SettingsHighlight}"
+                            Foreground="{DynamicResource SettingsFg}"
                             BorderThickness="0"
                             Cursor="Hand"/>
                     <Button Content="저장"
@@ -248,7 +255,7 @@
                             BorderThickness="0"
                             Cursor="Hand"/>
 
-                    <Separator Background="#33FFFFFF" Margin="0,0,0,16"/>
+                    <Separator Background="{DynamicResource SettingsHighlight}" Margin="0,0,0,16"/>
 
                     <!-- ── T-5.12: 관리자 권한으로 재시작 ─────────────────── -->
                     <Border Background="#33FFA500" CornerRadius="6" Padding="12,8" Margin="0,0,0,8">
@@ -258,7 +265,7 @@
                     <Button Content="관리자 권한으로 재시작"
                             Command="{Binding RestartAsAdminCommand}"
                             Height="32" Cursor="Hand"
-                            Background="#553B82F6" Foreground="#EEFFFFFF"
+                            Background="#553B82F6" Foreground="{DynamicResource SettingsFg}"
                             BorderThickness="0"/>
 
                 </StackPanel>

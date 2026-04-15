@@ -63,6 +63,9 @@ public partial class ClipboardViewModel : ObservableObject
         IsVisible = !IsVisible;
     }
 
+    [RelayCommand]
+    private void Close() => IsVisible = false;
+
     private static string Preview(string text)
     {
         // 최대 40자까지 미리보기

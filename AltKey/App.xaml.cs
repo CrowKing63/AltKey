@@ -56,6 +56,9 @@ public partial class App : System.Windows.Application
             services.AddSingleton<SoundService>();
             services.AddSingleton<ClipboardService>();
             services.AddSingleton<UpdateService>();
+            // T-9.3: 자동 완성 서비스
+            services.AddSingleton<WordFrequencyStore>();
+            services.AddSingleton<AutoCompleteService>();
 
             // ViewModel
             services.AddSingleton<KeyboardViewModel>();
@@ -63,6 +66,10 @@ public partial class App : System.Windows.Application
             services.AddSingleton<ClipboardViewModel>();
             services.AddSingleton<SettingsViewModel>();
             services.AddSingleton<MainViewModel>();
+            // T-9.3: 자동 완성 바 ViewModel
+            services.AddSingleton<SuggestionBarViewModel>();
+            // T-9.4: 레이아웃 편집기 ViewModel
+            services.AddSingleton<LayoutEditorViewModel>();
 
             // 창
             services.AddSingleton<MainWindow>();
@@ -77,6 +84,11 @@ public partial class App : System.Windows.Application
             // T-5.3: 포그라운드 앱 감지 시작
             var profileService = Services.GetRequiredService<ProfileService>();
             profileService.Start();
+
+            // T-9.3: AutoCompleteService → InputService 연결
+            var inputService = Services.GetRequiredService<InputService>();
+            var autoComplete = Services.GetRequiredService<AutoCompleteService>();
+            inputService.SetAutoComplete(autoComplete);
 
             var window = Services.GetRequiredService<MainWindow>();
             window.Show();
@@ -118,6 +130,10 @@ public partial class App : System.Windows.Application
 
     protected override void OnExit(ExitEventArgs e)
     {
+        // T-9.3: 학습된 단어 빈도 저장
+        try { Services.GetService<WordFrequencyStore>()?.Save(); }
+        catch { /* 저장 실패 — 무시 */ }
+
         // 서비스 정리
         if (Services is IDisposable d) d.Dispose();
         base.OnExit(e);

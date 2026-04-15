@@ -69,6 +69,9 @@ public partial class EmojiViewModel : ObservableObject
     {
         IsVisible = !IsVisible;
     }
+
+    [RelayCommand]
+    private void Close() => IsVisible = false;
 }
 
 // JSON 역직렬화용 데이터 모델

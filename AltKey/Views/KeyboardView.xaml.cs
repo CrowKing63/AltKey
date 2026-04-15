@@ -37,6 +37,16 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
     private void OnWindowSizeChanged(object sender, SizeChangedEventArgs e)
         => UpdateKeyUnit(e.NewSize.Width);
 
+    // 키보드 여백(키가 없는 영역) 클릭 시 이모지/클립보드 패널 닫기
+    private void KeyboardBorder_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (DataContext is MainViewModel vm)
+        {
+            vm.Emoji.IsVisible     = false;
+            vm.Clipboard.IsVisible = false;
+        }
+    }
+
     // T-4.10: KeyboardBorder 크기 변경 시 재계산 (이모지/클립보드 패널 토글 포함)
     private void KeyboardBorder_SizeChanged(object sender, SizeChangedEventArgs e)
         => UpdateKeyUnit(Window.GetWindow(this)?.Width ?? ActualWidth);
@@ -142,6 +152,30 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
             if (FindName("CollapseIcon") is TextBlock collapseIcon)
                 collapseIcon.Text = "▲";
             _isCollapsed = false;
+        }
+    }
+
+    // 화면 가장자리 이동 버튼 핸들러
+    private void EdgeLeftBtn_Click(object sender, RoutedEventArgs e)  => MoveToScreenEdge("Left");
+    private void EdgeRightBtn_Click(object sender, RoutedEventArgs e) => MoveToScreenEdge("Right");
+    private void EdgeUpBtn_Click(object sender, RoutedEventArgs e)    => MoveToScreenEdge("Up");
+    private void EdgeDownBtn_Click(object sender, RoutedEventArgs e)  => MoveToScreenEdge("Down");
+
+    /// 창을 지정 방향 화면 끝으로 이동한다 (반대축 위치는 유지).
+    private void MoveToScreenEdge(string direction)
+    {
+        var window = Window.GetWindow(this);
+        if (window is null) return;
+
+        var screen = System.Windows.SystemParameters.WorkArea;
+        const double margin = 8.0;
+
+        switch (direction)
+        {
+            case "Left":  window.Left = screen.Left + margin; break;
+            case "Right": window.Left = screen.Right - window.Width - margin; break;
+            case "Up":    window.Top  = screen.Top  + margin; break;
+            case "Down":  window.Top  = screen.Bottom - window.Height - margin; break;
         }
     }
 

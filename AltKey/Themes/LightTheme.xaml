@@ -21,4 +21,11 @@
     <SolidColorBrush x:Key="PanelBg"      Color="#EEF0F0F4"/>
     <SolidColorBrush x:Key="PanelFg"      Color="#FF1A1A1A"/>
     <SolidColorBrush x:Key="PanelBorder"  Color="#33000000"/>
+    <!-- 설정 패널 전용 -->
+    <SolidColorBrush x:Key="SettingsBg"        Color="#EEF4F4F8"/>
+    <SolidColorBrush x:Key="SettingsFg"        Color="#EE141420"/>
+    <SolidColorBrush x:Key="SettingsFgSub"     Color="#AA141420"/>
+    <SolidColorBrush x:Key="SettingsFgHint"    Color="#66141420"/>
+    <SolidColorBrush x:Key="SettingsHighlight" Color="#22000000"/>
+    <SolidColorBrush x:Key="SettingsBorder"    Color="#44000000"/>
 </ResourceDictionary>

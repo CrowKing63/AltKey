@@ -12,6 +12,22 @@
             BorderThickness="0,0,0,1"
             Padding="8">
         <StackPanel>
+            <!-- 패널 헤더 + 닫기 버튼 -->
+            <Grid Margin="0,0,0,4">
+                <TextBlock Text="이모지"
+                           FontSize="11" Opacity="0.6"
+                           VerticalAlignment="Center"
+                           Foreground="{DynamicResource PanelFg}"/>
+                <Button Content="✕"
+                        HorizontalAlignment="Right"
+                        Command="{Binding CloseCommand}"
+                        Width="20" Height="20"
+                        Background="Transparent" BorderThickness="0"
+                        Foreground="{DynamicResource PanelFg}"
+                        Opacity="0.6" Cursor="Hand"
+                        FontSize="11" Padding="0"/>
+            </Grid>
+
             <!-- 카테고리 탭 -->
             <ScrollViewer HorizontalScrollBarVisibility="Auto"
                           VerticalScrollBarVisibility="Disabled"

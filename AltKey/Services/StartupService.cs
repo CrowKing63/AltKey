@@ -13,8 +13,10 @@ public class StartupService
         get
         {
             using var key = Registry.CurrentUser.OpenSubKey(RegPath, writable: false);
-            return key?.GetValue(AppName) is string path
-                && path.Equals(ExePath, StringComparison.OrdinalIgnoreCase);
+            if (key?.GetValue(AppName) is not string rawValue) return false;
+            // 인스톨러 및 Enable()이 따옴표 포함 경로("path")를 저장하므로 비교 전 제거
+            var normalizedValue = rawValue.Trim('"');
+            return normalizedValue.Equals(ExePath, StringComparison.OrdinalIgnoreCase);
         }
     }
 
