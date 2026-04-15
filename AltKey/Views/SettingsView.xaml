@@ -8,7 +8,7 @@
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance vm:SettingsViewModel}">
     <UserControl.Resources>
-        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        <conv:BoolToVisibilityConverter x:Key="BoolToVis"/>
     </UserControl.Resources>
 
     <Border Background="{DynamicResource SettingsBg}"
@@ -22,9 +22,15 @@
 
             <!-- 헤더 -->
             <Grid Grid.Row="0" Margin="0,0,0,16">
-                <TextBlock Text="설정"
-                           FontSize="16" FontWeight="SemiBold"
-                           Foreground="{DynamicResource SettingsFg}"/>
+                <StackPanel Orientation="Vertical">
+                    <TextBlock Text="설정"
+                               FontSize="16" FontWeight="SemiBold"
+                               Foreground="{DynamicResource SettingsFg}"/>
+                    <TextBlock Text="{Binding CurrentVersion, StringFormat='버전 {0}'}"
+                               FontSize="11"
+                               Foreground="{DynamicResource SettingsFgSub}"
+                               Margin="0,2,0,0"/>
+                </StackPanel>
                 <Button HorizontalAlignment="Right"
                         Background="Transparent" BorderThickness="0"
                         Foreground="{DynamicResource SettingsFgSub}" FontSize="16" Cursor="Hand"
@@ -254,6 +260,86 @@
                             Foreground="#EEFFFFFF"
                             BorderThickness="0"
                             Cursor="Hand"/>
+
+                    <Separator Background="{DynamicResource SettingsHighlight}" Margin="0,0,0,16"/>
+
+                    <!-- ── T-9.5: 업데이트 확인 및 설치 ───────────────────── -->
+                    <TextBlock Text="업데이트"
+                               Foreground="{DynamicResource SettingsFgSub}"
+                               FontSize="12"
+                               FontWeight="SemiBold"
+                               Margin="0,0,0,8"/>
+
+                    <!-- 업데이트 상태 메시지 -->
+                    <Border Background="#333B82F6" CornerRadius="6" Padding="12,8" Margin="0,0,0,8"
+                            Visibility="{Binding IsCheckingUpdate, Converter={StaticResource BoolToVis}, ConverterParameter=Inverse}">
+                        <StackPanel Orientation="Vertical">
+                            <TextBlock Text="{Binding UpdateStatusMessage}"
+                                       TextWrapping="Wrap" FontSize="12"
+                                       Foreground="{DynamicResource SettingsFg}"/>
+                            <TextBlock Text="{Binding LatestVersion, StringFormat='최신 버전: {0}'}"
+                                       FontSize="11"
+                                       Foreground="{DynamicResource SettingsFgSub}"
+                                       Margin="0,4,0,0"
+                                       Visibility="{Binding HasUpdateAvailable, Converter={StaticResource BoolToVis}}"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- 다운로드 진행률 -->
+                    <StackPanel Orientation="Vertical"
+                                Visibility="{Binding IsDownloading, Converter={StaticResource BoolToVis}}">
+                        <TextBlock Text="{Binding UpdateStatusMessage}"
+                                   FontSize="12" Foreground="{DynamicResource SettingsFg}"
+                                   Margin="0,0,0,4"/>
+                        <ProgressBar Height="20" Value="{Binding DownloadProgress}"
+                                     Minimum="0" Maximum="1" Margin="0,0,0,4"/>
+                        <TextBlock Text="{Binding DownloadProgress, StringFormat={}{0:P0}}"
+                                   FontSize="11" Foreground="{DynamicResource SettingsFgSub}"/>
+                    </StackPanel>
+
+                    <!-- 설치 중 -->
+                    <TextBlock Text="설치 중... 앱이 자동으로 종료되고 재시작됩니다."
+                               FontSize="12" Foreground="#FFD700"
+                               Visibility="{Binding IsInstalling, Converter={StaticResource BoolToVis}}"
+                               Margin="0,0,0,8"/>
+
+                    <!-- 업데이트 버튼들 -->
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,16"
+                                Visibility="{Binding IsDownloading, Converter={StaticResource BoolToVis}, ConverterParameter=Inverse}">
+                        <Button Content="업데이트 확인"
+                                Command="{Binding CheckForUpdateCommand}"
+                                Height="32" Padding="12,4" Cursor="Hand"
+                                Background="{DynamicResource SettingsHighlight}"
+                                Foreground="{DynamicResource SettingsFg}"
+                                BorderThickness="0"
+                                Margin="0,0,8,0"/>
+
+                        <Button Content="자동 설치"
+                                Command="{Binding DownloadAndInstallFromSettingsCommand}"
+                                Height="32" Padding="12,4" Cursor="Hand"
+                                Background="#3B82F6"
+                                Foreground="#EEFFFFFF"
+                                BorderThickness="0"
+                                Visibility="{Binding HasUpdateAvailable, Converter={StaticResource BoolToVis}}"
+                                Margin="0,0,8,0"/>
+
+                        <Button Content="GitHub"
+                                Command="{Binding OpenReleasePageCommand}"
+                                Height="32" Padding="8,4" Cursor="Hand"
+                                Background="{DynamicResource SettingsHighlight}"
+                                Foreground="{DynamicResource SettingsFg}"
+                                BorderThickness="0"
+                                Visibility="{Binding HasUpdateAvailable, Converter={StaticResource BoolToVis}}"
+                                Margin="0,0,8,0"/>
+
+                        <Button Content="취소"
+                                Command="{Binding CancelDownloadCommand}"
+                                Height="32" Padding="8,4" Cursor="Hand"
+                                Background="{DynamicResource SettingsHighlight}"
+                                Foreground="{DynamicResource SettingsFg}"
+                                BorderThickness="0"
+                                Visibility="{Binding IsDownloading, Converter={StaticResource BoolToVis}}"/>
+                    </StackPanel>
 
                     <Separator Background="{DynamicResource SettingsHighlight}" Margin="0,0,0,16"/>
 

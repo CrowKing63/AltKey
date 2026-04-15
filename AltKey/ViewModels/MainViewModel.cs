@@ -262,7 +262,7 @@ public partial class MainViewModel : ObservableObject
             // 설치 실행
             IsInstalling = true;
             var installerService = App.Services.GetRequiredService<InstallerService>();
-            await installerService.RunInstallerAsync(installerPath);
+            await installerService.RunInstallerAsync(installerPath, autoRestart: true);
         }
         catch (Exception ex)
         {

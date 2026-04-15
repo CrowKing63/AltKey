@@ -2,16 +2,21 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.Reflection;
 using System.Windows;
 using AltKey.Services;
 using WpfApp = System.Windows.Application;
+using WpfMsgBox = System.Windows.MessageBox;
+using WpfMsgBoxButton = System.Windows.MessageBoxButton;
+using WpfMsgBoxImage = System.Windows.MessageBoxImage;
+using WpfMsgBoxResult = System.Windows.MessageBoxResult;
 using WpfDialog = Microsoft.Win32;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 namespace AltKey.ViewModels;
 
-/// T-5.10 / T-5.12 / T-8: 설정 패널 ViewModel
+/// T-5.10 / T-5.12 / T-8 / T-9.5: 설정 패널 ViewModel
 public partial class SettingsViewModel : ObservableObject
 {
     private readonly ConfigService        _configService;
@@ -21,6 +26,11 @@ public partial class SettingsViewModel : ObservableObject
     private readonly StartupService       _startupService;
     private readonly SoundService         _soundService;
     private readonly LayoutEditorViewModel _layoutEditorVm;
+    private readonly UpdateService        _updateService;
+    private readonly DownloadService      _downloadService;
+    private readonly InstallerService     _installerService;
+
+    private CancellationTokenSource?      _downloadCts;
 
     // ── Observable 속성 ─────────────────────────────────────────────────────
 
@@ -43,6 +53,20 @@ public partial class SettingsViewModel : ObservableObject
     // T-8.4: 클립보드 패널
     [ObservableProperty] private bool clipboardPanelEnabled;
 
+    // T-9.5: 현재 버전 표시
+    [ObservableProperty] private string currentVersion = "";
+
+    // T-9.5: 업데이트 체크 및 설치 상태
+    [ObservableProperty] private bool isCheckingUpdate;
+    [ObservableProperty] private bool isDownloading;
+    [ObservableProperty] private double downloadProgress;
+    [ObservableProperty] private bool isInstalling;
+    [ObservableProperty] private string updateStatusMessage = "";
+    [ObservableProperty] private bool hasUpdateAvailable;
+    [ObservableProperty] private string latestVersion = "";
+    [ObservableProperty] private string updateInstallerUrl = "";
+    [ObservableProperty] private string updateReleaseUrl = "";
+
     // T-8.5: 앱별 레이아웃 프로필
     [ObservableProperty]
     private ObservableCollection<ProfileEntry> profiles = [];
@@ -64,7 +88,10 @@ public partial class SettingsViewModel : ObservableObject
         HotkeyService        hotkeyService,
         StartupService       startupService,
         SoundService         soundService,
-        LayoutEditorViewModel layoutEditorViewModel)
+        LayoutEditorViewModel layoutEditorViewModel,
+        UpdateService        updateService,
+        DownloadService      downloadService,
+        InstallerService     installerService)
     {
         _configService  = configService;
         _themeService   = themeService;
@@ -73,6 +100,13 @@ public partial class SettingsViewModel : ObservableObject
         _startupService = startupService;
         _soundService   = soundService;
         _layoutEditorVm = layoutEditorViewModel;
+        _updateService  = updateService;
+        _downloadService = downloadService;
+        _installerService = installerService;
+
+        // T-9.5: 현재 버전 초기화
+        var asmVersion = Assembly.GetExecutingAssembly().GetName().Version;
+        CurrentVersion = asmVersion?.ToString(3) ?? "0.1.0";
 
         LoadFromConfig();
     }
@@ -278,6 +312,161 @@ public partial class SettingsViewModel : ObservableObject
         {
             // 사용자가 UAC 취소
         }
+    }
+
+    // ── T-9.5: 업데이트 확인 및 자동 설치 ───────────────────────────────────
+
+    /// <summary>GitHub에서 새 버전 확인</summary>
+    [RelayCommand]
+    private async Task CheckForUpdate()
+    {
+        IsCheckingUpdate = true;
+        UpdateStatusMessage = "업데이트 확인 중...";
+        HasUpdateAvailable = false;
+
+        try
+        {
+            var (hasUpdate, version, url, installerUrl) = await _updateService.CheckAsync();
+
+            if (string.IsNullOrEmpty(version))
+            {
+                UpdateStatusMessage = "업데이트 확인 실패 (네트워크 오류)";
+                ShowUpdateMessage("업데이트를 확인할 수 없습니다.\n네트워크 연결을 확인해주세요.");
+                return;
+            }
+
+            LatestVersion = version;
+            UpdateReleaseUrl = url;
+            UpdateInstallerUrl = installerUrl;
+
+            if (hasUpdate)
+            {
+                HasUpdateAvailable = true;
+                UpdateStatusMessage = $"새 버전 {version}이 있습니다!";
+            }
+            else
+            {
+                HasUpdateAvailable = false;
+                UpdateStatusMessage = "최신 버전입니다";
+                ShowUpdateMessage($"현재 최신 버전을 사용 중입니다.\n현재 버전: {CurrentVersion}");
+            }
+        }
+        catch (Exception ex)
+        {
+            UpdateStatusMessage = "업데이트 확인 오류";
+            ShowUpdateMessage($"업데이트 확인 중 오류:\n{ex.Message}");
+        }
+        finally
+        {
+            IsCheckingUpdate = false;
+        }
+    }
+
+    /// <summary>설치형 앱 자동 업데이트 (다운로드 → 설치 → 재시작)</summary>
+    [RelayCommand]
+    private async Task DownloadAndInstallFromSettings()
+    {
+        if (string.IsNullOrEmpty(UpdateInstallerUrl))
+        {
+            ShowUpdateMessage("인스톨러 URL을 찾을 수 없습니다.\nGitHub 페이지에서 수동으로 다운로드해주세요.");
+            OpenReleasePage();
+            return;
+        }
+
+        if (PathResolver.IsPortable)
+        {
+            ShowUpdateMessage("포터블 버전에서는 자동 업데이트를 지원하지 않습니다.\nGitHub 페이지에서 최신 버전을 다운로드해주세요.");
+            OpenReleasePage();
+            return;
+        }
+
+        try
+        {
+            _downloadCts = new CancellationTokenSource();
+
+            IsDownloading = true;
+            DownloadProgress = 0;
+            UpdateStatusMessage = $"{LatestVersion} 다운로드 중...";
+
+            var tempDir = Path.GetTempPath();
+            var installerFileName = $"AltKey-Setup-{LatestVersion}.exe";
+            var installerPath = Path.Combine(tempDir, installerFileName);
+
+            var progress = new Progress<double>(p => DownloadProgress = p);
+
+            await _downloadService.DownloadAsync(
+                UpdateInstallerUrl,
+                installerPath,
+                progress,
+                _downloadCts.Token);
+
+            IsDownloading = false;
+            UpdateStatusMessage = "설치 준비 중...";
+
+            // 설치 전 사용자 확인
+            var result = WpfMsgBox.Show(
+                $"AltKey {LatestVersion} 설치를 시작합니다.\n\n앱이 자동으로 종료되고, 설치 후 재시작됩니다.\n\n계속하시겠습니까?",
+                "설치 확인",
+                WpfMsgBoxButton.YesNo,
+                WpfMsgBoxImage.Question);
+
+            if (result != WpfMsgBoxResult.Yes)
+            {
+                UpdateStatusMessage = "설치가 취소되었습니다.";
+                try { File.Delete(installerPath); } catch { }
+                return;
+            }
+
+            // 설치 실행
+            IsInstalling = true;
+
+            // 1. 인스톨러 실행 (부모 프로세스가 죽기 전에 실행)
+            _installerService.StartInstaller(installerPath, autoRestart: true);
+
+            // 2. 앱 즉시 종료 (인스톨러가 재시작 Manager를 통해 앱을 닫을 수도 있지만, 명시적으로 종료)
+            if (WpfApp.Current.MainWindow is MainWindow mw)
+                mw.IsShuttingDown = true;
+
+            WpfApp.Current.Dispatcher.Invoke(() => WpfApp.Current.Shutdown());
+        }
+        catch (OperationCanceledException)
+        {
+            UpdateStatusMessage = "다운로드 취소됨";
+        }
+        catch (Exception ex)
+        {
+            IsDownloading = false;
+            IsInstalling = false;
+            UpdateStatusMessage = "업데이트 실패";
+
+            ShowUpdateMessage($"업데이트 중 오류:\n{ex.Message}\n\nGitHub에서 수동으로 다운로드해주세요.");
+            OpenReleasePage();
+        }
+        finally
+        {
+            _downloadCts?.Dispose();
+            _downloadCts = null;
+            IsDownloading = false;
+        }
+    }
+
+    [RelayCommand]
+    private void OpenReleasePage()
+    {
+        if (!string.IsNullOrEmpty(UpdateReleaseUrl))
+            Process.Start(new ProcessStartInfo(UpdateReleaseUrl) { UseShellExecute = true });
+    }
+
+    [RelayCommand]
+    private void CancelDownload()
+    {
+        _downloadCts?.Cancel();
+        IsDownloading = false;
+    }
+
+    private static void ShowUpdateMessage(string message)
+    {
+        WpfMsgBox.Show(message, "업데이트", WpfMsgBoxButton.OK, WpfMsgBoxImage.Information);
     }
 }
 
