@@ -183,6 +183,17 @@ git tag v1.2.3
 git push origin --tags
 ```
 
+```powershell
+# 1. 패치 버전 업데이트 (0.1.6 -> 0.1.7)
+./scripts/release.ps1 -VersionType patch
+
+# 2. 마이너 버전 업데이트 (0.1.6 -> 0.2.0)
+./scripts/release.ps1 -VersionType minor
+
+# 3. 특정 버전 지정
+./scripts/release.ps1 -CustomVersion "1.0.0"
+'''
+
 ---
 
 ## Project Structure
