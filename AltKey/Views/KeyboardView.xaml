@@ -184,11 +184,11 @@
 
             <!-- T-2.10: UAC 권한 경고 배너 (Auto 높이, 숨김 시 공간 없음) -->
             <Border DockPanel.Dock="Top"
-                    Background="#FFFACD" CornerRadius="4"
+                    Background="{DynamicResource ElevatedWarningBg}" CornerRadius="4"
                     Padding="12,6"
                     Visibility="{Binding Keyboard.ShowElevatedWarning, Converter={StaticResource BoolToVis}}">
-                <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="#7A6000"
-                           Text="현재 앱은 관리자 권한으로 실행 중이어서 입력이 전달되지 않습니다. AltKey를 관리자 권한으로 실행하세요."/>
+                <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource ElevatedWarningFg}"
+                           Text="키보드 보안 프로그램이나 관리자 권한 앱에서 입력이 차단되었습니다. AltKey를 관리자 권한으로 실행해 보세요."/>
             </Border>
 
             <!-- T-3.7 / T-4.10: 키보드 렌더링 (나머지 공간 채우기) -->

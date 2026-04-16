@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Security.Principal;
 using AltKey.Models;
 using AltKey.Platform;
 using WpfApp = System.Windows.Application;
@@ -7,13 +8,32 @@ using WpfClipboard = System.Windows.Clipboard;
 
 namespace AltKey.Services;
 
+public enum InputMode
+{
+    Unicode,
+    VirtualKey
+}
+
 public class InputService
 {
+    // ── 입력 모드: 관리자 권한이면 VirtualKey, 아니면 Unicode ──────────────
+    public InputMode Mode { get; } = CheckElevated() ? InputMode.VirtualKey : InputMode.Unicode;
+
+    // ── Unicode 모드에서 화면에 전송한 조합 문자열 길이 추적 ──────────────
+    public int TrackedOnScreenLength { get; set; }
+
     // ── T-9.3: 자동 완성 서비스 (옵셔널) ────────────────────────────────────
     private AutoCompleteService? _autoComplete;
 
     /// 자동 완성 서비스를 연결한다 (App.xaml.cs 초기화 이후 DI 에서 주입).
     public void SetAutoComplete(AutoCompleteService svc) => _autoComplete = svc;
+
+    private static bool CheckElevated()
+    {
+        using var identity = WindowsIdentity.GetCurrent();
+        var principal = new WindowsPrincipal(identity);
+        return principal.IsInRole(WindowsBuiltInRole.Administrator);
+    }
 
     // ── Sticky / Lock 상태 ────────────────────────────────────────────────────
     private readonly HashSet<VirtualKeyCode> _stickyKeys = [];
@@ -34,6 +54,61 @@ public class InputService
 
     // ── T-2.7: Caps Lock 상태 조회 ──────────────────────────────────────────
     public bool IsCapsLockOn => (Win32.GetKeyState((int)VirtualKeyCode.VK_CAPITAL) & 0x0001) != 0;
+
+    // Unicode 모드에서 조합키(Ctrl+C 등) 판별용
+    public bool HasActiveModifiers =>
+        _stickyKeys.Count > 0 || _lockedKeys.Count > 0;
+
+    /// 포그라운드 창의 IME 한/영 상태를 IMM32 API로 조회한다.
+    /// AttachThreadInput 없이 GetGUIThreadInfo + ImmGetDefaultIMEWnd로
+    /// 타겟 프로그램 IME 상태를 읽어온다 (포커스 탈취 방지).
+    public bool IsImeKorean()
+    {
+        try
+        {
+            var hwnd = Win32.GetForegroundWindow();
+            if (hwnd == IntPtr.Zero) return true;
+
+            uint fgThreadId = Win32.GetWindowThreadProcessId(hwnd, out _);
+
+            // 포커스된 컨트롤 HWND 획득 (타겟 프로그램의 실제 텍스트 입력 창)
+            IntPtr targetHwnd = IntPtr.Zero;
+
+            if (fgThreadId != 0)
+            {
+                var guiInfo = new Win32.GUITHREADINFO { cbSize = (uint)System.Runtime.InteropServices.Marshal.SizeOf<Win32.GUITHREADINFO>() };
+                if (Win32.GetGUIThreadInfo(fgThreadId, ref guiInfo))
+                {
+                    if (guiInfo.hwndFocus != IntPtr.Zero)
+                        targetHwnd = guiInfo.hwndFocus;
+                    else if (guiInfo.hwndActive != IntPtr.Zero)
+                        targetHwnd = guiInfo.hwndActive;
+                }
+            }
+
+            if (targetHwnd == IntPtr.Zero)
+                targetHwnd = hwnd;
+
+            // IMM32 API로 IME 상태 조회 (AttachThreadInput 없이)
+            IntPtr hIMEWnd = Win32.ImmGetDefaultIMEWnd(targetHwnd);
+            if (hIMEWnd != IntPtr.Zero)
+            {
+                IntPtr hIMC = Win32.ImmGetContext(hIMEWnd);
+                if (hIMC != IntPtr.Zero)
+                {
+                    Win32.ImmGetConversionStatus(hIMC, out uint conversion, out _);
+                    Win32.ImmReleaseContext(hIMEWnd, hIMC);
+                    return (conversion & Win32.IME_CMODE_NATIVE) != 0;
+                }
+            }
+
+            return true;
+        }
+        catch
+        {
+            return true;
+        }
+    }
 
     // ── T-2.4: 단일 키 전송 ──────────────────────────────────────────────────
     public void SendKeyPress(VirtualKeyCode vk)
@@ -101,8 +176,6 @@ public class InputService
             case SendKeyAction { Vk: var vkStr }:
                 if (Enum.TryParse<VirtualKeyCode>(vkStr, out var vk))
                 {
-                    // T-9.3: 자동 완성 서비스에 키 입력 알림
-                    _autoComplete?.OnKeyInput(vk);
                     SendKeyPress(vk);
                     ReleaseTransientModifiers();
                 }
@@ -192,6 +265,25 @@ public class InputService
         }
         DispatchInput(inputs.ToArray());
         ReleaseTransientModifiers();
+    }
+
+    // ── Unicode 모드: 이전 출력을 백스페이스로 지우고 새 출력을 원자적 전송 ──
+    public void SendAtomicReplace(int prevLen, string newOutput)
+    {
+        var inputs = new List<Win32.INPUT>();
+        for (int i = 0; i < prevLen; i++)
+        {
+            inputs.Add(MakeKeyDown((ushort)VirtualKeyCode.VK_BACK));
+            inputs.Add(MakeKeyUp((ushort)VirtualKeyCode.VK_BACK));
+        }
+        foreach (var ch in newOutput)
+        {
+            inputs.Add(MakeUnicodeKeyDown(ch));
+            inputs.Add(MakeUnicodeKeyUp(ch));
+        }
+        if (inputs.Count > 0)
+            DispatchInput(inputs.ToArray());
+        TrackedOnScreenLength = newOutput.Length;
     }
 
     private static Win32.INPUT MakeUnicodeKeyDown(char ch) => new()

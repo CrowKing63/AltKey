@@ -3,7 +3,7 @@ using AltKey.Models;
 namespace AltKey.Services;
 
 /// 자동 완성 서비스 — 영문 알파벳 + 한글 자모 조합 지원
-/// IsKoreanMode가 true면 한국어 레이아웃, IsImeKorean이 true면 한글 IME 모드
+/// IsKoreanMode가 true면 한국어 레이아웃, 한/영 IME 상태는 외부에서 주입
 public class AutoCompleteService
 {
     private readonly WordFrequencyStore _store;
@@ -14,9 +14,6 @@ public class AutoCompleteService
 
     /// 현재 레이아웃이 한국어인지 여부 (MainViewModel에서 레이아웃 전환 시 설정)
     public bool IsKoreanMode { get; set; }
-
-    /// 한글 IME 모드 여부 (한국어 레이아웃에서 한/영 전환 시 토글; 기본값 true)
-    public bool IsImeKorean { get; set; } = true;
 
     /// 제안 목록이 바뀔 때 발생 (UI 스레드가 아닐 수 있으므로 Dispatcher.Invoke 필요)
     public event Action<IReadOnlyList<string>>? SuggestionsChanged;
@@ -39,27 +36,10 @@ public class AutoCompleteService
         SuggestionsChanged?.Invoke(suggestions);
     }
 
-    /// InputService 의 SendKeyAction 처리 시 호출
-    /// 한글 IME 모드에서는 자동 완성 추적을 건너뛰고(OnHangulInput이 처리),
-    /// 영문 IME 모드에서는 영문 알파벳을 추적한다.
+    /// InputService 의 SendKeyAction 처리 시 호출 (KeyboardViewModel에서 라우팅)
+    /// 영문 추적 전용 — 한국어 자모는 OnHangulInput이 처리
     public void OnKeyInput(VirtualKeyCode vk)
     {
-        if (vk == VirtualKeyCode.VK_HANGUL)
-        {
-            CompleteCurrentWord();
-            IsImeKorean = !IsImeKorean;
-            return;
-        }
-
-        if (IsKoreanMode && IsImeKorean)
-        {
-            if (IsWordSeparator(vk))
-            {
-                CompleteCurrentWord();
-            }
-            return;
-        }
-
         if (IsWordSeparator(vk))
         {
             if (_currentWord.Length >= 2)
@@ -93,18 +73,26 @@ public class AutoCompleteService
     }
 
     /// 제안 단어를 수락하면 현재 단어로 학습하고 상태 초기화
-    /// 반환값: (삭제할 기존 입력 길이, 입력할 전체 단어, 조합 취소 필요 여부)
-    public (int backspaceCount, string fullWord, bool needsEscape) AcceptSuggestion(string suggestion)
+    /// 반환값: (삭제할 백스페이스 횟수, 입력할 전체 단어)
+    public (int backspaceCount, string fullWord) AcceptSuggestion(string suggestion)
     {
-        bool needsEscape = _isHangulMode && _hangul.HasComposition;
-        var bsCount = _isHangulMode ? _hangul.CompletedLength : _currentWord.Length;
+        int bsCount;
+        if (_isHangulMode)
+        {
+            // 완성된 음절(개당 1회) + 조합 중인 음절(분해 백스페이스)
+            bsCount = _hangul.CompletedLength + _hangul.CompositionDepth;
+        }
+        else
+        {
+            bsCount = _currentWord.Length;
+        }
 
         _store.RecordWord(suggestion);
         _hangul.Reset();
         _currentWord = "";
         _isHangulMode = false;
         SuggestionsChanged?.Invoke([]);
-        return (bsCount, suggestion, needsEscape);
+        return (bsCount, suggestion);
     }
 
     /// 현재 조합 중인 단어를 저장하고 상태 초기화

@@ -67,6 +67,10 @@ public partial class SettingsViewModel : ObservableObject
     // T-9.5: 현재 버전 표시
     [ObservableProperty] private string currentVersion = "";
 
+    // T-5.12: 관리자 권한 실행 여부
+    public bool IsRunningAsAdmin { get; } = System.Security.Principal.WindowsIdentity.GetCurrent() is { } identity
+        && new System.Security.Principal.WindowsPrincipal(identity).IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator);
+
     // T-9.5: 업데이트 체크 및 설치 상태
     [ObservableProperty] private bool isCheckingUpdate;
     [ObservableProperty] private bool isDownloading;

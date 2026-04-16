@@ -56,15 +56,20 @@ public partial class SuggestionBarViewModel : ObservableObject
     [RelayCommand]
     private void AcceptSuggestion(string suggestion)
     {
-        var (bsCount, fullWord, needsEscape) = _autoComplete.AcceptSuggestion(suggestion);
-        // 조합 중인 문자가 있으면 VK_ESCAPE로 IME 조합 취소
-        if (needsEscape)
-            _inputService.SendKeyPress(VirtualKeyCode.VK_ESCAPE);
-        // 기존 완성된 문자를 Backspace로 삭제
-        for (int i = 0; i < bsCount; i++)
-            _inputService.SendKeyPress(VirtualKeyCode.VK_BACK);
-        // 전체 단어를 유니코드로 입력
-        if (fullWord.Length > 0)
-            _inputService.SendUnicode(fullWord);
+        if (_inputService.Mode == InputMode.Unicode)
+        {
+            int onScreenLen = _autoComplete.CurrentWord.Length;
+            var (_, fullWord) = _autoComplete.AcceptSuggestion(suggestion);
+            _inputService.SendAtomicReplace(onScreenLen, fullWord);
+            _inputService.TrackedOnScreenLength = 0;
+        }
+        else
+        {
+            var (bsCount, fullWord) = _autoComplete.AcceptSuggestion(suggestion);
+            for (int i = 0; i < bsCount; i++)
+                _inputService.SendKeyPress(VirtualKeyCode.VK_BACK);
+            if (fullWord.Length > 0)
+                _inputService.SendUnicode(fullWord);
+        }
     }
 }

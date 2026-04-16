@@ -60,8 +60,15 @@ public partial class KeyboardViewModel : ObservableObject
     private readonly AutoCompleteService _autoComplete;
     private readonly ConfigService _configService;
 
-    // T-2.7: 100ms 주기 폴링으로 CapsLock 상태 동기화
+    // 한/영 내부 상태 (IME와 무관하게 자체 관리)
+    private bool _isKoreanInput = true;
+
+    // T-2.7: 100ms 주기 폴링으로 CapsLock 및 IME 한/영 상태 동기화
     private readonly DispatcherTimer _capsLockTimer;
+    private bool _lastImeKorean = true;
+
+    // 이벤트: IME 한/영 상태가 바뀌었을 때 발생
+    public event Action<bool>? ImeModeChanged;
 
     // ── Observable 속성 ─────────────────────────────────────────────────────
     [ObservableProperty]
@@ -92,7 +99,7 @@ public partial class KeyboardViewModel : ObservableObject
         _inputService.ElevatedAppDetected += OnElevatedAppDetected;
 
         _capsLockTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(100) };
-        _capsLockTimer.Tick += (_, _) => UpdateModifierState();
+        _capsLockTimer.Tick += OnTimerTick;
         _capsLockTimer.Start();
     }
 
@@ -114,37 +121,191 @@ public partial class KeyboardViewModel : ObservableObject
     [RelayCommand]
     private void KeyPressed(KeySlot slot)
     {
-        // T-8.2: 키 클릭 사운드 재생
         _soundService.Play();
 
-        // 자동 완성: 레이아웃 언어 + IME 모드에 따라 한글/영문 분기
-        if (_configService.Current.AutoCompleteEnabled)
+        bool handledByComposer = false;
+
+        if (_configService.Current.AutoCompleteEnabled && _autoComplete.IsKoreanMode)
+            handledByComposer = HandleKoreanLayoutKey(slot);
+        else if (_configService.Current.AutoCompleteEnabled)
         {
-            if (_autoComplete.IsKoreanMode && _autoComplete.IsImeKorean)
-            {
-                // 한국어 레이아웃 + 한글 IME: label(한글 자모)로 한글 자동 완성 추적
-                string? hangulJamo = ShowUpperCase && slot.ShiftLabel is { Length: 1 } && IsHangulJamo(slot.ShiftLabel)
-                    ? slot.ShiftLabel
-                    : IsHangulJamo(slot.Label) ? slot.Label : null;
-                if (hangulJamo is not null)
-                    _autoComplete.OnHangulInput(hangulJamo);
-                else if (slot.Action is SendKeyAction { Vk: var vkStr }
-                         && Enum.TryParse<VirtualKeyCode>(vkStr, out var vk)
-                         && vk == VirtualKeyCode.VK_BACK)
-                    _autoComplete.OnHangulBackspace();
-                else if (slot.Action is SendKeyAction { Vk: var vkStr2 }
-                         && Enum.TryParse<VirtualKeyCode>(vkStr2, out var vk2)
-                         && IsAutoCompleteSeparator(vk2))
-                    _autoComplete.CompleteCurrentWord();
-            }
-            // 영문 레이아웃 또는 한국어 레이아웃+영문 IME: InputService.OnKeyInput에서 자동 처리
+            HandleEnglishLayoutKey(slot);
+            handledByComposer = ShouldSkipHandleAction(slot);
         }
 
-        if (slot.Action is not null)
+        if (!handledByComposer && slot.Action is not null)
             _inputService.HandleAction(slot.Action);
 
         UpdateModifierState();
         KeyTapped?.Invoke();
+    }
+
+    /// Unicode 모드 + 알파벳 키는 SendUnicode로 이미 전송했으므로 HandleAction 스킵
+    private bool ShouldSkipHandleAction(KeySlot slot)
+    {
+        if (_inputService.Mode != InputMode.Unicode) return false;
+        if (_inputService.HasActiveModifiers) return false;
+        if (slot.Action is not SendKeyAction { Vk: var vkStr }
+            || !Enum.TryParse<VirtualKeyCode>(vkStr, out var vk))
+            return false;
+        return vk >= VirtualKeyCode.VK_A && vk <= VirtualKeyCode.VK_Z;
+    }
+
+    /// 한국어 레이아웃 키 처리. true 반환 시 HandleAction 스킵.
+    private bool HandleKoreanLayoutKey(KeySlot slot)
+    {
+        if (slot.Action is SendKeyAction { Vk: "VK_HANGUL" })
+        {
+            _isKoreanInput = !_isKoreanInput;
+            FinalizeKoreanComposition();
+            return false;
+        }
+
+        // modifier(Ctrl/Alt/Win/Shift)가 활성 상태면 조합키이므로 자모 처리 스킵
+        bool isComboKey = _inputService.HasActiveModifiers;
+
+        if (!_isKoreanInput)
+            return HandleEnglishSubMode(slot, isComboKey);
+
+        // ── 한국어 입력 모드 ──────────────────────────────────────────────
+
+        // 조합키면 자모 처리하지 않고 VK 코드 전송
+        if (isComboKey)
+        {
+            if (_inputService.Mode == InputMode.Unicode && _inputService.TrackedOnScreenLength > 0)
+                FinalizeKoreanComposition();
+            return false;
+        }
+
+        string? hangulJamo = GetHangulJamoFromSlot(slot);
+
+        if (hangulJamo is not null)
+        {
+            if (_inputService.Mode == InputMode.Unicode)
+            {
+                int prevLen = _inputService.TrackedOnScreenLength;
+                _autoComplete.OnHangulInput(hangulJamo);
+                string newOutput = _autoComplete.CurrentWord;
+                _inputService.SendAtomicReplace(prevLen, newOutput);
+                return true;
+            }
+            else
+            {
+                _autoComplete.OnHangulInput(hangulJamo);
+                return false;
+            }
+        }
+
+        if (slot.Action is SendKeyAction { Vk: var vkStr }
+            && Enum.TryParse<VirtualKeyCode>(vkStr, out var vk))
+        {
+            if (vk == VirtualKeyCode.VK_BACK)
+            {
+                if (_inputService.Mode == InputMode.Unicode && _inputService.TrackedOnScreenLength > 0)
+                {
+                    int prevLen = _inputService.TrackedOnScreenLength;
+                    _autoComplete.OnHangulBackspace();
+                    string newOutput = _autoComplete.CurrentWord;
+                    _inputService.SendAtomicReplace(prevLen, newOutput);
+                    return true;
+                }
+                else if (_autoComplete.CurrentWord.Length > 0)
+                {
+                    _autoComplete.OnHangulBackspace();
+                }
+                return false;
+            }
+
+            if (IsAutoCompleteSeparator(vk))
+            {
+                FinalizeKoreanComposition();
+                return false;
+            }
+
+            if (_inputService.Mode == InputMode.Unicode && _inputService.TrackedOnScreenLength > 0)
+                FinalizeKoreanComposition();
+        }
+
+        return false;
+    }
+
+    private bool HandleEnglishSubMode(KeySlot slot, bool isComboKey)
+    {
+        if (slot.Action is not SendKeyAction { Vk: var vkStr }
+            || !Enum.TryParse<VirtualKeyCode>(vkStr, out var vk))
+            return false;
+
+        if (IsAutoCompleteSeparator(vk))
+        {
+            _autoComplete.CompleteCurrentWord();
+            return false;
+        }
+
+        if (isComboKey || _inputService.Mode == InputMode.VirtualKey)
+        {
+            _autoComplete.OnKeyInput(vk);
+            return false;
+        }
+
+        char ch = VkToEnglishChar(vk, ShowUpperCase);
+        if (ch != '\0')
+        {
+            _autoComplete.OnKeyInput(vk);
+            _inputService.SendUnicode(ch.ToString());
+            return true;
+        }
+        return false;
+    }
+
+    private void HandleEnglishLayoutKey(KeySlot slot)
+    {
+        if (slot.Action is not SendKeyAction { Vk: var vkStr }
+            || !Enum.TryParse<VirtualKeyCode>(vkStr, out var vk))
+            return;
+
+        if (IsAutoCompleteSeparator(vk))
+        {
+            _autoComplete.CompleteCurrentWord();
+            return;
+        }
+
+        if (_inputService.HasActiveModifiers || _inputService.Mode == InputMode.VirtualKey)
+        {
+            _autoComplete.OnKeyInput(vk);
+            return;
+        }
+
+        char ch = VkToEnglishChar(vk, ShowUpperCase);
+        if (ch != '\0')
+        {
+            _autoComplete.OnKeyInput(vk);
+            _inputService.SendUnicode(ch.ToString());
+        }
+    }
+
+    private static char VkToEnglishChar(VirtualKeyCode vk, bool upperCase)
+    {
+        if (vk >= VirtualKeyCode.VK_A && vk <= VirtualKeyCode.VK_Z)
+        {
+            char c = (char)('a' + ((int)vk - (int)VirtualKeyCode.VK_A));
+            return upperCase ? char.ToUpperInvariant(c) : c;
+        }
+        return '\0';
+    }
+
+    private void FinalizeKoreanComposition()
+    {
+        _autoComplete.CompleteCurrentWord();
+        _inputService.TrackedOnScreenLength = 0;
+    }
+
+    private string? GetHangulJamoFromSlot(KeySlot slot)
+    {
+        if (ShowUpperCase && slot.ShiftLabel is { Length: 1 } && IsHangulJamo(slot.ShiftLabel))
+            return slot.ShiftLabel;
+        if (IsHangulJamo(slot.Label))
+            return slot.Label;
+        return null;
     }
 
     private static bool IsHangulJamo(string s) =>
@@ -156,6 +317,27 @@ public partial class KeyboardViewModel : ObservableObject
             or VirtualKeyCode.VK_OEM_COMMA;
 
     // ── 내부 메서드 ──────────────────────────────────────────────────────────
+    private void OnTimerTick(object? sender, EventArgs e)
+    {
+        UpdateModifierState();
+        UpdateImeState();
+    }
+
+    private void UpdateImeState()
+    {
+        if (_inputService.Mode != InputMode.VirtualKey) return;
+        if (!_autoComplete.IsKoreanMode) return;
+
+        bool imeKorean = _inputService.IsImeKorean();
+        if (imeKorean != _lastImeKorean)
+        {
+            _lastImeKorean = imeKorean;
+            _isKoreanInput = imeKorean;
+            ImeModeChanged?.Invoke(imeKorean);
+            _autoComplete.CompleteCurrentWord();
+        }
+    }
+
     private void UpdateModifierState()
     {
         ShowUpperCase =
@@ -188,6 +370,9 @@ public partial class KeyboardViewModel : ObservableObject
 
     private void OnElevatedAppDetected()
     {
+        if (_inputService.Mode == InputMode.VirtualKey)
+            return;
+
         ShowElevatedWarning = true;
 
         var dismissTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };

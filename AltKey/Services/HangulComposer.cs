@@ -78,6 +78,19 @@ public class HangulComposer
     /// 완성된 음절 수 (_completed 길이)
     public int CompletedLength => _completed.Length;
 
+    /// 현재 조합 음절을 지우기 위해 필요한 백스페이스 횟수
+    /// (초성+중성+종성 = 3, 초성+중성 = 2, 초성만 = 1, 없음 = 0)
+    public int CompositionDepth
+    {
+        get
+        {
+            if (_jongseongIdx.HasValue) return 3;
+            if (_jungseongIdx.HasValue) return 2;
+            if (_choseongIdx.HasValue) return 1;
+            return 0;
+        }
+    }
+
     /// 현재 상태를 지우기 위해 필요한 VK_BACK 횟수
     /// 완성 음절은 1회, 조합 중인 문자는 자모 개수만큼
     public int TotalBackspaceCount => _completed.Length + GetCurrentCompositionBackspaceCount();

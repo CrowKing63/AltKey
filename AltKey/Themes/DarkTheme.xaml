@@ -25,4 +25,12 @@
     <SolidColorBrush x:Key="SettingsFgHint"    Color="#66FFFFFF"/>
     <SolidColorBrush x:Key="SettingsHighlight" Color="#33FFFFFF"/>
     <SolidColorBrush x:Key="SettingsBorder"    Color="#55FFFFFF"/>
+    <!-- UAC 경고 배너 -->
+    <SolidColorBrush x:Key="ElevatedWarningBg"  Color="#CCFF8C00"/>
+    <SolidColorBrush x:Key="ElevatedWarningFg"  Color="#FFFFFFFF"/>
+    <!-- 관리자 상태 안내 -->
+    <SolidColorBrush x:Key="AdminWarningBg"     Color="#33FFA500"/>
+    <SolidColorBrush x:Key="AdminWarningFg"     Color="#FFEEAA"/>
+    <SolidColorBrush x:Key="AdminOkBg"          Color="#2216A34A"/>
+    <SolidColorBrush x:Key="AdminOkFg"          Color="#AA90EE90"/>
 </ResourceDictionary>
