@@ -177,6 +177,12 @@
                               IsChecked="{Binding ClipboardPanelEnabled}"
                               Margin="0,0,0,16"/>
 
+                    <!-- ── T-9.3: 자동 완성 ──────────────────────────── -->
+                    <CheckBox Content="영문 자동 완성"
+                              Foreground="{DynamicResource SettingsFg}"
+                              IsChecked="{Binding AutoCompleteEnabled}"
+                              Margin="0,0,0,16"/>
+
                     <Separator Background="{DynamicResource SettingsHighlight}" Margin="0,0,0,16"/>
 
                     <!-- ── T-8.5: 앱별 레이아웃 ──────────────────────────── -->

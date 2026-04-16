@@ -1,9 +1,11 @@
-using System.Diagnostics;
+using Microsoft.Extensions.DependencyInjection;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media.Animation;
+using AltKey.Models;
+using AltKey.Services;
 using AltKey.ViewModels;
 using WpfRect = System.Windows.Shapes.Rectangle;
 
@@ -13,9 +15,13 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
 {
     private double _expandedHeight = 0;
     private bool _isCollapsed = false;
+    private const double SuggestionBarHeight = 28.0;
+    private bool _autoCompleteBarAdded = false;
 
     // 비율 고정 리사이즈: 드래그 시작 시 캡처한 가로/세로 비율
     private double _resizeAspectRatio = 900.0 / 350.0;
+
+    private ConfigService? _configService;
 
     public KeyboardView()
     {
@@ -23,13 +29,43 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
         Loaded += OnLoaded;
     }
 
-    // T-4.10: 반응형 KeyUnit 초기화
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
         if (Window.GetWindow(this) is { } window)
         {
             UpdateKeyUnit(window.Width);
             window.SizeChanged += OnWindowSizeChanged;
+
+            _configService = App.Services.GetRequiredService<ConfigService>();
+            _configService.ConfigChanged += OnConfigChanged;
+
+            ApplySuggestionBarHeight();
+        }
+    }
+
+    private void ApplySuggestionBarHeight()
+    {
+        if (Window.GetWindow(this) is not { } window) return;
+
+        var wantBar = _configService?.Current.AutoCompleteEnabled == true;
+
+        if (wantBar && !_autoCompleteBarAdded)
+        {
+            window.Height += SuggestionBarHeight;
+            _autoCompleteBarAdded = true;
+        }
+        else if (!wantBar && _autoCompleteBarAdded)
+        {
+            window.Height -= SuggestionBarHeight;
+            _autoCompleteBarAdded = false;
+        }
+    }
+
+    private void OnConfigChanged(string? propertyName)
+    {
+        if (propertyName is null or nameof(Models.AppConfig.AutoCompleteEnabled))
+        {
+            Dispatcher.InvokeAsync(() => ApplySuggestionBarHeight());
         }
     }
 

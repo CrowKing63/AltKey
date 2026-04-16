@@ -78,6 +78,16 @@ public partial class MainViewModel : ObservableObject
         }
     }
 
+    public bool AutoCompleteEnabled
+    {
+        get => _configService.Current.AutoCompleteEnabled;
+        set
+        {
+            _configService.Current.AutoCompleteEnabled = value;
+            OnPropertyChanged();
+        }
+    }
+
     /// T-5.1: 체류 클릭 시간 ms (KeyButton 바인딩용)
     public int DwellTimeMs
     {
@@ -125,9 +135,9 @@ public partial class MainViewModel : ObservableObject
 
     private void OnConfigChanged(string? propertyName)
     {
-        // Dwell 관련 속성 변경 알림
         OnPropertyChanged(nameof(DwellEnabled));
         OnPropertyChanged(nameof(DwellTimeMs));
+        OnPropertyChanged(nameof(AutoCompleteEnabled));
     }
 
     public Task InitializeAsync()

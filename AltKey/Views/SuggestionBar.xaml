@@ -5,8 +5,9 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:vm="clr-namespace:AltKey.ViewModels"
              mc:Ignorable="d"
-             d:DataContext="{d:DesignInstance vm:SuggestionBarViewModel}">
-    <Border Background="#CC1A1A1A" Padding="4,2">
+             d:DataContext="{d:DesignInstance vm:SuggestionBarViewModel}"
+             Height="28">
+    <Border Background="{DynamicResource PanelBg}" Padding="4,2" ClipToBounds="True">
         <ItemsControl ItemsSource="{Binding Suggestions}">
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
@@ -21,8 +22,8 @@
                             CommandParameter="{Binding}"
                             Padding="8,4" Margin="2,0"
                             Background="Transparent"
-                            Foreground="#EEFFFFFF"
-                            BorderBrush="#44FFFFFF" BorderThickness="1"
+                            Foreground="{DynamicResource PanelFg}"
+                            BorderBrush="{DynamicResource PanelBorder}" BorderThickness="1"
                             Cursor="Hand" FontSize="12"/>
                 </DataTemplate>
             </ItemsControl.ItemTemplate>
