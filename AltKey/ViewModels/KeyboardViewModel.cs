@@ -117,12 +117,28 @@ public partial class KeyboardViewModel : ObservableObject
         // T-8.2: 키 클릭 사운드 재생
         _soundService.Play();
 
-        // 한글 자모 자동 완성 추적
-        bool isUpperCase = ShowUpperCase;
-        string? hangulJamo = isUpperCase && slot.HangulShiftLabel is { Length: > 0 } hs
-            ? hs : slot.HangulLabel;
-        if (hangulJamo is { Length: > 0 } && _configService.Current.AutoCompleteEnabled)
-            _autoComplete.OnHangulInput(hangulJamo);
+        // 자동 완성: 레이아웃 언어에 따라 한글/영문 모드 선택
+        if (_configService.Current.AutoCompleteEnabled)
+        {
+            if (_autoComplete.IsKoreanMode)
+            {
+                // 한국어 레이아웃: label(한글 자모)로 한글 자동 완성 추적
+                string? hangulJamo = ShowUpperCase && slot.ShiftLabel is { Length: 1 } && IsHangulJamo(slot.ShiftLabel)
+                    ? slot.ShiftLabel
+                    : IsHangulJamo(slot.Label) ? slot.Label : null;
+                if (hangulJamo is not null)
+                    _autoComplete.OnHangulInput(hangulJamo);
+                else if (slot.Action is SendKeyAction { Vk: var vkStr }
+                         && Enum.TryParse<VirtualKeyCode>(vkStr, out var vk)
+                         && vk == VirtualKeyCode.VK_BACK)
+                    _autoComplete.OnHangulInput("BACKSPACE");
+                else if (slot.Action is SendKeyAction { Vk: var vkStr2 }
+                         && Enum.TryParse<VirtualKeyCode>(vkStr2, out var vk2)
+                         && IsAutoCompleteSeparator(vk2))
+                    _autoComplete.ResetState();
+            }
+            // 영문 레이아웃: InputService.OnKeyInput에서 자동 처리
+        }
 
         if (slot.Action is not null)
             _inputService.HandleAction(slot.Action);
@@ -130,6 +146,14 @@ public partial class KeyboardViewModel : ObservableObject
         UpdateModifierState();
         KeyTapped?.Invoke();
     }
+
+    private static bool IsHangulJamo(string s) =>
+        s.Length == 1 && (s[0] >= '\u3131' && s[0] <= '\u3163' || s[0] >= '\uAC00' && s[0] <= '\uD7A3');
+
+    private static bool IsAutoCompleteSeparator(VirtualKeyCode vk) =>
+        vk is VirtualKeyCode.VK_SPACE or VirtualKeyCode.VK_RETURN
+            or VirtualKeyCode.VK_TAB or VirtualKeyCode.VK_OEM_PERIOD
+            or VirtualKeyCode.VK_OEM_COMMA;
 
     // ── 내부 메서드 ──────────────────────────────────────────────────────────
     private void UpdateModifierState()

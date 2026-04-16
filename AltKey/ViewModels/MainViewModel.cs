@@ -18,6 +18,7 @@ public partial class MainViewModel : ObservableObject
     private readonly ConfigService  _configService;
     private readonly LayoutService  _layoutService;
     private readonly ProfileService _profileService;
+    private readonly AutoCompleteService _autoCompleteService;
 
     // 표시명 → 파일명 매핑 (T-7.1: AvailableLayouts가 표시명을 저장)
     private readonly Dictionary<string, string> _displayToFileName = [];
@@ -107,7 +108,8 @@ public partial class MainViewModel : ObservableObject
         SettingsViewModel      settingsViewModel,
         EmojiViewModel         emojiViewModel,
         ClipboardViewModel     clipboardViewModel,
-        SuggestionBarViewModel suggestionBarViewModel)
+        SuggestionBarViewModel suggestionBarViewModel,
+        AutoCompleteService    autoCompleteService)
     {
         _configService  = configService;
         _layoutService  = layoutService;
@@ -118,6 +120,7 @@ public partial class MainViewModel : ObservableObject
         Emoji        = emojiViewModel;
         Clipboard    = clipboardViewModel;
         AutoComplete = suggestionBarViewModel;
+        _autoCompleteService = autoCompleteService;
 
         // T-5.4: 포그라운드 앱 변경 → 자동 레이아웃 전환
         _profileService.ForegroundAppChanged += OnForegroundAppChanged;
@@ -204,7 +207,11 @@ public partial class MainViewModel : ObservableObject
 
             if (layout is null) return;
             Keyboard.LoadLayout(layout);
-            CurrentLayoutName = layout.Name; // 표시명으로 저장 → ComboBox 일치
+            CurrentLayoutName = layout.Name;
+
+            // 자동 완성 언어 모드 설정: 레이아웃 language가 "ko"면 한국어 모드
+            _autoCompleteService.IsKoreanMode = layout.Language == "ko";
+            _autoCompleteService.ResetState();
         }
         finally
         {

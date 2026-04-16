@@ -3,6 +3,7 @@ using AltKey.Models;
 namespace AltKey.Services;
 
 /// 자동 완성 서비스 — 영문 알파벳 + 한글 자모 조합 지원
+/// IsKoreanMode가 true면 한글 자동 완성, false면 영문 자동 완성을 사용한다.
 public class AutoCompleteService
 {
     private readonly WordFrequencyStore _store;
@@ -10,6 +11,9 @@ public class AutoCompleteService
     private readonly HangulComposer _hangul = new();
     private string _currentWord = "";
     private bool _isHangulMode = false;
+
+    /// 현재 레이아웃이 한국어인지 여부 (MainViewModel에서 레이아웃 전환 시 설정)
+    public bool IsKoreanMode { get; set; }
 
     /// 제안 목록이 바뀔 때 발생 (UI 스레드가 아닐 수 있으므로 Dispatcher.Invoke 필요)
     public event Action<IReadOnlyList<string>>? SuggestionsChanged;
@@ -33,21 +37,16 @@ public class AutoCompleteService
     }
 
     /// InputService 의 SendKeyAction 처리 시 호출
+    /// 한국어 모드에서는 영문 자동 완성 추적을 건너뛴다.
     public void OnKeyInput(VirtualKeyCode vk)
     {
+        if (IsKoreanMode) return;
+
         if (IsWordSeparator(vk))
         {
-            if (_isHangulMode)
-            {
-                if (_hangul.Current.Length >= 1)
-                    _store.RecordWord(_hangul.Current);
-                _hangul.Reset();
-                _isHangulMode = false;
-            }
-            else if (_currentWord.Length >= 2)
-            {
+            // 단어 완성: 학습 후 초기화
+            if (_currentWord.Length >= 2)
                 _store.RecordWord(_currentWord);
-            }
             _currentWord = "";
             SuggestionsChanged?.Invoke([]);
             return;
@@ -55,21 +54,17 @@ public class AutoCompleteService
 
         if (vk == VirtualKeyCode.VK_BACK)
         {
-            if (_isHangulMode)
-                _hangul.Backspace();
-            else if (_currentWord.Length > 0)
+            if (_currentWord.Length > 0)
                 _currentWord = _currentWord[..^1];
         }
-        else if (!_isHangulMode)
+        else
         {
             var ch = VkToChar(vk);
             if (ch != '\0') _currentWord += ch;
         }
 
-        var sugg = _isHangulMode
-            ? _koreanDict.GetSuggestions(_hangul.Current)
-            : (IReadOnlyList<string>)_store.GetSuggestions(_currentWord);
-        SuggestionsChanged?.Invoke(sugg);
+        var suggestions = _store.GetSuggestions(_currentWord);
+        SuggestionsChanged?.Invoke(suggestions);
     }
 
     /// 제안 단어를 수락하면 현재 단어로 학습하고 상태 초기화
@@ -85,6 +80,15 @@ public class AutoCompleteService
         _isHangulMode = false;
         SuggestionsChanged?.Invoke([]);
         return (bsCount, suggestion);
+    }
+
+    /// 레이아웃 전환 시 상태 초기화
+    public void ResetState()
+    {
+        _hangul.Reset();
+        _currentWord = "";
+        _isHangulMode = false;
+        SuggestionsChanged?.Invoke([]);
     }
 
     // ── 내부 헬퍼 ───────────────────────────────────────────────────────────
