@@ -1,5 +1,6 @@
 using System.IO;
 using System.Text.Json;
+using System.Threading;
 using AltKey.Models;
 
 namespace AltKey.Services;
@@ -31,9 +32,23 @@ public class ConfigService
         }
     }
 
-    public void Save() =>
-        File.WriteAllText(PathResolver.ConfigPath,
-            JsonSerializer.Serialize(Current, JsonOptions.Default));
+    public void Save()
+    {
+        const int maxRetries = 3;
+        for (int i = 0; i < maxRetries; i++)
+        {
+            try
+            {
+                File.WriteAllText(PathResolver.ConfigPath,
+                    JsonSerializer.Serialize(Current, JsonOptions.Default));
+                return;
+            }
+            catch (IOException) when (i < maxRetries - 1)
+            {
+                Thread.Sleep(300); // 파일 잠금 해제 대기
+            }
+        }
+    }
 
     public void Update(Action<AppConfig> updater)
     {

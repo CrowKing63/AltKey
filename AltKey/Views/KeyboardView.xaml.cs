@@ -63,7 +63,7 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
 
     private void OnConfigChanged(string? propertyName)
     {
-        if (propertyName is null or nameof(Models.AppConfig.AutoCompleteEnabled))
+        if (propertyName is null or nameof(AppConfig.AutoCompleteEnabled))
         {
             Dispatcher.InvokeAsync(() => ApplySuggestionBarHeight());
         }

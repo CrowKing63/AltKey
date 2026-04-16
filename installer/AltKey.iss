@@ -78,7 +78,7 @@ Filename: "{app}\{#AppExeName}"; \
     Description: "{#AppName} 실행"; \
     Flags: nowait postinstall skipifsilent
 Filename: "{app}\{#AppExeName}"; \
-    Flags: nowait skipifsilent; \
+    Flags: nowait; \
     Check: IsAutoRestart
 
 [UninstallRun]

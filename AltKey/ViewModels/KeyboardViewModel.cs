@@ -121,7 +121,7 @@ public partial class KeyboardViewModel : ObservableObject
         bool isUpperCase = ShowUpperCase;
         string? hangulJamo = isUpperCase && slot.HangulShiftLabel is { Length: > 0 } hs
             ? hs : slot.HangulLabel;
-        if (hangulJamo is { Length: > 0 } && _configService.Current.KoreanAutoCompleteEnabled)
+        if (hangulJamo is { Length: > 0 } && _configService.Current.AutoCompleteEnabled)
             _autoComplete.OnHangulInput(hangulJamo);
 
         if (slot.Action is not null)

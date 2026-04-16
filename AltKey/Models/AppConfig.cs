@@ -36,9 +36,6 @@ public class AppConfig
     // T-8.4: 클립보드 히스토리 패널
     public bool ClipboardPanelEnabled { get; set; } = false;
 
-    // T-9.3: 영문 자동 완성 (기본 비활성)
+    // T-9.3: 자동 완성 (영문/한글 공용, 레이아웃에 따라 자동 선택)
     public bool AutoCompleteEnabled   { get; set; } = false;
-
-    // 한글 자동 완성 (기본 비활성)
-    public bool KoreanAutoCompleteEnabled { get; set; } = false;
 }

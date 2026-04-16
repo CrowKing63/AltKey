@@ -35,14 +35,12 @@ public partial class SuggestionBarViewModel : ObservableObject
 
     private void SetVisibleFromConfig()
     {
-        IsVisible = _configService.Current.AutoCompleteEnabled
-                  || _configService.Current.KoreanAutoCompleteEnabled;
+        IsVisible = _configService.Current.AutoCompleteEnabled;
     }
 
     private void OnConfigChanged(string? propertyName)
     {
-        if (propertyName is null or nameof(AppConfig.AutoCompleteEnabled)
-            or nameof(AppConfig.KoreanAutoCompleteEnabled))
+        if (propertyName is null or nameof(AppConfig.AutoCompleteEnabled))
             SetVisibleFromConfig();
     }
 

@@ -53,11 +53,8 @@ public partial class SettingsViewModel : ObservableObject
     // T-8.4: 클립보드 패널
     [ObservableProperty] private bool clipboardPanelEnabled;
 
-    // T-9.3: 영문 자동 완성
+    // T-9.3: 자동 완성
     [ObservableProperty] private bool autoCompleteEnabled;
-
-    // 한글 자동 완성
-    [ObservableProperty] private bool koreanAutoCompleteEnabled;
 
     // T-9.5: 현재 버전 표시
     [ObservableProperty] private string currentVersion = "";
@@ -146,7 +143,6 @@ public partial class SettingsViewModel : ObservableObject
 
             // T-9.3: 자동 완성
             AutoCompleteEnabled = c.AutoCompleteEnabled;
-            KoreanAutoCompleteEnabled = c.KoreanAutoCompleteEnabled;
 
             // T-8.5: 프로필
             Profiles = new ObservableCollection<ProfileEntry>(
@@ -179,28 +175,45 @@ public partial class SettingsViewModel : ObservableObject
 
     partial void OnAlwaysOnTopChanged(bool value)
     {
+        if (_isLoading) return;
         _configService.Update(c => c.AlwaysOnTop = value);
         if (WpfApp.Current.MainWindow is not null)
             WpfApp.Current.MainWindow.Topmost = value;
     }
 
     partial void OnOpacityIdleChanged(double value)
-        => _configService.Update(c => c.OpacityIdle = value);
+    {
+        if (_isLoading) return;
+        _configService.Update(c => c.OpacityIdle = value);
+    }
 
     partial void OnFadeDelaySecChanged(int value)
-        => _configService.Update(c => c.FadeDelayMs = value * 1000);
+    {
+        if (_isLoading) return;
+        _configService.Update(c => c.FadeDelayMs = value * 1000);
+    }
 
     partial void OnDwellEnabledChanged(bool value)
-        => _configService.Update(c => c.DwellEnabled = value);
+    {
+        if (_isLoading) return;
+        _configService.Update(c => c.DwellEnabled = value);
+    }
 
     partial void OnDwellTimeMsChanged(int value)
-        => _configService.Update(c => c.DwellTimeMs = value);
+    {
+        if (_isLoading) return;
+        _configService.Update(c => c.DwellTimeMs = value);
+    }
 
     partial void OnSelectedLayoutChanged(string value)
-        => _configService.Update(c => c.DefaultLayout = value);
+    {
+        if (_isLoading) return;
+        _configService.Update(c => c.DefaultLayout = value);
+    }
 
     partial void OnGlobalHotkeyChanged(string value)
     {
+        if (_isLoading) return;
         _configService.Update(c => c.GlobalHotkey = value);
         if (WpfApp.Current.MainWindow is MainWindow mw)
         {
@@ -259,14 +272,17 @@ public partial class SettingsViewModel : ObservableObject
     // ── T-8.4: 클립보드 패널 ───────────────────────────────────────────────
 
     partial void OnClipboardPanelEnabledChanged(bool value)
-        => _configService.Update(c => c.ClipboardPanelEnabled = value);
+    {
+        if (_isLoading) return;
+        _configService.Update(c => c.ClipboardPanelEnabled = value);
+    }
 
     // T-9.3: 자동 완성
     partial void OnAutoCompleteEnabledChanged(bool value)
-        => _configService.Update(c => c.AutoCompleteEnabled = value);
-
-    partial void OnKoreanAutoCompleteEnabledChanged(bool value)
-        => _configService.Update(c => c.KoreanAutoCompleteEnabled = value);
+    {
+        if (_isLoading) return;
+        _configService.Update(c => c.AutoCompleteEnabled = value);
+    }
 
     // ── T-8.5: 앱별 레이아웃 프로필 ────────────────────────────────────────
 

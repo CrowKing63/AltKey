@@ -43,7 +43,24 @@ $csproj.Save($csprojPath)
 Write-Host "Updated $csprojPath"
 
 # 4. Git operations
-$finalCommitMessage = $CommitMessage.Replace("{version}", "v$newVersionStr")
+Write-Host "Summarizing changes..."
+$prevTag = git describe --tags --abbrev=0 2>$null
+$summary = ""
+
+if ($prevTag) {
+    $commits = git log "$prevTag..HEAD" --oneline
+    if ($commits) {
+        $summary += "`n`nCommits since last release:`n" + ($commits -join "`n")
+    }
+}
+
+$changes = git status --short
+if ($changes) {
+    $summary += "`n`nFiles in this release:`n" + ($changes -join "`n")
+}
+
+$finalCommitMessage = $CommitMessage.Replace("{version}", "v$newVersionStr") + $summary
+
 Write-Host "Committing changes..."
 git add .
 git commit -m $finalCommitMessage
