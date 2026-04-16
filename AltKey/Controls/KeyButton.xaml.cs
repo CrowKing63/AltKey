@@ -187,21 +187,28 @@ public class KeyButton : System.Windows.Controls.Button
         CancelRepeat();
     }
 
-    protected override void OnMouseLeftButtonDown(System.Windows.Input.MouseButtonEventArgs e)
+    protected override void OnClick()
     {
-        base.OnMouseLeftButtonDown(e);
+        if (DwellEnabled)
+        {
+            base.OnClick();
+            return;
+        }
 
-        if (DwellEnabled) return;
+        if (KeyRepeatEnabled)
+        {
+            System.Diagnostics.Debug.WriteLine($"[KeyButton] OnClick - KeyRepeatEnabled={KeyRepeatEnabled}");
+            _isRepeating = false;
+            ExecuteKeyPress();
 
-        System.Diagnostics.Debug.WriteLine($"[KeyButton] OnMouseLeftButtonDown - KeyRepeatEnabled={KeyRepeatEnabled}");
-        if (!KeyRepeatEnabled) return;
-
-        _isRepeating = false;
-        ExecuteKeyPress();
-
-        _repeatDelayTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(KeyRepeatDelayMs) };
-        _repeatDelayTimer.Tick += RepeatDelayTick;
-        _repeatDelayTimer.Start();
+            _repeatDelayTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(KeyRepeatDelayMs) };
+            _repeatDelayTimer.Tick += RepeatDelayTick;
+            _repeatDelayTimer.Start();
+        }
+        else
+        {
+            base.OnClick();
+        }
     }
 
     protected override void OnMouseLeftButtonUp(System.Windows.Input.MouseButtonEventArgs e)

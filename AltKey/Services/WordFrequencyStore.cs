@@ -34,6 +34,7 @@ public class WordFrequencyStore
         }
         _freq[word] = (_freq.TryGetValue(word, out var c) ? c : 0) + 1;
         if (_freq.Count > MaxWords) PruneLowest();
+        Save();
     }
 
     /// prefix 로 시작하는 단어 제안 (영문 min 2자, 한글 min 1자)

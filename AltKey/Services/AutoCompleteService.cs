@@ -40,8 +40,6 @@ public class AutoCompleteService
     /// 한국어 모드에서는 영문 자동 완성 추적을 건너뛴다.
     public void OnKeyInput(VirtualKeyCode vk)
     {
-        if (IsKoreanMode) return;
-
         if (IsWordSeparator(vk))
         {
             // 단어 완성: 학습 후 초기화
@@ -88,6 +86,18 @@ public class AutoCompleteService
         _isHangulMode = false;
         SuggestionsChanged?.Invoke([]);
         return (bsCount, suggestion, needsEscape);
+    }
+
+    /// 현재 조합 중인 단어를 저장하고 상태 초기화
+    public void CompleteCurrentWord()
+    {
+        var word = _isHangulMode ? _hangul.Current : _currentWord;
+        if (!string.IsNullOrWhiteSpace(word))
+            _store.RecordWord(word);
+        _hangul.Reset();
+        _currentWord = "";
+        _isHangulMode = false;
+        SuggestionsChanged?.Invoke([]);
     }
 
     /// 레이아웃 전환 시 상태 초기화

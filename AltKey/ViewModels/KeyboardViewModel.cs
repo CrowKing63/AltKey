@@ -135,7 +135,7 @@ public partial class KeyboardViewModel : ObservableObject
                 else if (slot.Action is SendKeyAction { Vk: var vkStr2 }
                          && Enum.TryParse<VirtualKeyCode>(vkStr2, out var vk2)
                          && IsAutoCompleteSeparator(vk2))
-                    _autoComplete.ResetState();
+                    _autoComplete.CompleteCurrentWord();
             }
             // 영문 레이아웃: InputService.OnKeyInput에서 자동 처리
         }
