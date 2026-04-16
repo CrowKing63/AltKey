@@ -77,13 +77,33 @@ Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; \
 Filename: "{app}\{#AppExeName}"; \
     Description: "{#AppName} 실행"; \
     Flags: nowait postinstall skipifsilent
+Filename: "{app}\{#AppExeName}"; \
+    Flags: nowait skipifsilent; \
+    Check: IsAutoRestart
 
 [UninstallRun]
 ; 제거 시 실행 중인 AltKey 종료
 Filename: "taskkill.exe"; Parameters: "/f /im {#AppExeName}"; Flags: runhidden; RunOnceId: "KillAltKey"
 
 [Code]
-// 설치 전 실행 중인 AltKey 종료
+function CmdLineParamExists(const Param: String): Boolean;
+var
+  I: Integer;
+begin
+  Result := False;
+  for I := 1 to ParamCount do
+    if CompareText(ParamStr(I), Param) = 0 then
+    begin
+      Result := True;
+      Break;
+    end;
+end;
+
+function IsAutoRestart: Boolean;
+begin
+  Result := CmdLineParamExists('/AUTORESTART');
+end;
+
 procedure CurStepChanged(CurStep: TSetupStep);
 var
   ResultCode: Integer;
