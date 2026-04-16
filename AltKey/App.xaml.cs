@@ -62,6 +62,7 @@ public partial class App : System.Windows.Application
             // T-9.3: 자동 완성 서비스
             services.AddSingleton<WordFrequencyStore>();
             services.AddSingleton<KoreanDictionary>();
+            services.AddSingleton<EnglishDictionary>();
             services.AddSingleton<AutoCompleteService>();
 
             // ViewModel

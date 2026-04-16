@@ -252,7 +252,6 @@ public partial class MainViewModel : ObservableObject
             CurrentLayoutName = layout.Name;
 
             // 자동 완성 언어 모드 설정: 레이아웃 language가 "ko"면 한국어 모드
-            _autoCompleteService.IsKoreanMode = layout.Language == "ko";
             _autoCompleteService.ResetState();
         }
         finally

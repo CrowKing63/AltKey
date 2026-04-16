@@ -45,5 +45,6 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Assets\Data\ko-words.txt" />
+    <EmbeddedResource Include="Assets\Data\en-words.txt" />
   </ItemGroup>
 </Project>

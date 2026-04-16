@@ -63,6 +63,9 @@ public partial class KeyboardViewModel : ObservableObject
     // 한/영 내부 상태 (IME와 무관하게 자체 관리)
     private bool _isKoreanInput = true;
 
+    // 현재 레이아웃이 한글 자모/VK_HANGUL 키를 포함하는지 여부
+    private bool _layoutSupportsKorean;
+
     // T-2.7: 100ms 주기 폴링으로 CapsLock 및 IME 한/영 상태 동기화
     private readonly DispatcherTimer _capsLockTimer;
     private bool _lastImeKorean = true;
@@ -112,6 +115,13 @@ public partial class KeyboardViewModel : ObservableObject
             ))
         );
 
+        _layoutSupportsKorean = layout.Rows.Any(r =>
+            r.Keys.Any(k =>
+                k.Action is SendKeyAction { Vk: "VK_HANGUL" } ||
+                k.HangulLabel is not null));
+
+        _isKoreanInput = _layoutSupportsKorean;
+        _lastImeKorean = _layoutSupportsKorean;
     }
 
     /// 키가 눌릴 때 발생하는 이벤트 (패널 자동 닫기 등 외부 연동용)
@@ -125,7 +135,7 @@ public partial class KeyboardViewModel : ObservableObject
 
         bool handledByComposer = false;
 
-        if (_configService.Current.AutoCompleteEnabled && _autoComplete.IsKoreanMode)
+        if (_configService.Current.AutoCompleteEnabled && _layoutSupportsKorean)
             handledByComposer = HandleKoreanLayoutKey(slot);
         else if (_configService.Current.AutoCompleteEnabled)
         {
@@ -326,7 +336,7 @@ public partial class KeyboardViewModel : ObservableObject
     private void UpdateImeState()
     {
         if (_inputService.Mode != InputMode.VirtualKey) return;
-        if (!_autoComplete.IsKoreanMode) return;
+        if (!_layoutSupportsKorean) return;
 
         bool imeKorean = _inputService.IsImeKorean();
         if (imeKorean != _lastImeKorean)

@@ -3,17 +3,15 @@ using AltKey.Models;
 namespace AltKey.Services;
 
 /// 자동 완성 서비스 — 영문 알파벳 + 한글 자모 조합 지원
-/// IsKoreanMode가 true면 한국어 레이아웃, 한/영 IME 상태는 외부에서 주입
+/// _isHangulMode가 true면 한글 자모 조합 중, false면 영문 추적 중
 public class AutoCompleteService
 {
     private readonly WordFrequencyStore _store;
     private readonly KoreanDictionary _koreanDict;
+    private readonly EnglishDictionary _englishDict;
     private readonly HangulComposer _hangul = new();
     private string _currentWord = "";
     private bool _isHangulMode = false;
-
-    /// 현재 레이아웃이 한국어인지 여부 (MainViewModel에서 레이아웃 전환 시 설정)
-    public bool IsKoreanMode { get; set; }
 
     /// 제안 목록이 바뀔 때 발생 (UI 스레드가 아닐 수 있으므로 Dispatcher.Invoke 필요)
     public event Action<IReadOnlyList<string>>? SuggestionsChanged;
@@ -21,10 +19,11 @@ public class AutoCompleteService
     /// 현재 조합 중인 단어 (SuggestionBarViewModel 에서 나머지 문자 계산에 사용)
     public string CurrentWord => _isHangulMode ? _hangul.Current : _currentWord;
 
-    public AutoCompleteService(WordFrequencyStore store, KoreanDictionary koreanDict)
+    public AutoCompleteService(WordFrequencyStore store, KoreanDictionary koreanDict, EnglishDictionary englishDict)
     {
         _store = store;
         _koreanDict = koreanDict;
+        _englishDict = englishDict;
     }
 
     /// 한글 자모 입력 (KeyboardViewModel에서 호출)
@@ -60,7 +59,7 @@ public class AutoCompleteService
             if (ch != '\0') _currentWord += ch;
         }
 
-        var suggestions = _store.GetSuggestions(_currentWord);
+        var suggestions = _englishDict.GetSuggestions(_currentWord);
         SuggestionsChanged?.Invoke(suggestions);
     }
 
