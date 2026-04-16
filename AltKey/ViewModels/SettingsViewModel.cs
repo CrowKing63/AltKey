@@ -56,6 +56,9 @@ public partial class SettingsViewModel : ObservableObject
     // T-9.3: 영문 자동 완성
     [ObservableProperty] private bool autoCompleteEnabled;
 
+    // 한글 자동 완성
+    [ObservableProperty] private bool koreanAutoCompleteEnabled;
+
     // T-9.5: 현재 버전 표시
     [ObservableProperty] private string currentVersion = "";
 
@@ -143,6 +146,7 @@ public partial class SettingsViewModel : ObservableObject
 
             // T-9.3: 자동 완성
             AutoCompleteEnabled = c.AutoCompleteEnabled;
+            KoreanAutoCompleteEnabled = c.KoreanAutoCompleteEnabled;
 
             // T-8.5: 프로필
             Profiles = new ObservableCollection<ProfileEntry>(
@@ -260,6 +264,9 @@ public partial class SettingsViewModel : ObservableObject
     // T-9.3: 자동 완성
     partial void OnAutoCompleteEnabledChanged(bool value)
         => _configService.Update(c => c.AutoCompleteEnabled = value);
+
+    partial void OnKoreanAutoCompleteEnabledChanged(bool value)
+        => _configService.Update(c => c.KoreanAutoCompleteEnabled = value);
 
     // ── T-8.5: 앱별 레이아웃 프로필 ────────────────────────────────────────
 

@@ -57,6 +57,8 @@ public partial class KeyboardViewModel : ObservableObject
 {
     private readonly InputService _inputService;
     private readonly SoundService _soundService;
+    private readonly AutoCompleteService _autoComplete;
+    private readonly ConfigService _configService;
 
     // T-2.7: 100ms 주기 폴링으로 CapsLock 상태 동기화
     private readonly DispatcherTimer _capsLockTimer;
@@ -79,10 +81,13 @@ public partial class KeyboardViewModel : ObservableObject
 
 
     // ── 생성자 ──────────────────────────────────────────────────────────────
-    public KeyboardViewModel(InputService inputService, SoundService soundService)
+    public KeyboardViewModel(InputService inputService, SoundService soundService,
+        AutoCompleteService autoComplete, ConfigService configService)
     {
         _inputService = inputService;
         _soundService = soundService;
+        _autoComplete = autoComplete;
+        _configService = configService;
         _inputService.StickyStateChanged += UpdateModifierState;
         _inputService.ElevatedAppDetected += OnElevatedAppDetected;
 
@@ -111,6 +116,13 @@ public partial class KeyboardViewModel : ObservableObject
     {
         // T-8.2: 키 클릭 사운드 재생
         _soundService.Play();
+
+        // 한글 자모 자동 완성 추적
+        bool isUpperCase = ShowUpperCase;
+        string? hangulJamo = isUpperCase && slot.HangulShiftLabel is { Length: > 0 } hs
+            ? hs : slot.HangulLabel;
+        if (hangulJamo is { Length: > 0 } && _configService.Current.KoreanAutoCompleteEnabled)
+            _autoComplete.OnHangulInput(hangulJamo);
 
         if (slot.Action is not null)
             _inputService.HandleAction(slot.Action);

@@ -38,4 +38,7 @@ public class AppConfig
 
     // T-9.3: 영문 자동 완성 (기본 비활성)
     public bool AutoCompleteEnabled   { get; set; } = false;
+
+    // 한글 자동 완성 (기본 비활성)
+    public bool KoreanAutoCompleteEnabled { get; set; } = false;
 }

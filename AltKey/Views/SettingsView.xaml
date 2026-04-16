@@ -181,6 +181,10 @@
                     <CheckBox Content="영문 자동 완성"
                               Foreground="{DynamicResource SettingsFg}"
                               IsChecked="{Binding AutoCompleteEnabled}"
+                              Margin="0,0,0,4"/>
+                    <CheckBox Content="한글 자동 완성"
+                              Foreground="{DynamicResource SettingsFg}"
+                              IsChecked="{Binding KoreanAutoCompleteEnabled}"
                               Margin="0,0,0,16"/>
 
                     <Separator Background="{DynamicResource SettingsHighlight}" Margin="0,0,0,16"/>

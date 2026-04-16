@@ -35,12 +35,14 @@ public partial class SuggestionBarViewModel : ObservableObject
 
     private void SetVisibleFromConfig()
     {
-        IsVisible = _configService.Current.AutoCompleteEnabled;
+        IsVisible = _configService.Current.AutoCompleteEnabled
+                  || _configService.Current.KoreanAutoCompleteEnabled;
     }
 
     private void OnConfigChanged(string? propertyName)
     {
-        if (propertyName is null or nameof(AppConfig.AutoCompleteEnabled))
+        if (propertyName is null or nameof(AppConfig.AutoCompleteEnabled)
+            or nameof(AppConfig.KoreanAutoCompleteEnabled))
             SetVisibleFromConfig();
     }
 
@@ -56,8 +58,12 @@ public partial class SuggestionBarViewModel : ObservableObject
     [RelayCommand]
     private void AcceptSuggestion(string suggestion)
     {
-        var remaining = _autoComplete.AcceptSuggestion(suggestion);
-        if (remaining.Length > 0)
-            _inputService.SendUnicode(remaining);
+        var (bsCount, fullWord) = _autoComplete.AcceptSuggestion(suggestion);
+        // 기존 입력된 문자를 Backspace로 삭제
+        for (int i = 0; i < bsCount; i++)
+            _inputService.SendKeyPress(VirtualKeyCode.VK_BACK);
+        // 전체 단어를 유니코드로 입력
+        if (fullWord.Length > 0)
+            _inputService.SendUnicode(fullWord);
     }
 }
