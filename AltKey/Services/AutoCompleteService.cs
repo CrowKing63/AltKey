@@ -3,7 +3,7 @@ using AltKey.Models;
 namespace AltKey.Services;
 
 /// 자동 완성 서비스 — 영문 알파벳 + 한글 자모 조합 지원
-/// IsKoreanMode가 true면 한글 자동 완성, false면 영문 자동 완성을 사용한다.
+/// IsKoreanMode가 true면 한국어 레이아웃, IsImeKorean이 true면 한글 IME 모드
 public class AutoCompleteService
 {
     private readonly WordFrequencyStore _store;
@@ -14,6 +14,9 @@ public class AutoCompleteService
 
     /// 현재 레이아웃이 한국어인지 여부 (MainViewModel에서 레이아웃 전환 시 설정)
     public bool IsKoreanMode { get; set; }
+
+    /// 한글 IME 모드 여부 (한국어 레이아웃에서 한/영 전환 시 토글; 기본값 true)
+    public bool IsImeKorean { get; set; } = true;
 
     /// 제안 목록이 바뀔 때 발생 (UI 스레드가 아닐 수 있으므로 Dispatcher.Invoke 필요)
     public event Action<IReadOnlyList<string>>? SuggestionsChanged;
@@ -37,28 +40,22 @@ public class AutoCompleteService
     }
 
     /// InputService 의 SendKeyAction 처리 시 호출
-    /// 한국어 모드에서도 영어 키 입력을 추적하여 영어 단어를 저장함
+    /// 한글 IME 모드에서는 자동 완성 추적을 건너뛰고(OnHangulInput이 처리),
+    /// 영문 IME 모드에서는 영문 알파벳을 추적한다.
     public void OnKeyInput(VirtualKeyCode vk)
     {
-        if (IsKoreanMode)
+        if (vk == VirtualKeyCode.VK_HANGUL)
+        {
+            CompleteCurrentWord();
+            IsImeKorean = !IsImeKorean;
+            return;
+        }
+
+        if (IsKoreanMode && IsImeKorean)
         {
             if (IsWordSeparator(vk))
             {
-                if (_currentWord.Length >= 2)
-                    _store.RecordWord(_currentWord);
-                _currentWord = "";
-                return;
-            }
-
-            if (vk == VirtualKeyCode.VK_BACK)
-            {
-                if (_currentWord.Length > 0)
-                    _currentWord = _currentWord[..^1];
-            }
-            else
-            {
-                var ch = VkToChar(vk);
-                if (ch != '\0') _currentWord += ch;
+                CompleteCurrentWord();
             }
             return;
         }

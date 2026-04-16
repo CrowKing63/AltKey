@@ -117,12 +117,12 @@ public partial class KeyboardViewModel : ObservableObject
         // T-8.2: 키 클릭 사운드 재생
         _soundService.Play();
 
-        // 자동 완성: 레이아웃 언어에 따라 한글/영문 모드 선택
+        // 자동 완성: 레이아웃 언어 + IME 모드에 따라 한글/영문 분기
         if (_configService.Current.AutoCompleteEnabled)
         {
-            if (_autoComplete.IsKoreanMode)
+            if (_autoComplete.IsKoreanMode && _autoComplete.IsImeKorean)
             {
-                // 한국어 레이아웃: label(한글 자모)로 한글 자동 완성 추적
+                // 한국어 레이아웃 + 한글 IME: label(한글 자모)로 한글 자동 완성 추적
                 string? hangulJamo = ShowUpperCase && slot.ShiftLabel is { Length: 1 } && IsHangulJamo(slot.ShiftLabel)
                     ? slot.ShiftLabel
                     : IsHangulJamo(slot.Label) ? slot.Label : null;
@@ -137,7 +137,7 @@ public partial class KeyboardViewModel : ObservableObject
                          && IsAutoCompleteSeparator(vk2))
                     _autoComplete.CompleteCurrentWord();
             }
-            // 영문 레이아웃: InputService.OnKeyInput에서 자동 처리
+            // 영문 레이아웃 또는 한국어 레이아웃+영문 IME: InputService.OnKeyInput에서 자동 처리
         }
 
         if (slot.Action is not null)
