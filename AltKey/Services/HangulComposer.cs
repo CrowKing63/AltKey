@@ -78,6 +78,20 @@ public class HangulComposer
     /// 완성된 음절 수 (_completed 길이)
     public int CompletedLength => _completed.Length;
 
+    /// 현재 상태를 지우기 위해 필요한 VK_BACK 횟수
+    /// 완성 음절은 1회, 조합 중인 문자는 자모 개수만큼
+    public int TotalBackspaceCount => _completed.Length + GetCurrentCompositionBackspaceCount();
+
+    /// 조합 중인 문자를 지우기 위한 VK_BACK 횟수
+    private int GetCurrentCompositionBackspaceCount()
+    {
+        int count = 0;
+        if (_choseongIdx.HasValue) count++;
+        if (_jungseongIdx.HasValue) count++;
+        if (_jongseongIdx.HasValue) count++;
+        return count;
+    }
+
     public void Feed(string jamo)
     {
         if (string.IsNullOrEmpty(jamo)) return;

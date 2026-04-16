@@ -282,6 +282,33 @@ public class HangulComposerTests
         composer.Feed("b");
         Assert.Equal(2, composer.CompletedLength);
     }
+
+    [Fact]
+    public void TotalBackspaceCount_ReturnsCorrectCount()
+    {
+        var composer = new HangulComposer();
+        // 빈 상태
+        Assert.Equal(0, composer.TotalBackspaceCount);
+        // "ㅁ" 조합 중 (초성만 → 1회)
+        composer.Feed("ㅁ");
+        Assert.Equal(1, composer.TotalBackspaceCount);
+        // "무" 조합 중 (초성+중성 → 2회)
+        composer.Feed("ㅜ");
+        Assert.Equal(2, composer.TotalBackspaceCount);
+        // "문" 조합 중 (초성+중성+종성 → 3회)
+        composer.Feed("ㄴ");
+        Assert.Equal(3, composer.TotalBackspaceCount);
+        // "화" 조합 중 (초성+중성 → 2회)
+        composer.Reset();
+        composer.Feed("ㅎ"); composer.Feed("ㅗ"); composer.Feed("ㅏ");
+        Assert.Equal(2, composer.TotalBackspaceCount);
+        // "화사" - "화" 확정, "ㅅ" 종성 추가 (초성+중성+종성 → 3회)
+        composer.Feed("ㅅ");
+        Assert.Equal(3, composer.TotalBackspaceCount);
+        // "화사" - "화" 확정, "사" 완성 (초성+중성 → 2회)
+        composer.Feed("ㅏ");
+        Assert.Equal(3, composer.TotalBackspaceCount);
+    }
 }
 
 public static class HangulComposerTestExtensions
