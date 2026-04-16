@@ -67,7 +67,12 @@ public class WordFrequencyStore
     {
         try
         {
-            if (!File.Exists(_filePath)) return;
+            if (!File.Exists(_filePath))
+            {
+                // 파일이 없으면 빈 파일 생성 (설치 시 자동 생성)
+                Directory.CreateDirectory(Path.GetDirectoryName(_filePath)!);
+                File.WriteAllText(_filePath, "{}");
+            }
             var json = File.ReadAllText(_filePath);
             _freq = JsonSerializer.Deserialize<Dictionary<string, int>>(json) ?? [];
         }

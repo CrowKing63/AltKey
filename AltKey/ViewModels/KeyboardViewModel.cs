@@ -131,7 +131,7 @@ public partial class KeyboardViewModel : ObservableObject
                 else if (slot.Action is SendKeyAction { Vk: var vkStr }
                          && Enum.TryParse<VirtualKeyCode>(vkStr, out var vk)
                          && vk == VirtualKeyCode.VK_BACK)
-                    _autoComplete.OnHangulInput("BACKSPACE");
+                    _autoComplete.OnHangulBackspace();
                 else if (slot.Action is SendKeyAction { Vk: var vkStr2 }
                          && Enum.TryParse<VirtualKeyCode>(vkStr2, out var vk2)
                          && IsAutoCompleteSeparator(vk2))

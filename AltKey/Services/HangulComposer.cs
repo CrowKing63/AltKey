@@ -72,6 +72,12 @@ public class HangulComposer
 
     public string Current => _completed + ComposeCurrentSyllable();
 
+    /// 조합 중인 문자가 있는지 확인
+    public bool HasComposition => _choseongIdx.HasValue || _jungseongIdx.HasValue || _jongseongIdx.HasValue;
+
+    /// 완성된 음절 수 (_completed 길이)
+    public int CompletedLength => _completed.Length;
+
     public void Feed(string jamo)
     {
         if (string.IsNullOrEmpty(jamo)) return;
@@ -127,19 +133,7 @@ public class HangulComposer
 
         if (_completed.Length > 0)
         {
-            char last = _completed[^1];
-            if (IsHangulSyllable(last))
-            {
-                _completed = _completed[..^1];
-                var (cho, jung, jong) = Decompose(last);
-                _choseongIdx = cho;
-                _jungseongIdx = jung;
-                _jongseongIdx = jong > 0 ? jong : null;
-            }
-            else
-            {
-                _completed = _completed[..^1];
-            }
+            _completed = _completed[..^1];
         }
     }
 

@@ -106,8 +106,11 @@ public partial class MainWindow : Window
         else
         {
             // 실제 종료 — 설정 저장
-            // 자동 완성 바 높이를 제외한 기본 높이만 저장 (런타임에 다시 추가됨)
+            // 접힌 상태면 펼쳤을 때 높이를 저장 (현재 Height=28이 저장되는 것 방지)
             var saveHeight = Height;
+            if (KeyboardViewControl?.IsCollapsed == true && KeyboardViewControl.ExpandedHeight > 0)
+                saveHeight = KeyboardViewControl.ExpandedHeight;
+            // 자동 완성 바 높이를 제외한 기본 높이만 저장 (런타임에 다시 추가됨)
             if (_configService.Current.AutoCompleteEnabled)
                 saveHeight -= 28; // SuggestionBarHeight
 

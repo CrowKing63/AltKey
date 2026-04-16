@@ -113,14 +113,50 @@ public class HangulComposerTests
     }
 
     [Fact]
-    public void Backspace_DecomposeCompletedSyllable()
+    public void Backspace_RemoveJongseong_DuringComposition()
     {
+        // "간"에서 백스페이스 → 종성 제거 → "가"
         var composer = new HangulComposer();
         composer.Feed("ㄱ"); composer.Feed("ㅏ"); composer.Feed("ㄴ");
         Assert.Equal("간", composer.Current);
-        // Backspace from 간 → removes jongseong → 가
         composer.Backspace();
         Assert.Equal("가", composer.Current);
+    }
+
+    [Fact]
+    public void Backspace_RemoveCompletedSyllable_WhenNoComposition()
+    {
+        // "가" 확정 후, 조합 중인 문자 없을 때 백스페이스 → 전체 삭제
+        var composer = new HangulComposer();
+        composer.Feed("ㄱ"); composer.Feed("ㅏ");
+        // ㄸ은 종성이 될 수 없으므로 "가"가 확정되고 "ㄸ"이 새 초성으로 시작
+        composer.Feed("ㄸ");
+        Assert.Equal("가ㄸ", composer.Current);
+        // 백스페이스로 "ㄸ" 제거
+        composer.Backspace();
+        Assert.Equal("가", composer.Current);
+        // 백스페이스로 "가" 전체 삭제 (분해하지 않음)
+        composer.Backspace();
+        Assert.Equal("", composer.Current);
+    }
+
+    [Fact]
+    public void Backspace_HwasaScenario_EmptyFieldAfter3Backspaces()
+    {
+        // "화사"에서 백스페이스 3회 → 빈 필드 (OS IME 동작 일치)
+        var composer = new HangulComposer();
+        composer.Feed("ㅎ"); composer.Feed("ㅗ"); composer.Feed("ㅏ");
+        composer.Feed("ㅅ"); composer.Feed("ㅏ");
+        Assert.Equal("화사", composer.Current);
+        // 백스페이스 1: "사"의 중성(ㅏ) 제거 → "화ㅅ"
+        composer.Backspace();
+        Assert.Equal("화ㅅ", composer.Current);
+        // 백스페이스 2: "ㅅ"의 초성 제거 → "화"
+        composer.Backspace();
+        Assert.Equal("화", composer.Current);
+        // 백스페이스 3: "화" 전체 삭제 (분해하지 않음)
+        composer.Backspace();
+        Assert.Equal("", composer.Current);
     }
 
     [Fact]
@@ -201,6 +237,50 @@ public class HangulComposerTests
         var composer = new HangulComposer();
         composer.Feed("ㄷ"); composer.Feed("ㅏ"); composer.Feed("ㄹ"); composer.Feed("ㄱ");
         Assert.Equal("닭", composer.Current);
+    }
+
+    [Fact]
+    public void HasComposition_ReturnsTrue_WhenComposing()
+    {
+        var composer = new HangulComposer();
+        Assert.False(composer.HasComposition);
+        composer.Feed("ㄱ");
+        Assert.True(composer.HasComposition);
+        composer.Feed("ㅏ");
+        Assert.True(composer.HasComposition);
+    }
+
+    [Fact]
+    public void HasComposition_ReturnsFalse_AfterReset()
+    {
+        var composer = new HangulComposer();
+        composer.Feed("ㄱ"); composer.Feed("ㅏ");
+        Assert.True(composer.HasComposition);
+        composer.Reset();
+        Assert.False(composer.HasComposition);
+    }
+
+    [Fact]
+    public void CompletedLength_TracksCompletedSyllables()
+    {
+        var composer = new HangulComposer();
+        Assert.Equal(0, composer.CompletedLength);
+        // "화" 조합 중: ㅎ+ㅗ+ㅏ → 조합 중, CompletedLength는 0
+        composer.Feed("ㅎ"); composer.Feed("ㅗ"); composer.Feed("ㅏ");
+        Assert.Equal(0, composer.CompletedLength);
+        // 모음 입력 → "화" 확정 후 새 모음 조합 중
+        composer.Feed("ㅓ");
+        Assert.Equal(1, composer.CompletedLength);
+    }
+
+    [Fact]
+    public void CompletedLength_IncludesNonHangulCharacters()
+    {
+        var composer = new HangulComposer();
+        composer.Feed("a");
+        Assert.Equal(1, composer.CompletedLength);
+        composer.Feed("b");
+        Assert.Equal(2, composer.CompletedLength);
     }
 }
 

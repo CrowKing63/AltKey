@@ -15,6 +15,9 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
 {
     private double _expandedHeight = 0;
     private bool _isCollapsed = false;
+
+    public bool IsCollapsed => _isCollapsed;
+    public double ExpandedHeight => _expandedHeight;
     private const double SuggestionBarHeight = 28.0;
     private bool _autoCompleteBarAdded = false;
 

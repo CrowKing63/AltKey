@@ -67,19 +67,27 @@ public class AutoCompleteService
         SuggestionsChanged?.Invoke(suggestions);
     }
 
-    /// 제안 단어를 수락하면 현재 단어로 학습하고 상태 초기화
-    /// 반환값: (삭제할 기존 입력 길이, 입력할 전체 단어)
-    public (int backspaceCount, string fullWord) AcceptSuggestion(string suggestion)
+    /// 한글 백스페이스 처리 (KeyboardViewModel에서 호출)
+    public void OnHangulBackspace()
     {
-        var prefix = _isHangulMode ? _hangul.Current : _currentWord;
-        var bsCount = prefix.Length;
+        _hangul.Backspace();
+        var suggestions = _koreanDict.GetSuggestions(_hangul.Current);
+        SuggestionsChanged?.Invoke(suggestions);
+    }
+
+    /// 제안 단어를 수락하면 현재 단어로 학습하고 상태 초기화
+    /// 반환값: (삭제할 기존 입력 길이, 입력할 전체 단어, 조합 취소 필요 여부)
+    public (int backspaceCount, string fullWord, bool needsEscape) AcceptSuggestion(string suggestion)
+    {
+        bool needsEscape = _isHangulMode && _hangul.HasComposition;
+        var bsCount = _isHangulMode ? _hangul.CompletedLength : _currentWord.Length;
 
         _store.RecordWord(suggestion);
         _hangul.Reset();
         _currentWord = "";
         _isHangulMode = false;
         SuggestionsChanged?.Invoke([]);
-        return (bsCount, suggestion);
+        return (bsCount, suggestion, needsEscape);
     }
 
     /// 레이아웃 전환 시 상태 초기화
