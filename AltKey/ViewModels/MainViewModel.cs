@@ -100,6 +100,39 @@ public partial class MainViewModel : ObservableObject
         }
     }
 
+    /// T-10: 키 반복 입력 활성화 (KeyButton 바인딩용)
+    public bool KeyRepeatEnabled
+    {
+        get => _configService.Current.KeyRepeatEnabled;
+        set
+        {
+            _configService.Current.KeyRepeatEnabled = value;
+            OnPropertyChanged();
+        }
+    }
+
+    /// T-10: 키 반복 입력 초기 지연 ms (KeyButton 바인딩용)
+    public int KeyRepeatDelayMs
+    {
+        get => _configService.Current.KeyRepeatDelayMs;
+        set
+        {
+            _configService.Current.KeyRepeatDelayMs = value;
+            OnPropertyChanged();
+        }
+    }
+
+    /// T-10: 키 반복 입력 간격 ms (KeyButton 바인딩용)
+    public int KeyRepeatIntervalMs
+    {
+        get => _configService.Current.KeyRepeatIntervalMs;
+        set
+        {
+            _configService.Current.KeyRepeatIntervalMs = value;
+            OnPropertyChanged();
+        }
+    }
+
     public MainViewModel(
         ConfigService          configService,
         LayoutService          layoutService,
@@ -141,6 +174,9 @@ public partial class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(DwellEnabled));
         OnPropertyChanged(nameof(DwellTimeMs));
         OnPropertyChanged(nameof(AutoCompleteEnabled));
+        OnPropertyChanged(nameof(KeyRepeatEnabled));
+        OnPropertyChanged(nameof(KeyRepeatDelayMs));
+        OnPropertyChanged(nameof(KeyRepeatIntervalMs));
     }
 
     public Task InitializeAsync()

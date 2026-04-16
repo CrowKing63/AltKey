@@ -183,6 +183,37 @@
                               IsChecked="{Binding AutoCompleteEnabled}"
                               Margin="0,0,0,16"/>
 
+                    <!-- ── T-10: 키 반복 입력 ─────────────────────── -->
+                    <TextBlock Text="키 반복 입력 (접근성)"
+                               Foreground="{DynamicResource SettingsFgSub}"
+                               FontSize="12"
+                               FontWeight="SemiBold"
+                               Margin="0,0,0,8"/>
+                    <CheckBox Content="키 반복 입력 사용"
+                              Foreground="{DynamicResource SettingsFg}"
+                              IsChecked="{Binding KeyRepeatEnabled}"
+                              Margin="0,0,0,8"/>
+                    <TextBlock Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="16,0,0,4">
+                        <Run Text="초기 지연: "/>
+                        <Run Text="{Binding KeyRepeatDelayMs, StringFormat={}{0}ms}"/>
+                    </TextBlock>
+                    <Slider Minimum="100" Maximum="1000" TickFrequency="50"
+                            IsSnapToTickEnabled="True"
+                            Value="{Binding KeyRepeatDelayMs}"
+                            IsEnabled="{Binding KeyRepeatEnabled}"
+                            Foreground="{StaticResource KeyFgSticky}"
+                            Margin="16,0,0,8"/>
+                    <TextBlock Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="16,0,0,4">
+                        <Run Text="반복 간격: "/>
+                        <Run Text="{Binding KeyRepeatIntervalMs, StringFormat={}{0}ms}"/>
+                    </TextBlock>
+                    <Slider Minimum="20" Maximum="200" TickFrequency="10"
+                            IsSnapToTickEnabled="True"
+                            Value="{Binding KeyRepeatIntervalMs}"
+                            IsEnabled="{Binding KeyRepeatEnabled}"
+                            Foreground="{StaticResource KeyFgSticky}"
+                            Margin="16,0,0,16"/>
+
                     <Separator Background="{DynamicResource SettingsHighlight}" Margin="0,0,0,16"/>
 
                     <!-- ── T-8.5: 앱별 레이아웃 ──────────────────────────── -->

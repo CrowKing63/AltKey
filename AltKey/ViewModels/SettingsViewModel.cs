@@ -52,9 +52,17 @@ public partial class SettingsViewModel : ObservableObject
 
     // T-8.4: 클립보드 패널
     [ObservableProperty] private bool clipboardPanelEnabled;
-
     // T-9.3: 자동 완성
-    [ObservableProperty] private bool autoCompleteEnabled;
+    [ObservableProperty]
+    private bool autoCompleteEnabled;
+
+    // T-10: 키 반복 입력
+    [ObservableProperty]
+    private bool keyRepeatEnabled;
+    [ObservableProperty]
+    private int keyRepeatDelayMs;
+    [ObservableProperty]
+    private int keyRepeatIntervalMs;
 
     // T-9.5: 현재 버전 표시
     [ObservableProperty] private string currentVersion = "";
@@ -143,6 +151,11 @@ public partial class SettingsViewModel : ObservableObject
 
             // T-9.3: 자동 완성
             AutoCompleteEnabled = c.AutoCompleteEnabled;
+
+            // T-10: 키 반복 입력
+            KeyRepeatEnabled = c.KeyRepeatEnabled;
+            KeyRepeatDelayMs = c.KeyRepeatDelayMs;
+            KeyRepeatIntervalMs = c.KeyRepeatIntervalMs;
 
             // T-8.5: 프로필
             Profiles = new ObservableCollection<ProfileEntry>(
@@ -282,6 +295,25 @@ public partial class SettingsViewModel : ObservableObject
     {
         if (_isLoading) return;
         _configService.Update(c => c.AutoCompleteEnabled = value);
+    }
+
+    // T-10: 키 반복 입력
+    partial void OnKeyRepeatEnabledChanged(bool value)
+    {
+        if (_isLoading) return;
+        _configService.Update(c => c.KeyRepeatEnabled = value);
+    }
+
+    partial void OnKeyRepeatDelayMsChanged(int value)
+    {
+        if (_isLoading) return;
+        _configService.Update(c => c.KeyRepeatDelayMs = value);
+    }
+
+    partial void OnKeyRepeatIntervalMsChanged(int value)
+    {
+        if (_isLoading) return;
+        _configService.Update(c => c.KeyRepeatIntervalMs = value);
     }
 
     // ── T-8.5: 앱별 레이아웃 프로필 ────────────────────────────────────────

@@ -66,6 +66,22 @@ public class KeyButton : System.Windows.Controls.Button
             nameof(DwellProgress), typeof(double), typeof(KeyButton),
             new PropertyMetadata(0.0));
 
+    // T-10: 키 반복 입력 DependencyProperties
+    public static readonly DependencyProperty KeyRepeatEnabledProperty =
+        DependencyProperty.Register(
+            nameof(KeyRepeatEnabled), typeof(bool), typeof(KeyButton),
+            new PropertyMetadata(true));
+
+    public static readonly DependencyProperty KeyRepeatDelayMsProperty =
+        DependencyProperty.Register(
+            nameof(KeyRepeatDelayMs), typeof(int), typeof(KeyButton),
+            new PropertyMetadata(300));
+
+    public static readonly DependencyProperty KeyRepeatIntervalMsProperty =
+        DependencyProperty.Register(
+            nameof(KeyRepeatIntervalMs), typeof(int), typeof(KeyButton),
+            new PropertyMetadata(50));
+
     // ── Properties ──────────────────────────────────────────────────────────
 
     public KeySlotVm? Slot
@@ -122,10 +138,33 @@ public class KeyButton : System.Windows.Controls.Button
         private set => SetValue(DwellProgressProperty, value);
     }
 
+    public bool KeyRepeatEnabled
+    {
+        get => (bool)GetValue(KeyRepeatEnabledProperty);
+        set => SetValue(KeyRepeatEnabledProperty, value);
+    }
+
+    public int KeyRepeatDelayMs
+    {
+        get => (int)GetValue(KeyRepeatDelayMsProperty);
+        set => SetValue(KeyRepeatDelayMsProperty, value);
+    }
+
+    public int KeyRepeatIntervalMs
+    {
+        get => (int)GetValue(KeyRepeatIntervalMsProperty);
+        set => SetValue(KeyRepeatIntervalMsProperty, value);
+    }
+
     // ── 체류 클릭 타이머 ─────────────────────────────────────────────────────
 
     private DispatcherTimer? _dwellTimer;
     private DateTime         _dwellStart;
+
+    // T-10: 키 반복 입력 타이머
+    private DispatcherTimer? _repeatDelayTimer;
+    private DispatcherTimer? _repeatTimer;
+    private bool _isRepeating;
 
     protected override void OnMouseEnter(System.Windows.Input.MouseEventArgs e)
     {
@@ -145,6 +184,70 @@ public class KeyButton : System.Windows.Controls.Button
         System.Diagnostics.Debug.WriteLine($"[KeyButton] OnMouseLeave - DwellEnabled={DwellEnabled}");
         base.OnMouseLeave(e);
         CancelDwell();
+        CancelRepeat();
+    }
+
+    protected override void OnMouseLeftButtonDown(System.Windows.Input.MouseButtonEventArgs e)
+    {
+        base.OnMouseLeftButtonDown(e);
+
+        if (DwellEnabled) return;
+
+        System.Diagnostics.Debug.WriteLine($"[KeyButton] OnMouseLeftButtonDown - KeyRepeatEnabled={KeyRepeatEnabled}");
+        if (!KeyRepeatEnabled) return;
+
+        _isRepeating = false;
+        ExecuteKeyPress();
+
+        _repeatDelayTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(KeyRepeatDelayMs) };
+        _repeatDelayTimer.Tick += RepeatDelayTick;
+        _repeatDelayTimer.Start();
+    }
+
+    protected override void OnMouseLeftButtonUp(System.Windows.Input.MouseButtonEventArgs e)
+    {
+        base.OnMouseLeftButtonUp(e);
+        CancelRepeat();
+    }
+
+    private void RepeatDelayTick(object? sender, EventArgs e)
+    {
+        _repeatDelayTimer?.Stop();
+        _repeatDelayTimer = null;
+
+        if (!KeyRepeatEnabled) return;
+
+        System.Diagnostics.Debug.WriteLine($"[KeyButton] Repeat started");
+        _isRepeating = true;
+
+        _repeatTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(KeyRepeatIntervalMs) };
+        _repeatTimer.Tick += RepeatTick;
+        _repeatTimer.Start();
+    }
+
+    private void RepeatTick(object? sender, EventArgs e)
+    {
+        if (_isRepeating)
+        {
+            ExecuteKeyPress();
+        }
+    }
+
+    private void ExecuteKeyPress()
+    {
+        if (Command?.CanExecute(CommandParameter) == true)
+        {
+            Command.Execute(CommandParameter);
+        }
+    }
+
+    private void CancelRepeat()
+    {
+        _isRepeating = false;
+        _repeatDelayTimer?.Stop();
+        _repeatDelayTimer = null;
+        _repeatTimer?.Stop();
+        _repeatTimer = null;
     }
 
     private void DwellTick(object? sender, EventArgs e)
@@ -174,6 +277,7 @@ public class KeyButton : System.Windows.Controls.Button
         _dwellTimer?.Stop();
         _dwellTimer  = null;
         DwellProgress = 0;
+        CancelRepeat();
     }
 
     // ── 변경 콜백 ────────────────────────────────────────────────────────────

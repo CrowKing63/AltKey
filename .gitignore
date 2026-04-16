@@ -92,3 +92,6 @@ TESTING.md
 
 # Installer build output
 installer/Output/
+
+# AltKey: issue notes
+docs/Problems/

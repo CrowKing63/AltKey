@@ -223,6 +223,12 @@
                                                 RelativeSource={RelativeSource AncestorType=UserControl}}"
                                             DwellTime="{Binding DataContext.DwellTimeMs,
                                                 RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            KeyRepeatEnabled="{Binding DataContext.KeyRepeatEnabled,
+                                                RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            KeyRepeatDelayMs="{Binding DataContext.KeyRepeatDelayMs,
+                                                RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            KeyRepeatIntervalMs="{Binding DataContext.KeyRepeatIntervalMs,
+                                                RelativeSource={RelativeSource AncestorType=UserControl}}"
                                             Command="{Binding DataContext.Keyboard.KeyPressedCommand,
                                                 RelativeSource={RelativeSource AncestorType=UserControl}}"
                                             CommandParameter="{Binding Slot}"/>

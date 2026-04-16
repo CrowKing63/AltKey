@@ -106,12 +106,17 @@ public partial class MainWindow : Window
         else
         {
             // 실제 종료 — 설정 저장
+            // 자동 완성 바 높이를 제외한 기본 높이만 저장 (런타임에 다시 추가됨)
+            var saveHeight = Height;
+            if (_configService.Current.AutoCompleteEnabled)
+                saveHeight -= 28; // SuggestionBarHeight
+
             _configService.Update(c =>
             {
                 c.Window.Left   = Left;
                 c.Window.Top    = Top;
                 c.Window.Width  = Width;
-                c.Window.Height = Height;
+                c.Window.Height = saveHeight;
             });
         }
 
