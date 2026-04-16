@@ -1,4 +1,5 @@
 using System.IO;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 
 namespace AltKey.Services;
@@ -10,6 +11,11 @@ public class WordFrequencyStore
 
     private readonly string _filePath;
     private Dictionary<string, int> _freq = [];
+    private readonly JsonSerializerOptions _jsonOptions = new()
+    {
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+        WriteIndented = true
+    };
 
     public WordFrequencyStore()
     {
@@ -58,7 +64,7 @@ public class WordFrequencyStore
         try
         {
             Directory.CreateDirectory(Path.GetDirectoryName(_filePath)!);
-            var json = JsonSerializer.Serialize(_freq);
+            var json = JsonSerializer.Serialize(_freq, _jsonOptions);
             File.WriteAllText(_filePath, json);
         }
         catch { /* 저장 실패 — 무시 */ }

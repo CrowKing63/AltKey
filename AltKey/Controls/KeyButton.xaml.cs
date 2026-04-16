@@ -181,23 +181,22 @@ public class KeyButton : System.Windows.Controls.Button
 
     protected override void OnMouseLeave(System.Windows.Input.MouseEventArgs e)
     {
-        System.Diagnostics.Debug.WriteLine($"[KeyButton] OnMouseLeave - DwellEnabled={DwellEnabled}");
         base.OnMouseLeave(e);
         CancelDwell();
         CancelRepeat();
     }
 
-    protected override void OnClick()
+    protected override void OnPreviewMouseLeftButtonDown(System.Windows.Input.MouseButtonEventArgs e)
     {
         if (DwellEnabled)
         {
-            base.OnClick();
+            e.Handled = false;
             return;
         }
 
         if (KeyRepeatEnabled)
         {
-            System.Diagnostics.Debug.WriteLine($"[KeyButton] OnClick - KeyRepeatEnabled={KeyRepeatEnabled}");
+            e.Handled = true;
             _isRepeating = false;
             ExecuteKeyPress();
 
@@ -207,14 +206,27 @@ public class KeyButton : System.Windows.Controls.Button
         }
         else
         {
-            base.OnClick();
+            e.Handled = false;
         }
     }
 
-    protected override void OnMouseLeftButtonUp(System.Windows.Input.MouseButtonEventArgs e)
+    protected override void OnPreviewMouseLeftButtonUp(System.Windows.Input.MouseButtonEventArgs e)
     {
-        base.OnMouseLeftButtonUp(e);
-        CancelRepeat();
+        if (DwellEnabled)
+        {
+            e.Handled = false;
+            return;
+        }
+
+        if (KeyRepeatEnabled)
+        {
+            e.Handled = true;
+            CancelRepeat();
+        }
+        else
+        {
+            e.Handled = false;
+        }
     }
 
     private void RepeatDelayTick(object? sender, EventArgs e)

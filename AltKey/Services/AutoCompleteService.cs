@@ -37,12 +37,34 @@ public class AutoCompleteService
     }
 
     /// InputService 의 SendKeyAction 처리 시 호출
-    /// 한국어 모드에서는 영문 자동 완성 추적을 건너뛴다.
+    /// 한국어 모드에서도 영어 키 입력을 추적하여 영어 단어를 저장함
     public void OnKeyInput(VirtualKeyCode vk)
     {
+        if (IsKoreanMode)
+        {
+            if (IsWordSeparator(vk))
+            {
+                if (_currentWord.Length >= 2)
+                    _store.RecordWord(_currentWord);
+                _currentWord = "";
+                return;
+            }
+
+            if (vk == VirtualKeyCode.VK_BACK)
+            {
+                if (_currentWord.Length > 0)
+                    _currentWord = _currentWord[..^1];
+            }
+            else
+            {
+                var ch = VkToChar(vk);
+                if (ch != '\0') _currentWord += ch;
+            }
+            return;
+        }
+
         if (IsWordSeparator(vk))
         {
-            // 단어 완성: 학습 후 초기화
             if (_currentWord.Length >= 2)
                 _store.RecordWord(_currentWord);
             _currentWord = "";
