@@ -225,7 +225,7 @@ public partial class SettingsViewModel : ObservableObject
     partial void OnSelectedLayoutChanged(string value)
     {
         if (_isLoading) return;
-        _configService.Update(c => c.DefaultLayout = value);
+        _configService.Update(c => c.DefaultLayout = value, "DefaultLayout");
     }
 
     partial void OnGlobalHotkeyChanged(string value)

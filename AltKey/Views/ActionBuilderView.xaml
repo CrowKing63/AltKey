@@ -37,23 +37,65 @@
 
         <!-- ── SendKey ── -->
         <StackPanel Visibility="{Binding IsSendKey, Converter={StaticResource BoolToVis}}">
-            <TextBlock Text="가상 키 코드 (예: VK_A, VK_RETURN)" Style="{StaticResource HintText}"/>
-            <TextBox Text="{Binding SendKeyVk, UpdateSourceTrigger=PropertyChanged}"
-                     Style="{StaticResource InputBox}"/>
+            <TextBlock Text="가상 키 코드 (예: VK_A, Ctrl+A, A)" Style="{StaticResource HintText}"/>
+            <Grid Margin="0,0,0,6">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <ComboBox Grid.Column="0"
+                          ItemsSource="{Binding CommonVkCodes}"
+                          SelectedItem="{Binding SendKeyVk}"
+                          Width="120" Margin="0,0,6,0"
+                          IsEditable="True"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding SendKeyVk, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{StaticResource InputBox}"/>
+            </Grid>
         </StackPanel>
 
         <!-- ── SendCombo ── -->
         <StackPanel Visibility="{Binding IsSendCombo, Converter={StaticResource BoolToVis}}">
-            <TextBlock Text="키 조합 (쉼표 구분, 예: VK_CONTROL,VK_C)" Style="{StaticResource HintText}"/>
-            <TextBox Text="{Binding SendComboKeys, UpdateSourceTrigger=PropertyChanged}"
-                     Style="{StaticResource InputBox}"/>
+            <TextBlock Text="키 조합 (예: Ctrl+A, Shift+B)" Style="{StaticResource HintText}"/>
+            <ItemsControl ItemsSource="{Binding SendComboKeysCollection}" Margin="0,0,0,6">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Margin="0,0,0,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <ComboBox Grid.Column="0"
+                                      ItemsSource="{Binding DataContext.CommonVkCodes, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                      Text="{Binding Path=., Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                      IsEditable="True"
+                                      Margin="0,0,4,0"/>
+                            <Button Grid.Column="1"
+                                    Content="✕"
+                                    Padding="6,2"
+                                    Background="#33FFFFFF" Foreground="#EEFFFFFF"
+                                    BorderThickness="0" Cursor="Hand"
+                                    Command="{Binding DataContext.RemoveComboKeyCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                    CommandParameter="{Binding}"/>
+                        </Grid>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <Button Content="+ 키 추가"
+                    Padding="6,4"
+                    Background="#33FFFFFF" Foreground="#EEFFFFFF"
+                    BorderThickness="0" Cursor="Hand"
+                    Command="{Binding AddComboKeyCommand}"
+                    HorizontalAlignment="Left"/>
         </StackPanel>
 
         <!-- ── ToggleSticky ── -->
         <StackPanel Visibility="{Binding IsToggleSticky, Converter={StaticResource BoolToVis}}">
-            <TextBlock Text="수식자 키 (예: VK_SHIFT, VK_CONTROL)" Style="{StaticResource HintText}"/>
-            <TextBox Text="{Binding ToggleStickyVk, UpdateSourceTrigger=PropertyChanged}"
-                     Style="{StaticResource InputBox}"/>
+            <TextBlock Text="수식자 키 (예: VK_SHIFT, Shift, Ctrl)" Style="{StaticResource HintText}"/>
+            <ComboBox ItemsSource="{Binding CommonVkCodes}"
+                      SelectedItem="{Binding ToggleStickyVk}"
+                      IsEditable="True"
+                      Style="{StaticResource InputCombo}"/>
         </StackPanel>
 
         <!-- ── SwitchLayout ── -->

@@ -50,10 +50,10 @@ public class ConfigService
         }
     }
 
-    public void Update(Action<AppConfig> updater)
+    public void Update(Action<AppConfig> updater, string? propertyName = null)
     {
         updater(Current);
         Save();
-        ConfigChanged?.Invoke(null);
+        ConfigChanged?.Invoke(propertyName);
     }
 }

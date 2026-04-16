@@ -171,6 +171,12 @@ public partial class MainViewModel : ObservableObject
 
     private void OnConfigChanged(string? propertyName)
     {
+        if (propertyName == "DefaultLayout")
+        {
+            SwitchLayout(_configService.Current.DefaultLayout);
+            return;
+        }
+
         OnPropertyChanged(nameof(DwellEnabled));
         OnPropertyChanged(nameof(DwellTimeMs));
         OnPropertyChanged(nameof(AutoCompleteEnabled));
