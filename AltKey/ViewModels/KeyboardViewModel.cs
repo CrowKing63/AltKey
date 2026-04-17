@@ -46,8 +46,8 @@ public class KeySlotVm(KeySlot slot) : ObservableObject
     /// 서브 레이블 (한글 자모). 통합 레이아웃에서 키 우상단에 항상 표시.
     public string GetSubLabel(bool upperCase)
     {
-        if (Slot.HangulLabel is null) return "";
-        return upperCase && Slot.HangulShiftLabel is { } hs ? hs : Slot.HangulLabel;
+        if (Slot.EnglishLabel is null) return "";
+        return upperCase && Slot.EnglishShiftLabel is { } hs ? hs : Slot.EnglishLabel;
     }
 }
 
@@ -118,7 +118,7 @@ public partial class KeyboardViewModel : ObservableObject
         _layoutSupportsKorean = layout.Rows.Any(r =>
             r.Keys.Any(k =>
                 k.Action is SendKeyAction { Vk: "VK_HANGUL" } ||
-                k.HangulLabel is not null));
+                k.EnglishLabel is not null));
 
         _isKoreanInput = _layoutSupportsKorean;
         _lastImeKorean = _layoutSupportsKorean;

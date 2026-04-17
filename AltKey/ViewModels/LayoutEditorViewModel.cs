@@ -17,13 +17,13 @@ public partial class EditableKeySlotVm : ObservableObject
     [ObservableProperty] private KeyAction? editAction;
     [ObservableProperty] private bool    isSelected      = false;
 
-    public string? HangulLabel      { get; set; }
-    public string? HangulShiftLabel { get; set; }
+    public string? EnglishLabel      { get; set; }
+    public string? EnglishShiftLabel { get; set; }
 
     /// 편집 결과를 KeySlot 레코드로 변환
     public KeySlot ToKeySlot() =>
         new(EditLabel, EditShiftLabel, EditAction, EditWidth, 1.0,
-            "", EditGapBefore, HangulLabel, HangulShiftLabel);
+            "", EditGapBefore, EnglishLabel, EnglishShiftLabel);
 }
 
 // ── 편집 가능한 키 행 VM ────────────────────────────────────────────────────
@@ -105,8 +105,8 @@ public partial class LayoutEditorViewModel : ObservableObject
                         EditWidth       = k.Width,
                         EditGapBefore   = k.GapBefore,
                         EditAction      = k.Action,
-                        HangulLabel     = k.HangulLabel,
-                        HangulShiftLabel = k.HangulShiftLabel,
+                        EnglishLabel     = k.EnglishLabel,
+                        EnglishShiftLabel = k.EnglishShiftLabel,
                     }).ToList())
             }).ToList());
 

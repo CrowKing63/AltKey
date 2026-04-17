@@ -14,6 +14,7 @@ namespace AltKey.Models;
 [JsonDerivedType(typeof(ShellCommandAction),  "ShellCommand")]
 [JsonDerivedType(typeof(VolumeControlAction), "VolumeControl")]
 [JsonDerivedType(typeof(ClipboardPasteAction),"ClipboardPaste")]
+[JsonDerivedType(typeof(ToggleKoreanSubmodeAction), "ToggleKoreanSubmode")]
 public abstract record KeyAction;
 
 public record SendKeyAction(string Vk)               : KeyAction;
@@ -43,3 +44,7 @@ public record VolumeControlAction(string Direction, int Step = 5) : KeyAction;
 
 /// 지정 텍스트를 클립보드에 복사 후 Ctrl+V 로 붙여넣기
 public record ClipboardPasteAction(string Text) : KeyAction;
+
+/// "가/A" 토글 버튼이 트리거하는 액션.
+/// KeyboardViewModel.KeyPressed가 이 액션을 감지하면 KoreanInputModule.ToggleSubmode()를 호출한다.
+public sealed record ToggleKoreanSubmodeAction() : KeyAction;
