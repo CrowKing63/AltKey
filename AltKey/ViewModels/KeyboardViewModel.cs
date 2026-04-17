@@ -26,15 +26,73 @@ public class KeySlotVm(KeySlot slot) : ObservableObject
         Enum.TryParse<VirtualKeyCode>(ta.Vk, ignoreCase: true, out var vk)
             ? vk : null;
 
-    public string GetLabel(bool upperCase)
-    {
-        if (upperCase && Slot.ShiftLabel is { } s)
-            return s;
+    public bool IsKoreanSubmodeToggle => Slot.Action is ToggleKoreanSubmodeAction;
 
-        bool isAlphaKey = Slot.Label.Length == 1 && char.IsLetter(Slot.Label[0]);
-        return isAlphaKey
-            ? (upperCase ? Slot.Label.ToUpperInvariant() : Slot.Label.ToLowerInvariant())
+    private InputSubmode _activeSubmode = InputSubmode.HangulJamo;
+    public InputSubmode ActiveSubmode
+    {
+        get => _activeSubmode;
+        set
+        {
+            if (SetProperty(ref _activeSubmode, value))
+            {
+                RefreshDisplay();
+            }
+        }
+    }
+
+    public string GetLabel(bool upperCase, InputSubmode submode)
+    {
+        if (IsKoreanSubmodeToggle)
+            return _autoCompleteComposeStateLabel ?? "가";
+
+        if (submode == InputSubmode.QuietEnglish && Slot.EnglishLabel is { Length: > 0 } eng)
+        {
+            string baseLabel = upperCase
+                ? (Slot.EnglishShiftLabel ?? eng.ToUpperInvariant())
+                : eng;
+            return baseLabel;
+        }
+
+        return upperCase && Slot.ShiftLabel is { Length: > 0 } s
+            ? s
             : Slot.Label;
+    }
+
+    public bool GetIsDimmed(InputSubmode submode)
+        => submode == InputSubmode.QuietEnglish && Slot.EnglishLabel is null;
+
+    public string DisplayLabel { get; private set; } = "";
+    public bool IsDimmed { get; private set; }
+
+    private string? _autoCompleteComposeStateLabel;
+    private bool _showUpperCase;
+
+    public void RefreshDisplay()
+    {
+        DisplayLabel = GetLabel(_showUpperCase, _activeSubmode);
+        IsDimmed = GetIsDimmed(_activeSubmode);
+        OnPropertyChanged(nameof(DisplayLabel));
+        OnPropertyChanged(nameof(IsDimmed));
+    }
+
+    public void SetShowUpperCase(bool value)
+    {
+        if (_showUpperCase != value)
+        {
+            _showUpperCase = value;
+            RefreshDisplay();
+        }
+    }
+
+    public void SetComposeStateLabel(string? label)
+    {
+        if (_autoCompleteComposeStateLabel != label)
+        {
+            _autoCompleteComposeStateLabel = label;
+            if (IsKoreanSubmodeToggle)
+                RefreshDisplay();
+        }
     }
 
     public string GetSubLabel(bool upperCase)
@@ -51,12 +109,7 @@ public partial class KeyboardViewModel : ObservableObject
     private readonly AutoCompleteService _autoComplete;
     private readonly ConfigService _configService;
 
-    private bool _layoutSupportsKorean;
-
     private readonly DispatcherTimer _capsLockTimer;
-    private bool _lastImeKorean = true;
-
-    public event Action<bool>? ImeModeChanged;
 
     [ObservableProperty]
     private ObservableCollection<KeyRowVm> rows = [];
@@ -80,6 +133,8 @@ public partial class KeyboardViewModel : ObservableObject
         _inputService.StickyStateChanged += UpdateModifierState;
         _inputService.ElevatedAppDetected += OnElevatedAppDetected;
 
+        _autoComplete.SubmodeChanged += OnSubmodeChanged;
+
         _capsLockTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(100) };
         _capsLockTimer.Tick += OnTimerTick;
         _capsLockTimer.Start();
@@ -93,22 +148,8 @@ public partial class KeyboardViewModel : ObservableObject
             ))
         );
 
-        _layoutSupportsKorean = layout.Rows.Any(r =>
-            r.Keys.Any(k =>
-                k.Action is SendKeyAction { Vk: "VK_HANGUL" } ||
-                k.EnglishLabel is not null));
-
-        if (_layoutSupportsKorean)
-        {
-            _autoComplete.ResetState();
-        }
-        else
-        {
-            _autoComplete.ResetState();
-            _autoComplete.ToggleKoreanSubmode();
-        }
-
-        _lastImeKorean = _layoutSupportsKorean;
+        _autoComplete.ResetState();
+        OnSubmodeChanged(_autoComplete.ActiveSubmode);
     }
 
     public event Action? KeyTapped;
@@ -118,34 +159,22 @@ public partial class KeyboardViewModel : ObservableObject
     {
         _soundService.Play();
 
-        bool handled = false;
-
-        if (_configService.Current.AutoCompleteEnabled)
-        {
-            handled = HandleKeyWithAutoComplete(slot);
-        }
-
-        if (!handled && slot.Action is not null)
-            _inputService.HandleAction(slot.Action);
-
-        UpdateModifierState();
-        KeyTapped?.Invoke();
-    }
-
-    private bool HandleKeyWithAutoComplete(KeySlot slot)
-    {
-        if (_layoutSupportsKorean && slot.Action is SendKeyAction { Vk: "VK_HANGUL" })
+        if (slot.Action is ToggleKoreanSubmodeAction)
         {
             _autoComplete.ToggleKoreanSubmode();
-            _inputService.TrackedOnScreenLength = 0;
-            return false;
+            UpdateModifierState();
+            KeyTapped?.Invoke();
+            return;
         }
 
         if (IsSeparatorKey(slot))
         {
             _autoComplete.OnSeparator();
-            _inputService.TrackedOnScreenLength = 0;
-            return false;
+            if (slot.Action is not null)
+                _inputService.HandleAction(slot.Action);
+            UpdateModifierState();
+            KeyTapped?.Invoke();
+            return;
         }
 
         var ctx = new KeyContext(
@@ -153,50 +182,37 @@ public partial class KeyboardViewModel : ObservableObject
             _inputService.HasActiveModifiers,
             _inputService.HasActiveModifiersExcludingShift,
             _inputService.Mode,
-            _inputService.TrackedOnScreenLength
-        );
+            _inputService.TrackedOnScreenLength);
 
-        return _autoComplete.OnKey(slot, ctx);
+        bool handled = _autoComplete.OnKey(slot, ctx);
+        if (!handled && slot.Action is not null)
+            _inputService.HandleAction(slot.Action);
+
+        UpdateModifierState();
+        KeyTapped?.Invoke();
     }
 
-    private static bool IsSeparatorKey(KeySlot slot)
+    private static bool IsSeparatorKey(KeySlot slot) => slot.Action switch
     {
-        if (slot.Action is not SendKeyAction { Vk: var vkStr }
-            || !Enum.TryParse<VirtualKeyCode>(vkStr, out var vk))
-            return false;
+        SendKeyAction { Vk: "VK_SPACE" }  => true,
+        SendKeyAction { Vk: "VK_RETURN" } => true,
+        SendKeyAction { Vk: "VK_TAB" }    => true,
+        _ => false,
+    };
 
-        return vk is VirtualKeyCode.VK_SPACE or VirtualKeyCode.VK_RETURN
-            or VirtualKeyCode.VK_TAB or VirtualKeyCode.VK_OEM_PERIOD
-            or VirtualKeyCode.VK_OEM_COMMA;
+    private void OnSubmodeChanged(InputSubmode submode)
+    {
+        foreach (var row in Rows)
+            foreach (var keyVm in row.Keys)
+            {
+                keyVm.ActiveSubmode = submode;
+                keyVm.SetComposeStateLabel(_autoComplete.ComposeStateLabel);
+            }
     }
 
     private void OnTimerTick(object? sender, EventArgs e)
     {
         UpdateModifierState();
-        UpdateImeState();
-    }
-
-    private void UpdateImeState()
-    {
-        if (_inputService.Mode != InputMode.VirtualKey) return;
-        if (!_layoutSupportsKorean) return;
-
-        bool imeKorean = _inputService.IsImeKorean();
-        if (imeKorean != _lastImeKorean)
-        {
-            _lastImeKorean = imeKorean;
-            ImeModeChanged?.Invoke(imeKorean);
-
-            if (imeKorean)
-            {
-                _autoComplete.ResetState();
-            }
-            else
-            {
-                _autoComplete.ResetState();
-                _autoComplete.ToggleKoreanSubmode();
-            }
-        }
     }
 
     private void UpdateModifierState()
@@ -222,6 +238,8 @@ public partial class KeyboardViewModel : ObservableObject
                 {
                     slotVm.IsLocked = _inputService.IsCapsLockOn;
                 }
+
+                slotVm.SetShowUpperCase(ShowUpperCase);
             }
         }
     }

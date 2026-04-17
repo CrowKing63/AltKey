@@ -211,27 +211,29 @@
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate DataType="{x:Type vm:KeySlotVm}">
-                                        <controls:KeyButton
-                                            Slot="{Binding}"
-                                            ShowUpperCase="{Binding DataContext.Keyboard.ShowUpperCase,
-                                                RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                            IsSticky="{Binding IsSticky}"
-                                            IsLocked="{Binding IsLocked}"
-                                            KeyUnit="{Binding DataContext.Keyboard.KeyUnit,
-                                                RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                            DwellEnabled="{Binding DataContext.DwellEnabled,
-                                                RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                            DwellTime="{Binding DataContext.DwellTimeMs,
-                                                RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                            KeyRepeatEnabled="{Binding DataContext.KeyRepeatEnabled,
-                                                RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                            KeyRepeatDelayMs="{Binding DataContext.KeyRepeatDelayMs,
-                                                RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                            KeyRepeatIntervalMs="{Binding DataContext.KeyRepeatIntervalMs,
-                                                RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                            Command="{Binding DataContext.Keyboard.KeyPressedCommand,
-                                                RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                            CommandParameter="{Binding Slot}"/>
+                                 <controls:KeyButton
+                                     Slot="{Binding}"
+                                     ShowUpperCase="{Binding DataContext.Keyboard.ShowUpperCase,
+                                         RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                     DisplayLabel="{Binding DisplayLabel}"
+                                     IsDimmed="{Binding IsDimmed}"
+                                     IsSticky="{Binding IsSticky}"
+                                     IsLocked="{Binding IsLocked}"
+                                     KeyUnit="{Binding DataContext.Keyboard.KeyUnit,
+                                         RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                     DwellEnabled="{Binding DataContext.DwellEnabled,
+                                         RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                     DwellTime="{Binding DataContext.DwellTimeMs,
+                                         RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                     KeyRepeatEnabled="{Binding DataContext.KeyRepeatEnabled,
+                                         RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                     KeyRepeatDelayMs="{Binding DataContext.KeyRepeatDelayMs,
+                                         RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                     KeyRepeatIntervalMs="{Binding DataContext.KeyRepeatIntervalMs,
+                                         RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                     Command="{Binding DataContext.Keyboard.KeyPressedCommand,
+                                         RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                     CommandParameter="{Binding Slot}"/>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>

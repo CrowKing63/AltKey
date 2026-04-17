@@ -11,11 +11,13 @@ public sealed class AutoCompleteService
     {
         _module = module;
         _module.SuggestionsChanged += list => SuggestionsChanged?.Invoke(list);
+        _module.SubmodeChanged += submode => SubmodeChanged?.Invoke(submode);
     }
 
     public string CurrentWord => _module.CurrentWord;
 
     public event Action<IReadOnlyList<string>>? SuggestionsChanged;
+    public event Action<InputSubmode>? SubmodeChanged;
 
     /// KeyboardViewModel.KeyPressed가 호출.
     /// true면 호출자가 HandleAction 스킵.

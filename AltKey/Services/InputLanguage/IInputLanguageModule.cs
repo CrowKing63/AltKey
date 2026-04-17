@@ -24,6 +24,9 @@ public interface IInputLanguageModule
     /// 자동완성 제안 변경 이벤트.
     event Action<IReadOnlyList<string>>? SuggestionsChanged;
 
+    /// 서브모드 변경 이벤트.
+    event Action<InputSubmode>? SubmodeChanged;
+
     /// 키 입력 처리. true면 호출자가 HandleAction을 스킵해야 함(모듈이 유니코드/SendInput으로 이미 처리).
     bool HandleKey(KeySlot slot, KeyContext ctx);
 
