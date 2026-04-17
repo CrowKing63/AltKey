@@ -155,6 +155,18 @@
                     <TextBlock Text="📋" FontSize="14"/>
                 </Button>
 
+                <!-- T-9.3 / 06: 자동완성 토글 버튼 -->
+                <ToggleButton Width="32" Height="28"
+                        HorizontalAlignment="Right" Margin="0,0,192,0"
+                        Background="{Binding AutoCompleteEnabled, Converter={StaticResource BoolToVis}, ConverterParameter=Background}"
+                        Foreground="{DynamicResource TitleFg}"
+                        BorderThickness="0" Cursor="Hand"
+                        IsChecked="{Binding AutoCompleteEnabled, Mode=TwoWay}"
+                        IsEnabled="{Binding CanToggleAutoComplete}"
+                        ToolTip="자동완성 (유니코드 직접 입력) 켜기/끄기">
+                    <TextBlock Text="AC" FontWeight="Bold" FontSize="12"/>
+                </ToggleButton>
+
                 <!-- T-7.2: 접기/펼치기 버튼 -->
                 <Button x:Name="CollapseButton" Width="32" Height="28"
                         HorizontalAlignment="Right" Margin="0,0,32,0"

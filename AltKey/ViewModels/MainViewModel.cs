@@ -19,6 +19,7 @@ public partial class MainViewModel : ObservableObject
     private readonly LayoutService  _layoutService;
     private readonly ProfileService _profileService;
     private readonly AutoCompleteService _autoCompleteService;
+    private readonly InputService _inputService;
 
     // 표시명 → 파일명 매핑 (T-7.1: AvailableLayouts가 표시명을 저장)
     private readonly Dictionary<string, string> _displayToFileName = [];
@@ -84,10 +85,28 @@ public partial class MainViewModel : ObservableObject
         get => _configService.Current.AutoCompleteEnabled;
         set
         {
+            if (_configService.Current.AutoCompleteEnabled == value) return;
             _configService.Current.AutoCompleteEnabled = value;
+            _configService.Save();
             OnPropertyChanged();
+
+            var target = value ? InputMode.Unicode : InputMode.VirtualKey;
+            bool ok = _inputService.TrySetMode(target);
+
+            if (!ok && value)
+            {
+                System.Media.SystemSounds.Beep.Play();
+                _configService.Current.AutoCompleteEnabled = false;
+                _configService.Save();
+                OnPropertyChanged(nameof(AutoCompleteEnabled));
+            }
+
+            _autoCompleteService.ResetState();
+            AutoComplete.IsVisible = _configService.Current.AutoCompleteEnabled;
         }
     }
+
+    public bool CanToggleAutoComplete => !_inputService.IsElevated;
 
     /// T-5.1: 체류 클릭 시간 ms (KeyButton 바인딩용)
     public int DwellTimeMs
@@ -142,7 +161,8 @@ public partial class MainViewModel : ObservableObject
         EmojiViewModel         emojiViewModel,
         ClipboardViewModel     clipboardViewModel,
         SuggestionBarViewModel suggestionBarViewModel,
-        AutoCompleteService    autoCompleteService)
+        AutoCompleteService    autoCompleteService,
+        InputService           inputService)
     {
         _configService  = configService;
         _layoutService  = layoutService;
@@ -154,6 +174,7 @@ public partial class MainViewModel : ObservableObject
         Clipboard    = clipboardViewModel;
         AutoComplete = suggestionBarViewModel;
         _autoCompleteService = autoCompleteService;
+        _inputService = inputService;
 
         // T-5.4: 포그라운드 앱 변경 → 자동 레이아웃 전환
         _profileService.ForegroundAppChanged += OnForegroundAppChanged;

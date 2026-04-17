@@ -98,6 +98,13 @@ public partial class App : System.Windows.Application
             var inputService = Services.GetRequiredService<InputService>();
             profileService.ElevatedAppDetected += () => inputService.NotifyElevatedApp();
 
+            // 06: 관리자 모드에서 자동완성 강제 OFF
+            if (inputService.IsElevated && config.Current.AutoCompleteEnabled)
+            {
+                config.Current.AutoCompleteEnabled = false;
+                config.Save();
+            }
+
             var window = Services.GetRequiredService<MainWindow>();
             window.Show();
 

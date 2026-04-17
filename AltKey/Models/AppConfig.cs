@@ -41,7 +41,7 @@ public class AppConfig
     public bool ClipboardPanelEnabled { get; set; } = false;
 
     // T-9.3: 자동 완성 (영문/한글 공용, 레이아웃에 따라 자동 선택)
-    public bool AutoCompleteEnabled   { get; set; } = true;
+    public bool AutoCompleteEnabled   { get; set; } = false;
 
     // T-10: 키 반복 입력 (접근성 - 물리적 키보드처럼 홀드 시 반복)
     public bool KeyRepeatEnabled      { get; set; } = true;

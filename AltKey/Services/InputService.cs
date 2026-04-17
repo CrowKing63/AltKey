@@ -16,8 +16,30 @@ public enum InputMode
 
 public class InputService
 {
-    // ── 입력 모드: 관리자 권한이면 VirtualKey, 아니면 Unicode ──────────────
-    public InputMode Mode { get; } = CheckElevated() ? InputMode.VirtualKey : InputMode.Unicode;
+    private readonly bool _isElevated;
+
+    public InputMode Mode { get; private set; }
+
+    public bool IsElevated => _isElevated;
+
+    public event Action<InputMode>? ModeChanged;
+
+    public InputService()
+    {
+        _isElevated = CheckElevated();
+        Mode = _isElevated ? InputMode.VirtualKey : InputMode.Unicode;
+    }
+
+    public bool TrySetMode(InputMode target)
+    {
+        if (_isElevated && target == InputMode.Unicode)
+            return false;
+
+        if (Mode == target) return true;
+        Mode = target;
+        ModeChanged?.Invoke(Mode);
+        return true;
+    }
 
     // ── Unicode 모드에서 화면에 전송한 조합 문자열 길이 추적 ──────────────
     public int TrackedOnScreenLength { get; set; }
