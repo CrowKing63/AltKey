@@ -61,9 +61,10 @@ public partial class App : System.Windows.Application
             services.AddSingleton<DownloadService>();
             services.AddSingleton<InstallerService>();
             // T-9.3: 자동 완성 서비스
-            services.AddSingleton<Func<string, WordFrequencyStore>>(_ => lang => new WordFrequencyStore(lang));
             services.AddSingleton<KoreanDictionary>();
             services.AddSingleton<EnglishDictionary>();
+            services.AddSingleton<KoreanInputModule>();
+            services.AddSingleton<IInputLanguageModule>(sp => sp.GetRequiredService<KoreanInputModule>());
             services.AddSingleton<AutoCompleteService>();
             services.AddSingleton<KoreanInputModule>();
             services.AddSingleton<IInputLanguageModule>(sp => sp.GetRequiredService<KoreanInputModule>());
@@ -93,12 +94,8 @@ public partial class App : System.Windows.Application
             var profileService = Services.GetRequiredService<ProfileService>();
             profileService.Start();
 
-            // T-9.3: AutoCompleteService → InputService 연결
-            var inputService = Services.GetRequiredService<InputService>();
-            var autoComplete = Services.GetRequiredService<AutoCompleteService>();
-            inputService.SetAutoComplete(autoComplete);
-
             // T-2.10b: ProfileService → InputService 관리자 권한 알림 연결
+            var inputService = Services.GetRequiredService<InputService>();
             profileService.ElevatedAppDetected += () => inputService.NotifyElevatedApp();
 
             var window = Services.GetRequiredService<MainWindow>();

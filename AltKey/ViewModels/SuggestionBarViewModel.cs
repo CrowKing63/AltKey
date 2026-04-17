@@ -56,16 +56,14 @@ public partial class SuggestionBarViewModel : ObservableObject
     [RelayCommand]
     private void AcceptSuggestion(string suggestion)
     {
+        var (bsCount, fullWord) = _autoComplete.AcceptSuggestion(suggestion);
         if (_inputService.Mode == InputMode.Unicode)
         {
-            int onScreenLen = _autoComplete.CurrentWord.Length;
-            var (_, fullWord) = _autoComplete.AcceptSuggestion(suggestion);
-            _inputService.SendAtomicReplace(onScreenLen, fullWord);
-            _inputService.TrackedOnScreenLength = 0;
+            _inputService.SendAtomicReplace(bsCount, fullWord);
+            _inputService.TrackedOnScreenLength = fullWord.Length;
         }
         else
         {
-            var (bsCount, fullWord) = _autoComplete.AcceptSuggestion(suggestion);
             for (int i = 0; i < bsCount; i++)
                 _inputService.SendKeyPress(VirtualKeyCode.VK_BACK);
             if (fullWord.Length > 0)

@@ -22,12 +22,6 @@ public class InputService
     // ── Unicode 모드에서 화면에 전송한 조합 문자열 길이 추적 ──────────────
     public int TrackedOnScreenLength { get; set; }
 
-    // ── T-9.3: 자동 완성 서비스 (옵셔널) ────────────────────────────────────
-    private AutoCompleteService? _autoComplete;
-
-    /// 자동 완성 서비스를 연결한다 (App.xaml.cs 초기화 이후 DI 에서 주입).
-    public void SetAutoComplete(AutoCompleteService svc) => _autoComplete = svc;
-
     private static bool CheckElevated()
     {
         using var identity = WindowsIdentity.GetCurrent();
