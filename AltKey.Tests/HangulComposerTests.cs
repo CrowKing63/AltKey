@@ -309,6 +309,19 @@ public class HangulComposerTests
         composer.Feed("ㅏ");
         Assert.Equal(3, composer.TotalBackspaceCount);
     }
+
+    [Fact]
+    public void Feed_Hae_Plus_SsangSiot_ComposesAsJongseong()
+    {
+        // "해" + "ㅆ" → "했" (ㅆ이 종성 쌍시옷으로 처리됨)
+        // 회귀 방지: "T"가 나오지 않아야 함
+        var composer = new HangulComposer();
+        composer.Feed("ㅎ"); composer.Feed("ㅐ");
+        Assert.Equal("해", composer.Current);
+        composer.Feed("ㅆ");
+        Assert.Equal("했", composer.Current);
+        Assert.DoesNotContain("T", composer.Current);
+    }
 }
 
 public static class HangulComposerTestExtensions

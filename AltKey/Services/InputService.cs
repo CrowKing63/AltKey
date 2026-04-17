@@ -289,8 +289,7 @@ public class InputService
         ReleaseTransientModifiers();
     }
 
-    // ── T-8.3: 유니코드 문자 전송 (이모지 지원) ─────────────────────────────
-    public void SendUnicode(string text)
+    public virtual void SendUnicode(string text)
     {
         var inputs = new List<Win32.INPUT>();
         foreach (var ch in text)
@@ -303,7 +302,7 @@ public class InputService
     }
 
     // ── Unicode 모드: 이전 출력을 백스페이스로 지우고 새 출력을 원자적 전송 ──
-    public void SendAtomicReplace(int prevLen, string newOutput)
+    public virtual void SendAtomicReplace(int prevLen, string newOutput)
     {
         var inputs = new List<Win32.INPUT>();
         for (int i = 0; i < prevLen; i++)
