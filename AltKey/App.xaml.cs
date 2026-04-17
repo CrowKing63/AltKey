@@ -3,6 +3,7 @@ using System.IO;
 using System.Windows;
 using Microsoft.Extensions.DependencyInjection;
 using AltKey.Services;
+using AltKey.Services.InputLanguage;
 using AltKey.ViewModels;
 
 namespace AltKey;
@@ -64,6 +65,8 @@ public partial class App : System.Windows.Application
             services.AddSingleton<KoreanDictionary>();
             services.AddSingleton<EnglishDictionary>();
             services.AddSingleton<AutoCompleteService>();
+            services.AddSingleton<KoreanInputModule>();
+            services.AddSingleton<IInputLanguageModule>(sp => sp.GetRequiredService<KoreanInputModule>());
 
             // ViewModel
             services.AddSingleton<KeyboardViewModel>();

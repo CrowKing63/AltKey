@@ -59,6 +59,25 @@ public class InputService
     public bool HasActiveModifiers =>
         _stickyKeys.Count > 0 || _lockedKeys.Count > 0;
 
+    /// Shift만 활성된 경우는 false. 한국어 쌍자음/쌍모음 입력과 "조합키"를 구분하기 위해 사용.
+    public bool HasActiveModifiersExcludingShift
+    {
+        get
+        {
+            foreach (var vk in _stickyKeys)
+            {
+                if (vk is not VirtualKeyCode.VK_SHIFT and not VirtualKeyCode.VK_LSHIFT and not VirtualKeyCode.VK_RSHIFT)
+                    return true;
+            }
+            foreach (var vk in _lockedKeys)
+            {
+                if (vk is not VirtualKeyCode.VK_SHIFT and not VirtualKeyCode.VK_LSHIFT and not VirtualKeyCode.VK_RSHIFT)
+                    return true;
+            }
+            return false;
+        }
+    }
+
     /// 포그라운드 창의 IME 한/영 상태를 IMM32 API로 조회한다.
     /// AttachThreadInput 없이 GetGUIThreadInfo + ImmGetDefaultIMEWnd로
     /// 타겟 프로그램 IME 상태를 읽어온다 (포커스 탈취 방지).
