@@ -10,13 +10,8 @@ public class WindowConfig
 
 public class AppConfig
 {
-    private static string DefaultLayoutForLocale =>
-        System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "ko"
-            ? "qwerty-ko" : "qwerty-en";
-
     public string Version           { get; set; } = "1.0.0";
-    public string Language          { get; set; } = "ko";
-    public string DefaultLayout     { get; set; } = DefaultLayoutForLocale;
+    public string DefaultLayout     { get; set; } = "qwerty-ko";
     public bool   AlwaysOnTop       { get; set; } = true;
     public double OpacityIdle       { get; set; } = 0.4;
     public double OpacityActive     { get; set; } = 1.0;

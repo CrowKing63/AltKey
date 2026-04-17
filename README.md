@@ -2,9 +2,9 @@
 
 # AltKey
 
-**Customizable On-Screen Keyboard for Windows**
+**한국어 사용자 전용 커스터마이징 화상 키보드**
 
-A lightweight, portable virtual keyboard for Windows, inspired by the macOS Accessibility Keyboard and reimagined for the Windows ecosystem.
+Windows 환경에서 한국어 입력을 지원하는 경량·무설치 가상 키보드. macOS 손쉬운 사용 키보드에서 영감을 받아 Windows 생태계에 맞게 재설계되었다.
 
 [![Release](https://img.shields.io/github/v/release/CrowKing63/AltKey?style=flat-square&color=2563EB)](https://github.com/CrowKing63/AltKey/releases/latest)
 [![License](https://img.shields.io/github/license/CrowKing63/AltKey?style=flat-square)](LICENSE)
@@ -44,7 +44,7 @@ It enables fast, flexible text entry even without a physical keyboard or in situ
 
 ### Layouts
 
-- **QWERTY Korean / English** included by default (with Korean Hangul dual labels)
+- **QWERTY Korean** included by default (with "가/A" toggle for English submode)
 - **JSON Layout Editor** — edit key placement and actions directly in the GUI
 - **Per-app layout profiles** — automatically switch layouts when specific apps come into focus
 - **Instant layout switching** — change layouts with a single click from the header dropdown
@@ -80,10 +80,11 @@ Each key can be assigned a variety of actions:
 - **Key click sound** — replaceable WAV file
 - **Emoji panel** — quick access to frequently used emoji
 - **Clipboard history panel** — view and paste recently copied items
-- **Word auto-complete** — frequency-based word suggestions (optional)
+- **Unicode-based Korean auto-complete** — frequency-based Korean word suggestions (optional)
 - **Auto-update notifications** — GitHub Releases integration with a banner for new versions
 - **Run on Windows startup** — register or remove from startup via the registry
 - **Restart as administrator** — for use cases requiring elevated privileges
+- **OS IME Hangul emergency button** — top bar button to toggle system IME Korean/English
 
 ---
 

@@ -13,7 +13,7 @@ Windows 생태계에 맞는 기능과 "가볍고, 무설치이며, 애플급 미
 - **가볍다** — 단일 실행 파일, 메모리 점유 최소화 (~20MB 유휴 목표)
 - **무설치(Portable)** — 레지스트리 미사용, 설정은 로컬 JSON 파일
 - **아름답다** — Windows 11 Acrylic/Mica 효과, 부드러운 애니메이션
-- **확장 가능하다** — JSON 기반 레이아웃, 앱별 프로필, WPF 리소스 딕셔너리 테마
+- **한국어 전용** — 한국어 사용자에 최적화된 단일 언어 키보드
 
 ---
 
@@ -124,8 +124,7 @@ AltKey/
 │   └── Converters.cs               # IValueConverter 모음
 │
 ├── layouts/
-│   ├── qwerty-ko.json
-│   └── qwerty-en.json
+│   └── qwerty-ko.json
 │
 └── config.json                     # 사용자 설정 (포터블 모드 시 exe 옆)
 ```
@@ -207,9 +206,9 @@ altkey/                     # 실행 파일과 같은 폴더 (포터블)
 ├── AltKey.exe
 ├── config.json
 ├── layouts/
-│   ├── qwerty-ko.json
-│   └── qwerty-en.json
-└── themes/                 # 사용자 커스텀 리소스 딕셔너리 (옵션)
+│   └── qwerty-ko.json
+│
+└── config.json                     # 사용자 설정 (포터블 모드 시 exe 옆)
 ```
 
 ### config.json 예시
@@ -217,7 +216,6 @@ altkey/                     # 실행 파일과 같은 폴더 (포터블)
 ```json
 {
   "version": "1.0.0",
-  "language": "ko",
   "default_layout": "qwerty-ko",
   "always_on_top": true,
   "opacity_idle": 0.4,
