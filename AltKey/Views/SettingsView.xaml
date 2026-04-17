@@ -164,17 +164,7 @@
                                     Cursor="Hand"/>
                         </StackPanel>
 
-                        <!-- 클립보드 패널 -->
-                        <CheckBox Content="클립보드 히스토리 패널"
-                                  Foreground="{DynamicResource SettingsFg}"
-                                  IsChecked="{Binding ClipboardPanelEnabled}"
-                                  Margin="0,0,0,16"/>
 
-                        <!-- 자동 완성 -->
-                        <CheckBox Content="자동 완성"
-                                  Foreground="{DynamicResource SettingsFg}"
-                                  IsChecked="{Binding AutoCompleteEnabled}"
-                                  Margin="0,0,0,16"/>
 
                     </StackPanel>
 

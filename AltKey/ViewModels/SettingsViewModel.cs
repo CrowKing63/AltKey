@@ -50,11 +50,7 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty] private bool soundEnabled;
     [ObservableProperty] private string soundFilePath = "";
 
-    // T-8.4: 클립보드 패널
-    [ObservableProperty] private bool clipboardPanelEnabled;
-    // T-9.3: 자동 완성
-    [ObservableProperty]
-    private bool autoCompleteEnabled;
+
 
     // T-10: 키 반복 입력
     [ObservableProperty]
@@ -150,11 +146,7 @@ public partial class SettingsViewModel : ObservableObject
             SoundEnabled = c.SoundEnabled;
             SoundFilePath = c.SoundFilePath ?? "";
 
-            // T-8.4: 클립보드 패널
-            ClipboardPanelEnabled = c.ClipboardPanelEnabled;
 
-            // T-9.3: 자동 완성
-            AutoCompleteEnabled = c.AutoCompleteEnabled;
 
             // T-10: 키 반복 입력
             KeyRepeatEnabled = c.KeyRepeatEnabled;
@@ -284,21 +276,6 @@ public partial class SettingsViewModel : ObservableObject
         SoundFilePath = "";
         _soundService.Configure(SoundEnabled, null);
         _configService.Update(c => c.SoundFilePath = null);
-    }
-
-    // ── T-8.4: 클립보드 패널 ───────────────────────────────────────────────
-
-    partial void OnClipboardPanelEnabledChanged(bool value)
-    {
-        if (_isLoading) return;
-        _configService.Update(c => c.ClipboardPanelEnabled = value);
-    }
-
-    // T-9.3: 자동 완성
-    partial void OnAutoCompleteEnabledChanged(bool value)
-    {
-        if (_isLoading) return;
-        _configService.Update(c => c.AutoCompleteEnabled = value);
     }
 
     // T-10: 키 반복 입력

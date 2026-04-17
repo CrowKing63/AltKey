@@ -44,6 +44,9 @@ public class InputService
     // ── Unicode 모드에서 화면에 전송한 조합 문자열 길이 추적 ──────────────
     public int TrackedOnScreenLength { get; set; }
 
+    /// 조합 완료(공백/엔터 등) 후 추적 길이를 리셋.
+    public void ResetTrackedLength() => TrackedOnScreenLength = 0;
+
     private static bool CheckElevated()
     {
         using var identity = WindowsIdentity.GetCurrent();
@@ -318,6 +321,7 @@ public class InputService
         if (inputs.Count > 0)
             DispatchInput(inputs.ToArray());
         TrackedOnScreenLength = newOutput.Length;
+        ReleaseTransientModifiers();
     }
 
     private static Win32.INPUT MakeUnicodeKeyDown(char ch) => new()

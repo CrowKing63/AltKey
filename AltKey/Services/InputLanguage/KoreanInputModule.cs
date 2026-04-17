@@ -62,10 +62,9 @@ public sealed class KoreanInputModule : IInputLanguageModule
         }
 
         string? jamo = GetHangulJamoFromSlot(slot, ctx.ShowUpperCase);
+
         if (jamo is null)
         {
-            if (ctx.InputMode == InputMode.Unicode && ctx.TrackedOnScreenLength > 0)
-                FinalizeComposition();
             return false;
         }
 
@@ -89,6 +88,11 @@ public sealed class KoreanInputModule : IInputLanguageModule
         if (slot.Action is not SendKeyAction { Vk: var vkStr }
             || !Enum.TryParse<VirtualKeyCode>(vkStr, out var vk))
             return false;
+
+        if (vk == VirtualKeyCode.VK_BACK)
+        {
+            return HandleBackspace(ctx);
+        }
 
         if (IsSeparator(vk))
         {
@@ -199,6 +203,7 @@ public sealed class KoreanInputModule : IInputLanguageModule
         _composer.Reset();
         _englishPrefix = "";
         SuggestionsChanged?.Invoke(Array.Empty<string>());
+        _input.ResetTrackedLength();
     }
 
     private static string? GetHangulJamoFromSlot(KeySlot slot, bool showUpperCase)

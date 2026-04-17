@@ -87,26 +87,26 @@ public partial class MainViewModel : ObservableObject
         set
         {
             if (_configService.Current.AutoCompleteEnabled == value) return;
-            _configService.Current.AutoCompleteEnabled = value;
-            _configService.Save();
-            OnPropertyChanged();
 
             var target = value ? InputMode.Unicode : InputMode.VirtualKey;
             bool ok = _inputService.TrySetMode(target);
 
-        if (!ok && value)
-        {
-            System.Media.SystemSounds.Beep.Play();
-            _configService.Current.AutoCompleteEnabled = false;
-            _configService.Save();
-            OnPropertyChanged(nameof(AutoCompleteEnabled));
+            if (!ok && value)
+            {
+                System.Media.SystemSounds.Beep.Play();
+                _liveRegion.Announce("자동완성 켜기 실패");
+                OnPropertyChanged(nameof(AutoCompleteEnabled));
+                return;
+            }
+
+            _configService.Update(c => c.AutoCompleteEnabled = value);
+            OnPropertyChanged();
+
+            _autoCompleteService.ResetState();
+            AutoComplete.IsVisible = _configService.Current.AutoCompleteEnabled;
+
+            _liveRegion.Announce(value ? "자동완성 켜짐" : "자동완성 꺼짐");
         }
-
-        _autoCompleteService.ResetState();
-        AutoComplete.IsVisible = _configService.Current.AutoCompleteEnabled;
-
-        _liveRegion.Announce(value ? "자동완성 켜짐" : "자동완성 꺼짐");
-    }
     }
 
     public bool CanToggleAutoComplete => !_inputService.IsElevated;

@@ -59,8 +59,7 @@ public class KeySlotVm(KeySlot slot, AutoCompleteService autoComplete) : Observa
             : Slot.Label;
     }
 
-    public bool GetIsDimmed(InputSubmode submode)
-        => submode == InputSubmode.QuietEnglish && Slot.EnglishLabel is null;
+    public bool GetIsDimmed(InputSubmode submode) => false;
 
     public string DisplayLabel { get; private set; } = "";
     public string SubLabelText { get; private set; } = "";
@@ -102,6 +101,7 @@ public class KeySlotVm(KeySlot slot, AutoCompleteService autoComplete) : Observa
     public string GetSubLabel(bool upperCase)
     {
         if (Slot.EnglishLabel is null) return "";
+        if (_activeSubmode == InputSubmode.HangulJamo) return "";
         return upperCase && Slot.EnglishShiftLabel is { } hs ? hs : Slot.EnglishLabel;
     }
 

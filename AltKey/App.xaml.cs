@@ -106,6 +106,13 @@ public partial class App : System.Windows.Application
                 config.Save();
             }
 
+            // 일반 모드에서 config에 따라 InputService.Mode 초기화
+            if (!inputService.IsElevated)
+            {
+                var targetMode = config.Current.AutoCompleteEnabled ? InputMode.Unicode : InputMode.VirtualKey;
+                inputService.TrySetMode(targetMode);
+            }
+
             var window = Services.GetRequiredService<MainWindow>();
             window.Show();
 
