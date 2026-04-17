@@ -4,7 +4,7 @@ using System.Text.Json;
 
 namespace AltKey.Services;
 
-/// T-9.3: 단어 빈도 저장소 — 로컬 JSON 파일에 학습 데이터 유지
+/// T-9.3: 단어 빈도 저장소 — 언어별 인스턴스, 로컬 JSON 파일에 학습 데이터 유지
 public class WordFrequencyStore
 {
     private const int MaxWords = 5000;
@@ -17,38 +17,27 @@ public class WordFrequencyStore
         WriteIndented = true
     };
 
-    public WordFrequencyStore()
+    public WordFrequencyStore(string languageCode)
     {
-        _filePath = Path.Combine(PathResolver.DataDir, "user-words.json");
+        _filePath = Path.Combine(PathResolver.DataDir, $"user-words.{languageCode}.json");
         Load();
     }
 
-    /// 단어 빈도 1 증가 (영문 2자 미만 / 한글 1자 미만 무시)
+    /// 단어 빈도 1 증가 (최소 길이·대소문자 정규화는 호출자 책임)
     public void RecordWord(string word)
     {
         if (string.IsNullOrWhiteSpace(word)) return;
         word = word.Trim();
-        bool isLatin = word.All(c => c < 128);
-        if (isLatin)
-        {
-            word = word.ToLower();
-            if (word.Length < 2) return;
-        }
-        else
-        {
-            if (word.Length < 1) return;
-        }
+        if (word.Length == 0) return;
         _freq[word] = (_freq.TryGetValue(word, out var c) ? c : 0) + 1;
         if (_freq.Count > MaxWords) PruneLowest();
         Save();
     }
 
-    /// prefix 로 시작하는 단어 제안 (영문 min 2자, 한글 min 1자)
+    /// prefix 로 시작하는 단어 제안 (빈도 내림차순)
     public IReadOnlyList<string> GetSuggestions(string prefix, int count = 5)
     {
         if (string.IsNullOrEmpty(prefix)) return [];
-        bool isLatin = prefix.All(c => c < 128);
-        if (isLatin && prefix.Length < 2) return [];
         return _freq
             .Where(kv => kv.Key.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
                          && kv.Key.Length > prefix.Length)

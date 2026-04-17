@@ -60,7 +60,7 @@ public partial class App : System.Windows.Application
             services.AddSingleton<DownloadService>();
             services.AddSingleton<InstallerService>();
             // T-9.3: 자동 완성 서비스
-            services.AddSingleton<WordFrequencyStore>();
+            services.AddSingleton<Func<string, WordFrequencyStore>>(_ => lang => new WordFrequencyStore(lang));
             services.AddSingleton<KoreanDictionary>();
             services.AddSingleton<EnglishDictionary>();
             services.AddSingleton<AutoCompleteService>();
@@ -139,10 +139,6 @@ public partial class App : System.Windows.Application
 
     protected override void OnExit(ExitEventArgs e)
     {
-        // T-9.3: 학습된 단어 빈도 저장
-        try { Services.GetService<WordFrequencyStore>()?.Save(); }
-        catch { /* 저장 실패 — 무시 */ }
-
         // 서비스 정리
         if (Services is IDisposable d) d.Dispose();
         base.OnExit(e);

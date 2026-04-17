@@ -6,7 +6,6 @@ namespace AltKey.Services;
 /// _isHangulMode가 true면 한글 자모 조합 중, false면 영문 추적 중
 public class AutoCompleteService
 {
-    private readonly WordFrequencyStore _store;
     private readonly KoreanDictionary _koreanDict;
     private readonly EnglishDictionary _englishDict;
     private readonly HangulComposer _hangul = new();
@@ -19,9 +18,8 @@ public class AutoCompleteService
     /// 현재 조합 중인 단어 (SuggestionBarViewModel 에서 나머지 문자 계산에 사용)
     public string CurrentWord => _isHangulMode ? _hangul.Current : _currentWord;
 
-    public AutoCompleteService(WordFrequencyStore store, KoreanDictionary koreanDict, EnglishDictionary englishDict)
+    public AutoCompleteService(KoreanDictionary koreanDict, EnglishDictionary englishDict)
     {
-        _store = store;
         _koreanDict = koreanDict;
         _englishDict = englishDict;
     }
@@ -42,7 +40,7 @@ public class AutoCompleteService
         if (IsWordSeparator(vk))
         {
             if (_currentWord.Length >= 2)
-                _store.RecordWord(_currentWord);
+                _englishDict.RecordWord(_currentWord);
             _currentWord = "";
             SuggestionsChanged?.Invoke([]);
             return;
@@ -86,7 +84,10 @@ public class AutoCompleteService
             bsCount = _currentWord.Length;
         }
 
-        _store.RecordWord(suggestion);
+        if (_isHangulMode)
+            _koreanDict.RecordWord(suggestion);
+        else
+            _englishDict.RecordWord(suggestion);
         _hangul.Reset();
         _currentWord = "";
         _isHangulMode = false;
@@ -99,7 +100,12 @@ public class AutoCompleteService
     {
         var word = _isHangulMode ? _hangul.Current : _currentWord;
         if (!string.IsNullOrWhiteSpace(word))
-            _store.RecordWord(word);
+        {
+            if (_isHangulMode)
+                _koreanDict.RecordWord(word);
+            else
+                _englishDict.RecordWord(word);
+        }
         _hangul.Reset();
         _currentWord = "";
         _isHangulMode = false;
