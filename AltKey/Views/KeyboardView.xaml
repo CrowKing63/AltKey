@@ -127,7 +127,7 @@
 
                 <!-- T-5.10 / T-7.2: 기어(설정) 버튼 -->
                 <Button x:Name="SettingsButton" Width="32" Height="28"
-                        HorizontalAlignment="Right" Margin="0,0,96,0"
+                        HorizontalAlignment="Right" Margin="0,0,248,0"
                         Background="Transparent" Foreground="{DynamicResource TitleFg}"
                         BorderThickness="0" Cursor="Hand"
                         Command="{Binding ToggleSettingsCommand}"
@@ -137,7 +137,7 @@
 
                 <!-- T-8.3: 이모지 패널 토글 버튼 -->
                 <Button Width="32" Height="28"
-                        HorizontalAlignment="Right" Margin="0,0,128,0"
+                        HorizontalAlignment="Right" Margin="0,0,208,0"
                         Background="Transparent" Foreground="{DynamicResource TitleFg}"
                         BorderThickness="0" Cursor="Hand"
                         Command="{Binding ToggleEmojiPanelCommand}"
@@ -147,7 +147,7 @@
 
                 <!-- T-8.4: 클립보드 패널 토글 버튼 -->
                 <Button Width="32" Height="28"
-                        HorizontalAlignment="Right" Margin="0,0,160,0"
+                        HorizontalAlignment="Right" Margin="0,0,168,0"
                         Background="Transparent" Foreground="{DynamicResource TitleFg}"
                         BorderThickness="0" Cursor="Hand"
                         Command="{Binding ToggleClipboardPanelCommand}"
@@ -155,9 +155,19 @@
                     <TextBlock Text="📋" FontSize="14"/>
                 </Button>
 
+                <!-- 07: OS IME 한/영 비상 버튼 -->
+                <Button Width="40" Height="28"
+                        HorizontalAlignment="Right" Margin="0,0,80,0"
+                        Background="Transparent" Foreground="{DynamicResource TitleFg}"
+                        BorderThickness="0" Cursor="Hand"
+                        Command="{Binding SendOsImeHangulCommand}"
+                        ToolTip="OS IME 한/영 전환 (거의 쓸 일이 없는 비상 버튼)">
+                    <TextBlock Text="한/영" FontSize="10"/>
+                </Button>
+
                 <!-- T-9.3 / 06: 자동완성 토글 버튼 -->
                 <ToggleButton Width="32" Height="28"
-                        HorizontalAlignment="Right" Margin="0,0,192,0"
+                        HorizontalAlignment="Right" Margin="0,0,128,0"
                         Background="{Binding AutoCompleteEnabled, Converter={StaticResource BoolToVis}, ConverterParameter=Background}"
                         Foreground="{DynamicResource TitleFg}"
                         BorderThickness="0" Cursor="Hand"

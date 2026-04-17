@@ -376,6 +376,12 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void ToggleClipboardPanel() => Clipboard.IsVisible = !Clipboard.IsVisible;
 
+    [RelayCommand]
+    private void SendOsImeHangul()
+    {
+        _inputService.SendKeyPress(VirtualKeyCode.VK_HANGUL);
+    }
+
     // T-5.4: 앱 프로필 자동 전환
     private void OnForegroundAppChanged(string processName)
     {
