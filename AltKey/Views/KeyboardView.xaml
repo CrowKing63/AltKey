@@ -97,12 +97,14 @@
                                     Background="Transparent" BorderThickness="0"
                                     Foreground="{DynamicResource TitleFg}" Opacity="0.45"
                                     Cursor="Hand" Padding="0" FontSize="10"
-                                    Click="EdgeLeftBtn_Click"/>
+                                    Click="EdgeLeftBtn_Click"
+                                    AutomationProperties.Name="왼쪽으로 이동"/>
                             <Button Width="18" Height="18" Content="↑" ToolTip="화면 위쪽으로 이동"
                                     Background="Transparent" BorderThickness="0"
                                     Foreground="{DynamicResource TitleFg}" Opacity="0.45"
                                     Cursor="Hand" Padding="0" FontSize="10"
-                                    Click="EdgeUpBtn_Click"/>
+                                    Click="EdgeUpBtn_Click"
+                                    AutomationProperties.Name="위쪽으로 이동"/>
                             <Rectangle x:Name="DragPill"
                                        Width="36" Height="4"
                                        Fill="{DynamicResource TitleFg}"
@@ -110,17 +112,19 @@
                                        RadiusX="2" RadiusY="2"
                                        Margin="6,0"
                                        VerticalAlignment="Center"
-                                       IsHitTestVisible="False"/>
+                                        IsHitTestVisible="False"/>
                             <Button Width="18" Height="18" Content="↓" ToolTip="화면 아래쪽으로 이동"
                                     Background="Transparent" BorderThickness="0"
                                     Foreground="{DynamicResource TitleFg}" Opacity="0.45"
                                     Cursor="Hand" Padding="0" FontSize="10"
-                                    Click="EdgeDownBtn_Click"/>
+                                    Click="EdgeDownBtn_Click"
+                                    AutomationProperties.Name="아래쪽으로 이동"/>
                             <Button Width="18" Height="18" Content="→" ToolTip="화면 오른쪽으로 이동"
                                     Background="Transparent" BorderThickness="0"
                                     Foreground="{DynamicResource TitleFg}" Opacity="0.45"
                                     Cursor="Hand" Padding="0" FontSize="10"
-                                    Click="EdgeRightBtn_Click"/>
+                                    Click="EdgeRightBtn_Click"
+                                    AutomationProperties.Name="오른쪽으로 이동"/>
                         </StackPanel>
                     </Grid>
                 </Border>
@@ -131,7 +135,8 @@
                         Background="Transparent" Foreground="{DynamicResource TitleFg}"
                         BorderThickness="0" Cursor="Hand"
                         Command="{Binding ToggleSettingsCommand}"
-                        ToolTip="설정">
+                        ToolTip="설정"
+                        AutomationProperties.Name="설정">
                     <TextBlock Text="⚙" FontSize="14"/>
                 </Button>
 
@@ -141,7 +146,8 @@
                         Background="Transparent" Foreground="{DynamicResource TitleFg}"
                         BorderThickness="0" Cursor="Hand"
                         Command="{Binding ToggleEmojiPanelCommand}"
-                        ToolTip="이모지 패널">
+                        ToolTip="이모지 패널"
+                        AutomationProperties.Name="이모지 패널">
                     <TextBlock Text="😊" FontSize="14"/>
                 </Button>
 
@@ -151,7 +157,8 @@
                         Background="Transparent" Foreground="{DynamicResource TitleFg}"
                         BorderThickness="0" Cursor="Hand"
                         Command="{Binding ToggleClipboardPanelCommand}"
-                        ToolTip="클립보드 패널">
+                        ToolTip="클립보드 패널"
+                        AutomationProperties.Name="클립보드 패널">
                     <TextBlock Text="📋" FontSize="14"/>
                 </Button>
 
@@ -161,7 +168,9 @@
                         Background="Transparent" Foreground="{DynamicResource TitleFg}"
                         BorderThickness="0" Cursor="Hand"
                         Command="{Binding SendOsImeHangulCommand}"
-                        ToolTip="OS IME 한/영 전환 (거의 쓸 일이 없는 비상 버튼)">
+                        ToolTip="OS IME 한/영 전환 (거의 쓸 일이 없는 비상 버튼)"
+                        AutomationProperties.Name="OS IME 한영 전환"
+                        AutomationProperties.HelpText="거의 사용할 일이 없는 비상용 버튼입니다.">
                     <TextBlock Text="한/영" FontSize="10"/>
                 </Button>
 
@@ -173,7 +182,9 @@
                         BorderThickness="0" Cursor="Hand"
                         IsChecked="{Binding AutoCompleteEnabled, Mode=TwoWay}"
                         IsEnabled="{Binding CanToggleAutoComplete}"
-                        ToolTip="자동완성 (유니코드 직접 입력) 켜기/끄기">
+                        ToolTip="자동완성 (유니코드 직접 입력) 켜기/끄기"
+                        AutomationProperties.Name="자동완성 토글"
+                        AutomationProperties.HelpText="켜면 유니코드 직접 입력, 끄면 OS IME 사용">
                     <TextBlock Text="AC" FontWeight="Bold" FontSize="12"/>
                 </ToggleButton>
 
@@ -183,7 +194,8 @@
                         Background="Transparent" Foreground="{DynamicResource TitleFg}"
                         BorderThickness="0" Cursor="Hand"
                         Click="CollapseButton_Click"
-                        ToolTip="접기 / 펼치기">
+                        ToolTip="접기 / 펼치기"
+                        AutomationProperties.Name="접기 펼치기">
                     <TextBlock x:Name="CollapseIcon" Text="▲" FontSize="10"/>
                 </Button>
 
@@ -193,7 +205,8 @@
                         Background="Transparent" Foreground="{DynamicResource TitleFg}"
                         BorderThickness="0" Cursor="Hand"
                         Click="CloseButton_Click"
-                        ToolTip="닫기 (트레이로 숨김)">
+                        ToolTip="닫기 (트레이로 숨김)"
+                        AutomationProperties.Name="닫기">
                     <TextBlock Text="✕" FontSize="14"/>
                 </Button>
             </Grid>
@@ -203,6 +216,14 @@
                 DockPanel.Dock="Top"
                 DataContext="{Binding AutoComplete}"
                 Visibility="{Binding IsVisible, Converter={StaticResource BoolToVis}}"/>
+
+            <!-- 08: LiveRegion 공지 (Narrator용) -->
+            <TextBlock x:Name="ModeAnnouncer"
+                       Text="{Binding Keyboard.ModeAnnouncement}"
+                       Opacity="0"
+                       IsHitTestVisible="False"
+                       AutomationProperties.LiveSetting="Polite"
+                       Width="0" Height="0"/>
 
             <!-- T-2.10: UAC 권한 경고 배너 (Auto 높이, 숨김 시 공간 없음) -->
             <Border DockPanel.Dock="Top"
@@ -233,29 +254,30 @@
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate DataType="{x:Type vm:KeySlotVm}">
-                                 <controls:KeyButton
-                                     Slot="{Binding}"
-                                     ShowUpperCase="{Binding DataContext.Keyboard.ShowUpperCase,
-                                         RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                     DisplayLabel="{Binding DisplayLabel}"
-                                     IsDimmed="{Binding IsDimmed}"
-                                     IsSticky="{Binding IsSticky}"
-                                     IsLocked="{Binding IsLocked}"
-                                     KeyUnit="{Binding DataContext.Keyboard.KeyUnit,
-                                         RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                     DwellEnabled="{Binding DataContext.DwellEnabled,
-                                         RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                     DwellTime="{Binding DataContext.DwellTimeMs,
-                                         RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                     KeyRepeatEnabled="{Binding DataContext.KeyRepeatEnabled,
-                                         RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                     KeyRepeatDelayMs="{Binding DataContext.KeyRepeatDelayMs,
-                                         RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                     KeyRepeatIntervalMs="{Binding DataContext.KeyRepeatIntervalMs,
-                                         RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                     Command="{Binding DataContext.Keyboard.KeyPressedCommand,
-                                         RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                     CommandParameter="{Binding Slot}"/>
+                                  <controls:KeyButton
+                                      Slot="{Binding}"
+                                      ShowUpperCase="{Binding DataContext.Keyboard.ShowUpperCase,
+                                          RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                      DisplayLabel="{Binding DisplayLabel}"
+                                      SubLabel="{Binding SubLabelText}"
+                                      IsDimmed="{Binding IsDimmed}"
+                                      IsSticky="{Binding IsSticky}"
+                                      IsLocked="{Binding IsLocked}"
+                                      KeyUnit="{Binding DataContext.Keyboard.KeyUnit,
+                                          RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                      DwellEnabled="{Binding DataContext.DwellEnabled,
+                                          RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                      DwellTime="{Binding DataContext.DwellTimeMs,
+                                          RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                      KeyRepeatEnabled="{Binding DataContext.KeyRepeatEnabled,
+                                          RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                      KeyRepeatDelayMs="{Binding DataContext.KeyRepeatDelayMs,
+                                          RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                      KeyRepeatIntervalMs="{Binding DataContext.KeyRepeatIntervalMs,
+                                          RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                      Command="{Binding DataContext.Keyboard.KeyPressedCommand,
+                                          RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                      CommandParameter="{Binding Slot}"/>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>

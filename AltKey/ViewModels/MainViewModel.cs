@@ -20,6 +20,7 @@ public partial class MainViewModel : ObservableObject
     private readonly ProfileService _profileService;
     private readonly AutoCompleteService _autoCompleteService;
     private readonly InputService _inputService;
+    private readonly LiveRegionService _liveRegion;
 
     // 표시명 → 파일명 매핑 (T-7.1: AvailableLayouts가 표시명을 저장)
     private readonly Dictionary<string, string> _displayToFileName = [];
@@ -93,17 +94,19 @@ public partial class MainViewModel : ObservableObject
             var target = value ? InputMode.Unicode : InputMode.VirtualKey;
             bool ok = _inputService.TrySetMode(target);
 
-            if (!ok && value)
-            {
-                System.Media.SystemSounds.Beep.Play();
-                _configService.Current.AutoCompleteEnabled = false;
-                _configService.Save();
-                OnPropertyChanged(nameof(AutoCompleteEnabled));
-            }
-
-            _autoCompleteService.ResetState();
-            AutoComplete.IsVisible = _configService.Current.AutoCompleteEnabled;
+        if (!ok && value)
+        {
+            System.Media.SystemSounds.Beep.Play();
+            _configService.Current.AutoCompleteEnabled = false;
+            _configService.Save();
+            OnPropertyChanged(nameof(AutoCompleteEnabled));
         }
+
+        _autoCompleteService.ResetState();
+        AutoComplete.IsVisible = _configService.Current.AutoCompleteEnabled;
+
+        _liveRegion.Announce(value ? "자동완성 켜짐" : "자동완성 꺼짐");
+    }
     }
 
     public bool CanToggleAutoComplete => !_inputService.IsElevated;
@@ -162,11 +165,13 @@ public partial class MainViewModel : ObservableObject
         ClipboardViewModel     clipboardViewModel,
         SuggestionBarViewModel suggestionBarViewModel,
         AutoCompleteService    autoCompleteService,
-        InputService           inputService)
+        InputService           inputService,
+        LiveRegionService      liveRegion)
     {
         _configService  = configService;
         _layoutService  = layoutService;
         _profileService = profileService;
+        _liveRegion = liveRegion;
 
         Keyboard     = keyboardViewModel;
         Settings     = settingsViewModel;
@@ -380,6 +385,7 @@ public partial class MainViewModel : ObservableObject
     private void SendOsImeHangul()
     {
         _inputService.SendKeyPress(VirtualKeyCode.VK_HANGUL);
+        _liveRegion.Announce("OS IME 한영 전환 신호 전송됨");
     }
 
     // T-5.4: 앱 프로필 자동 전환

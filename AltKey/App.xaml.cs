@@ -68,6 +68,8 @@ public partial class App : System.Windows.Application
             services.AddSingleton<AutoCompleteService>();
             services.AddSingleton<KoreanInputModule>();
             services.AddSingleton<IInputLanguageModule>(sp => sp.GetRequiredService<KoreanInputModule>());
+            // 08: 접근성 LiveRegion 서비스
+            services.AddSingleton<LiveRegionService>();
 
             // ViewModel
             services.AddSingleton<KeyboardViewModel>();
