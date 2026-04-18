@@ -82,6 +82,29 @@ public class WordFrequencyStore
         }
     }
 
+    /// 초성(호환 자모)으로 시작하는 단어 제안 (첫 음절의 초성이 일치하는 단어)
+    public IReadOnlyList<string> GetSuggestionsByChoseong(char choseong, int count = 5)
+    {
+        lock (_saveLock)
+        {
+            return _freq
+                .Where(kv => kv.Key.Length > 0
+                             && kv.Key[0] >= '\uAC00' && kv.Key[0] <= '\uD7A3'
+                             && GetChoseongChar(kv.Key[0]) == choseong)
+                .OrderByDescending(kv => kv.Value)
+                .Take(count)
+                .Select(kv => kv.Key)
+                .ToList();
+        }
+    }
+
+    private static char GetChoseongChar(char syllable)
+    {
+        const string choseong = "ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ";
+        int idx = (syllable - 0xAC00) / (21 * 28);
+        return choseong[idx];
+    }
+
     private void ScheduleSave()
     {
         lock (_saveLock) { _pending = true; }

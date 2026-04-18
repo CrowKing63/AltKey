@@ -44,6 +44,25 @@ internal sealed class WordFrequencyStoreInMemory : WordFrequencyStore
             .ToList();
     }
 
+    public new IReadOnlyList<string> GetSuggestionsByChoseong(char choseong, int count = 5)
+    {
+        return _freq
+            .Where(kv => kv.Key.Length > 0
+                         && kv.Key[0] >= '\uAC00' && kv.Key[0] <= '\uD7A3'
+                         && GetChoseongChar(kv.Key[0]) == choseong)
+            .OrderByDescending(kv => kv.Value)
+            .Take(count)
+            .Select(kv => kv.Key)
+            .ToList();
+    }
+
+    private static char GetChoseongChar(char syllable)
+    {
+        const string ch = "ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ";
+        int idx = (syllable - 0xAC00) / (21 * 28);
+        return ch[idx];
+    }
+
     public new void RecordWord(string word)
     {
         if (string.IsNullOrWhiteSpace(word)) return;

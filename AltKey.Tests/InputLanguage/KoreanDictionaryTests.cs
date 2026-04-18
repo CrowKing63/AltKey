@@ -48,4 +48,42 @@ public class KoreanDictionaryTests
         dict.RecordWord("");
         Assert.Equal(0, dict.UserWordCount);
     }
+
+    [Fact]
+    public void GetSuggestions_with_choseong_jamo_returns_words_starting_with_that_choseong()
+    {
+        var dict = new KoreanDictionaryTestable();
+        var sugg = dict.GetSuggestions("ㄱ", 5);
+        // 결과가 비어있지 않아야 함 (내장 사전에 ㄱ으로 시작하는 단어가 있다고 가정)
+        Assert.NotEmpty(sugg);
+        // 모든 단어의 첫 글자가 ㄱ 초성인 완성 음절이어야 함
+        Assert.All(sugg, w =>
+        {
+            Assert.InRange(w[0], '\uAC00', '\uD7A3');
+            int choIdx = (w[0] - 0xAC00) / (21 * 28);
+            Assert.Equal(0, choIdx); // ㄱ = index 0
+        });
+    }
+
+    [Fact]
+    public void GetSuggestions_with_complete_syllable_prefix_unchanged()
+    {
+        var dict = new KoreanDictionaryTestable();
+        var sugg = dict.GetSuggestions("가", 5);
+        // 완성 음절 prefix 매칭이 여전히 동작해야 함
+        Assert.All(sugg, w =>
+        {
+            Assert.StartsWith("가", w);
+            Assert.True(w.Length > 1);
+        });
+    }
+
+    [Fact]
+    public void GetSuggestions_choseong_user_word_included()
+    {
+        var dict = new KoreanDictionaryTestable();
+        dict.RecordWord("해달");
+        var sugg = dict.GetSuggestions("ㅎ", 5);
+        Assert.Contains("해달", sugg);
+    }
 }
