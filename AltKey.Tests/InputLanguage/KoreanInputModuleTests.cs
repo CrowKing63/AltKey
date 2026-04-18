@@ -1,6 +1,7 @@
 using AltKey.Models;
 using AltKey.Services;
 using AltKey.Services.InputLanguage;
+using System.Linq;
 
 namespace AltKey.Tests.InputLanguage;
 
@@ -337,5 +338,131 @@ public class KoreanInputModuleTests
         Assert.Equal("help", word);
         // AcceptSuggestion 후 prefix 초기화 확인
         Assert.Equal("", module.CurrentWord);
+    }
+
+    // ──────────────────────────────────────────────────────────────
+    // G 항목: 회귀 방지 테스트 (2026-04-18 추가)
+    // ──────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// G-1: AcceptSuggestion 직후 자모 재입력 시 prevLen=0 검증 (F-1 회귀 방지)
+    /// </summary>
+    [Fact]
+    public void AcceptSuggestion_then_new_jamo_preserves_accepted_word_on_screen()
+    {
+        var (module, input, _) = TestSlotFactory.CreateModuleWithInput();
+
+        module.HandleKey(ㅎ_slot, ctxNoModifiers);
+        module.HandleKey(ㅐ_slot, ctxNoModifiers);      // "해" 조합
+
+        var (bs, word) = module.AcceptSuggestion("해달");
+        // VM 시뮬레이션
+        input.SendAtomicReplace(bs, word);
+        input.ResetTrackedLength();                     // F-1 수정 후 VM이 호출
+
+        module.HandleKey(ㅎ_slot, ctxNoModifiers);      // Accept 후 첫 자모
+
+        var last = input.AtomicReplaces.Last();
+        Assert.Equal(0, last.prevLen);                  // 이전 제안을 건드리지 않아야 함
+        Assert.Equal("ㅎ", last.next);
+    }
+
+    /// <summary>
+    /// G-2: ToggleSubmode 전환 시 현재 학습/폐기 동작 고정
+    /// ToggleSubmode는 FinalizeComposition을 호출하므로, 조합 중인 단어가 학습된다.
+    /// </summary>
+    [Fact]
+    public void ToggleSubmode_during_composition_learns_word()
+    {
+        var (module, _, dict) = TestSlotFactory.CreateModuleWithInput();
+
+        module.HandleKey(ㅎ_slot, ctxNoModifiers);
+        module.HandleKey(ㅐ_slot, ctxNoModifiers);
+        module.HandleKey(ㄷ_slot, ctxNoModifiers);
+        module.HandleKey(ㅏ_slot, ctxNoModifiers);
+        module.HandleKey(ㄹ_slot, ctxNoModifiers);       // "해달" 완성
+
+        module.ToggleSubmode();
+
+        // FinalizeComposition이 호출되어 학습됨
+        Assert.Contains("해달", dict.GetSuggestions("해", 10));
+    }
+
+    /// <summary>
+    /// G-5a: 조합 중 Backspace는 composer만 업데이트 (VK_BACK 전송 안 함)
+    /// </summary>
+    [Fact]
+    public void Backspace_during_composition_updates_composer_only()
+    {
+        var (module, input, _) = TestSlotFactory.CreateModuleWithInput();
+        var bsSlot = TestSlotFactory.Backspace();
+
+        module.HandleKey(ㅎ_slot, ctxNoModifiers);
+        module.HandleKey(ㅐ_slot, ctxNoModifiers);
+        module.HandleKey(ㄷ_slot, ctxNoModifiers);       // "해ㄷ" (cho=ㄷ 분리됨)
+
+        int beforeBsPressCount = input.KeyPresses.Count(k => k == VirtualKeyCode.VK_BACK);
+        module.HandleKey(bsSlot, ctxNoModifiers);        // Backspace via HandleKey
+        int afterBsPressCount = input.KeyPresses.Count(k => k == VirtualKeyCode.VK_BACK);
+
+        // Composer는 1단계 되돌리지만 직접 VK_BACK 전송은 없어야 함
+        Assert.Equal("해", module.CurrentWord);
+        Assert.Equal(beforeBsPressCount, afterBsPressCount);
+    }
+
+    /// <summary>
+    /// G-5b: 조합 종료(OnSeparator) 후 Backspace는 VK_BACK을 전송하지 않음
+    /// (현재 구현: composer가 비어있고 TrackedOnScreenLength=0이면 HandleBackspace 진입 불가)
+    /// </summary>
+    [Fact]
+    public void Backspace_after_composition_ended_does_not_send_backspace_via_module()
+    {
+        var (module, input, _) = TestSlotFactory.CreateModuleWithInput();
+        var bsSlot = TestSlotFactory.Backspace();
+
+        module.HandleKey(ㅎ_slot, ctxNoModifiers);
+        module.HandleKey(ㅐ_slot, ctxNoModifiers);
+        module.OnSeparator();                           // "해" 확정, composer Reset
+
+        int before = input.KeyPresses.Count(k => k == VirtualKeyCode.VK_BACK);
+        module.HandleKey(bsSlot, ctxNoModifiers);
+        int after = input.KeyPresses.Count(k => k == VirtualKeyCode.VK_BACK);
+
+        // 현재 동작: 모듈 레벨에서 VK_BACK 전송하지 않음 (VM이 처리)
+        Assert.Equal(before, after);
+        Assert.Equal("", module.CurrentWord);
+    }
+
+    /// <summary>
+    /// G-6a: 빈 조합에서 OnSeparator 호출 시 학습하지 않음
+    /// </summary>
+    [Fact]
+    public void OnSeparator_with_empty_composition_does_not_record()
+    {
+        var (module, _, dict) = TestSlotFactory.CreateModuleWithInput();
+
+        // 빈 상태에서 separator
+        module.OnSeparator();
+
+        // 빈 prefix로는 GetSuggestions가 빈 리스트를 반환 (학습 없음)
+        Assert.Empty(dict.GetSuggestions("", 10));
+    }
+
+    /// <summary>
+    /// G-6b: 다음절 조합 후 OnSeparator 시 사용자 사전에 학습
+    /// </summary>
+    [Fact]
+    public void OnSeparator_with_multi_syllable_records_user_dictionary()
+    {
+        var (module, _, dict) = TestSlotFactory.CreateModuleWithInput();
+
+        module.HandleKey(ㅎ_slot, ctxNoModifiers);
+        module.HandleKey(ㅐ_slot, ctxNoModifiers);
+        module.HandleKey(ㄷ_slot, ctxNoModifiers);
+        module.HandleKey(ㅏ_slot, ctxNoModifiers);
+        module.HandleKey(ㄹ_slot, ctxNoModifiers);       // "해달"
+        module.OnSeparator();
+
+        Assert.Contains("해달", dict.GetSuggestions("해", 5));
     }
 }

@@ -98,7 +98,7 @@ public class InputService
     }
 
     // ── T-2.4: 단일 키 전송 ──────────────────────────────────────────────────
-    public void SendKeyPress(VirtualKeyCode vk)
+    public virtual void SendKeyPress(VirtualKeyCode vk)
     {
         var inputs = new Win32.INPUT[] { MakeKeyDown((ushort)vk), MakeKeyUp((ushort)vk) };
         DispatchInput(inputs);

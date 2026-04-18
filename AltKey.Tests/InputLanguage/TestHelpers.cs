@@ -12,11 +12,14 @@ internal sealed class FakeInputService : InputService
 {
     public ConcurrentBag<string> SentUnicodes { get; } = new();
     public ConcurrentBag<(int prevLen, string next)> AtomicReplaces { get; } = new();
+    public List<VirtualKeyCode> KeyPresses { get; } = new();
 
     public override void SendUnicode(string text) => SentUnicodes.Add(text);
 
     public override void SendAtomicReplace(int prevLen, string next) =>
         AtomicReplaces.Add((prevLen, next));
+
+    public override void SendKeyPress(VirtualKeyCode vk) => KeyPresses.Add(vk);
 }
 
 /// <summary>
@@ -25,6 +28,7 @@ internal sealed class FakeInputService : InputService
 internal sealed class WordFrequencyStoreInMemory : WordFrequencyStore
 {
     private readonly Dictionary<string, int> _freq = new();
+    public int UserWordCount => _freq.Count;
 
     public WordFrequencyStoreInMemory() : base("test") { }
 
@@ -54,7 +58,13 @@ internal sealed class WordFrequencyStoreInMemory : WordFrequencyStore
 /// </summary>
 internal sealed class KoreanDictionaryTestable : KoreanDictionary
 {
-    public KoreanDictionaryTestable() : base(_ => new WordFrequencyStoreInMemory()) { }
+    private readonly WordFrequencyStoreInMemory _store;
+    public int UserWordCount => _store.UserWordCount;
+
+    public KoreanDictionaryTestable() : base(_ => new WordFrequencyStoreInMemory())
+    {
+        _store = new WordFrequencyStoreInMemory();
+    }
 }
 
 /// <summary>
@@ -87,4 +97,14 @@ internal static class TestSlotFactory
     /// <summary>백스페이스 키용 팩토리</summary>
     public static KeySlot Backspace() =>
         new(Label: "⌫", ShiftLabel: null, Action: new SendKeyAction(VirtualKeyCode.VK_BACK.ToString()));
+
+    /// <summary>G-테스트용: (KoreanInputModule, FakeInputService, KoreanDictionaryTestable) 튜플 팩토리</summary>
+    internal static (KoreanInputModule module, FakeInputService input, KoreanDictionaryTestable dict) CreateModuleWithInput()
+    {
+        var input = new FakeInputService();
+        var koDict = new KoreanDictionaryTestable();
+        var enDict = new EnglishDictionaryTestable();
+        var module = new KoreanInputModule(input, koDict, enDict);
+        return (module, input, koDict);
+    }
 }
