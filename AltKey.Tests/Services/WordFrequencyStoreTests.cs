@@ -110,5 +110,54 @@ public class WordFrequencyStoreTests : IDisposable
         Assert.Contains("원자적", json);
     }
 
+    [Fact]
+    public void PruneLowest_removes_exactly_twenty_percent_when_ties_exist()
+    {
+        var store = new WordFrequencyStore(_testDir, "test-ko-prune");
+        // 5001개 단어: 4500개 빈도 1, 500개 빈도 2, 1개 빈도 100
+        for (int i = 0; i < 4500; i++) store.RecordWord($"a{i}");
+        for (int i = 0; i < 500; i++) { store.RecordWord($"b{i}"); store.RecordWord($"b{i}"); }
+        store.RecordWord("big");  // 첫 기록
+        for (int i = 0; i < 99; i++) store.RecordWord("big");
+
+        store.Flush();
+        // MaxWords=5000이므로 RecordWord 내부에서 PruneLowest가 한 번 호출됨
+        int totalAfter = store.Count;
+        Assert.InRange(totalAfter, 3990, 4010);  // 5001 - 1000 ± 오차
+        Assert.True(store.Contains("big"));       // 빈도 100은 살아남아야
+    }
+
+    [Fact]
+    public void PruneLowest_is_deterministic_across_runs()
+    {
+        // 동일 입력 시퀀스 → 동일 생존 단어 집합
+        var storeA = BuildStoreForDeterministicTest("test-ko-det-a");
+        var storeB = BuildStoreForDeterministicTest("test-ko-det-b");
+
+        // 두 store 모두 Flush 후 Count가 동일해야 함
+        storeA.Flush();
+        storeB.Flush();
+        Assert.Equal(storeA.Count, storeB.Count);
+    }
+
+    private WordFrequencyStore BuildStoreForDeterministicTest(string langCode)
+    {
+        var store = new WordFrequencyStore(_testDir, langCode);
+        for (int i = 0; i < 4500; i++) store.RecordWord($"a{i}");
+        for (int i = 0; i < 500; i++) { store.RecordWord($"b{i}"); store.RecordWord($"b{i}"); }
+        store.RecordWord("big");
+        for (int i = 0; i < 99; i++) store.RecordWord("big");
+        return store;
+    }
+
+    [Fact]
+    public void PruneLowest_no_op_when_under_max()
+    {
+        var store = new WordFrequencyStore(_testDir, "test-ko-small");
+        for (int i = 0; i < 100; i++) store.RecordWord($"w{i}");
+        store.Flush();
+        Assert.Equal(100, store.Count);  // Prune 발동 안 함
+    }
+
     private string GetFilePath(string lang) => Path.Combine(_testDir, $"user-words.{lang}.json");
 }

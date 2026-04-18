@@ -26,6 +26,18 @@ public class WordFrequencyStore
 
     public Exception? LastSaveError { get; private set; }
 
+    /// 테스트용: 현재 저장된 단어 수
+    public int Count
+    {
+        get { lock (_saveLock) { return _freq.Count; } }
+    }
+
+    /// 테스트용: 단어 존재 여부
+    public bool Contains(string word)
+    {
+        lock (_saveLock) { return _freq.ContainsKey(word); }
+    }
+
     public WordFrequencyStore(string languageCode)
         : this(PathResolver.DataDir, languageCode)
     {
@@ -129,9 +141,19 @@ public class WordFrequencyStore
 
     private void PruneLowest()
     {
-        // 빈도 하위 20% 제거
-        var threshold = _freq.Values.OrderBy(v => v).ElementAt(_freq.Count / 5);
-        foreach (var key in _freq.Keys.Where(k => _freq[k] <= threshold).ToList())
-            _freq.Remove(key);
+        int targetRemoveCount = _freq.Count / 5;
+        if (targetRemoveCount == 0) return;
+
+        var toRemove = _freq
+            .OrderBy(kv => kv.Value)
+            .ThenBy(kv => kv.Key)
+            .Take(targetRemoveCount)
+            .Select(kv => kv.Key)
+            .ToList();
+
+        Debug.WriteLine(
+            $"[WordFrequencyStore] Pruned {toRemove.Count} of {_freq.Count} words.");
+
+        foreach (var k in toRemove) _freq.Remove(k);
     }
 }
