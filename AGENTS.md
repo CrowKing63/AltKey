@@ -1,5 +1,6 @@
 - 사용자 요청에 대한 응답은 한국어로 작성할 것.
 - 사용자는 코딩 전문가가 아님.
 - 이 프로젝트에서 가장 중요한 기능인 자동 완성은 구현 자체가 너무나 까다로웠다. 관련 코드 수정시 각별한 주의가 필요하다. 다음의 문서를 참고할 것. C:\Users\UITAEK\AltKey\docs\ime-korean-detect.md
+- **자동완성/한글 조합 관련 코드를 수정하기 전에 반드시 [`docs/auto-complet/CORE-LOGIC-PROTECTION.md`](docs/auto-complet/CORE-LOGIC-PROTECTION.md)를 먼저 읽을 것.** 어떤 코드가 "절대 건드리면 안 되는 핵심 로직"이고 어떤 코드가 "조심스럽게 수정 가능한 영역"인지, 그리고 그 근거(과거 회귀 사례)가 정리되어 있다. 개선·버그수정 작업지시서는 `docs/auto-complet/TASK-XX-*.md`에 있으며, 전체 목록은 [`docs/auto-complet/findings-overview.md`](docs/auto-complet/findings-overview.md)에서 확인.
 - 이 프로젝트는 **한국어 사용자 전용** 가상 키보드이다. `qwerty-en.json`은 삭제되었으며, `Language` 필드와 `PrimaryLanguage` 개념은 제거되었다. 영어 입력은 한국어 레이아웃 내 "가/A" 토글(QuietEnglish 서브모드)로 처리된다.
 - 기존 `HandleKoreanLayoutKey`, `HandleEnglishLayoutKey`, `HandleEnglishSubMode`, `_isKoreanInput`, `_layoutSupportsKorean`, `_lastImeKorean`은 모두 제거되었다. 한국어 입력 로직은 `KoreanInputModule`으로 이전되었다.
