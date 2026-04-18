@@ -79,6 +79,19 @@ public class KoreanDictionaryTests
     }
 
     [Fact]
+    public void TryRemoveUserWord_Removes_Only_From_User_Store_Not_BuiltIn()
+    {
+        var dict = new KoreanDictionaryTestable();
+        dict.RecordWord("해달테스트");
+        Assert.Contains("해달테스트", dict.GetSuggestions("해달"));
+
+        Assert.True(dict.TryRemoveUserWord("해달테스트"));
+        Assert.DoesNotContain("해달테스트", dict.GetSuggestions("해달"));
+
+        Assert.False(dict.TryRemoveUserWord("사랑"));
+    }
+
+    [Fact]
     public void GetSuggestions_choseong_user_word_included()
     {
         var dict = new KoreanDictionaryTestable();

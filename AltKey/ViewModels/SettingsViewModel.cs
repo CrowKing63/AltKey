@@ -26,6 +26,7 @@ public partial class SettingsViewModel : ObservableObject
     private readonly StartupService       _startupService;
     private readonly SoundService         _soundService;
     private readonly LayoutEditorViewModel _layoutEditorVm;
+    private readonly UserDictionaryEditorViewModel _userDictEditorVm;
     private readonly UpdateService        _updateService;
     private readonly DownloadService      _downloadService;
     private readonly InstallerService     _installerService;
@@ -102,7 +103,8 @@ public partial class SettingsViewModel : ObservableObject
         LayoutEditorViewModel layoutEditorViewModel,
         UpdateService        updateService,
         DownloadService      downloadService,
-        InstallerService     installerService)
+        InstallerService     installerService,
+        UserDictionaryEditorViewModel userDictionaryEditorViewModel)
     {
         _configService  = configService;
         _themeService   = themeService;
@@ -114,6 +116,7 @@ public partial class SettingsViewModel : ObservableObject
         _updateService  = updateService;
         _downloadService = downloadService;
         _installerService = installerService;
+        _userDictEditorVm = userDictionaryEditorViewModel;
 
         // T-9.5: 현재 버전 초기화
         var asmVersion = Assembly.GetExecutingAssembly().GetName().Version;
@@ -327,6 +330,18 @@ public partial class SettingsViewModel : ObservableObject
     private void OpenLayoutEditor()
     {
         var win = new AltKey.Views.LayoutEditorWindow(_layoutEditorVm)
+        {
+            Owner = WpfApp.Current.MainWindow
+        };
+        win.Show();
+    }
+
+    // ── ac-editor 03: 사용자 단어 편집기 열기 ─────────────────────────────
+
+    [RelayCommand]
+    private void OpenUserDictionaryEditor()
+    {
+        var win = new AltKey.Views.UserDictionaryEditorWindow(_userDictEditorVm)
         {
             Owner = WpfApp.Current.MainWindow
         };

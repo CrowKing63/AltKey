@@ -80,6 +80,8 @@ public partial class App : System.Windows.Application
             services.AddSingleton<SuggestionBarViewModel>();
             // T-9.4: 레이아웃 편집기 ViewModel
             services.AddSingleton<LayoutEditorViewModel>();
+            // ac-editor 03: 사용자 사전 편집기 ViewModel
+            services.AddSingleton<UserDictionaryEditorViewModel>();
 
             // 창
             services.AddSingleton<MainWindow>();

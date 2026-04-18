@@ -15,6 +15,8 @@ public class EnglishDictionary
         _builtIn = LoadBuiltIn();
     }
 
+    public WordFrequencyStore UserStore => _userStore;
+
     public IReadOnlyList<string> GetSuggestions(string prefix, int count = 5)
     {
         if (prefix.Length < 2) return [];
@@ -39,6 +41,13 @@ public class EnglishDictionary
     {
         if (word.Length < 2) return;
         _userStore.RecordWord(word.ToLowerInvariant());
+    }
+
+    /// 사용자 학습 저장소에서 단어를 제거 (소문자 정규화).
+    public bool TryRemoveUserWord(string word)
+    {
+        if (string.IsNullOrWhiteSpace(word)) return false;
+        return _userStore.RemoveWord(word.Trim().ToLowerInvariant());
     }
 
     /// 앱 종료 시 호출 — 사용자 학습 데이터 즉시 저장

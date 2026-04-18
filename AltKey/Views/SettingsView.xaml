@@ -103,9 +103,17 @@
                         <!-- T-9.4: 레이아웃 편집기 -->
                         <Button Content="레이아웃 편집기 열기"
                                 Command="{Binding OpenLayoutEditorCommand}"
-                                Height="30" Margin="0,0,0,16"
+                                Height="30" Margin="0,0,0,8"
                                 Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}"
                                 BorderThickness="0" Cursor="Hand"/>
+
+                        <!-- ac-editor 03: 사용자 단어 편집기 -->
+                        <Button Content="사용자 단어 편집기 열기"
+                                Command="{Binding OpenUserDictionaryEditorCommand}"
+                                Height="30" Margin="0,0,0,16"
+                                Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}"
+                                BorderThickness="0" Cursor="Hand"
+                                ToolTip="자동완성에서 학습된 단어 목록을 확인·편집합니다"/>
 
                         <!-- 전역 단축키 -->
                         <TextBlock Text="전역 단축키" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>

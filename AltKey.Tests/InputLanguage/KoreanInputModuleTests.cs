@@ -31,12 +31,14 @@ public class KoreanInputModuleTests
     private static KeyContext ctxShiftOnly => new(true, true, false, InputMode.Unicode, 1);
     private static KeyContext ctxCtrlShift => new(true, true, true, InputMode.Unicode, 0);
 
-    private KoreanInputModule CreateModule(out FakeInputService input)
+    private KoreanInputModule CreateModule(out FakeInputService input, bool autoCompleteEnabled = true)
     {
         input = new FakeInputService();
         var koDict = new KoreanDictionaryTestable();
         var enDict = new EnglishDictionaryTestable();
-        return new KoreanInputModule(input, koDict, enDict);
+        var config = new ConfigService();
+        config.Current.AutoCompleteEnabled = autoCompleteEnabled;
+        return new KoreanInputModule(input, koDict, enDict, config);
     }
 
     [Fact]
@@ -464,5 +466,62 @@ public class KoreanInputModuleTests
         module.OnSeparator();
 
         Assert.Contains("해달", dict.GetSuggestions("해", 5));
+    }
+
+    /// <summary>
+    /// AutoComplete OFF 시 FinalizeComposition에서 단어 학습하지 않음
+    /// (조합 상태는 정상 초기화됨을 함께 검증)
+    /// </summary>
+    [Fact]
+    public void FinalizeComposition_With_AutoCompleteDisabled_Does_Not_Record_Word()
+    {
+        var (module, _, _) = TestSlotFactory.CreateModuleWithInput(autoCompleteEnabled: false);
+
+        module.HandleKey(ㅎ_slot, ctxNoModifiers);
+        module.HandleKey(ㅐ_slot, ctxNoModifiers);
+        module.HandleKey(ㄷ_slot, ctxNoModifiers);
+        module.HandleKey(ㅏ_slot, ctxNoModifiers);
+        module.HandleKey(ㄹ_slot, ctxNoModifiers);
+        module.OnSeparator();
+
+        Assert.Equal("", module.CurrentWord);
+    }
+
+    /// <summary>
+    /// AutoComplete ON 시 FinalizeComposition에서 단어 학습 수행
+    /// (GetSuggestions에 제안이 포함되는지로 간접 검증)
+    /// </summary>
+    [Fact]
+    public void FinalizeComposition_With_AutoCompleteEnabled_Records_Word()
+    {
+        var (module, _, dict) = TestSlotFactory.CreateModuleWithInput(autoCompleteEnabled: true);
+
+        module.HandleKey(ㅎ_slot, ctxNoModifiers);
+        module.HandleKey(ㅐ_slot, ctxNoModifiers);
+        module.HandleKey(ㄷ_slot, ctxNoModifiers);
+        module.HandleKey(ㅏ_slot, ctxNoModifiers);
+        module.HandleKey(ㄹ_slot, ctxNoModifiers);
+        module.OnSeparator();
+
+        Assert.Contains("해달", dict.GetSuggestions("해", 5));
+    }
+
+    /// <summary>
+    /// AutoComplete OFF 시 AcceptSuggestion에서 단어 학습하지 않음
+    /// (bsCount·fullWord는 정상 반환됨을 함께 검증)
+    /// </summary>
+    [Fact]
+    public void AcceptSuggestion_With_AutoCompleteDisabled_Does_Not_Record()
+    {
+        var (module, _, _) = TestSlotFactory.CreateModuleWithInput(autoCompleteEnabled: false);
+
+        module.HandleKey(ㅎ_slot, ctxNoModifiers);
+        module.HandleKey(ㅐ_slot, ctxNoModifiers);
+
+        var (bs, word) = module.AcceptSuggestion("해달");
+
+        Assert.Equal(2, bs);
+        Assert.Equal("해달", word);
+        Assert.Equal("", module.CurrentWord);
     }
 }

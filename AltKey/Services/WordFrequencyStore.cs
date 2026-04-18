@@ -66,6 +66,64 @@ public class WordFrequencyStore
         ScheduleSave();
     }
 
+    /// 단어 빈도를 명시적으로 설정. <=0 이면 제거.
+    /// 새 단어 추가 겸용.
+    public void SetFrequency(string word, int frequency)
+    {
+        if (string.IsNullOrWhiteSpace(word)) return;
+        word = word.Trim();
+        if (word.Length == 0) return;
+
+        lock (_saveLock)
+        {
+            if (frequency <= 0)
+            {
+                _freq.Remove(word);
+            }
+            else
+            {
+                _freq[word] = frequency;
+                if (_freq.Count > MaxWords) PruneLowest();
+            }
+        }
+        ScheduleSave();
+    }
+
+    /// 저장된 모든 단어의 스냅샷 반환. 빈도 내림차순, 같은 빈도는 단어 오름차순.
+    public IReadOnlyList<(string Word, int Frequency)> GetAllWords()
+    {
+        lock (_saveLock)
+        {
+            return _freq
+                .OrderByDescending(kv => kv.Value)
+                .ThenBy(kv => kv.Key, StringComparer.Ordinal)
+                .Select(kv => (kv.Key, kv.Value))
+                .ToList();
+        }
+    }
+
+    /// 저장소를 완전히 비운다 (UI 측 확인 대화상자 뒤에서만 호출할 것).
+    public void Clear()
+    {
+        lock (_saveLock) { _freq.Clear(); }
+        ScheduleSave();
+    }
+
+    /// 단어를 사용자 사전에서 제거. 존재하지 않으면 false.
+    /// 성공 시 디바운스 저장 예약.
+    public bool RemoveWord(string word)
+    {
+        if (string.IsNullOrWhiteSpace(word)) return false;
+        word = word.Trim();
+        bool removed;
+        lock (_saveLock)
+        {
+            removed = _freq.Remove(word);
+        }
+        if (removed) ScheduleSave();
+        return removed;
+    }
+
     /// prefix 로 시작하는 단어 제안 (빈도 내림차순)
     public IReadOnlyList<string> GetSuggestions(string prefix, int count = 5)
     {

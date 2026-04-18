@@ -126,12 +126,15 @@ internal static class TestSlotFactory
         new(Label: "⌫", ShiftLabel: null, Action: new SendKeyAction(VirtualKeyCode.VK_BACK.ToString()));
 
     /// <summary>G-테스트용: (KoreanInputModule, FakeInputService, KoreanDictionaryTestable) 튜플 팩토리</summary>
-    internal static (KoreanInputModule module, FakeInputService input, KoreanDictionaryTestable dict) CreateModuleWithInput()
+    internal static (KoreanInputModule module, FakeInputService input, KoreanDictionaryTestable dict) CreateModuleWithInput(
+        bool autoCompleteEnabled = true)
     {
         var input = new FakeInputService();
         var koDict = new KoreanDictionaryTestable();
         var enDict = new EnglishDictionaryTestable();
-        var module = new KoreanInputModule(input, koDict, enDict);
+        var config = new ConfigService();
+        config.Current.AutoCompleteEnabled = autoCompleteEnabled;
+        var module = new KoreanInputModule(input, koDict, enDict, config);
         return (module, input, koDict);
     }
 }

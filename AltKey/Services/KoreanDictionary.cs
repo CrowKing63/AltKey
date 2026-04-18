@@ -116,6 +116,13 @@ public class KoreanDictionary
         _userStore.RecordWord(word);
     }
 
+    public WordFrequencyStore UserStore => _userStore;
+
+    /// 사용자 학습 저장소에서 단어를 제거. 내장 사전은 건드리지 않음.
+    /// 단어가 없거나 내장 전용이면 false.
+    public bool TryRemoveUserWord(string word) =>
+        !string.IsNullOrWhiteSpace(word) && _userStore.RemoveWord(word.Trim());
+
     /// 앱 종료 시 호출 — 사용자 학습 데이터 즉시 저장
     public void Flush() => _userStore.Flush();
 

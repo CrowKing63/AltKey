@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using AltKey.Models;
 using AltKey.Services;
+using AltKey.Services.InputLanguage;
 using WpfApp = System.Windows.Application;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -12,6 +13,8 @@ public partial class SuggestionBarViewModel : ObservableObject
     private readonly AutoCompleteService _autoComplete;
     private readonly InputService        _inputService;
     private readonly ConfigService       _configService;
+    private readonly KoreanDictionary    _koDict;
+    private readonly EnglishDictionary   _enDict;
 
     [ObservableProperty]
     private ObservableCollection<string> suggestions = [];
@@ -22,11 +25,18 @@ public partial class SuggestionBarViewModel : ObservableObject
     [ObservableProperty]
     private bool isVisible;
 
-    public SuggestionBarViewModel(AutoCompleteService autoComplete, InputService inputService, ConfigService configService)
+    public SuggestionBarViewModel(
+        AutoCompleteService autoComplete,
+        InputService inputService,
+        ConfigService configService,
+        KoreanDictionary koDict,
+        EnglishDictionary enDict)
     {
         _autoComplete = autoComplete;
         _inputService = inputService;
         _configService = configService;
+        _koDict = koDict;
+        _enDict = enDict;
         _autoComplete.SuggestionsChanged += OnSuggestionsChanged;
         _configService.ConfigChanged += OnConfigChanged;
 
@@ -68,6 +78,25 @@ public partial class SuggestionBarViewModel : ObservableObject
                 _inputService.SendKeyPress(VirtualKeyCode.VK_BACK);
             if (fullWord.Length > 0)
                 _inputService.SendUnicode(fullWord);
+        }
+    }
+
+    [RelayCommand]
+    private void RemoveSuggestion(string suggestion)
+    {
+        if (string.IsNullOrWhiteSpace(suggestion)) return;
+
+        bool removed = _autoComplete.ActiveSubmode == InputSubmode.HangulJamo
+            ? _koDict.TryRemoveUserWord(suggestion)
+            : _enDict.TryRemoveUserWord(suggestion);
+
+        if (removed)
+        {
+            WpfApp.Current.Dispatcher.Invoke(() =>
+            {
+                Suggestions.Remove(suggestion);
+                HasSuggestions = Suggestions.Count > 0;
+            });
         }
     }
 }

@@ -8,15 +8,17 @@ public sealed class KoreanInputModule : IInputLanguageModule
     private readonly HangulComposer    _composer = new();
     private readonly KoreanDictionary  _koDict;
     private readonly EnglishDictionary _enDict;
+    private readonly ConfigService     _config;
 
     private InputSubmode _submode = InputSubmode.HangulJamo;
     private string _englishPrefix = "";
 
-    public KoreanInputModule(InputService input, KoreanDictionary koDict, EnglishDictionary enDict)
+    public KoreanInputModule(InputService input, KoreanDictionary koDict, EnglishDictionary enDict, ConfigService config)
     {
         _input  = input;
         _koDict = koDict;
         _enDict = enDict;
+        _config = config;
     }
 
     public string LanguageCode => "ko";
@@ -172,16 +174,18 @@ public sealed class KoreanInputModule : IInputLanguageModule
     public (int backspaceCount, string fullWord) AcceptSuggestion(string suggestion)
     {
         int bsCount;
+        bool learningEnabled = _config.Current.AutoCompleteEnabled;
+
         if (_submode == InputSubmode.HangulJamo)
         {
             bsCount = _composer.CompletedLength + _composer.CompositionDepth;
-            _koDict.RecordWord(suggestion);
+            if (learningEnabled) _koDict.RecordWord(suggestion);
             _composer.Reset();
         }
         else
         {
             bsCount = _englishPrefix.Length;
-            _enDict.RecordWord(suggestion);
+            if (learningEnabled) _enDict.RecordWord(suggestion);
             _englishPrefix = "";
         }
         SuggestionsChanged?.Invoke(Array.Empty<string>());
@@ -214,13 +218,15 @@ public sealed class KoreanInputModule : IInputLanguageModule
     {
         if (!_composer.HasComposition && _englishPrefix.Length == 0) return;
 
+        bool learningEnabled = _config.Current.AutoCompleteEnabled;
+
         if (_submode == InputSubmode.HangulJamo && _composer.Current.Length > 0)
         {
-            _koDict.RecordWord(_composer.Current);
+            if (learningEnabled) _koDict.RecordWord(_composer.Current);
         }
         else if (_submode == InputSubmode.QuietEnglish && _englishPrefix.Length >= 2)
         {
-            _enDict.RecordWord(_englishPrefix);
+            if (learningEnabled) _enDict.RecordWord(_englishPrefix);
         }
 
         _composer.Reset();

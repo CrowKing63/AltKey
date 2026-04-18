@@ -159,5 +159,114 @@ public class WordFrequencyStoreTests : IDisposable
         Assert.Equal(100, store.Count);  // Prune 발동 안 함
     }
 
+    [Fact]
+    public void RemoveWord_ExistingWord_Returns_True_And_Removes_Entry()
+    {
+        var store = new WordFrequencyStore(_testDir, "test-remove-ko");
+        store.RecordWord("해달");
+        store.RecordWord("해달");
+        Assert.True(store.Contains("해달"));
+
+        var removed = store.RemoveWord("해달");
+
+        Assert.True(removed);
+        Assert.False(store.Contains("해달"));
+    }
+
+    [Fact]
+    public void RemoveWord_NonExistingWord_Returns_False()
+    {
+        var store = new WordFrequencyStore(_testDir, "test-remove-none");
+        var removed = store.RemoveWord("없는단어");
+        Assert.False(removed);
+    }
+
+    [Fact]
+    public void RemoveWord_Persists_After_Flush()
+    {
+        var store = new WordFrequencyStore(_testDir, "test-remove-persist");
+        store.RecordWord("해달");
+        store.Flush();
+        Assert.True(store.Contains("해달"));
+
+        store.RemoveWord("해달");
+        store.Flush();
+
+        var reloaded = new WordFrequencyStore(_testDir, "test-remove-persist");
+        Assert.False(reloaded.Contains("해달"));
+    }
+
     private string GetFilePath(string lang) => Path.Combine(_testDir, $"user-words.{lang}.json");
+
+    [Fact]
+    public void SetFrequency_Zero_Removes_Word()
+    {
+        var store = new WordFrequencyStore(_testDir, "test-sf-zero");
+        store.RecordWord("해달");
+        store.RecordWord("해달");
+        Assert.True(store.Contains("해달"));
+
+        store.SetFrequency("해달", 0);
+        Assert.False(store.Contains("해달"));
+    }
+
+    [Fact]
+    public void SetFrequency_Positive_Upserts_Word()
+    {
+        var store = new WordFrequencyStore(_testDir, "test-sf-upsert");
+
+        store.SetFrequency("바나나", 3);
+        Assert.True(store.Contains("바나나"));
+
+        var all = store.GetAllWords();
+        Assert.Equal(1, all.Count);
+        Assert.Equal("바나나", all[0].Word);
+        Assert.Equal(3, all[0].Frequency);
+
+        store.SetFrequency("바나나", 10);
+        var updated = store.GetAllWords();
+        Assert.Equal(10, updated[0].Frequency);
+    }
+
+    [Fact]
+    public void SetFrequency_TriggersPrune_WhenOverMax()
+    {
+        var store = new WordFrequencyStore(_testDir, "test-sf-prune");
+
+        for (int i = 0; i < 4999; i++) store.RecordWord($"w{i}");
+
+        store.SetFrequency("overflow", 1);
+        Assert.True(store.Count <= 5000);
+    }
+
+    [Fact]
+    public void GetAllWords_Returns_SortedByFrequencyDesc_ThenWordAsc()
+    {
+        var store = new WordFrequencyStore(_testDir, "test-getall");
+        store.RecordWord("가"); store.RecordWord("가");
+        store.RecordWord("나");
+        store.RecordWord("다");
+
+        var all = store.GetAllWords();
+
+        Assert.Equal(3, all.Count);
+        Assert.Equal(("가", 2), all[0]);
+        Assert.Equal(("나", 1), all[1]);
+        Assert.Equal(("다", 1), all[2]);
+    }
+
+    [Fact]
+    public void Clear_Empties_Store_Persistently()
+    {
+        var store = new WordFrequencyStore(_testDir, "test-clear");
+        store.RecordWord("해달");
+        store.Flush();
+        Assert.True(store.Contains("해달"));
+
+        store.Clear();
+        store.Flush();
+
+        var reloaded = new WordFrequencyStore(_testDir, "test-clear");
+        Assert.Equal(0, reloaded.Count);
+    }
 }
