@@ -1,6 +1,8 @@
+using System.Diagnostics;
 using System.IO;
 using System.Text.Encodings.Web;
 using System.Text.Json;
+using System.Timers;
 
 namespace AltKey.Services;
 
@@ -17,10 +19,25 @@ public class WordFrequencyStore
         WriteIndented = true
     };
 
+    // 디바운스 저장용
+    private readonly System.Timers.Timer _debounceTimer;
+    private readonly object _saveLock = new();
+    private bool _pending;
+
+    public Exception? LastSaveError { get; private set; }
+
     public WordFrequencyStore(string languageCode)
+        : this(PathResolver.DataDir, languageCode)
     {
-        _filePath = Path.Combine(PathResolver.DataDir, $"user-words.{languageCode}.json");
+    }
+
+    /// 테스트용: 커스텀 디렉토리 지정
+    public WordFrequencyStore(string baseDir, string languageCode)
+    {
+        _filePath = Path.Combine(baseDir, $"user-words.{languageCode}.json");
         Load();
+        _debounceTimer = new System.Timers.Timer(1000) { AutoReset = false };
+        _debounceTimer.Elapsed += (_, _) => FlushIfPending();
     }
 
     /// 단어 빈도 1 증가 (최소 길이·대소문자 정규화는 호출자 책임)
@@ -29,34 +46,69 @@ public class WordFrequencyStore
         if (string.IsNullOrWhiteSpace(word)) return;
         word = word.Trim();
         if (word.Length == 0) return;
-        _freq[word] = (_freq.TryGetValue(word, out var c) ? c : 0) + 1;
-        if (_freq.Count > MaxWords) PruneLowest();
-        Save();
+        lock (_saveLock)
+        {
+            _freq[word] = (_freq.TryGetValue(word, out var c) ? c : 0) + 1;
+            if (_freq.Count > MaxWords) PruneLowest();
+        }
+        ScheduleSave();
     }
 
     /// prefix 로 시작하는 단어 제안 (빈도 내림차순)
     public IReadOnlyList<string> GetSuggestions(string prefix, int count = 5)
     {
         if (string.IsNullOrEmpty(prefix)) return [];
-        return _freq
-            .Where(kv => kv.Key.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
-                         && kv.Key.Length > prefix.Length)
-            .OrderByDescending(kv => kv.Value)
-            .Take(count)
-            .Select(kv => kv.Key)
-            .ToList();
+        lock (_saveLock)
+        {
+            return _freq
+                .Where(kv => kv.Key.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
+                             && kv.Key.Length > prefix.Length)
+                .OrderByDescending(kv => kv.Value)
+                .Take(count)
+                .Select(kv => kv.Key)
+                .ToList();
+        }
+    }
+
+    private void ScheduleSave()
+    {
+        lock (_saveLock) { _pending = true; }
+        _debounceTimer.Stop();
+        _debounceTimer.Start();
+    }
+
+    public void FlushIfPending()
+    {
+        bool shouldSave;
+        lock (_saveLock) { shouldSave = _pending; _pending = false; }
+        if (shouldSave) Save();
     }
 
     /// 앱 종료 시 호출 — 파일 저장
+    public void Flush()
+    {
+        _debounceTimer.Stop();
+        FlushIfPending();
+    }
+
     public void Save()
     {
         try
         {
+            Dictionary<string, int> snapshot;
+            lock (_saveLock) { snapshot = new(_freq); }
+
             Directory.CreateDirectory(Path.GetDirectoryName(_filePath)!);
-            var json = JsonSerializer.Serialize(_freq, _jsonOptions);
-            File.WriteAllText(_filePath, json);
+            var json = JsonSerializer.Serialize(snapshot, _jsonOptions);
+            var tmp = _filePath + ".tmp";
+            File.WriteAllText(tmp, json);
+            File.Move(tmp, _filePath, overwrite: true);
         }
-        catch { /* 저장 실패 — 무시 */ }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[WordFrequencyStore] Save failed ({_filePath}): {ex}");
+            LastSaveError = ex;
+        }
     }
 
     private void Load()

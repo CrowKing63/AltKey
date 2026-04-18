@@ -57,6 +57,9 @@ public class KoreanDictionary
         _userStore.RecordWord(word);
     }
 
+    /// 앱 종료 시 호출 — 사용자 학습 데이터 즉시 저장
+    public void Flush() => _userStore.Flush();
+
     private static IReadOnlyList<string> LoadBuiltIn()
     {
         var asm = Assembly.GetExecutingAssembly();

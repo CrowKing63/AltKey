@@ -154,6 +154,14 @@ public partial class App : System.Windows.Application
 
     protected override void OnExit(ExitEventArgs e)
     {
+        // TASK-05: 자동완성 학습 데이터 즉시 저장 (디버운스 타이머 Flush)
+        try
+        {
+            Services.GetService<KoreanDictionary>()?.Flush();
+            Services.GetService<EnglishDictionary>()?.Flush();
+        }
+        catch { /* Flush 실패는 무시 (이미 WordFrequencyStore.Save 내부에서 로깅) */ }
+
         // 서비스 정리
         if (Services is IDisposable d) d.Dispose();
         base.OnExit(e);
