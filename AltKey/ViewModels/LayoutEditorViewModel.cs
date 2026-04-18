@@ -211,6 +211,7 @@ public partial class LayoutEditorViewModel : ObservableObject
         if (string.IsNullOrWhiteSpace(newFileName)) return;
         _currentFileName = newFileName.Trim();
         Save();
+        SelectedLayoutToLoad = _currentFileName;
     }
 
     // ── 내부 헬퍼 ─────────────────────────────────────────────────────────

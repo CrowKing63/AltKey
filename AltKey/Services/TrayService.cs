@@ -22,6 +22,17 @@ public class TrayService : IDisposable
         _layoutService = layoutService;
         _mainViewModel = mainViewModel;
         _updateService = updateService;
+
+        _layoutService.LayoutsChanged += OnLayoutsChanged;
+    }
+
+    private void OnLayoutsChanged()
+    {
+        if (_notifyIcon is not null)
+        {
+            var menu = BuildContextMenu();
+            _notifyIcon.ContextMenuStrip = menu;
+        }
     }
 
     public void Initialize(Window window)

@@ -9,6 +9,8 @@ public class LayoutService
     private readonly string _layoutsDir;
     private readonly Dictionary<string, LayoutConfig> _cache = [];
 
+    public event Action? LayoutsChanged;
+
     public LayoutService() : this(PathResolver.LayoutsDir) { }
 
     protected LayoutService(string layoutsDir)
@@ -79,6 +81,7 @@ public class LayoutService
         var json = JsonSerializer.Serialize(config, JsonOptions.Default);
         File.WriteAllText(path, json);
         InvalidateCache();
+        LayoutsChanged?.Invoke();
     }
 
     /// <summary>config 변경 시 캐시 무효화</summary>

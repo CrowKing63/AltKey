@@ -187,6 +187,9 @@ public partial class MainViewModel : ObservableObject
         // 체류 클릭 설정 변경 시 UI에 알림
         _configService.ConfigChanged += OnConfigChanged;
 
+        // 레이아웃 변경 시 AvailableLayouts 새로고침
+        _layoutService.LayoutsChanged += OnLayoutsChanged;
+
         // 키 입력 시 이모지/클립보드 패널 자동 닫기
         Keyboard.KeyTapped += () =>
         {
@@ -209,6 +212,21 @@ public partial class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(KeyRepeatEnabled));
         OnPropertyChanged(nameof(KeyRepeatDelayMs));
         OnPropertyChanged(nameof(KeyRepeatIntervalMs));
+    }
+
+    private void OnLayoutsChanged()
+    {
+        _displayToFileName.Clear();
+        var fileNames    = _layoutService.GetAvailableLayouts();
+        var displayNames = new List<string>();
+        foreach (var fn in fileNames)
+        {
+            var l = _layoutService.TryLoad(fn);
+            var display = l?.Name ?? fn;
+            _displayToFileName[display] = fn;
+            displayNames.Add(display);
+        }
+        AvailableLayouts = new ObservableCollection<string>(displayNames);
     }
 
     public Task InitializeAsync()

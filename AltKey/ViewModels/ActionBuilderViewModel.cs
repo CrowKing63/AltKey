@@ -8,6 +8,16 @@ using WpfDialog = Microsoft.Win32;
 
 namespace AltKey.ViewModels;
 
+/// string TwoWay 바인딩용 래퍼 (string은 불변이므로 TwoWay 바인딩 불가)
+public partial class ObservableString : ObservableObject
+{
+    [ObservableProperty] private string _value;
+
+    public ObservableString(string value) => Value = value;
+
+    public override string ToString() => Value;
+}
+
 /// T-9.2: 키 슬롯 액션 편집 VM — ActionBuilderView 와 LayoutEditorWindow 에서 공유
 public partial class ActionBuilderViewModel : ObservableObject
 {
@@ -71,7 +81,8 @@ public partial class ActionBuilderViewModel : ObservableObject
     [ObservableProperty] private string sendKeyVk = "VK_A";
 
     // SendCombo (다중 키)
-    [ObservableProperty] private ObservableCollection<string> sendComboKeysCollection = ["VK_CONTROL", "VK_C"];
+    [ObservableProperty] private ObservableCollection<ObservableString> sendComboKeysCollection = 
+        [new ObservableString("VK_CONTROL"), new ObservableString("VK_C")];
 
     // ToggleSticky
     [ObservableProperty] private string toggleStickyVk = "VK_SHIFT";
@@ -108,7 +119,8 @@ public partial class ActionBuilderViewModel : ObservableObject
                 break;
             case SendComboAction a:
                 SelectedActionType = "SendCombo";
-                SendComboKeysCollection = new ObservableCollection<string>(a.Keys);
+                SendComboKeysCollection = new ObservableCollection<ObservableString>(
+                    a.Keys.Select(k => new ObservableString(k)));
                 break;
             case ToggleStickyAction a:
                 SelectedActionType = "ToggleSticky";
@@ -152,7 +164,8 @@ public partial class ActionBuilderViewModel : ObservableObject
     {
         "SendKey"      => new SendKeyAction(SendKeyVk.Trim()),
         "SendCombo"    => new SendComboAction(
-            SendComboKeysCollection.Where(s => !string.IsNullOrWhiteSpace(s)).ToList()),
+            SendComboKeysCollection.Where(s => !string.IsNullOrWhiteSpace(s.Value))
+                .Select(s => s.Value).ToList()),
         "ToggleSticky" => new ToggleStickyAction(ToggleStickyVk.Trim()),
         "SwitchLayout" => new SwitchLayoutAction(SwitchLayoutName.Trim()),
         "RunApp"       => new RunAppAction(AppPath.Trim(), AppArgs.Trim()),
@@ -197,11 +210,11 @@ public partial class ActionBuilderViewModel : ObservableObject
     [RelayCommand]
     private void AddComboKey()
     {
-        SendComboKeysCollection.Add("VK_A");
+        SendComboKeysCollection.Add(new ObservableString("VK_A"));
     }
 
     [RelayCommand]
-    private void RemoveComboKey(string key)
+    private void RemoveComboKey(ObservableString key)
     {
         if (SendComboKeysCollection.Count > 1)
             SendComboKeysCollection.Remove(key);
@@ -211,7 +224,7 @@ public partial class ActionBuilderViewModel : ObservableObject
     private void ClearComboKeys()
     {
         SendComboKeysCollection.Clear();
-        SendComboKeysCollection.Add("VK_A");
+        SendComboKeysCollection.Add(new ObservableString("VK_A"));
     }
 
     public bool CanRemoveComboKey => SendComboKeysCollection.Count > 1;

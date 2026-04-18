@@ -67,7 +67,7 @@
                             </Grid.ColumnDefinitions>
                             <ComboBox Grid.Column="0"
                                       ItemsSource="{Binding DataContext.CommonVkCodes, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                      Text="{Binding Path=., Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                      Text="{Binding Path=Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                       IsEditable="True"
                                       Margin="0,0,4,0"/>
                             <Button Grid.Column="1"

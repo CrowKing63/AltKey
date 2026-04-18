@@ -9,3 +9,38 @@
   - 메인 프로젝트(빌드): `C:\Users\UITAEK\AltKey\AltKey\AltKey.csproj`
   - 테스트 프로젝트: `C:\Users\UITAEK\AltKey\AltKey.Tests\AltKey.Tests.csproj`
 - **PowerShell 환경에서는 `&&` 연산자가 작동하지 않으므로, 여러 명령어를 실행할 때는 `;`를 사용하거나 각 명령어를 별도로 실행할 것.**
+
+## 프로젝트 구조
+
+```
+AltKey/
+├── App.xaml / App.xaml.cs          # 앱 진입점, DI 컨테이너
+├── MainWindow.xaml / .cs           # 메인 창 (투명, NoActivate, Acrylic)
+│
+├── Views/                          # XAML 뷰
+│   ├── KeyboardView.xaml           # 키보드 UI
+│   ├── SettingsView.xaml           # 설정 패널
+│   ├── LayoutEditorWindow.xaml    # 레이아웃 에디터
+│   ├── ActionBuilderView.xaml      # 액션 빌더
+│   ├── EmojiPanel.xaml             # 이모지 패널
+│   ├── ClipboardPanel.xaml        # 클립보드 히스토리 패널
+│   └── SuggestionBar.xaml        # 자동완성 추천 바
+│
+├── ViewModels/                    # MVVM 뷰모델 (CommunityToolkit.Mvvm)
+├── Models/                        # 데이터 모델 (레이아웃 & 설정 구조체)
+├── Services/                     # 핵심 서비스
+│   ├── InputService.cs           # SendInput 래퍼, Sticky Keys, 액션 디스패처
+│   ├── LayoutService.cs           # JSON 레이아웃 로딩, 세이브, 캐싱
+│   ├── ConfigService.cs          # 설정 JSON 읽기/쓰기
+│   ├── ProfileService.cs          # WinEventHook 포그라운드 앱 감지
+│   ├── ThemeService.cs           # 다크/라이트/시스템 테마 적용
+│   ├── HotkeyService.cs          # 전역 단축키 등록
+│   ├── StartupService.cs          # 시작 프로그램 레지스트리 관리
+│   ├── SoundService.cs           # 키 클릭 음향 재생
+│   ├── AutoCompleteService.cs    # 단어 자동완성
+│   └── UpdateService.cs         # GitHub Releases 업데이트 확인
+├── Controls/                      # 커스텀 컨트롤 (KeyButton 등)
+├── Platform/                     # Win32 P/Invoke 선언
+├── Themes/                       # WPF 리소스 딕셔너리 (색상, 스타일)
+└── layouts/                       # 기본 레이아웃 JSON 파일
+```

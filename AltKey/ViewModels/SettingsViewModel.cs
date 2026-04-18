@@ -122,7 +122,14 @@ public partial class SettingsViewModel : ObservableObject
         var asmVersion = Assembly.GetExecutingAssembly().GetName().Version;
         CurrentVersion = asmVersion?.ToString(3) ?? "0.1.0";
 
+        _layoutService.LayoutsChanged += OnLayoutsChanged;
         LoadFromConfig();
+    }
+
+    private void OnLayoutsChanged()
+    {
+        AvailableLayouts = new ObservableCollection<string>(
+            _layoutService.GetAvailableLayouts());
     }
 
     private bool _isLoading;
