@@ -3,6 +3,7 @@ using System.IO;
 using System.Windows;
 using Microsoft.Extensions.DependencyInjection;
 using AltKey.Services;
+using AltKey.Services.InputLanguage;
 using AltKey.ViewModels;
 
 namespace AltKey;
@@ -60,10 +61,14 @@ public partial class App : System.Windows.Application
             services.AddSingleton<DownloadService>();
             services.AddSingleton<InstallerService>();
             // T-9.3: 자동 완성 서비스
-            services.AddSingleton<WordFrequencyStore>();
+            services.AddSingleton<Func<string, WordFrequencyStore>>(_ => lang => new WordFrequencyStore(lang));
             services.AddSingleton<KoreanDictionary>();
             services.AddSingleton<EnglishDictionary>();
+            services.AddSingleton<KoreanInputModule>();
+            services.AddSingleton<IInputLanguageModule>(sp => sp.GetRequiredService<KoreanInputModule>());
             services.AddSingleton<AutoCompleteService>();
+            // 08: 접근성 LiveRegion 서비스
+            services.AddSingleton<LiveRegionService>();
 
             // ViewModel
             services.AddSingleton<KeyboardViewModel>();
@@ -90,13 +95,23 @@ public partial class App : System.Windows.Application
             var profileService = Services.GetRequiredService<ProfileService>();
             profileService.Start();
 
-            // T-9.3: AutoCompleteService → InputService 연결
-            var inputService = Services.GetRequiredService<InputService>();
-            var autoComplete = Services.GetRequiredService<AutoCompleteService>();
-            inputService.SetAutoComplete(autoComplete);
-
             // T-2.10b: ProfileService → InputService 관리자 권한 알림 연결
+            var inputService = Services.GetRequiredService<InputService>();
             profileService.ElevatedAppDetected += () => inputService.NotifyElevatedApp();
+
+            // 06: 관리자 모드에서 자동완성 강제 OFF
+            if (inputService.IsElevated && config.Current.AutoCompleteEnabled)
+            {
+                config.Current.AutoCompleteEnabled = false;
+                config.Save();
+            }
+
+            // 일반 모드에서 config에 따라 InputService.Mode 초기화
+            if (!inputService.IsElevated)
+            {
+                var targetMode = config.Current.AutoCompleteEnabled ? InputMode.Unicode : InputMode.VirtualKey;
+                inputService.TrySetMode(targetMode);
+            }
 
             var window = Services.GetRequiredService<MainWindow>();
             window.Show();
@@ -139,10 +154,6 @@ public partial class App : System.Windows.Application
 
     protected override void OnExit(ExitEventArgs e)
     {
-        // T-9.3: 학습된 단어 빈도 저장
-        try { Services.GetService<WordFrequencyStore>()?.Save(); }
-        catch { /* 저장 실패 — 무시 */ }
-
         // 서비스 정리
         if (Services is IDisposable d) d.Dispose();
         base.OnExit(e);

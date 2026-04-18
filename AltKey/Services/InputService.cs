@@ -16,17 +16,36 @@ public enum InputMode
 
 public class InputService
 {
-    // ── 입력 모드: 관리자 권한이면 VirtualKey, 아니면 Unicode ──────────────
-    public InputMode Mode { get; } = CheckElevated() ? InputMode.VirtualKey : InputMode.Unicode;
+    private readonly bool _isElevated;
+
+    public InputMode Mode { get; private set; }
+
+    public bool IsElevated => _isElevated;
+
+    public event Action<InputMode>? ModeChanged;
+
+    public InputService()
+    {
+        _isElevated = CheckElevated();
+        Mode = _isElevated ? InputMode.VirtualKey : InputMode.Unicode;
+    }
+
+    public bool TrySetMode(InputMode target)
+    {
+        if (_isElevated && target == InputMode.Unicode)
+            return false;
+
+        if (Mode == target) return true;
+        Mode = target;
+        ModeChanged?.Invoke(Mode);
+        return true;
+    }
 
     // ── Unicode 모드에서 화면에 전송한 조합 문자열 길이 추적 ──────────────
     public int TrackedOnScreenLength { get; set; }
 
-    // ── T-9.3: 자동 완성 서비스 (옵셔널) ────────────────────────────────────
-    private AutoCompleteService? _autoComplete;
-
-    /// 자동 완성 서비스를 연결한다 (App.xaml.cs 초기화 이후 DI 에서 주입).
-    public void SetAutoComplete(AutoCompleteService svc) => _autoComplete = svc;
+    /// 조합 완료(공백/엔터 등) 후 추적 길이를 리셋.
+    public void ResetTrackedLength() => TrackedOnScreenLength = 0;
 
     private static bool CheckElevated()
     {
@@ -58,6 +77,25 @@ public class InputService
     // Unicode 모드에서 조합키(Ctrl+C 등) 판별용
     public bool HasActiveModifiers =>
         _stickyKeys.Count > 0 || _lockedKeys.Count > 0;
+
+    /// Shift만 활성된 경우는 false. 한국어 쌍자음/쌍모음 입력과 "조합키"를 구분하기 위해 사용.
+    public bool HasActiveModifiersExcludingShift
+    {
+        get
+        {
+            foreach (var vk in _stickyKeys)
+            {
+                if (vk is not VirtualKeyCode.VK_SHIFT and not VirtualKeyCode.VK_LSHIFT and not VirtualKeyCode.VK_RSHIFT)
+                    return true;
+            }
+            foreach (var vk in _lockedKeys)
+            {
+                if (vk is not VirtualKeyCode.VK_SHIFT and not VirtualKeyCode.VK_LSHIFT and not VirtualKeyCode.VK_RSHIFT)
+                    return true;
+            }
+            return false;
+        }
+    }
 
     /// 포그라운드 창의 IME 한/영 상태를 IMM32 API로 조회한다.
     /// AttachThreadInput 없이 GetGUIThreadInfo + ImmGetDefaultIMEWnd로
@@ -254,8 +292,7 @@ public class InputService
         ReleaseTransientModifiers();
     }
 
-    // ── T-8.3: 유니코드 문자 전송 (이모지 지원) ─────────────────────────────
-    public void SendUnicode(string text)
+    public virtual void SendUnicode(string text)
     {
         var inputs = new List<Win32.INPUT>();
         foreach (var ch in text)
@@ -268,7 +305,7 @@ public class InputService
     }
 
     // ── Unicode 모드: 이전 출력을 백스페이스로 지우고 새 출력을 원자적 전송 ──
-    public void SendAtomicReplace(int prevLen, string newOutput)
+    public virtual void SendAtomicReplace(int prevLen, string newOutput)
     {
         var inputs = new List<Win32.INPUT>();
         for (int i = 0; i < prevLen; i++)
@@ -284,6 +321,7 @@ public class InputService
         if (inputs.Count > 0)
             DispatchInput(inputs.ToArray());
         TrackedOnScreenLength = newOutput.Length;
+        ReleaseTransientModifiers();
     }
 
     private static Win32.INPUT MakeUnicodeKeyDown(char ch) => new()

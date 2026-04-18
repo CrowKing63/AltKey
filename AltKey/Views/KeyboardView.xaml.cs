@@ -4,6 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media.Animation;
+using System.Windows.Automation.Peers;
 using AltKey.Models;
 using AltKey.Services;
 using AltKey.ViewModels;
@@ -43,6 +44,11 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
             _configService.ConfigChanged += OnConfigChanged;
 
             ApplySuggestionBarHeight();
+
+            if (DataContext is MainViewModel mainVm)
+            {
+                mainVm.Keyboard.LiveRegionChanged += AnnounceLiveRegion;
+            }
         }
     }
 
@@ -231,5 +237,16 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
         if (DragPill is WpfRect pill)
             pill.BeginAnimation(UIElement.OpacityProperty,
                 new DoubleAnimation(0.25, TimeSpan.FromMilliseconds(150)));
+    }
+
+    // 08: LiveRegion 공지
+    private void AnnounceLiveRegion()
+    {
+        Dispatcher.InvokeAsync(() =>
+        {
+            var peer = FrameworkElementAutomationPeer.FromElement(ModeAnnouncer)
+                       ?? new FrameworkElementAutomationPeer(ModeAnnouncer);
+            peer.RaiseAutomationEvent(AutomationEvents.LiveRegionChanged);
+        });
     }
 }

@@ -14,6 +14,9 @@
         <Setter Property="FontSize"         Value="{DynamicResource KeyFontSize}"/>
         <Setter Property="Margin"           Value="2"/>
         <Setter Property="Cursor"           Value="Hand"/>
+        <Setter Property="AutomationProperties.Name" Value="{Binding AccessibleName}"/>
+        <Setter Property="AutomationProperties.HelpText" Value="{Binding AccessibleHelp}"/>
+        <Setter Property="AutomationProperties.AutomationId" Value="{Binding AutomationId}"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type controls:KeyButton}">
@@ -39,7 +42,8 @@
                                            Margin="0,2,4,0"
                                            Opacity="0.65"
                                            IsHitTestVisible="False"/>
-                                <ContentPresenter HorizontalAlignment="Center"
+                                <ContentPresenter x:Name="MainLabel"
+                                                  HorizontalAlignment="Center"
                                                   VerticalAlignment="Center"
                                                   RecognizesAccessKey="False"/>
                                 <!-- T-4.7: Locked 상태 자물쇠 오버레이 -->
@@ -153,6 +157,12 @@
                             <Setter TargetName="LockIcon" Property="Visibility"
                                     Value="Visible"/>
                         </Trigger>
+
+                        <!-- 07: 가/A 서브모드 토글 키 강조 -->
+                        <DataTrigger Binding="{Binding Slot.IsKoreanSubmodeToggle, RelativeSource={RelativeSource TemplatedParent}}" Value="True">
+                            <Setter TargetName="Root" Property="Background"
+                                    Value="{DynamicResource AccentBrush}"/>
+                        </DataTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>

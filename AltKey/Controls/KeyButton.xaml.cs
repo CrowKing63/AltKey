@@ -33,6 +33,18 @@ public class KeyButton : System.Windows.Controls.Button
             nameof(SubLabel), typeof(string), typeof(KeyButton),
             new PropertyMetadata(""));
 
+    // DisplayLabel — KeySlotVm.DisplayLabel 바인딩용
+    public static readonly DependencyProperty DisplayLabelProperty =
+        DependencyProperty.Register(
+            nameof(DisplayLabel), typeof(string), typeof(KeyButton),
+            new PropertyMetadata("", OnDisplayLabelChanged));
+
+    // IsDimmed — QuietEnglish에서 영어 라벨 없는 키 흐림 표시
+    public static readonly DependencyProperty IsDimmedProperty =
+        DependencyProperty.Register(
+            nameof(IsDimmed), typeof(bool), typeof(KeyButton),
+            new PropertyMetadata(false, OnIsDimmedChanged));
+
     // T-4.7: Sticky / Locked 상태 DependencyProperty
     public static readonly DependencyProperty IsStickyProperty =
         DependencyProperty.Register(
@@ -100,6 +112,18 @@ public class KeyButton : System.Windows.Controls.Button
     {
         get => (string)GetValue(SubLabelProperty);
         set => SetValue(SubLabelProperty, value);
+    }
+
+    public string DisplayLabel
+    {
+        get => (string)GetValue(DisplayLabelProperty);
+        set => SetValue(DisplayLabelProperty, value);
+    }
+
+    public bool IsDimmed
+    {
+        get => (bool)GetValue(IsDimmedProperty);
+        set => SetValue(IsDimmedProperty, value);
     }
 
     public bool IsSticky
@@ -318,8 +342,21 @@ public class KeyButton : System.Windows.Controls.Button
     private void UpdateLabel()
     {
         if (Slot is null) return;
-        Content  = Slot.GetLabel(ShowUpperCase);
+        Slot.RefreshDisplay();
+        Content = Slot.DisplayLabel;
         SubLabel = Slot.GetSubLabel(ShowUpperCase);
+    }
+
+    private static void OnDisplayLabelChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is KeyButton kb)
+            kb.Content = e.NewValue as string;
+    }
+
+    private static void OnIsDimmedChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is KeyButton kb)
+            kb.IsEnabled = !(bool)e.NewValue;
     }
 
     private static void OnKeyUnitChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)

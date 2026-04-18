@@ -9,9 +9,9 @@ public class EnglishDictionary
     private readonly WordFrequencyStore _userStore;
     private readonly IReadOnlyList<string> _builtIn;
 
-    public EnglishDictionary(WordFrequencyStore userStore)
+    public EnglishDictionary(Func<string, WordFrequencyStore> storeFactory)
     {
-        _userStore = userStore;
+        _userStore = storeFactory("en");
         _builtIn = LoadBuiltIn();
     }
 
@@ -32,6 +32,13 @@ public class EnglishDictionary
             .ToList();
 
         return [..userSuggestions, ..builtInSuggestions];
+    }
+
+    /// 영어 단어를 사용자 빈도 저장소에 기록 (최소 2자, 소문자 정규화)
+    public void RecordWord(string word)
+    {
+        if (word.Length < 2) return;
+        _userStore.RecordWord(word.ToLowerInvariant());
     }
 
     private static IReadOnlyList<string> LoadBuiltIn()

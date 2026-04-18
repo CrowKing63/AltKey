@@ -1,3 +1,5 @@
 - 사용자 요청에 대한 응답은 한국어로 작성할 것.
 - 사용자는 코딩 전문가가 아님.
 - 이 프로젝트에서 가장 중요한 기능인 자동 완성은 구현 자체가 너무나 까다로웠다. 관련 코드 수정시 각별한 주의가 필요하다. 다음의 문서를 참고할 것. C:\Users\UITAEK\AltKey\docs\ime-korean-detect.md
+- 이 프로젝트는 **한국어 사용자 전용** 가상 키보드이다. `qwerty-en.json`은 삭제되었으며, `Language` 필드와 `PrimaryLanguage` 개념은 제거되었다. 영어 입력은 한국어 레이아웃 내 "가/A" 토글(QuietEnglish 서브모드)로 처리된다.
+- 기존 `HandleKoreanLayoutKey`, `HandleEnglishLayoutKey`, `HandleEnglishSubMode`, `_isKoreanInput`, `_layoutSupportsKorean`, `_lastImeKorean`은 모두 제거되었다. 한국어 입력 로직은 `KoreanInputModule`으로 이전되었다.

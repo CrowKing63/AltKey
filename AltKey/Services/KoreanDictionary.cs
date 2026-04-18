@@ -10,9 +10,9 @@ public class KoreanDictionary
     private readonly WordFrequencyStore _userStore;
     private readonly IReadOnlyList<string> _builtIn;
 
-    public KoreanDictionary(WordFrequencyStore userStore)
+    public KoreanDictionary(Func<string, WordFrequencyStore> storeFactory)
     {
-        _userStore = userStore;
+        _userStore = storeFactory("ko");
         _builtIn = LoadBuiltIn();
     }
 
@@ -34,6 +34,13 @@ public class KoreanDictionary
             .ToList();
 
         return [..userSuggestions, ..builtInSuggestions];
+    }
+
+    /// 한국어 단어를 사용자 빈도 저장소에 기록 (최소 1자)
+    public void RecordWord(string word)
+    {
+        if (word.Length < 1) return;
+        _userStore.RecordWord(word);
     }
 
     private static IReadOnlyList<string> LoadBuiltIn()

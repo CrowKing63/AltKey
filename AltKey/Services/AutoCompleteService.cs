@@ -1,132 +1,45 @@
 using AltKey.Models;
+using AltKey.Services.InputLanguage;
 
 namespace AltKey.Services;
 
-/// 자동 완성 서비스 — 영문 알파벳 + 한글 자모 조합 지원
-/// _isHangulMode가 true면 한글 자모 조합 중, false면 영문 추적 중
-public class AutoCompleteService
+public sealed class AutoCompleteService
 {
-    private readonly WordFrequencyStore _store;
-    private readonly KoreanDictionary _koreanDict;
-    private readonly EnglishDictionary _englishDict;
-    private readonly HangulComposer _hangul = new();
-    private string _currentWord = "";
-    private bool _isHangulMode = false;
+    private readonly IInputLanguageModule _module;
 
-    /// 제안 목록이 바뀔 때 발생 (UI 스레드가 아닐 수 있으므로 Dispatcher.Invoke 필요)
+    public AutoCompleteService(IInputLanguageModule module)
+    {
+        _module = module;
+        _module.SuggestionsChanged += list => SuggestionsChanged?.Invoke(list);
+        _module.SubmodeChanged += submode => SubmodeChanged?.Invoke(submode);
+    }
+
+    public string CurrentWord => _module.CurrentWord;
+
     public event Action<IReadOnlyList<string>>? SuggestionsChanged;
+    public event Action<InputSubmode>? SubmodeChanged;
 
-    /// 현재 조합 중인 단어 (SuggestionBarViewModel 에서 나머지 문자 계산에 사용)
-    public string CurrentWord => _isHangulMode ? _hangul.Current : _currentWord;
+    /// KeyboardViewModel.KeyPressed가 호출.
+    /// true면 호출자가 HandleAction 스킵.
+    public bool OnKey(KeySlot slot, KeyContext ctx) => _module.HandleKey(slot, ctx);
 
-    public AutoCompleteService(WordFrequencyStore store, KoreanDictionary koreanDict, EnglishDictionary englishDict)
-    {
-        _store = store;
-        _koreanDict = koreanDict;
-        _englishDict = englishDict;
-    }
-
-    /// 한글 자모 입력 (KeyboardViewModel에서 호출)
-    public void OnHangulInput(string jamo)
-    {
-        _isHangulMode = true;
-        _hangul.Feed(jamo);
-        var suggestions = _koreanDict.GetSuggestions(_hangul.Current);
-        SuggestionsChanged?.Invoke(suggestions);
-    }
-
-    /// InputService 의 SendKeyAction 처리 시 호출 (KeyboardViewModel에서 라우팅)
-    /// 영문 추적 전용 — 한국어 자모는 OnHangulInput이 처리
-    public void OnKeyInput(VirtualKeyCode vk)
-    {
-        if (IsWordSeparator(vk))
-        {
-            if (_currentWord.Length >= 2)
-                _store.RecordWord(_currentWord);
-            _currentWord = "";
-            SuggestionsChanged?.Invoke([]);
-            return;
-        }
-
-        if (vk == VirtualKeyCode.VK_BACK)
-        {
-            if (_currentWord.Length > 0)
-                _currentWord = _currentWord[..^1];
-        }
-        else
-        {
-            var ch = VkToChar(vk);
-            if (ch != '\0') _currentWord += ch;
-        }
-
-        var suggestions = _englishDict.GetSuggestions(_currentWord);
-        SuggestionsChanged?.Invoke(suggestions);
-    }
-
-    /// 한글 백스페이스 처리 (KeyboardViewModel에서 호출)
-    public void OnHangulBackspace()
-    {
-        _hangul.Backspace();
-        var suggestions = _koreanDict.GetSuggestions(_hangul.Current);
-        SuggestionsChanged?.Invoke(suggestions);
-    }
-
-    /// 제안 단어를 수락하면 현재 단어로 학습하고 상태 초기화
-    /// 반환값: (삭제할 백스페이스 횟수, 입력할 전체 단어)
+    /// 자동완성 제안 수락.
     public (int backspaceCount, string fullWord) AcceptSuggestion(string suggestion)
-    {
-        int bsCount;
-        if (_isHangulMode)
-        {
-            // 완성된 음절(개당 1회) + 조합 중인 음절(분해 백스페이스)
-            bsCount = _hangul.CompletedLength + _hangul.CompositionDepth;
-        }
-        else
-        {
-            bsCount = _currentWord.Length;
-        }
+        => _module.AcceptSuggestion(suggestion);
 
-        _store.RecordWord(suggestion);
-        _hangul.Reset();
-        _currentWord = "";
-        _isHangulMode = false;
-        SuggestionsChanged?.Invoke([]);
-        return (bsCount, suggestion);
-    }
+    /// 공백/엔터/탭 등 단어 분리자 도달 시 호출.
+    public void OnSeparator() => _module.OnSeparator();
 
-    /// 현재 조합 중인 단어를 저장하고 상태 초기화
-    public void CompleteCurrentWord()
-    {
-        var word = _isHangulMode ? _hangul.Current : _currentWord;
-        if (!string.IsNullOrWhiteSpace(word))
-            _store.RecordWord(word);
-        _hangul.Reset();
-        _currentWord = "";
-        _isHangulMode = false;
-        SuggestionsChanged?.Invoke([]);
-    }
+    /// 레이아웃 전환·"가/A" 토글 등으로 상태 초기화가 필요할 때.
+    public void ResetState() => _module.Reset();
 
-    /// 레이아웃 전환 시 상태 초기화
-    public void ResetState()
-    {
-        _hangul.Reset();
-        _currentWord = "";
-        _isHangulMode = false;
-        SuggestionsChanged?.Invoke([]);
-    }
+    /// 과거 호환용 — 현재 조합을 학습시키고 상태를 flush.
+    /// 내부적으로 OnSeparator와 동일. 과거 호출자 유지 목적.
+    public void CompleteCurrentWord() => _module.OnSeparator();
 
-    // ── 내부 헬퍼 ───────────────────────────────────────────────────────────
+    /// Submode 토글을 외부에 노출 — "가/A" 버튼 액션에서 사용.
+    public void ToggleKoreanSubmode() => _module.ToggleSubmode();
 
-    private static bool IsWordSeparator(VirtualKeyCode vk) =>
-        vk is VirtualKeyCode.VK_SPACE  or VirtualKeyCode.VK_RETURN
-           or VirtualKeyCode.VK_TAB    or VirtualKeyCode.VK_OEM_PERIOD
-           or VirtualKeyCode.VK_OEM_COMMA;
-
-    /// VK_A~VK_Z → 'a'~'z', 그 외 '\0'
-    private static char VkToChar(VirtualKeyCode vk)
-    {
-        if (vk >= VirtualKeyCode.VK_A && vk <= VirtualKeyCode.VK_Z)
-            return (char)('a' + ((int)vk - (int)VirtualKeyCode.VK_A));
-        return '\0';
-    }
+    public InputSubmode ActiveSubmode => _module.ActiveSubmode;
+    public string ComposeStateLabel => _module.ComposeStateLabel;
 }
