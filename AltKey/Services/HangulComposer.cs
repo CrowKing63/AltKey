@@ -316,18 +316,4 @@ public class HangulComposer
             return Jungseong[_jungseongIdx.Value];
         return "";
     }
-
-    private static bool IsHangulSyllable(char ch)
-    {
-        return ch >= 0xAC00 && ch <= 0xD7A3;
-    }
-
-    private static (int cho, int jung, int jong) Decompose(char ch)
-    {
-        int code = ch - 0xAC00;
-        int jong = code % 28;
-        int jung = (code / 28) % 21;
-        int cho = code / (28 * 21);
-        return (cho, jung, jong);
-    }
 }
