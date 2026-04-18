@@ -253,7 +253,7 @@ AltKey/
 |---|---|---|
 | 키 입력이 elevated 앱에 전송 안 됨 | SendInput 권한 수준 불일치 | 설정의 "관리자 권한으로 재시작" 사용 |
 | 독점 전체 화면 게임에서 창이 가려짐 | DirectX 독점 모드 | 창 모드 게임에서 사용 |
-| 구버전 Windows에서 Acrylic 블러 안 됨 | Windows 10 22H2 미만 | 우아하게固体색으로 대체 |
+| 구버전 Windows에서 Acrylic 블러 안 됨 | Windows 10 22H2 미만 | 우아하게 단색으로 대체 |
 
 ---
 
