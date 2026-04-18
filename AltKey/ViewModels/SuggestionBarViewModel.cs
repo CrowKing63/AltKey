@@ -60,7 +60,7 @@ public partial class SuggestionBarViewModel : ObservableObject
         if (_inputService.Mode == InputMode.Unicode)
         {
             _inputService.SendAtomicReplace(bsCount, fullWord);
-            _inputService.TrackedOnScreenLength = fullWord.Length;
+            _inputService.ResetTrackedLength();
         }
         else
         {
