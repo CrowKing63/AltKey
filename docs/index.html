@@ -1,31 +1,41 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AltKey — Windows 화상 키보드</title>
-  <meta name="description" content="macOS 손쉬운 사용 키보드에서 영감을 받은, 가볍고 아름다운 Windows용 커스터마이징 화상 키보드" />
+  <meta name="description"
+    content="macOS 손쉬운 사용 키보드에서 영감을 받은, 가볍고 아름다운 Windows용 커스터마이징 화상 키보드 - JSON 레이아웃, Sticky Keys, 체류 클릭, Acrylic 블러 지원" />
   <meta property="og:title" content="AltKey — Windows 화상 키보드" />
-  <meta property="og:description" content="JSON 기반 레이아웃, Sticky Keys, 체류 클릭, Acrylic 블러 지원" />
+  <meta property="og:description" content="macOS 손쉬운 사용 키보드에서 영감을 받은, 가볍고 아름다운 Windows용 커스터마이징 화상 키보드" />
   <meta property="og:type" content="website" />
 
   <style>
     :root {
-      --bg:        #0f1117;
-      --surface:   #1a1d27;
-      --surface2:  #21253a;
-      --border:    #2e334d;
-      --accent:    #2563eb;
-      --accent-h:  #3b7bff;
-      --text:      #e8ecf5;
-      --text-muted:#8b93b8;
-      --radius:    12px;
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #21253a;
+      --border: #2e334d;
+      --accent: #2563eb;
+      --accent-h: #3b7bff;
+      --text: #e8ecf5;
+      --text-muted: #8b93b8;
+      --radius: 12px;
       --radius-sm: 8px;
     }
 
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-    html { scroll-behavior: smooth; }
+    html {
+      scroll-behavior: smooth;
+    }
 
     body {
       font-family: 'Pretendard', 'Apple SD Gothic Neo', 'Noto Sans KR', system-ui, sans-serif;
@@ -49,6 +59,7 @@
       backdrop-filter: blur(16px);
       border-bottom: 1px solid var(--border);
     }
+
     .nav-logo {
       font-size: 1.1rem;
       font-weight: 700;
@@ -56,41 +67,20 @@
       color: var(--text);
       text-decoration: none;
     }
-    .nav-links { display: flex; gap: 1.5rem; }
+
+    .nav-links {
+      display: flex;
+      gap: 1.5rem;
+    }
+
     .nav-links a {
       color: var(--text-muted);
       text-decoration: none;
       font-size: 0.9rem;
       transition: color 0.15s;
     }
-    .nav-links a:hover { color: var(--text); }
 
-    /* ── Language Switcher ── */
-    .lang-switcher {
-      display: flex;
-      gap: 0.4rem;
-      margin-left: 1rem;
-      background: var(--surface2);
-      padding: 3px;
-      border-radius: 6px;
-      border: 1px solid var(--border);
-    }
-    .lang-btn {
-      background: transparent;
-      border: none;
-      color: var(--text-muted);
-      font-size: 0.65rem;
-      font-weight: 700;
-      padding: 3px 8px;
-      border-radius: 4px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .lang-btn.active {
-      background: var(--accent);
-      color: #fff;
-    }
-    .lang-btn:hover:not(.active) {
+    .nav-links a:hover {
       color: var(--text);
     }
 
@@ -105,6 +95,7 @@
       max-width: 860px;
       margin: 0 auto;
     }
+
     .hero-badge {
       display: inline-flex;
       align-items: center;
@@ -119,6 +110,7 @@
       letter-spacing: 0.04em;
       margin-bottom: 2rem;
     }
+
     .hero h1 {
       font-size: clamp(2.4rem, 6vw, 4rem);
       font-weight: 800;
@@ -126,24 +118,28 @@
       line-height: 1.15;
       margin-bottom: 1.25rem;
     }
+
     .hero h1 span {
       background: linear-gradient(135deg, #60a5fa 0%, #2563eb 50%, #818cf8 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
     }
+
     .hero p {
       font-size: 1.15rem;
       color: var(--text-muted);
       max-width: 580px;
       margin-bottom: 2.5rem;
     }
+
     .hero-actions {
       display: flex;
       gap: 1rem;
       flex-wrap: wrap;
       justify-content: center;
     }
+
     .btn {
       display: inline-flex;
       align-items: center;
@@ -157,17 +153,27 @@
       cursor: pointer;
       transition: all 0.15s;
     }
+
     .btn-primary {
       background: var(--accent);
       color: #fff;
     }
-    .btn-primary:hover { background: var(--accent-h); transform: translateY(-1px); }
+
+    .btn-primary:hover {
+      background: var(--accent-h);
+      transform: translateY(-1px);
+    }
+
     .btn-secondary {
       background: var(--surface2);
       color: var(--text);
       border: 1px solid var(--border);
     }
-    .btn-secondary:hover { background: #2a2f4a; transform: translateY(-1px); }
+
+    .btn-secondary:hover {
+      background: #2a2f4a;
+      transform: translateY(-1px);
+    }
 
     /* ── Keyboard Preview ── */
     .keyboard-preview {
@@ -175,33 +181,38 @@
       margin: 0 auto 5rem;
       padding: 0 1.5rem;
     }
+
     .kb-window {
       background: rgba(30, 33, 50, 0.85);
       border: 1px solid var(--border);
       border-radius: 14px;
       overflow: hidden;
       backdrop-filter: blur(20px);
-      box-shadow: 0 32px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04) inset;
+      box-shadow: 0 32px 80px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
     }
+
     .kb-titlebar {
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 0 12px;
       height: 30px;
-      background: rgba(255,255,255,0.04);
+      background: rgba(255, 255, 255, 0.04);
       border-bottom: 1px solid var(--border);
     }
+
     .kb-title-text {
       font-size: 0.7rem;
       color: var(--text-muted);
       font-weight: 500;
     }
+
     .kb-arrow-group {
       display: flex;
       align-items: center;
       gap: 2px;
     }
+
     .kb-arrow {
       width: 18px;
       height: 18px;
@@ -209,38 +220,44 @@
       align-items: center;
       justify-content: center;
       font-size: 0.6rem;
-      color: rgba(255,255,255,0.35);
+      color: rgba(255, 255, 255, 0.35);
       background: transparent;
       border-radius: 4px;
       cursor: default;
     }
+
     .kb-pill {
       width: 32px;
       height: 3px;
-      background: rgba(255,255,255,0.18);
+      background: rgba(255, 255, 255, 0.18);
       border-radius: 2px;
       margin: 0 8px;
     }
+
     .kb-titlebar-btns {
       display: flex;
       gap: 6px;
     }
+
     .kb-btn-icon {
       font-size: 0.65rem;
-      color: rgba(255,255,255,0.35);
+      color: rgba(255, 255, 255, 0.35);
       padding: 0 6px;
     }
+
     .kb-keys {
       padding: 10px 8px;
       display: flex;
       flex-direction: column;
       gap: 4px;
     }
+
     .kb-row {
       display: flex;
       gap: 3px;
       justify-content: center;
     }
+
     .key {
       display: flex;
       flex-direction: column;
@@ -248,8 +265,8 @@
       justify-content: flex-end;
       padding: 4px 6px;
       border-radius: 5px;
-      background: rgba(255,255,255,0.07);
-      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.08);
       font-size: 0.6rem;
       color: var(--text);
       cursor: default;
@@ -258,18 +275,61 @@
       position: relative;
       user-select: none;
     }
-    .key:hover { background: rgba(255,255,255,0.13); }
-    .key.wide-1-5 { min-width: 54px; }
-    .key.wide-1-75 { min-width: 63px; }
-    .key.wide-2 { min-width: 72px; }
-    .key.wide-2-25 { min-width: 81px; }
-    .key.wide-2-75 { min-width: 99px; }
-    .key.wide-3 { min-width: 108px; }
-    .key.wide-4 { min-width: 144px; }
-    .key.std { min-width: 36px; }
-    .key .sub { font-size: 0.45rem; color: #60a5fa; position: absolute; top: 3px; left: 5px; }
-    .key.sticky { background: rgba(37, 99, 235, 0.25); border-color: rgba(37,99,235,0.5); }
-    .key.special { background: rgba(255,255,255,0.05); color: var(--text-muted); font-size: 0.55rem; }
+
+    .key:hover {
+      background: rgba(255, 255, 255, 0.13);
+    }
+
+    .key.wide-1-5 {
+      min-width: 54px;
+    }
+
+    .key.wide-1-75 {
+      min-width: 63px;
+    }
+
+    .key.wide-2 {
+      min-width: 72px;
+    }
+
+    .key.wide-2-25 {
+      min-width: 81px;
+    }
+
+    .key.wide-2-75 {
+      min-width: 99px;
+    }
+
+    .key.wide-3 {
+      min-width: 108px;
+    }
+
+    .key.wide-4 {
+      min-width: 144px;
+    }
+
+    .key.std {
+      min-width: 36px;
+    }
+
+    .key .sub {
+      font-size: 0.45rem;
+      color: #60a5fa;
+      position: absolute;
+      top: 3px;
+      left: 5px;
+    }
+
+    .key.sticky {
+      background: rgba(37, 99, 235, 0.25);
+      border-color: rgba(37, 99, 235, 0.5);
+    }
+
+    .key.special {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-muted);
+      font-size: 0.55rem;
+    }
 
     /* ── Features ── */
     .section {
@@ -277,6 +337,7 @@
       margin: 0 auto;
       padding: 5rem 1.5rem;
     }
+
     .section-label {
       font-size: 0.78rem;
       font-weight: 700;
@@ -285,12 +346,14 @@
       color: #60a5fa;
       margin-bottom: 0.75rem;
     }
+
     .section-title {
       font-size: clamp(1.7rem, 3.5vw, 2.5rem);
       font-weight: 800;
       letter-spacing: -0.5px;
       margin-bottom: 1rem;
     }
+
     .section-desc {
       color: var(--text-muted);
       font-size: 1.05rem;
@@ -303,6 +366,7 @@
       grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
       gap: 1rem;
     }
+
     .feature-card {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -310,19 +374,23 @@
       padding: 1.5rem;
       transition: border-color 0.2s, transform 0.2s;
     }
+
     .feature-card:hover {
-      border-color: rgba(37,99,235,0.5);
+      border-color: rgba(37, 99, 235, 0.5);
       transform: translateY(-2px);
     }
+
     .feature-icon {
       font-size: 1.5rem;
       margin-bottom: 0.75rem;
     }
+
     .feature-card h3 {
       font-size: 1rem;
       font-weight: 700;
       margin-bottom: 0.4rem;
     }
+
     .feature-card p {
       font-size: 0.875rem;
       color: var(--text-muted);
@@ -336,6 +404,7 @@
       gap: 0.75rem;
       margin-top: 2rem;
     }
+
     .action-chip {
       display: flex;
       align-items: flex-start;
@@ -345,11 +414,13 @@
       border: 1px solid var(--border);
       border-radius: var(--radius-sm);
     }
+
     .action-chip-icon {
       font-size: 1.1rem;
       flex-shrink: 0;
       margin-top: 2px;
     }
+
     .action-chip-name {
       font-size: 0.8rem;
       font-weight: 700;
@@ -357,6 +428,7 @@
       color: #93b4ff;
       margin-bottom: 2px;
     }
+
     .action-chip-desc {
       font-size: 0.78rem;
       color: var(--text-muted);
@@ -368,12 +440,14 @@
       border-top: 1px solid var(--border);
       border-bottom: 1px solid var(--border);
     }
+
     .download-inner {
       max-width: 800px;
       margin: 0 auto;
       padding: 5rem 1.5rem;
       text-align: center;
     }
+
     .download-cards {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -381,6 +455,7 @@
       margin-top: 2.5rem;
       text-align: left;
     }
+
     .download-card {
       background: var(--bg);
       border: 1px solid var(--border);
@@ -391,10 +466,12 @@
       transition: border-color 0.2s, transform 0.2s;
       display: block;
     }
+
     .download-card:hover {
       border-color: var(--accent);
       transform: translateY(-2px);
     }
+
     .download-card .tag {
       display: inline-block;
       font-size: 0.7rem;
@@ -403,10 +480,27 @@
       border-radius: 4px;
       margin-bottom: 0.75rem;
     }
-    .tag-installer { background: rgba(37,99,235,0.2); color: #93b4ff; }
-    .tag-portable { background: rgba(16,185,129,0.15); color: #6ee7b7; }
-    .download-card h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 0.4rem; }
-    .download-card p { font-size: 0.85rem; color: var(--text-muted); }
+
+    .tag-installer {
+      background: rgba(37, 99, 235, 0.2);
+      color: #93b4ff;
+    }
+
+    .tag-portable {
+      background: rgba(16, 185, 129, 0.15);
+      color: #6ee7b7;
+    }
+
+    .download-card h3 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: 0.4rem;
+    }
+
+    .download-card p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
 
     /* ── Code block ── */
     .code-section {
@@ -414,6 +508,7 @@
       margin: 0 auto;
       padding: 5rem 1.5rem;
     }
+
     pre {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -424,11 +519,27 @@
       line-height: 1.7;
       color: #c9d1f5;
     }
-    .json-key   { color: #93b4ff; }
-    .json-str   { color: #86efac; }
-    .json-num   { color: #fda4af; }
-    .json-bool  { color: #fbbf24; }
-    .json-cmt   { color: var(--text-muted); font-style: italic; }
+
+    .json-key {
+      color: #93b4ff;
+    }
+
+    .json-str {
+      color: #86efac;
+    }
+
+    .json-num {
+      color: #fda4af;
+    }
+
+    .json-bool {
+      color: #fbbf24;
+    }
+
+    .json-cmt {
+      color: var(--text-muted);
+      font-style: italic;
+    }
 
     /* ── Footer ── */
     footer {
@@ -436,304 +547,332 @@
       padding: 2.5rem 1.5rem;
       text-align: center;
     }
-    footer p { font-size: 0.85rem; color: var(--text-muted); }
-    footer a { color: #60a5fa; text-decoration: none; }
-    footer a:hover { text-decoration: underline; }
+
+    footer p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    footer a {
+      color: #60a5fa;
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
 
     /* ── Responsive ── */
     @media (max-width: 640px) {
-      .nav-links { display: none; }
-      .hero { padding: 4rem 1rem 3rem; }
+      .nav-links {
+        display: none;
+      }
+
+      .hero {
+        padding: 4rem 1rem 3rem;
+      }
     }
   </style>
 </head>
+
 <body>
 
-<!-- Nav -->
-<nav>
-  <a class="nav-logo" href="#">⌨ AltKey</a>
-  <div class="nav-links">
-    <a href="#features" data-i18n="nav-features">기능</a>
-    <a href="#actions" data-i18n="nav-actions">액션</a>
-    <a href="#layout" data-i18n="nav-layout">레이아웃</a>
-    <a href="#download" data-i18n="nav-download">다운로드</a>
-    <a href="https://github.com/CrowKing63/AltKey">GitHub</a>
-    <div class="lang-switcher">
-      <button onclick="setLanguage('ko')" class="lang-btn" id="lang-ko">KO</button>
-      <button onclick="setLanguage('en')" class="lang-btn" id="lang-en">EN</button>
+  <!-- Nav -->
+  <nav>
+    <a class="nav-logo" href="#">⌨ AltKey</a>
+    <div class="nav-links">
+      <a href="#features">기능</a>
+      <a href="#actions">액션</a>
+      <a href="#layout">레이아웃</a>
+      <a href="#download">다운로드</a>
+      <a href="https://github.com/CrowKing63/AltKey">GitHub</a>
     </div>
-  </div>
-</nav>
+  </nav>
 
-<!-- Hero -->
-<section class="hero">
-  <div class="hero-badge" data-i18n="hero-badge">
-    <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-      <circle cx="5" cy="5" r="4" fill="#2563eb"/>
-    </svg>
-    Windows 10 / 11 · .NET 8 · 무설치 포터블
-  </div>
-  <h1 data-i18n="hero-title">마우스 하나로 완성하는<br><span>화상 키보드</span></h1>
-  <p data-i18n="hero-desc">macOS 손쉬운 사용 키보드에서 영감을 받은,
-     가볍고 아름다운 Windows용 커스터마이징 화상 키보드.
-     JSON 레이아웃, Sticky Keys, 체류 클릭, Acrylic 블러까지.</p>
-  <div class="hero-actions">
-    <a class="btn btn-primary" href="https://github.com/CrowKing63/AltKey/releases/latest" data-i18n="hero-download">
-      ⬇ 최신 버전 다운로드
-    </a>
-    <a class="btn btn-secondary" href="https://github.com/CrowKing63/AltKey">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-badge">
+      <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+        <circle cx="5" cy="5" r="4" fill="#2563eb" />
       </svg>
-      <span data-i18n="hero-github">GitHub에서 보기</span>
-    </a>
-  </div>
-</section>
+      Windows 10 / 11 · .NET 8 · 무설치 포터블
+    </div>
+    <h1>마우스 하나로 완성하는<br><span>화상 키보드</span></h1>
+    <p>macOS 손쉬운 사용 키보드에서 영감을 받은,
+      가볍고 아름다운 Windows용 커스터마이징 화상 키보드.
+      JSON 레이아웃, Sticky Keys, 체류 클릭, Acrylic 블러까지.</p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="https://github.com/CrowKing63/AltKey/releases/latest">
+        ⬇ 최신 버전 다운로드
+      </a>
+      <a class="btn btn-secondary" href="https://github.com/CrowKing63/AltKey">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path
+            d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z" />
+        </svg>
+        <span>GitHub에서 보기</span>
+      </a>
+    </div>
+  </section>
 
-<!-- Keyboard Preview -->
-<div class="keyboard-preview">
-  <div class="kb-window">
-    <div class="kb-titlebar">
-      <span class="kb-title-text">AltKey</span>
-      <div class="kb-arrow-group">
-        <span class="kb-arrow">←</span>
-        <span class="kb-arrow">↑</span>
-        <div class="kb-pill"></div>
-        <span class="kb-arrow">↓</span>
-        <span class="kb-arrow">→</span>
+  <!-- Keyboard Preview -->
+  <div class="keyboard-preview">
+    <div class="kb-window">
+      <div class="kb-titlebar">
+        <span class="kb-title-text">AltKey</span>
+        <div class="kb-arrow-group">
+          <span class="kb-arrow">←</span>
+          <span class="kb-arrow">↑</span>
+          <div class="kb-pill"></div>
+          <span class="kb-arrow">↓</span>
+          <span class="kb-arrow">→</span>
+        </div>
+        <div class="kb-titlebar-btns">
+          <span class="kb-btn-icon">😊</span>
+          <span class="kb-btn-icon">📋</span>
+          <span class="kb-btn-icon">⚙</span>
+          <span class="kb-btn-icon">▲</span>
+          <span class="kb-btn-icon">✕</span>
+        </div>
       </div>
-      <div class="kb-titlebar-btns">
-        <span class="kb-btn-icon">😊</span>
-        <span class="kb-btn-icon">📋</span>
-        <span class="kb-btn-icon">⚙</span>
-        <span class="kb-btn-icon">▲</span>
-        <span class="kb-btn-icon">✕</span>
-      </div>
-    </div>
-    <div class="kb-keys">
-      <!-- Row 1: Number row -->
-      <div class="kb-row">
-        <div class="key std">`</div>
-        <div class="key std">1</div><div class="key std">2</div>
-        <div class="key std">3</div><div class="key std">4</div>
-        <div class="key std">5</div><div class="key std">6</div>
-        <div class="key std">7</div><div class="key std">8</div>
-        <div class="key std">9</div><div class="key std">0</div>
-        <div class="key std">-</div><div class="key std">=</div>
-        <div class="key wide-2">⌫</div>
-      </div>
-      <!-- Row 2: QWERTY -->
-      <div class="kb-row">
-        <div class="key wide-1-5 special">Tab</div>
-        <div class="key std"><span class="sub">ㅂ</span>q</div>
-        <div class="key std"><span class="sub">ㅈ</span>w</div>
-        <div class="key std"><span class="sub">ㄷ</span>e</div>
-        <div class="key std"><span class="sub">ㄱ</span>r</div>
-        <div class="key std"><span class="sub">ㅅ</span>t</div>
-        <div class="key std"><span class="sub">ㅛ</span>y</div>
-        <div class="key std"><span class="sub">ㅕ</span>u</div>
-        <div class="key std"><span class="sub">ㅑ</span>i</div>
-        <div class="key std"><span class="sub">ㅐ</span>o</div>
-        <div class="key std"><span class="sub">ㅔ</span>p</div>
-        <div class="key std">[</div><div class="key std">]</div>
-        <div class="key wide-1-5">\</div>
-      </div>
-      <!-- Row 3: ASDF -->
-      <div class="kb-row">
-        <div class="key wide-1-75 special">Caps</div>
-        <div class="key std"><span class="sub">ㅁ</span>a</div>
-        <div class="key std"><span class="sub">ㄴ</span>s</div>
-        <div class="key std"><span class="sub">ㅇ</span>d</div>
-        <div class="key std"><span class="sub">ㄹ</span>f</div>
-        <div class="key std"><span class="sub">ㅎ</span>g</div>
-        <div class="key std"><span class="sub">ㅗ</span>h</div>
-        <div class="key std"><span class="sub">ㅓ</span>j</div>
-        <div class="key std"><span class="sub">ㅏ</span>k</div>
-        <div class="key std"><span class="sub">ㅣ</span>l</div>
-        <div class="key std">;</div><div class="key std">'</div>
-        <div class="key wide-2-25 special">Enter</div>
-      </div>
-      <!-- Row 4: ZXCV -->
-      <div class="kb-row">
-        <div class="key wide-2-25 special sticky">Shift</div>
-        <div class="key std"><span class="sub">ㅋ</span>z</div>
-        <div class="key std"><span class="sub">ㅌ</span>x</div>
-        <div class="key std"><span class="sub">ㅊ</span>c</div>
-        <div class="key std"><span class="sub">ㅍ</span>v</div>
-        <div class="key std"><span class="sub">ㅠ</span>b</div>
-        <div class="key std"><span class="sub">ㅜ</span>n</div>
-        <div class="key std"><span class="sub">ㅡ</span>m</div>
-        <div class="key std">,</div><div class="key std">.</div><div class="key std">/</div>
-        <div class="key wide-2-75 special">Shift</div>
-      </div>
-      <!-- Row 5: Bottom -->
-      <div class="kb-row">
-        <div class="key special" style="min-width:45px">Ctrl</div>
-        <div class="key special" style="min-width:36px">Win</div>
-        <div class="key special" style="min-width:45px">Alt</div>
-        <div class="key special" style="min-width:40px; font-size:0.5rem">한자</div>
-        <div class="key wide-3">Space</div>
-        <div class="key special" style="min-width:40px; font-size:0.5rem">한/영</div>
-        <div class="key special" style="min-width:45px">Alt</div>
-        <div class="key special" style="min-width:45px">Ctrl</div>
-        <div class="key std">←</div><div class="key std">↑</div>
-        <div class="key std">↓</div><div class="key std">→</div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Features -->
-<section class="section" id="features">
-  <div class="section-label" data-i18n="features-label">Features</div>
-  <h2 class="section-title" data-i18n="features-title">필요한 기능은 모두 담았습니다</h2>
-  <p class="section-desc" data-i18n="features-desc">
-    접근성부터 생산성 자동화까지, AltKey 하나로 해결하세요.
-  </p>
-
-  <div class="feature-grid">
-    <div class="feature-card">
-      <div class="feature-icon">🔒</div>
-      <h3 data-i18n="feature-sticky-title">Sticky Keys</h3>
-      <p data-i18n="feature-sticky-desc">Shift·Ctrl·Alt·Win을 한 번 탭하면 일회성 고정, 두 번 탭하면 영구 잠금.
-         한 손 조작이나 접근성 환경에 최적화되어 있습니다.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">⏱</div>
-      <h3 data-i18n="feature-dwell-title">체류 클릭 (Dwell Click)</h3>
-      <p data-i18n="feature-dwell-desc">키 위에 마우스를 올려놓으면 설정한 시간 후 자동 클릭.
-         물리적 클릭이 어려운 사용자를 위한 접근성 기능입니다.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">🎨</div>
-      <h3 data-i18n="feature-json-title">JSON 레이아웃</h3>
-      <p data-i18n="feature-json-desc">원하는 키 배치를 JSON으로 정의하고, GUI 레이아웃 에디터로 쉽게 편집하세요.
-         한글 음운 이중 레이블도 완벽 지원합니다.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">🔄</div>
-      <h3 data-i18n="feature-profile-title">앱별 레이아웃 프로필</h3>
-      <p data-i18n="feature-profile-desc">게임, 크리에이티브 툴, 오피스 앱마다 레이아웃을 자동으로 전환합니다.
-         WinEventHook 기반으로 포그라운드 앱을 감지합니다.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">🪟</div>
-      <h3 data-i18n="feature-acrylic-title">Acrylic 블러 UI</h3>
-      <p data-i18n="feature-acrylic-desc">Windows 11 Acrylic 블러 효과와 다크/라이트/시스템 테마를 지원합니다.
-         미사용 시 자동으로 반투명 상태로 전환됩니다.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">🧲</div>
-      <h3 data-i18n="feature-edge-title">화면 가장자리 이동</h3>
-      <p data-i18n="feature-edge-desc">헤더 중앙의 ← ↑ ↓ → 버튼 한 번으로 키보드를 화면 끝에 즉시 붙입니다.
-         자주 쓰는 위치에 빠르게 고정하세요.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">😊</div>
-      <h3 data-i18n="feature-emoji-title">이모지 패널</h3>
-      <p data-i18n="feature-emoji-desc">이모지 패널로 자주 쓰는 이모지를 빠르게 입력하세요.
-         유니코드 직접 입력으로 모든 환경에서 동작합니다.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">📋</div>
-      <h3 data-i18n="feature-clipboard-title">클립보드 히스토리</h3>
-      <p data-i18n="feature-clipboard-desc">최근 복사한 항목을 패널에서 빠르게 다시 붙여넣기.
-         반복 작업을 효율적으로 처리하세요.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">🔔</div>
-      <h3 data-i18n="feature-update-title">자동 업데이트 알림</h3>
-      <p data-i18n="feature-update-desc">GitHub Releases와 연동해 새 버전이 있을 때 앱 상단 배너로 알려줍니다.
-         설정 없이 항상 최신 버전을 유지하세요.</p>
-    </div>
-  </div>
-</section>
-
-<!-- Actions -->
-<section class="section" id="actions" style="padding-top: 0;">
-  <div class="section-label" data-i18n="actions-label">Actions</div>
-  <h2 class="section-title" data-i18n="actions-title">키 하나에 무엇이든</h2>
-  <p class="section-desc" data-i18n="actions-desc">
-    단순한 키 전송을 넘어, 앱 실행·상용구 입력·볼륨 조절까지
-    모든 액션을 키에 연결할 수 있습니다.
-  </p>
-
-  <div class="action-grid">
-    <div class="action-chip">
-      <span class="action-chip-icon">⌨</span>
-      <div>
-        <div class="action-chip-name">SendKey</div>
-        <div class="action-chip-desc" data-i18n="action-sendkey-desc">가상 키코드 단일 전송</div>
-      </div>
-    </div>
-    <div class="action-chip">
-      <span class="action-chip-icon">🔗</span>
-      <div>
-        <div class="action-chip-name">SendCombo</div>
-        <div class="action-chip-desc" data-i18n="action-sendcombo-desc">키 조합 전송 (Ctrl+C 등)</div>
-      </div>
-    </div>
-    <div class="action-chip">
-      <span class="action-chip-icon">📌</span>
-      <div>
-        <div class="action-chip-name">ToggleSticky</div>
-        <div class="action-chip-desc" data-i18n="action-sticky-desc">수식자 키 Sticky 상태 토글</div>
-      </div>
-    </div>
-    <div class="action-chip">
-      <span class="action-chip-icon">🔀</span>
-      <div>
-        <div class="action-chip-name">SwitchLayout</div>
-        <div class="action-chip-desc" data-i18n="action-switch-desc">다른 레이아웃으로 즉시 전환</div>
-      </div>
-    </div>
-    <div class="action-chip">
-      <span class="action-chip-icon">🚀</span>
-      <div>
-        <div class="action-chip-name">RunApp</div>
-        <div class="action-chip-desc" data-i18n="action-runapp-desc">앱 또는 파일 실행 (경로 + 인수)</div>
-      </div>
-    </div>
-    <div class="action-chip">
-      <span class="action-chip-icon">📝</span>
-      <div>
-        <div class="action-chip-name">Boilerplate</div>
-        <div class="action-chip-desc" data-i18n="action-boilerplate-desc">상용구 텍스트 유니코드 직접 입력</div>
-      </div>
-    </div>
-    <div class="action-chip">
-      <span class="action-chip-icon">💻</span>
-      <div>
-        <div class="action-chip-name">ShellCommand</div>
-        <div class="action-chip-desc" data-i18n="action-shell-desc">CMD / PowerShell 명령 실행</div>
-      </div>
-    </div>
-    <div class="action-chip">
-      <span class="action-chip-icon">🔊</span>
-      <div>
-        <div class="action-chip-name">VolumeControl</div>
-        <div class="action-chip-desc" data-i18n="action-volume-desc">볼륨 올리기·내리기·음소거</div>
-      </div>
-    </div>
-    <div class="action-chip">
-      <span class="action-chip-icon">📋</span>
-      <div>
-        <div class="action-chip-name">ClipboardPaste</div>
-        <div class="action-chip-desc" data-i18n="action-paste-desc">텍스트를 클립보드 복사 후 붙여넣기</div>
+      <div class="kb-keys">
+        <!-- Row 1: Number row -->
+        <div class="kb-row">
+          <div class="key std">`</div>
+          <div class="key std">1</div>
+          <div class="key std">2</div>
+          <div class="key std">3</div>
+          <div class="key std">4</div>
+          <div class="key std">5</div>
+          <div class="key std">6</div>
+          <div class="key std">7</div>
+          <div class="key std">8</div>
+          <div class="key std">9</div>
+          <div class="key std">0</div>
+          <div class="key std">-</div>
+          <div class="key std">=</div>
+          <div class="key wide-2">⌫</div>
+        </div>
+        <!-- Row 2: QWERTY -->
+        <div class="kb-row">
+          <div class="key wide-1-5 special">Tab</div>
+          <div class="key std"><span class="sub">ㅂ</span>q</div>
+          <div class="key std"><span class="sub">ㅈ</span>w</div>
+          <div class="key std"><span class="sub">ㄷ</span>e</div>
+          <div class="key std"><span class="sub">ㄱ</span>r</div>
+          <div class="key std"><span class="sub">ㅅ</span>t</div>
+          <div class="key std"><span class="sub">ㅛ</span>y</div>
+          <div class="key std"><span class="sub">ㅕ</span>u</div>
+          <div class="key std"><span class="sub">ㅑ</span>i</div>
+          <div class="key std"><span class="sub">ㅐ</span>o</div>
+          <div class="key std"><span class="sub">ㅔ</span>p</div>
+          <div class="key std">[</div>
+          <div class="key std">]</div>
+          <div class="key wide-1-5">\</div>
+        </div>
+        <!-- Row 3: ASDF -->
+        <div class="kb-row">
+          <div class="key wide-1-75 special">Caps</div>
+          <div class="key std"><span class="sub">ㅁ</span>a</div>
+          <div class="key std"><span class="sub">ㄴ</span>s</div>
+          <div class="key std"><span class="sub">ㅇ</span>d</div>
+          <div class="key std"><span class="sub">ㄹ</span>f</div>
+          <div class="key std"><span class="sub">ㅎ</span>g</div>
+          <div class="key std"><span class="sub">ㅗ</span>h</div>
+          <div class="key std"><span class="sub">ㅓ</span>j</div>
+          <div class="key std"><span class="sub">ㅏ</span>k</div>
+          <div class="key std"><span class="sub">ㅣ</span>l</div>
+          <div class="key std">;</div>
+          <div class="key std">'</div>
+          <div class="key wide-2-25 special">Enter</div>
+        </div>
+        <!-- Row 4: ZXCV -->
+        <div class="kb-row">
+          <div class="key wide-2-25 special sticky">Shift</div>
+          <div class="key std"><span class="sub">ㅋ</span>z</div>
+          <div class="key std"><span class="sub">ㅌ</span>x</div>
+          <div class="key std"><span class="sub">ㅊ</span>c</div>
+          <div class="key std"><span class="sub">ㅍ</span>v</div>
+          <div class="key std"><span class="sub">ㅠ</span>b</div>
+          <div class="key std"><span class="sub">ㅜ</span>n</div>
+          <div class="key std"><span class="sub">ㅡ</span>m</div>
+          <div class="key std">,</div>
+          <div class="key std">.</div>
+          <div class="key std">/</div>
+          <div class="key wide-2-75 special">Shift</div>
+        </div>
+        <!-- Row 5: Bottom -->
+        <div class="kb-row">
+          <div class="key special" style="min-width:45px">Ctrl</div>
+          <div class="key special" style="min-width:36px">Win</div>
+          <div class="key special" style="min-width:45px">Alt</div>
+          <div class="key special" style="min-width:40px; font-size:0.5rem">한자</div>
+          <div class="key wide-3">Space</div>
+          <div class="key special" style="min-width:40px; font-size:0.5rem">한/영</div>
+          <div class="key special" style="min-width:45px">Alt</div>
+          <div class="key special" style="min-width:45px">Ctrl</div>
+          <div class="key std">←</div>
+          <div class="key std">↑</div>
+          <div class="key std">↓</div>
+          <div class="key std">→</div>
+        </div>
       </div>
     </div>
   </div>
-</section>
 
-<!-- Layout JSON -->
-<section class="code-section" id="layout">
-  <div class="section-label" data-i18n="layout-label">Layout</div>
-  <h2 class="section-title" style="font-size:clamp(1.5rem,3vw,2.2rem); font-weight:800; letter-spacing:-0.5px; margin-bottom:0.75rem;" data-i18n="layout-title">JSON으로 레이아웃 정의</h2>
-  <p style="color:var(--text-muted); margin-bottom:1.5rem;" data-i18n="layout-desc">
-    <code>layouts/</code> 폴더의 JSON 파일 하나가 키보드 레이아웃 하나입니다.
-    GUI 에디터로 편집하거나 직접 파일을 수정하세요.
-  </p>
-  <pre><code><span class="json-cmt">// layouts/my-layout.json</span>
+  <!-- Features -->
+  <section class="section" id="features">
+    <div class="section-label">Features</div>
+    <h2 class="section-title">필요한 기능은 모두 담았습니다</h2>
+    <p class="section-desc">
+      접근성부터 생산성 자동화까지, AltKey 하나로 해결하세요.
+    </p>
+
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🔒</div>
+        <h3>Sticky Keys</h3>
+        <p>Shift·Ctrl·Alt·Win을 한 번 탭하면 일회성 고정, 두 번 탭하면 영구 잠금.
+          한 손 조작이나 접근성 환경에 최적화되어 있습니다.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">⏱</div>
+        <h3>체류 클릭 (Dwell Click)</h3>
+        <p>키 위에 마우스를 올려놓으면 설정한 시간 후 자동 클릭.
+          물리적 클릭이 어려운 사용자를 위한 접근성 기능입니다.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🎨</div>
+        <h3>JSON 레이아웃</h3>
+        <p>원하는 키 배치를 JSON으로 정의하고, GUI 레이아웃 에디터로 쉽게 편집하세요.
+          한글 음운 이중 레이블도 완벽 지원합니다.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔄</div>
+        <h3>앱별 레이아웃 프로필</h3>
+        <p>게임, 크리에이티브 툴, 오피스 앱마다 레이아웃을 자동으로 전환합니다.
+          WinEventHook 기반으로 포그라운드 앱을 감지합니다.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🪟</div>
+        <h3>Acrylic 블러 UI</h3>
+        <p>Windows 11 Acrylic 블러 효과와 다크/라이트/시스템 테마를 지원합니다.
+          미사용 시 자동으로 반투명 상태로 전환됩니다.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🧲</div>
+        <h3>화면 가장자리 이동</h3>
+        <p>헤더 중앙의 ← ↑ ↓ → 버튼 한 번으로 키보드를 화면 끝에 즉시 붙입니다.
+          자주 쓰는 위치에 빠르게 고정하세요.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">😊</div>
+        <h3>이모지 패널</h3>
+        <p>이모지 패널로 자주 쓰는 이모지를 빠르게 입력하세요.
+          유니코드 직접 입력으로 모든 환경에서 동작합니다.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📋</div>
+        <h3>클립보드 히스토리</h3>
+        <p>최근 복사한 항목을 패널에서 빠르게 다시 붙여넣기.
+          반복 작업을 효율적으로 처리하세요.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔔</div>
+        <h3>자동 업데이트 알림</h3>
+        <p>GitHub Releases와 연동해 새 버전이 있을 때 앱 상단 배너로 알려줍니다.
+          설정 없이 항상 최신 버전을 유지하세요.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Actions -->
+  <section class="section" id="actions" style="padding-top: 0;">
+    <div class="section-label">Actions</div>
+    <h2 class="section-title">키 하나에 무엇이든</h2>
+    <p class="section-desc">
+      단순한 키 전송을 넘어, 앱 실행·상용구 입력·볼륨 조절까지
+      모든 액션을 키에 연결할 수 있습니다.
+    </p>
+
+    <div class="action-grid">
+      <div class="action-chip">
+        <span class="action-chip-icon">⌨</span>
+        <div>
+          <div class="action-chip-name">SendKey</div>
+          <div class="action-chip-desc">가상 키코드 단일 전송</div>
+        </div>
+      </div>
+      <div class="action-chip">
+        <span class="action-chip-icon">🔗</span>
+        <div>
+          <div class="action-chip-name">SendCombo</div>
+          <div class="action-chip-desc">키 조합 전송 (Ctrl+C 등)</div>
+        </div>
+      </div>
+      <div class="action-chip">
+        <span class="action-chip-icon">📌</span>
+        <div>
+          <div class="action-chip-name">ToggleSticky</div>
+          <div class="action-chip-desc">수식자 키 Sticky 상태 토글</div>
+        </div>
+      </div>
+      <div class="action-chip">
+        <span class="action-chip-icon">🔀</span>
+        <div>
+          <div class="action-chip-name">SwitchLayout</div>
+          <div class="action-chip-desc">다른 레이아웃으로 즉시 전환</div>
+        </div>
+      </div>
+      <div class="action-chip">
+        <span class="action-chip-icon">🚀</span>
+        <div>
+          <div class="action-chip-name">RunApp</div>
+          <div class="action-chip-desc">앱 또는 파일 실행 (경로 + 인수)</div>
+        </div>
+      </div>
+      <div class="action-chip">
+        <span class="action-chip-icon">📝</span>
+        <div>
+          <div class="action-chip-name">Boilerplate</div>
+          <div class="action-chip-desc">상용구 텍스트 유니코드 직접 입력</div>
+        </div>
+      </div>
+      <div class="action-chip">
+        <span class="action-chip-icon">💻</span>
+        <div>
+          <div class="action-chip-name">ShellCommand</div>
+          <div class="action-chip-desc">CMD / PowerShell 명령 실행</div>
+        </div>
+      </div>
+      <div class="action-chip">
+        <span class="action-chip-icon">🔊</span>
+        <div>
+          <div class="action-chip-name">VolumeControl</div>
+          <div class="action-chip-desc">볼륨 올리기·내리기·음소거</div>
+        </div>
+      </div>
+      <div class="action-chip">
+        <span class="action-chip-icon">📋</span>
+        <div>
+          <div class="action-chip-name">ClipboardPaste</div>
+          <div class="action-chip-desc">텍스트를 클립보드 복사 후 붙여넣기</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Layout JSON -->
+  <section class="code-section" id="layout">
+    <div class="section-label">Layout</div>
+    <h2 class="section-title"
+      style="font-size:clamp(1.5rem,3vw,2.2rem); font-weight:800; letter-spacing:-0.5px; margin-bottom:0.75rem;">JSON으로
+      레이아웃 정의</h2>
+    <p style="color:var(--text-muted); margin-bottom:1.5rem;">
+      <code>layouts/</code> 폴더의 JSON 파일 하나가 키보드 레이아웃 하나입니다.
+      GUI 에디터로 편집하거나 직접 파일을 수정하세요.
+    </p>
+    <pre><code><span class="json-cmt">// layouts/my-layout.json</span>
 {
   <span class="json-key">"name"</span>: <span class="json-str">"나만의 레이아웃"</span>,
   <span class="json-key">"language"</span>: <span class="json-str">"ko"</span>,
@@ -769,208 +908,49 @@
     }
   ]
 }</code></pre>
-</section>
+  </section>
 
-<!-- Download -->
-<div class="download-section" id="download">
-  <div class="download-inner">
-    <div class="section-label" style="text-align:center" data-i18n="download-label">Download</div>
-    <h2 class="section-title" data-i18n="download-title">지금 바로 사용해보세요</h2>
-    <p style="color:var(--text-muted); font-size:1rem" data-i18n="download-desc">
-      Windows 10 22H2 이상 · .NET 8 런타임 별도 설치 불필요
-    </p>
-    <div class="download-cards">
-      <a class="download-card" href="https://github.com/CrowKing63/AltKey/releases/latest">
-        <span class="tag tag-installer" data-i18n="download-installer-tag">설치 프로그램 (권장)</span>
-        <h3>AltKey-Setup.exe</h3>
-        <p data-i18n="download-installer-desc">시작 메뉴 등록, 시작프로그램 설정 포함.<br>일반 사용자에게 권장합니다.</p>
-      </a>
-      <a class="download-card" href="https://github.com/CrowKing63/AltKey/releases/latest">
-        <span class="tag tag-portable" data-i18n="download-portable-tag">포터블</span>
-        <h3>AltKey-Portable.zip</h3>
-        <p data-i18n="download-portable-desc">압축 해제 후 바로 실행.<br>설치 없이 USB에 넣어 어디서든 사용하세요.</p>
-      </a>
+  <!-- Download -->
+  <div class="download-section" id="download">
+    <div class="download-inner">
+      <div class="section-label" style="text-align:center">Download</div>
+      <h2 class="section-title">지금 바로 사용해보세요</h2>
+      <p style="color:var(--text-muted); font-size:1rem">
+        Windows 10 22H2 이상 · .NET 8 런타임 별도 설치 불필요
+      </p>
+      <div class="download-cards">
+        <a class="download-card" href="https://github.com/CrowKing63/AltKey/releases/latest">
+          <span class="tag tag-installer">설치 프로그램 (권장)</span>
+          <h3>AltKey-Setup.exe</h3>
+          <p>시작 메뉴 등록, 시작프로그램 설정 포함.<br>일반 사용자에게 권장합니다.</p>
+        </a>
+        <a class="download-card" href="https://github.com/CrowKing63/AltKey/releases/latest">
+          <span class="tag tag-portable">포터블</span>
+          <h3>AltKey-Portable.zip</h3>
+          <p>압축 해제 후 바로 실행.<br>설치 없이 USB에 넣어 어디서든 사용하세요.</p>
+        </a>
+      </div>
+      <p style="margin-top:2rem; color:var(--text-muted); font-size:0.85rem">
+        소스 코드 및 이전 버전은 <a href="https://github.com/CrowKing63/AltKey/releases">GitHub Releases</a> 에서 확인하세요.
+      </p>
     </div>
-    <p style="margin-top:2rem; color:var(--text-muted); font-size:0.85rem" id="download-footer">
-      <!-- Translated via script -->
-    </p>
   </div>
-</div>
 
-<!-- Footer -->
+  <!-- Footer -->
   <footer>
-    <p id="footer-made-by">
-      <!-- Translated via script -->
-    </p>
+    <p>Made with ♥ by <a href="https://github.com/CrowKing63">CrowKing63</a></p>
     <div style="display:flex; gap:10px; justify-content:center; margin-top:0.5rem;">
-        <a href="https://github.com/CrowKing63/AltKey">GitHub</a>
-        <span style="color:var(--border)">·</span>
-        <a href="https://github.com/CrowKing63/AltKey/blob/main/LICENSE">MIT License</a>
+      <a href="https://github.com/CrowKing63/AltKey">GitHub</a>
+      <span style="color:var(--border)">·</span>
+      <a href="https://github.com/CrowKing63/AltKey/blob/main/LICENSE">MIT License</a>
     </div>
-    <p style="margin-top:0.5rem; font-size:0.75rem" data-i18n="footer-copyright">
+    <p style="margin-top:0.5rem; font-size:0.75rem">
       © 2025 AltKey Contributors
     </p>
   </footer>
 
-  <script>
-    const translations = {
-      ko: {
-        "title": "AltKey — Windows 화상 키보드",
-        "description": "macOS 손쉬운 사용 키보드에서 영감을 받은, 가볍고 아름다운 Windows용 커스터마이징 화상 키보드",
-        "nav-features": "기능",
-        "nav-actions": "액션",
-        "nav-layout": "레이아웃",
-        "nav-download": "다운로드",
-        "hero-badge": `<svg width="10" height="10" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="4" fill="#2563eb"/></svg> Windows 10 / 11 · .NET 8 · 무설치 포터블`,
-        "hero-title": "마우스 하나로 완성하는<br><span>화상 키보드</span>",
-        "hero-desc": "macOS 손쉬운 사용 키보드에서 영감을 받은, 가볍고 아름다운 Windows용 커스터마이징 화상 키보드. JSON 레이아웃, Sticky Keys, 체류 클릭, Acrylic 블러까지.",
-        "hero-download": "⬇ 최신 버전 다운로드",
-        "hero-github": "GitHub에서 보기",
-        "features-label": "Features",
-        "features-title": "필요한 기능은 모두 담았습니다",
-        "features-desc": "접근성부터 생산성 자동화까지, AltKey 하나로 해결하세요.",
-        "feature-sticky-title": "Sticky Keys",
-        "feature-sticky-desc": "Shift·Ctrl·Alt·Win을 한 번 탭하면 일회성 고정, 두 번 탭하면 영구 잠금. 한 손 조작이나 접근성 환경에 최적화되어 있습니다.",
-        "feature-dwell-title": "체류 클릭 (Dwell Click)",
-        "feature-dwell-desc": "키 위에 마우스를 올려놓으면 설정한 시간 후 자동 클릭. 물리적 클릭이 어려운 사용자를 위한 접근성 기능입니다.",
-        "feature-json-title": "JSON 레이아웃",
-        "feature-json-desc": "원하는 키 배치를 JSON으로 정의하고, GUI 레이아웃 에디터로 쉽게 편집하세요. 한글 음운 이중 레이블도 완벽 지원합니다.",
-        "feature-profile-title": "앱별 레이아웃 프로필",
-        "feature-profile-desc": "게임, 크리에이티브 툴, 오피스 앱마다 레이아웃을 자동으로 전환합니다. WinEventHook 기반으로 포그라운드 앱을 감지합니다.",
-        "feature-acrylic-title": "Acrylic 블러 UI",
-        "feature-acrylic-desc": "Windows 11 Acrylic 블러 효과와 다크/라이트/시스템 테마를 지원합니다. 미사용 시 자동으로 반투명 상태로 전환됩니다.",
-        "feature-edge-title": "화면 가장자리 이동",
-        "feature-edge-desc": "헤더 중앙의 ← ↑ ↓ → 버튼 한 번으로 키보드를 화면 끝에 즉시 붙입니다. 자주 쓰는 위치에 빠르게 고정하세요.",
-        "feature-emoji-title": "이모지 패널",
-        "feature-emoji-desc": "이모지 패널로 자주 쓰는 이모지를 빠르게 입력하세요. 유니코드 직접 입력으로 모든 환경에서 동작합니다.",
-        "feature-clipboard-title": "클립보드 히스토리",
-        "feature-clipboard-desc": "최근 복사한 항목을 패널에서 빠르게 다시 붙여넣기. 반복 작업을 효율적으로 처리하세요.",
-        "feature-update-title": "자동 업데이트 알림",
-        "feature-update-desc": "GitHub Releases와 연동해 새 버전이 있을 때 앱 상단 배너로 알려줍니다. 설정 없이 항상 최신 버전을 유지하세요.",
-        "actions-label": "Actions",
-        "actions-title": "키 하나에 무엇이든",
-        "actions-desc": "단순한 키 전송을 넘어, 앱 실행·상용구 입력·볼륨 조절까지 모든 액션을 키에 연결할 수 있습니다.",
-        "action-sendkey-desc": "가상 키코드 단일 전송",
-        "action-sendcombo-desc": "키 조합 전송 (Ctrl+C 등)",
-        "action-sticky-desc": "수식자 키 Sticky 상태 토글",
-        "action-switch-desc": "다른 레이아웃으로 즉시 전환",
-        "action-runapp-desc": "앱 또는 파일 실행 (경로 + 인수)",
-        "action-boilerplate-desc": "상용구 텍스트 유니코드 직접 입력",
-        "action-shell-desc": "CMD / PowerShell 명령 실행",
-        "action-volume-desc": "볼륨 올리기·내리기·음소거",
-        "action-paste-desc": "텍스트를 클립보드 복사 후 붙여넣기",
-        "layout-label": "Layout",
-        "layout-title": "JSON으로 레이아웃 정의",
-        "layout-desc": "<code>layouts/</code> 폴더의 JSON 파일 하나가 키보드 레이아웃 하나입니다. GUI 에디터로 편집하거나 직접 파일을 수정하세요.",
-        "download-label": "Download",
-        "download-title": "지금 바로 사용해보세요",
-        "download-desc": "Windows 10 22H2 이상 · .NET 8 런타임 별도 설치 불필요",
-        "download-installer-tag": "설치 프로그램 (권장)",
-        "download-installer-desc": "시작 메뉴 등록, 시작프로그램 설정 포함.<br>일반 사용자에게 권장합니다.",
-        "download-portable-tag": "포터블",
-        "download-portable-desc": "압축 해제 후 바로 실행.<br>설치 없이 USB에 넣어 어디서든 사용하세요.",
-        "download-footer": `소스 코드 및 이전 버전은 <a href="https://github.com/CrowKing63/AltKey/releases">GitHub Releases</a> 에서 확인하세요.`,
-        "footer-made-by": `Made with ♥ by <a href="https://github.com/CrowKing63">CrowKing63</a>`,
-        "footer-copyright": "© 2025 AltKey Contributors"
-      },
-      en: {
-        "title": "AltKey — Windows On-Screen Keyboard",
-        "description": "A lightweight, beautiful, and customizable on-screen keyboard for Windows, inspired by macOS Accessibility Keyboard.",
-        "nav-features": "Features",
-        "nav-actions": "Actions",
-        "nav-layout": "Layout",
-        "nav-download": "Download",
-        "hero-badge": `<svg width="10" height="10" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="4" fill="#2563eb"/></svg> Windows 10 / 11 · .NET 8 · Portable`,
-        "hero-title": "Complete Control with<br><span>On-Screen Keyboard</span>",
-        "hero-desc": "A lightweight and beautiful customizable on-screen keyboard for Windows, inspired by macOS Accessibility Keyboard. Supports JSON layouts, Sticky Keys, Dwell Click, and Acrylic blur.",
-        "hero-download": "⬇ Download Latest",
-        "hero-github": "View on GitHub",
-        "features-label": "Features",
-        "features-title": "Everything You Need",
-        "features-desc": "From accessibility to productivity automation, AltKey has you covered.",
-        "feature-sticky-title": "Sticky Keys",
-        "feature-sticky-desc": "Tap Shift·Ctrl·Alt·Win once for one-time lock, twice for permanent lock. Optimized for one-handed use and accessibility.",
-        "feature-dwell-title": "Dwell Click",
-        "feature-dwell-desc": "Hover over a key to automatically click after a set time. An essential feature for users with physical clicking difficulties.",
-        "feature-json-title": "JSON Layouts",
-        "feature-json-desc": "Define your keyboard layout in JSON and edit it easily with the built-in GUI editor. Fully supports dual labels (e.g. Korean letters).",
-        "feature-profile-title": "App-Specific Profiles",
-        "feature-profile-desc": "Automatically switch layouts for games, creative tools, or office apps. Detects foreground apps via WinEventHook.",
-        "feature-acrylic-title": "Acrylic Blur UI",
-        "feature-acrylic-desc": "Supports Windows 11 Acrylic blur effects with Dark/Light/System themes. Automatically dims when not in use.",
-        "feature-edge-title": "Snap to Edges",
-        "feature-edge-desc": "Instantly move the keyboard to screen edges with ← ↑ ↓ → buttons in the header. Quick positioning for your workflow.",
-        "feature-emoji-title": "Emoji Panel",
-        "feature-emoji-desc": "Quickly type your favorite emojis using the Emoji Panel. Uses Unicode input to work across all applications.",
-        "feature-clipboard-title": "Clipboard History",
-        "feature-clipboard-desc": "Quickly paste recently copied items from the panel. Boost your repetitive tasks efficiency.",
-        "feature-update-title": "Auto Update Notifications",
-        "feature-update-desc": "Integrated with GitHub Releases to notify you via a top banner when a new version is available.",
-        "actions-label": "Actions",
-        "actions-title": "Power in Every Key",
-        "actions-desc": "Connect any action to a key, from launching apps and boilerplate text to volume control.",
-        "action-sendkey-desc": "Send single virtual keycodes",
-        "action-sendcombo-desc": "Send key combinations (Ctrl+C, etc.)",
-        "action-sticky-desc": "Toggle Modifier Key Sticky State",
-        "action-switch-desc": "Switch layouts instantly",
-        "action-runapp-desc": "Run app or file (Path + Args)",
-        "action-boilerplate-desc": "Enter boilerplate text via Unicode",
-        "action-shell-desc": "Run CMD / PowerShell commands",
-        "action-volume-desc": "Volume Up/Down/Mute",
-        "action-paste-desc": "Copy text to clipboard and paste",
-        "layout-label": "Layout",
-        "layout-title": "Define Layouts with JSON",
-        "layout-desc": "Each JSON file in the <code>layouts/</code> folder is a keyboard layout. Edit with the GUI or modify directly.",
-        "download-label": "Download",
-        "download-title": "Get Started Today",
-        "download-desc": "Windows 10 22H2+ · No separate .NET 8 runtime needed",
-        "download-installer-tag": "Installer (Recommended)",
-        "download-installer-desc": "Includes Start menu shortcuts and startup settings. Recommended for most users.",
-        "download-portable-tag": "Portable",
-        "download-portable-desc": "Run instantly after unzipping. Take your settings anywhere on a USB drive.",
-        "download-footer": `Check <a href="https://github.com/CrowKing63/AltKey/releases">GitHub Releases</a> for source code and older versions.`,
-        "footer-made-by": `Made with ♥ by <a href="https://github.com/CrowKing63">CrowKing63</a>`,
-        "footer-copyright": "© 2025 AltKey Contributors"
-      }
-    };
-
-    function setLanguage(lang) {
-      localStorage.setItem('altkey-lang', lang);
-      document.documentElement.lang = lang;
-      
-      const t = translations[lang];
-      
-      // Update Title & Meta
-      document.title = t.title;
-      document.querySelector('meta[name="description"]').setAttribute('content', t.description);
-      document.querySelector('meta[property="og:title"]').setAttribute('content', t.title);
-      document.querySelector('meta[property="og:description"]').setAttribute('content', t.description);
-
-      // Simple translation by data-i18n
-      document.querySelectorAll('[data-i18n]').forEach(el => {
-        const key = el.getAttribute('data-i18n');
-        if (t[key]) {
-          if (t[key].includes('<')) {
-            el.innerHTML = t[key];
-          } else {
-            el.textContent = t[key];
-          }
-        }
-      });
-
-      // Special cases
-      document.getElementById('download-footer').innerHTML = t['download-footer'];
-      document.getElementById('footer-made-by').innerHTML = t['footer-made-by'];
-
-      // Update Switcher UI
-      document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
-      document.getElementById(`lang-${lang}`).classList.add('active');
-    }
-
-    // Init language
-    const savedLang = localStorage.getItem('altkey-lang') || (navigator.language.startsWith('ko') ? 'ko' : 'en');
-    setLanguage(savedLang);
   </script>
 
 </body>
+
 </html>
