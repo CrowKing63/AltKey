@@ -6,6 +6,9 @@
 *.sln.docstates
 .vs/
 
+# WPF XAML 임시 csproj (dotnet build 부산물)
+*_wpftmp.csproj
+
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/
