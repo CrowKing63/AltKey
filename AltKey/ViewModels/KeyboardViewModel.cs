@@ -268,7 +268,7 @@ public partial class KeyboardViewModel : ObservableObject
         );
 
         _autoComplete.ResetState();
-        OnSubmodeChanged(_autoComplete.ActiveSubmode);
+        RefreshKeyLabels(_autoComplete.ActiveSubmode);
     }
 
     public event Action? KeyTapped;
@@ -321,16 +321,21 @@ public partial class KeyboardViewModel : ObservableObject
 
     private void OnSubmodeChanged(InputSubmode submode)
     {
+        RefreshKeyLabels(submode);
+
+        _liveRegion.Announce(submode == InputSubmode.HangulJamo
+            ? "한국어 입력 상태"
+            : "영어 입력 상태");
+    }
+
+    private void RefreshKeyLabels(InputSubmode submode)
+    {
         foreach (var row in Rows)
             foreach (var keyVm in row.Keys)
             {
                 keyVm.ActiveSubmode = submode;
                 keyVm.SetComposeStateLabel(_autoComplete.ComposeStateLabel);
             }
-
-        _liveRegion.Announce(submode == InputSubmode.HangulJamo
-            ? "한국어 입력 상태"
-            : "영어 입력 상태");
     }
 
     private void OnTimerTick(object? sender, EventArgs e)

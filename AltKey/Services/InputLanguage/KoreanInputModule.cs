@@ -100,24 +100,48 @@ public sealed class KoreanInputModule : IInputLanguageModule
             return false;
         }
 
+        char ch = GetEnglishCharFromSlot(slot, ctx.ShowUpperCase);
+
         if (ctx.HasActiveModifiers || ctx.InputMode == InputMode.VirtualKey)
         {
-            TrackEnglishKey(vk);
+            TrackEnglishKey(ch != '\0' ? ch : VkToEnglishChar(vk, ctx.ShowUpperCase));
             return false;
         }
 
-        char ch = VkToEnglishChar(vk, ctx.ShowUpperCase);
+        if (ch == '\0')
+            ch = VkToEnglishChar(vk, ctx.ShowUpperCase);
+
         if (ch != '\0')
         {
-            TrackEnglishKey(vk);
+            TrackEnglishKey(ch);
             _input.SendUnicode(ch.ToString());
             return true;
         }
         return false;
     }
 
+    private static char GetEnglishCharFromSlot(KeySlot slot, bool showUpperCase)
+    {
+        string? label = showUpperCase && slot.EnglishShiftLabel is { Length: > 0 }
+            ? slot.EnglishShiftLabel
+            : slot.EnglishLabel ?? slot.Label;
+
+        if (label is { Length: 1 } && label[0] < 128)
+            return showUpperCase ? char.ToUpperInvariant(label[0]) : label[0];
+
+        return '\0';
+    }
+
     private bool HandleBackspace(KeyContext ctx)
     {
+        // QuietEnglish 모드에서는 prefix를 줄임
+        if (_submode == InputSubmode.QuietEnglish && _englishPrefix.Length > 0)
+        {
+            _englishPrefix = _englishPrefix[..^1];
+            SuggestionsChanged?.Invoke(_enDict.GetSuggestions(_englishPrefix));
+            return false;
+        }
+
         if (ctx.InputMode == InputMode.Unicode && ctx.TrackedOnScreenLength > 0)
         {
             int prevLen = ctx.TrackedOnScreenLength;
@@ -136,9 +160,8 @@ public sealed class KoreanInputModule : IInputLanguageModule
         return false;
     }
 
-    private void TrackEnglishKey(VirtualKeyCode vk)
+    private void TrackEnglishKey(char ch)
     {
-        var ch = VkToChar(vk);
         if (ch != '\0')
         {
             _englishPrefix += ch;
@@ -233,10 +256,5 @@ public sealed class KoreanInputModule : IInputLanguageModule
         return '\0';
     }
 
-    private static char VkToChar(VirtualKeyCode vk)
-    {
-        if (vk >= VirtualKeyCode.VK_A && vk <= VirtualKeyCode.VK_Z)
-            return (char)('a' + ((int)vk - (int)VirtualKeyCode.VK_A));
-        return '\0';
-    }
+
 }

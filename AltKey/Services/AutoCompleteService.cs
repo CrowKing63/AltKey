@@ -33,10 +33,6 @@ public sealed class AutoCompleteService
     /// 레이아웃 전환·"가/A" 토글 등으로 상태 초기화가 필요할 때.
     public void ResetState() => _module.Reset();
 
-    /// 과거 호환용 — 현재 조합을 학습시키고 상태를 flush.
-    /// 내부적으로 OnSeparator와 동일. 과거 호출자 유지 목적.
-    public void CompleteCurrentWord() => _module.OnSeparator();
-
     /// Submode 토글을 외부에 노출 — "가/A" 버튼 액션에서 사용.
     public void ToggleKoreanSubmode() => _module.ToggleSubmode();
 

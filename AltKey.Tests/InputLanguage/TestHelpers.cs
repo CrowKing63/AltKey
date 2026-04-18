@@ -75,4 +75,16 @@ internal static class TestSlotFactory
 
     public static KeySlot English(string label, string? shiftLabel = null, VirtualKeyCode vk = VirtualKeyCode.VK_A) =>
         new(Label: label, ShiftLabel: shiftLabel, Action: new SendKeyAction(vk.ToString()), EnglishLabel: label.ToLowerInvariant(), EnglishShiftLabel: shiftLabel?.ToLowerInvariant());
+
+    /// <summary>숫자키(1~0)용 팩토리 — Label에 숫자 문자열 전달</summary>
+    public static KeySlot Number(string label, string? shiftLabel = null, VirtualKeyCode vk = VirtualKeyCode.VK_0) =>
+        new(Label: label, ShiftLabel: shiftLabel, Action: new SendKeyAction(vk.ToString()), EnglishLabel: label, EnglishShiftLabel: shiftLabel);
+
+    /// <summary>기호키용 팩토리 — Label에 기호 문자열 전달</summary>
+    public static KeySlot Symbol(string label, string? shiftLabel = null, VirtualKeyCode vk = VirtualKeyCode.VK_OEM_MINUS) =>
+        new(Label: label, ShiftLabel: shiftLabel, Action: new SendKeyAction(vk.ToString()), EnglishLabel: label, EnglishShiftLabel: shiftLabel);
+
+    /// <summary>백스페이스 키용 팩토리</summary>
+    public static KeySlot Backspace() =>
+        new(Label: "⌫", ShiftLabel: null, Action: new SendKeyAction(VirtualKeyCode.VK_BACK.ToString()));
 }

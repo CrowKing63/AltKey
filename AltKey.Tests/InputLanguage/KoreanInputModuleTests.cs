@@ -207,4 +207,135 @@ public class KoreanInputModuleTests
         Assert.Equal(InputSubmode.HangulJamo, module.ActiveSubmode);
         Assert.Equal("가", module.ComposeStateLabel);
     }
+
+    // ──────────────────────────────────────────────────────────────
+    // E 항목 누락 테스트 4종 (2026-04-18 추가)
+    // ──────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// E-1: Shift+A를 QuietEnglish에서 눌렀을 때 prefix에 "A"가 누적되는지 검증
+    /// (HasActiveModifiers=true이면 SendUnicode는 호출되지 않고 TrackEnglishKey만 호출됨)
+    /// </summary>
+    [Fact]
+    public void QuietEnglish_Shift_A_updates_prefix_with_uppercase_A()
+    {
+        var module = CreateModule(out var input);
+        module.ToggleSubmode(); // QuietEnglish 진입
+
+        // Shift+A (ShowUpperCase=true, HasActiveModifiers=true)
+        var aSlot = TestSlotFactory.English("a", "A", VirtualKeyCode.VK_A);
+        module.HandleKey(aSlot, ctxShiftOnly);
+
+        // prefix에 "A"가 누적되어야 함 (소문자 "a"가 아님)
+        Assert.Equal("A", module.CurrentWord);
+        // HasActiveModifiers=true이므로 SendUnicode는 호출되지 않음
+        Assert.Empty(input.SentUnicodes);
+    }
+
+    /// <summary>
+    /// E-2: 숫자키(1~0) · 기호키가 QuietEnglish에서 전송되는지 회귀
+    /// </summary>
+    [Fact]
+    public void QuietEnglish_number_and_symbol_keys_are_sent()
+    {
+        var module = CreateModule(out var input);
+        module.ToggleSubmode(); // QuietEnglish 진입
+
+        // 숫자키 "1" (VK_1)
+        var key1 = TestSlotFactory.Number("1", "!", VirtualKeyCode.VK_1);
+        module.HandleKey(key1, ctxNoModifiers);
+
+        // 기호키 "-" (VK_OEM_MINUS)
+        var keyDash = TestSlotFactory.Symbol("-", "_", VirtualKeyCode.VK_OEM_MINUS);
+        module.HandleKey(keyDash, ctxNoModifiers);
+
+        // prefix에 "1-" 누적 확인
+        Assert.Equal("1-", module.CurrentWord);
+        // SendUnicode으로 "1"과 "-" 전송 확인
+        Assert.Contains("1", input.SentUnicodes);
+        Assert.Contains("-", input.SentUnicodes);
+    }
+
+    /// <summary>
+    /// E-3: 백스페이스가 HangulJamo에서 composer를 올바르게 줄이는지
+    /// </summary>
+    [Fact]
+    public void Backspace_in_HangulJamo_reduces_composer_correctly()
+    {
+        var module = CreateModule(out _);
+
+        // "가" 조합 (ㄱ + ㅏ)
+        module.HandleKey(ㄱ_slot, ctxNoModifiers);
+        module.HandleKey(ㅏ_slot, ctxNoModifiers);
+        Assert.Equal("가", module.CurrentWord);
+
+        // 백스페이스 → "ㄱ"으로 줄어들어야 함
+        var backSlot = TestSlotFactory.Backspace();
+        module.HandleKey(backSlot, ctxNoModifiers);
+        Assert.Equal("ㄱ", module.CurrentWord);
+
+        // 백스페이스 한 번 더 → 빈 문자열
+        module.HandleKey(backSlot, ctxNoModifiers);
+        Assert.Equal("", module.CurrentWord);
+    }
+
+    /// <summary>
+    /// E-3: 백스페이스가 QuietEnglish에서 prefix를 올바르게 줄이는지
+    /// </summary>
+    [Fact]
+    public void Backspace_in_QuietEnglish_reduces_prefix_correctly()
+    {
+        var module = CreateModule(out _);
+        module.ToggleSubmode(); // QuietEnglish 진입
+
+        // "abc" 입력
+        var aSlot = TestSlotFactory.English("a", "A", VirtualKeyCode.VK_A);
+        var bSlot = TestSlotFactory.English("b", "B", VirtualKeyCode.VK_B);
+        var cSlot = TestSlotFactory.English("c", "C", VirtualKeyCode.VK_C);
+        module.HandleKey(aSlot, ctxNoModifiers);
+        module.HandleKey(bSlot, ctxNoModifiers);
+        module.HandleKey(cSlot, ctxNoModifiers);
+        Assert.Equal("abc", module.CurrentWord);
+
+        // 백스페이스 → "ab"로 줄어들어야 함
+        var backSlot = TestSlotFactory.Backspace();
+        module.HandleKey(backSlot, ctxNoModifiers);
+        Assert.Equal("ab", module.CurrentWord);
+
+        // 백스페이스 한 번 더 → "a"
+        module.HandleKey(backSlot, ctxNoModifiers);
+        Assert.Equal("a", module.CurrentWord);
+    }
+
+    /// <summary>
+    /// E-4: AcceptSuggestion VirtualKey 모드 경로(bsCount 사용) 테스트
+    /// </summary>
+    [Fact]
+    public void AcceptSuggestion_in_QuietEnglish_returns_correct_bsCount()
+    {
+        var module = CreateModule(out _);
+        module.ToggleSubmode(); // QuietEnglish 진입
+
+        // "hello" 입력
+        var hSlot = TestSlotFactory.English("h", "H", VirtualKeyCode.VK_H);
+        var eSlot = TestSlotFactory.English("e", "E", VirtualKeyCode.VK_E);
+        var lSlot = TestSlotFactory.English("l", "L", VirtualKeyCode.VK_L);
+        var l2Slot = TestSlotFactory.English("l", "L", VirtualKeyCode.VK_L);
+        var oSlot = TestSlotFactory.English("o", "O", VirtualKeyCode.VK_O);
+        module.HandleKey(hSlot, ctxNoModifiers);
+        module.HandleKey(eSlot, ctxNoModifiers);
+        module.HandleKey(lSlot, ctxNoModifiers);
+        module.HandleKey(l2Slot, ctxNoModifiers);
+        module.HandleKey(oSlot, ctxNoModifiers);
+        Assert.Equal("hello", module.CurrentWord);
+
+        // "help" 제안 수락
+        var (bs, word) = module.AcceptSuggestion("help");
+
+        // bsCount는 prefix 길이(5)와 같아야 함
+        Assert.Equal(5, bs);
+        Assert.Equal("help", word);
+        // AcceptSuggestion 후 prefix 초기화 확인
+        Assert.Equal("", module.CurrentWord);
+    }
 }
