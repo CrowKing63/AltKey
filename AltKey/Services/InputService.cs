@@ -97,57 +97,6 @@ public class InputService
         }
     }
 
-    /// 포그라운드 창의 IME 한/영 상태를 IMM32 API로 조회한다.
-    /// AttachThreadInput 없이 GetGUIThreadInfo + ImmGetDefaultIMEWnd로
-    /// 타겟 프로그램 IME 상태를 읽어온다 (포커스 탈취 방지).
-    public bool IsImeKorean()
-    {
-        try
-        {
-            var hwnd = Win32.GetForegroundWindow();
-            if (hwnd == IntPtr.Zero) return true;
-
-            uint fgThreadId = Win32.GetWindowThreadProcessId(hwnd, out _);
-
-            // 포커스된 컨트롤 HWND 획득 (타겟 프로그램의 실제 텍스트 입력 창)
-            IntPtr targetHwnd = IntPtr.Zero;
-
-            if (fgThreadId != 0)
-            {
-                var guiInfo = new Win32.GUITHREADINFO { cbSize = (uint)System.Runtime.InteropServices.Marshal.SizeOf<Win32.GUITHREADINFO>() };
-                if (Win32.GetGUIThreadInfo(fgThreadId, ref guiInfo))
-                {
-                    if (guiInfo.hwndFocus != IntPtr.Zero)
-                        targetHwnd = guiInfo.hwndFocus;
-                    else if (guiInfo.hwndActive != IntPtr.Zero)
-                        targetHwnd = guiInfo.hwndActive;
-                }
-            }
-
-            if (targetHwnd == IntPtr.Zero)
-                targetHwnd = hwnd;
-
-            // IMM32 API로 IME 상태 조회 (AttachThreadInput 없이)
-            IntPtr hIMEWnd = Win32.ImmGetDefaultIMEWnd(targetHwnd);
-            if (hIMEWnd != IntPtr.Zero)
-            {
-                IntPtr hIMC = Win32.ImmGetContext(hIMEWnd);
-                if (hIMC != IntPtr.Zero)
-                {
-                    Win32.ImmGetConversionStatus(hIMC, out uint conversion, out _);
-                    Win32.ImmReleaseContext(hIMEWnd, hIMC);
-                    return (conversion & Win32.IME_CMODE_NATIVE) != 0;
-                }
-            }
-
-            return true;
-        }
-        catch
-        {
-            return true;
-        }
-    }
-
     // ── T-2.4: 단일 키 전송 ──────────────────────────────────────────────────
     public void SendKeyPress(VirtualKeyCode vk)
     {

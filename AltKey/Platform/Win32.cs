@@ -62,33 +62,6 @@ internal static class Win32
     [DllImport("user32.dll")]
     public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
 
-    // T-7.5a: 포그라운드 창 조회
-    [DllImport("user32.dll")]
-    public static extern IntPtr GetForegroundWindow();
-
-    // IME 한/영 상태 감지 — GetGUIThreadInfo로 포커스된 HWND 획득
-    [DllImport("user32.dll")]
-    public static extern bool GetGUIThreadInfo(uint idThread, ref GUITHREADINFO lpGUI);
-
-    [StructLayout(LayoutKind.Sequential)]
-    public struct GUITHREADINFO
-    {
-        public uint cbSize;
-        public uint flags;
-        public IntPtr hwndActive;
-        public IntPtr hwndFocus;
-        public IntPtr hwndCapture;
-        public IntPtr hwndMenuOwner;
-        public IntPtr hwndMoveSize;
-    }
-
-    // IME 한/영 상태 감지 — 스레드 입력 연결 (AttachThreadInput은 IsImeKorean에서만 폴백으로 사용)
-    [DllImport("user32.dll")]
-    public static extern bool AttachThreadInput(uint idAttach, uint idAttachTo, bool fAttach);
-
-    [DllImport("kernel32.dll")]
-    public static extern uint GetCurrentThreadId();
-
     // T-2.10b: 프로세스 핸들 및 무결성 수준 조회
     [DllImport("kernel32.dll")]
     public static extern IntPtr OpenProcess(uint dwDesiredAccess, bool bInheritHandle, uint dwProcessId);
@@ -177,22 +150,6 @@ internal static class Win32
         public uint   time;
         public IntPtr dwExtraInfo;
     }
-
-    // IMM32: 포그라운드 창의 IME 변환 모드 직접 조회 (동일 프로세스 창 전용)
-    [DllImport("imm32.dll")]
-    public static extern IntPtr ImmGetContext(IntPtr hwnd);
-
-    [DllImport("imm32.dll")]
-    public static extern bool ImmReleaseContext(IntPtr hwnd, IntPtr hIMC);
-
-    [DllImport("imm32.dll")]
-    public static extern bool ImmGetConversionStatus(IntPtr hIMC, out uint lpConversion, out uint lpSentence);
-
-    [DllImport("imm32.dll")]
-    public static extern IntPtr ImmGetDefaultIMEWnd(IntPtr hwnd);
-
-    /// IME_CMODE_NATIVE: 한국어/중국어/일본어 입력 모드 (한글 ON)
-    public const uint IME_CMODE_NATIVE = 0x0001;
 
     // Acrylic 효과 (T-1.3 / T-1.4에서 사용)
     [DllImport("user32.dll")]
