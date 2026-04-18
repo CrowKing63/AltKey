@@ -199,7 +199,7 @@ git push origin --tags
 
 ## 프로젝트 구조
 
-```
+```text
 AltKey/
 ├── App.xaml / App.xaml.cs          # 앱 진입점, DI 컨테이너
 ├── MainWindow.xaml / .cs           # 메인 창 (투명, NoActivate, Acrylic)
@@ -207,7 +207,7 @@ AltKey/
 ├── Views/                          # XAML 뷰
 │   ├── KeyboardView.xaml           # 키보드 UI
 │   ├── SettingsView.xaml           # 설정 패널
-│   ├���─ LayoutEditorWindow.xaml    # 레이아웃 에디터
+│   ├── LayoutEditorWindow.xaml    # 레이아웃 에디터
 │   ├── ActionBuilderView.xaml      # 액션 빌더
 │   ├── EmojiPanel.xaml             # 이모지 패널
 │   ├── ClipboardPanel.xaml        # 클립보드 히스토리 패널
