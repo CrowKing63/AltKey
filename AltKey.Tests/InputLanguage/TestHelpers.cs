@@ -61,9 +61,17 @@ internal sealed class KoreanDictionaryTestable : KoreanDictionary
     private readonly WordFrequencyStoreInMemory _store;
     public int UserWordCount => _store.UserWordCount;
 
-    public KoreanDictionaryTestable() : base(_ => new WordFrequencyStoreInMemory())
+    public KoreanDictionaryTestable() : base(lang => CreateStore(lang))
     {
-        _store = new WordFrequencyStoreInMemory();
+        _store = s_lastCreated!;
+    }
+
+    private static WordFrequencyStoreInMemory? s_lastCreated;
+
+    private static WordFrequencyStore CreateStore(string lang)
+    {
+        s_lastCreated = new WordFrequencyStoreInMemory();
+        return s_lastCreated;
     }
 }
 

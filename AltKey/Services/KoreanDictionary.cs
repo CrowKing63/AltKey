@@ -36,10 +36,24 @@ public class KoreanDictionary
         return [..userSuggestions, ..builtInSuggestions];
     }
 
-    /// 한국어 단어를 사용자 빈도 저장소에 기록 (최소 1자)
+    /// 한국어 단어를 사용자 빈도 저장소에 기록 (완성 음절 2개 이상만 학습)
     public void RecordWord(string word)
     {
-        if (word.Length < 1) return;
+        if (string.IsNullOrWhiteSpace(word)) return;
+
+        word = word.Trim();
+
+        // 완성 한글 음절만 센다 (자모 단독 U+3131~U+3163 은 제외).
+        int syllableCount = 0;
+        foreach (var ch in word)
+        {
+            if (ch >= '\uAC00' && ch <= '\uD7A3')
+                syllableCount++;
+        }
+
+        // 최소 2음절 이상일 때만 학습.
+        if (syllableCount < 2) return;
+
         _userStore.RecordWord(word);
     }
 
