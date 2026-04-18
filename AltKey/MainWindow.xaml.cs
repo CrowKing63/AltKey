@@ -131,8 +131,10 @@ public partial class MainWindow : Window
     {
         var cfg = _configService.Current.Window;
 
-        Width  = Math.Max(432, cfg.Width);
-        Height = Math.Max(250, cfg.Height);
+        // 저장된 크기를 그대로 복원 (사용자가 줄인 크기가 다음 실행에서 커지지 않도록).
+        // 절대 하한은 KeyboardView.AbsMinWindow* 와 일치.
+        Width  = Math.Max(400, cfg.Width);
+        Height = Math.Max(180, cfg.Height);
 
         // 화면 작업 영역 (가상 스크린 전체)
         var screen = System.Windows.SystemParameters.WorkArea;

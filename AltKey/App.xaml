@@ -18,6 +18,9 @@
             
             <!-- T-9.5: Bool ↔ Visibility 컨버터 (Inverse 지원) -->
             <converters:BoolToVisibilityConverter x:Key="BoolToVis"/>
+
+            <!-- 열(Column) Gap → 우측 Margin Thickness 컨버터 -->
+            <themes:GapToRightMarginConverter x:Key="GapToRightMargin"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

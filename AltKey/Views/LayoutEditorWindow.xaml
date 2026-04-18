@@ -118,6 +118,9 @@
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="키 배치" Foreground="#AAFFFFFF"
                                    VerticalAlignment="Center" Margin="0,0,12,0"/>
+                        <Button Content="+ 열 추가"
+                                Command="{Binding AddColumnCommand}"
+                                Style="{StaticResource DarkBtn}"/>
                         <Button Content="+ 행 추가"
                                 Command="{Binding AddRowCommand}"
                                 Style="{StaticResource DarkBtn}"/>
@@ -128,21 +131,30 @@
                               VerticalScrollBarVisibility="Auto"
                               HorizontalScrollBarVisibility="Auto"
                               Padding="8">
-                    <ItemsControl ItemsSource="{Binding Rows}">
+                    <ItemsControl ItemsSource="{Binding Columns}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
-                            <DataTemplate DataType="{x:Type vm:EditableKeyRowVm}">
-                                <Border Margin="0,0,0,8" Background="#22FFFFFF"
+                            <DataTemplate DataType="{x:Type vm:EditableKeyColumnVm}">
+                                <Border Margin="0,0,4,0" Background="#22FFFFFF"
                                         CornerRadius="4" Padding="6,4">
                                     <StackPanel>
-                                        <!-- 행 헤더 -->
+                                        <!-- 열 헤더 -->
                                         <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                                            <Button Content="+ 키"
-                                                    Command="{Binding DataContext.AddKeyToRowCommand,
+                                            <TextBlock Text="열" Foreground="#AAFFFFFF"
+                                                       VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                            <TextBlock Text="{Binding Gap, StringFormat='간격: {0:F1}'}"
+                                                       Foreground="#88FFFFFF" FontSize="10"
+                                                       VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                            <Button Content="행 추가"
+                                                    Command="{Binding DataContext.AddRowCommand,
                                                         RelativeSource={RelativeSource AncestorType=Window}}"
-                                                    CommandParameter="{Binding}"
                                                     Style="{StaticResource DarkBtn}" FontSize="10"/>
-                                            <Button Content="행 삭제"
-                                                    Command="{Binding DataContext.RemoveRowCommand,
+                                            <Button Content="열 삭제"
+                                                    Command="{Binding DataContext.RemoveColumnCommand,
                                                         RelativeSource={RelativeSource AncestorType=Window}}"
                                                     CommandParameter="{Binding}"
                                                     Background="#55FF4444" Foreground="#FFEEAAAA"
@@ -150,56 +162,84 @@
                                                     Margin="4,0" FontSize="10" Cursor="Hand"/>
                                         </StackPanel>
 
-                                        <!-- 키 버튼 목록 -->
-                                        <ItemsControl ItemsSource="{Binding Keys}">
-                                            <ItemsControl.ItemsPanel>
-                                                <ItemsPanelTemplate>
-                                                    <WrapPanel Orientation="Horizontal"/>
-                                                </ItemsPanelTemplate>
-                                            </ItemsControl.ItemsPanel>
+                                        <!-- 행 목록 -->
+                                        <ItemsControl ItemsSource="{Binding Rows}">
                                             <ItemsControl.ItemTemplate>
-                                                <DataTemplate DataType="{x:Type vm:EditableKeySlotVm}">
-                                                    <Border Margin="2" MinWidth="36" MinHeight="34"
-                                                            Width="{Binding EditWidth, Converter={StaticResource WidthToPx}}"
-                                                            CornerRadius="4" BorderThickness="1.5" Cursor="Hand">
-                                                        <Border.Style>
-                                                            <Style TargetType="Border">
-                                                                <Setter Property="Background"   Value="#FF2D2D3F"/>
-                                                                <Setter Property="BorderBrush"  Value="#44FFFFFF"/>
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                                                                        <Setter Property="Background"  Value="#FF1E3A5F"/>
-                                                                        <Setter Property="BorderBrush" Value="#FF3B82F6"/>
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </Border.Style>
-                                                        <Border.InputBindings>
-                                                            <MouseBinding MouseAction="LeftClick"
-                                                                Command="{Binding DataContext.SelectKeyCommand,
-                                                                    RelativeSource={RelativeSource AncestorType=Window}}"
-                                                                CommandParameter="{Binding}"/>
-                                                        </Border.InputBindings>
-                                                        <Grid>
-                                                            <TextBlock Text="{Binding EditLabel}"
-                                                                       Foreground="#EEFFFFFF"
-                                                                       FontSize="11"
-                                                                       HorizontalAlignment="Center"
-                                                                       VerticalAlignment="Center"
-                                                                       TextTrimming="CharacterEllipsis"
-                                                                       Margin="2"/>
-                                                            <Button Content="×"
-                                                                    Width="14" Height="14"
-                                                                    HorizontalAlignment="Right"
-                                                                    VerticalAlignment="Top"
-                                                                    Margin="0,1,1,0" FontSize="9"
-                                                                    Background="Transparent"
-                                                                    Foreground="#88FFFFFF"
-                                                                    BorderThickness="0" Cursor="Hand"
-                                                                    Command="{Binding DataContext.RemoveKeyCommand,
-                                                                        RelativeSource={RelativeSource AncestorType=Window}}"
-                                                                    CommandParameter="{Binding}"/>
-                                                        </Grid>
+                                                <DataTemplate DataType="{x:Type vm:EditableKeyRowVm}">
+                                                    <Border Margin="0,0,0,4" Background="#18FFFFFF"
+                                                            CornerRadius="3" Padding="4,3">
+                                                        <StackPanel>
+                                                            <!-- 행 헤더 -->
+                                                            <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+                                                                <Button Content="+ 키"
+                                                                        Command="{Binding DataContext.AddKeyToRowCommand,
+                                                                            RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                        CommandParameter="{Binding}"
+                                                                        Style="{StaticResource DarkBtn}" FontSize="9"/>
+                                                                <Button Content="행 삭제"
+                                                                        Command="{Binding DataContext.RemoveRowCommand,
+                                                                            RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                        CommandParameter="{Binding}"
+                                                                        Background="#55FF4444" Foreground="#FFEEAAAA"
+                                                                        BorderThickness="0" Padding="4,2"
+                                                                        Margin="2,0" FontSize="9" Cursor="Hand"/>
+                                                            </StackPanel>
+
+                                                            <!-- 키 버튼 목록 -->
+                                                            <ItemsControl ItemsSource="{Binding Keys}">
+                                                                <ItemsControl.ItemsPanel>
+                                                                    <ItemsPanelTemplate>
+                                                                        <WrapPanel Orientation="Horizontal"/>
+                                                                    </ItemsPanelTemplate>
+                                                                </ItemsControl.ItemsPanel>
+                                                                <ItemsControl.ItemTemplate>
+                                                                    <DataTemplate DataType="{x:Type vm:EditableKeySlotVm}">
+                                                                        <Border Margin="1" MinWidth="30" MinHeight="28"
+                                                                                Width="{Binding EditWidth, Converter={StaticResource WidthToPx}}"
+                                                                                CornerRadius="3" BorderThickness="1" Cursor="Hand">
+                                                                            <Border.Style>
+                                                                                <Style TargetType="Border">
+                                                                                    <Setter Property="Background"   Value="#FF2D2D3F"/>
+                                                                                    <Setter Property="BorderBrush"  Value="#44FFFFFF"/>
+                                                                                    <Style.Triggers>
+                                                                                        <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                                                            <Setter Property="Background"  Value="#FF1E3A5F"/>
+                                                                                            <Setter Property="BorderBrush" Value="#FF3B82F6"/>
+                                                                                        </DataTrigger>
+                                                                                    </Style.Triggers>
+                                                                                </Style>
+                                                                            </Border.Style>
+                                                                            <Border.InputBindings>
+                                                                                <MouseBinding MouseAction="LeftClick"
+                                                                                    Command="{Binding DataContext.SelectKeyCommand,
+                                                                                        RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                                    CommandParameter="{Binding}"/>
+                                                                            </Border.InputBindings>
+                                                                            <Grid>
+                                                                                <TextBlock Text="{Binding EditLabel}"
+                                                                                           Foreground="#EEFFFFFF"
+                                                                                           FontSize="10"
+                                                                                           HorizontalAlignment="Center"
+                                                                                           VerticalAlignment="Center"
+                                                                                           TextTrimming="CharacterEllipsis"
+                                                                                           Margin="1"/>
+                                                                                <Button Content="×"
+                                                                                        Width="12" Height="12"
+                                                                                        HorizontalAlignment="Right"
+                                                                                        VerticalAlignment="Top"
+                                                                                        Margin="0,0,0,0" FontSize="8"
+                                                                                        Background="Transparent"
+                                                                                        Foreground="#88FFFFFF"
+                                                                                        BorderThickness="0" Cursor="Hand"
+                                                                                        Command="{Binding DataContext.RemoveKeyCommand,
+                                                                                            RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                                        CommandParameter="{Binding}"/>
+                                                                            </Grid>
+                                                                        </Border>
+                                                                    </DataTemplate>
+                                                                </ItemsControl.ItemTemplate>
+                                                            </ItemsControl>
+                                                        </StackPanel>
                                                     </Border>
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>

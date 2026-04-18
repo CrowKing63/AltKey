@@ -10,6 +10,8 @@ namespace AltKey.ViewModels;
 
 public record KeyRowVm(IReadOnlyList<KeySlotVm> Keys);
 
+public record KeyColumnVm(double Gap, IReadOnlyList<KeyRowVm> Rows);
+
 public class KeySlotVm(KeySlot slot, AutoCompleteService autoComplete) : ObservableObject
 {
     public KeySlot Slot { get; } = slot;
@@ -214,7 +216,65 @@ public partial class KeyboardViewModel : ObservableObject
     private readonly DispatcherTimer _capsLockTimer;
 
     [ObservableProperty]
-    private ObservableCollection<KeyRowVm> rows = [];
+    private ObservableCollection<KeyColumnVm> columns = [];
+
+    // 동적 크기 계산용 프로퍼티 (열 기준)
+    [ObservableProperty] private double maxRowUnits = 15.0;
+    [ObservableProperty] private double maxRowCount = 14.0;
+    [ObservableProperty] private double rowCount    = 5.0;
+
+    /// 빈 행을 포함해 모든 행이 확보해야 할 픽셀 높이 (KeyUnit + 키 Margin 상하 합)
+    public double KeyRowHeight => KeyUnit + 4.0;
+
+    partial void OnColumnsChanged(ObservableCollection<KeyColumnVm> value)
+    {
+        RecalculateLayoutMetrics();
+    }
+
+    partial void OnKeyUnitChanged(double value)
+    {
+        OnPropertyChanged(nameof(KeyRowHeight));
+    }
+
+    /// 열 단위 기준으로 가로·세로 단위를 재계산.
+    /// - MaxRowUnits = Σ(열별 가장 긴 행의 단위) + Σ(열 간격)
+    /// - MaxRowCount = Σ(열별 가장 긴 행의 키 개수)
+    /// - RowCount    = max(열별 행 개수)
+    private void RecalculateLayoutMetrics()
+    {
+        if (Columns.Count == 0 || Columns.All(c => c.Rows.Count == 0))
+        {
+            MaxRowUnits = 15.0;
+            MaxRowCount = 14.0;
+            RowCount    = 5.0;
+            return;
+        }
+
+        double totalUnits = 0;
+        double totalKeys  = 0;
+        double maxRows    = 0;
+        bool first = true;
+
+        foreach (var col in Columns)
+        {
+            if (!first) totalUnits += col.Gap;
+            first = false;
+
+            if (col.Rows.Count == 0) continue;
+
+            double colUnits = col.Rows.Max(r =>
+                r.Keys.Sum(k => k.Width) + r.Keys.Sum(k => k.Slot.GapBefore));
+            int    colKeys  = col.Rows.Max(r => r.Keys.Count);
+
+            totalUnits += colUnits;
+            totalKeys  += colKeys;
+            maxRows     = Math.Max(maxRows, col.Rows.Count);
+        }
+
+        MaxRowUnits = Math.Max(1, totalUnits);
+        MaxRowCount = Math.Max(1, totalKeys);
+        RowCount    = Math.Max(1, maxRows);
+    }
 
     [ObservableProperty]
     private bool showUpperCase;
@@ -261,11 +321,30 @@ public partial class KeyboardViewModel : ObservableObject
 
     public void LoadLayout(LayoutConfig layout)
     {
-        Rows = new ObservableCollection<KeyRowVm>(
-            layout.Rows.Select(r => new KeyRowVm(
+        if (layout.Columns is { Count: > 0 })
+        {
+            Columns = new ObservableCollection<KeyColumnVm>(
+                layout.Columns.Select(col => new KeyColumnVm(
+                    col.Gap,
+                    col.Rows?.Select(r => new KeyRowVm(
+                        r.Keys.Select(k => new KeySlotVm(k, _autoComplete)).ToList()
+                    )).ToList() ?? []
+                ))
+            );
+        }
+        else if (layout.Rows is { Count: > 0 })
+        {
+            // 하위 호환: rows만 있는 JSON을 단일 열로 감싼다
+            var rowVms = layout.Rows.Select(r => new KeyRowVm(
                 r.Keys.Select(k => new KeySlotVm(k, _autoComplete)).ToList()
-            ))
-        );
+            )).ToList();
+
+            Columns = [new KeyColumnVm(0, rowVms)];
+        }
+        else
+        {
+            Columns = [];
+        }
 
         _autoComplete.ResetState();
         RefreshKeyLabels(_autoComplete.ActiveSubmode);
@@ -330,12 +409,13 @@ public partial class KeyboardViewModel : ObservableObject
 
     private void RefreshKeyLabels(InputSubmode submode)
     {
-        foreach (var row in Rows)
-            foreach (var keyVm in row.Keys)
-            {
-                keyVm.ActiveSubmode = submode;
-                keyVm.SetComposeStateLabel(_autoComplete.ComposeStateLabel);
-            }
+        foreach (var col in Columns)
+            foreach (var row in col.Rows)
+                foreach (var keyVm in row.Keys)
+                {
+                    keyVm.ActiveSubmode = submode;
+                    keyVm.SetComposeStateLabel(_autoComplete.ComposeStateLabel);
+                }
     }
 
     private void OnTimerTick(object? sender, EventArgs e)
@@ -352,23 +432,22 @@ public partial class KeyboardViewModel : ObservableObject
             _inputService.LockedKeys.Contains(VirtualKeyCode.VK_LSHIFT) ||
             _inputService.IsCapsLockOn;
 
-        foreach (var row in Rows)
+        foreach (var col in Columns)
+        foreach (var row in col.Rows)
+        foreach (var slotVm in row.Keys)
         {
-            foreach (var slotVm in row.Keys)
+            if (slotVm.StickyVk is { } vk)
             {
-                if (slotVm.StickyVk is { } vk)
-                {
-                    slotVm.IsSticky = _inputService.StickyKeys.Contains(vk);
-                    slotVm.IsLocked = _inputService.LockedKeys.Contains(vk);
-                }
-
-                if (slotVm.Slot.Action is SendKeyAction { Vk: "VK_CAPITAL" })
-                {
-                    slotVm.IsLocked = _inputService.IsCapsLockOn;
-                }
-
-                slotVm.SetShowUpperCase(ShowUpperCase);
+                slotVm.IsSticky = _inputService.StickyKeys.Contains(vk);
+                slotVm.IsLocked = _inputService.LockedKeys.Contains(vk);
             }
+
+            if (slotVm.Slot.Action is SendKeyAction { Vk: "VK_CAPITAL" })
+            {
+                slotVm.IsLocked = _inputService.IsCapsLockOn;
+            }
+
+            slotVm.SetShowUpperCase(ShowUpperCase);
         }
     }
 

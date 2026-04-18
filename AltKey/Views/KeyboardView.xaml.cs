@@ -48,6 +48,18 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
             if (DataContext is MainViewModel mainVm)
             {
                 mainVm.Keyboard.LiveRegionChanged += AnnounceLiveRegion;
+
+                // 레이아웃 교체/편집기 저장으로 메트릭이 바뀌면 KeyUnit 재계산
+                mainVm.Keyboard.PropertyChanged += (_, e) =>
+                {
+                    if (e.PropertyName is nameof(KeyboardViewModel.MaxRowUnits)
+                                       or nameof(KeyboardViewModel.MaxRowCount)
+                                       or nameof(KeyboardViewModel.RowCount))
+                    {
+                        Dispatcher.InvokeAsync(() =>
+                            UpdateKeyUnit(Window.GetWindow(this)?.Width ?? ActualWidth));
+                    }
+                };
             }
         }
     }
@@ -96,30 +108,59 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
     private void KeyboardBorder_SizeChanged(object sender, SizeChangedEventArgs e)
         => UpdateKeyUnit(Window.GetWindow(this)?.Width ?? ActualWidth);
 
+    // 키 한 변의 최소/최대 픽셀 (너무 작아 터치 불가해지는 것 방지)
+    private const double MinKeyUnit = 28.0;
+    private const double MaxKeyUnit = 80.0;
+
+    // 레이아웃 패딩/마진 상수
+    private const double KbHorizontalPad = 12.0; // KeyboardBorder Padding 좌+우
+    private const double KbVerticalPad   = 8.0;  // KeyboardBorder Padding 상+하
+    private const double KeyMargin       = 4.0;  // 키 1개당 마진 총합 (Margin="2")
+
+    // 엣지케이스 방어용 절대 하한 (공백 레이아웃 등)
+    private const double AbsMinWindowWidth  = 400.0;
+    private const double AbsMinWindowHeight = 180.0;
+
     // T-4.10: KeyUnit = min(가로 기준, 세로 기준) — Stretch=Uniform 동작 재현
-    // 가장 넓은 행(Row1/2): 14개 키, 15단위 → 가로 = 15K + 14×4
-    // 행 수: 5행, 각 1단위 높이 → 세로 = 5K + 5×4
     // KeyboardBorder.ActualHeight 를 직접 사용하므로 패널 토글 시에도 자동으로 재조정됨
     private void UpdateKeyUnit(double windowWidth)
     {
         if (DataContext is not MainViewModel vm) return;
 
-        const double hPad  = 6 + 6;   // KeyboardBorder Padding 좌+우
-        const double kPad  = 4 + 4;   // KeyboardBorder Padding 상+하
-        const double units = 15.0;    // 가장 넓은 행의 단위 합계
-        const double wKeys = 14.0;    // 가장 넓은 행의 키 개수
-        const double rows  = 5.0;     // 행 수
-        const double mKey  = 4.0;     // 키 한 개당 마진 총합 (Margin="2")
+        double units  = Math.Max(1, vm.Keyboard.MaxRowUnits);
+        double wKeys  = Math.Max(1, vm.Keyboard.MaxRowCount);
+        double rows   = Math.Max(1, vm.Keyboard.RowCount);
 
-        double availW = windowWidth - hPad;
-        double availH = KeyboardBorder.ActualHeight - kPad;
+        double availW = windowWidth - KbHorizontalPad;
+        double availH = KeyboardBorder.ActualHeight - KbVerticalPad;
 
         if (availH < 1) return; // 레이아웃 완료 전 무시
 
-        double kW = (availW - wKeys * mKey) / units;  // 가로 기준 KeyUnit
-        double kH = (availH - rows  * mKey) / rows;   // 세로 기준 KeyUnit
+        double kW = (availW - wKeys * KeyMargin) / units;
+        double kH = (availH - rows  * KeyMargin) / rows;
 
-        vm.Keyboard.KeyUnit = Math.Max(18, Math.Min(80, Math.Min(kW, kH)));
+        vm.Keyboard.KeyUnit = Math.Max(MinKeyUnit, Math.Min(MaxKeyUnit, Math.Min(kW, kH)));
+    }
+
+    /// 현재 레이아웃 × MinKeyUnit 기준 최소 창 크기 계산
+    private (double W, double H) ComputeMinWindowSize()
+    {
+        if (DataContext is not MainViewModel vm || Window.GetWindow(this) is not { } window)
+            return (AbsMinWindowWidth, AbsMinWindowHeight);
+
+        double units = Math.Max(1, vm.Keyboard.MaxRowUnits);
+        double wKeys = Math.Max(1, vm.Keyboard.MaxRowCount);
+        double rows  = Math.Max(1, vm.Keyboard.RowCount);
+
+        double minW = units * MinKeyUnit + wKeys * KeyMargin + KbHorizontalPad;
+
+        // 키보드 바깥(헤더·경고 배너·자동완성 바 등)이 차지하는 높이
+        double nonKeyboardH = window.ActualHeight - KeyboardBorder.ActualHeight;
+        if (nonKeyboardH < 1) nonKeyboardH = 28;
+
+        double minH = rows * MinKeyUnit + rows * KeyMargin + KbVerticalPad + nonKeyboardH;
+
+        return (Math.Max(minW, AbsMinWindowWidth), Math.Max(minH, AbsMinWindowHeight));
     }
 
     // T-1.5: 창 드래그 이동
@@ -140,27 +181,27 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
 
     // T-1.9: 비율 고정(대각선) 리사이즈
     // 가로 변화량을 주 축으로 삼아 가로/세로 비율을 유지한 채 크기 조절
+    // 최소 크기는 현재 레이아웃 × MinKeyUnit 기준으로 동적 계산
     private void ResizeGrip_DragDelta(object sender, DragDeltaEventArgs e)
     {
-        if (Window.GetWindow(this) is { } window)
+        if (Window.GetWindow(this) is not { } window) return;
+
+        var (minWidth, minHeight) = ComputeMinWindowSize();
+
+        // 가로·세로 변화량을 대각선으로 합산해 비율 유지
+        double diagChange = (e.HorizontalChange + e.VerticalChange * _resizeAspectRatio) / 2.0;
+
+        double newWidth  = Math.Max(minWidth, window.Width + diagChange);
+        double newHeight = newWidth / _resizeAspectRatio;
+
+        if (newHeight < minHeight)
         {
-            // 가로·세로 변화량을 대각선으로 합산해 비율 유지
-            double diagChange = (e.HorizontalChange + e.VerticalChange * _resizeAspectRatio) / 2.0;
-
-            // T-7.4: 최소 너비 432px (minUnit 28 × 15단위 + 12px 패딩)
-            double newWidth  = Math.Max(432, window.Width  + diagChange);
-            double newHeight = newWidth / _resizeAspectRatio;
-
-            // 최소 높이 250px 하한 적용 시 너비도 비율에 맞춰 재조정
-            if (newHeight < 250)
-            {
-                newHeight = 250;
-                newWidth  = Math.Max(432, newHeight * _resizeAspectRatio);
-            }
-
-            window.Width  = newWidth;
-            window.Height = newHeight;
+            newHeight = minHeight;
+            newWidth  = Math.Max(minWidth, newHeight * _resizeAspectRatio);
         }
+
+        window.Width  = newWidth;
+        window.Height = newHeight;
     }
 
     // T-7.2: 닫기 버튼 → 트레이로 숨기기

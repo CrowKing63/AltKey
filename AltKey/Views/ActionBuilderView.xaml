@@ -44,8 +44,10 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 <ComboBox Grid.Column="0"
-                          ItemsSource="{Binding CommonVkCodes}"
-                          SelectedItem="{Binding SendKeyVk}"
+                          ItemsSource="{Binding CommonVkCodesDisplay}"
+                          DisplayMemberPath="DisplayName"
+                          SelectedValuePath="VkCode"
+                          SelectedValue="{Binding SendKeyVk}"
                           Width="120" Margin="0,0,6,0"
                           IsEditable="True"/>
                 <TextBox Grid.Column="1"
@@ -66,8 +68,10 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <ComboBox Grid.Column="0"
-                                      ItemsSource="{Binding DataContext.CommonVkCodes, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                      Text="{Binding Path=Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                      ItemsSource="{Binding DataContext.CommonVkCodesDisplay, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                      DisplayMemberPath="DisplayName"
+                                      SelectedValuePath="VkCode"
+                                      SelectedValue="{Binding Path=Value, Mode=TwoWay}"
                                       IsEditable="True"
                                       Margin="0,0,4,0"/>
                             <Button Grid.Column="1"
@@ -92,8 +96,10 @@
         <!-- ── ToggleSticky ── -->
         <StackPanel Visibility="{Binding IsToggleSticky, Converter={StaticResource BoolToVis}}">
             <TextBlock Text="수식자 키 (예: VK_SHIFT, Shift, Ctrl)" Style="{StaticResource HintText}"/>
-            <ComboBox ItemsSource="{Binding CommonVkCodes}"
-                      SelectedItem="{Binding ToggleStickyVk}"
+            <ComboBox ItemsSource="{Binding CommonVkCodesDisplay}"
+                      DisplayMemberPath="DisplayName"
+                      SelectedValuePath="VkCode"
+                      SelectedValue="{Binding ToggleStickyVk}"
                       IsEditable="True"
                       Style="{StaticResource InputCombo}"/>
         </StackPanel>

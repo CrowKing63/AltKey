@@ -216,6 +216,7 @@ public partial class MainViewModel : ObservableObject
 
     private void OnLayoutsChanged()
     {
+        _layoutService.InvalidateCache();
         _displayToFileName.Clear();
         var fileNames    = _layoutService.GetAvailableLayouts();
         var displayNames = new List<string>();
@@ -227,6 +228,10 @@ public partial class MainViewModel : ObservableObject
             displayNames.Add(display);
         }
         AvailableLayouts = new ObservableCollection<string>(displayNames);
+
+        // 현재 레이아웃 다시 로드
+        if (!string.IsNullOrEmpty(CurrentLayoutName))
+            SwitchLayout(CurrentLayoutName);
     }
 
     public Task InitializeAsync()

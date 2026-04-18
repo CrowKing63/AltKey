@@ -18,9 +18,51 @@ public partial class ObservableString : ObservableObject
     public override string ToString() => Value;
 }
 
+/// VK 코드 항목 (표시명 + 실제 값)
+public record VkCodeItem(string VkCode, string DisplayName);
+
 /// T-9.2: 키 슬롯 액션 편집 VM — ActionBuilderView 와 LayoutEditorWindow 에서 공유
 public partial class ActionBuilderViewModel : ObservableObject
 {
+    // ── VK 코드 → 표시명 매핑 ─────────────────────────────────────────────────
+    public static Dictionary<string, string> KeyDisplayNameMap { get; } = new(StringComparer.OrdinalIgnoreCase)
+    {
+        // 알파벳
+        ["VK_A"] = "A", ["VK_B"] = "B", ["VK_C"] = "C", ["VK_D"] = "D",
+        ["VK_E"] = "E", ["VK_F"] = "F", ["VK_G"] = "G", ["VK_H"] = "H",
+        ["VK_I"] = "I", ["VK_J"] = "J", ["VK_K"] = "K", ["VK_L"] = "L",
+        ["VK_M"] = "M", ["VK_N"] = "N", ["VK_O"] = "O", ["VK_P"] = "P",
+        ["VK_Q"] = "Q", ["VK_R"] = "R", ["VK_S"] = "S", ["VK_T"] = "T",
+        ["VK_U"] = "U", ["VK_V"] = "V", ["VK_W"] = "W", ["VK_X"] = "X",
+        ["VK_Y"] = "Y", ["VK_Z"] = "Z",
+        // 숫자
+        ["VK_0"] = "0", ["VK_1"] = "1", ["VK_2"] = "2", ["VK_3"] = "3",
+        ["VK_4"] = "4", ["VK_5"] = "5", ["VK_6"] = "6", ["VK_7"] = "7",
+        ["VK_8"] = "8", ["VK_9"] = "9",
+        // 기능키
+        ["VK_F1"] = "F1", ["VK_F2"] = "F2", ["VK_F3"] = "F3", ["VK_F4"] = "F4",
+        ["VK_F5"] = "F5", ["VK_F6"] = "F6", ["VK_F7"] = "F7", ["VK_F8"] = "F8",
+        ["VK_F9"] = "F9", ["VK_F10"] = "F10", ["VK_F11"] = "F11", ["VK_F12"] = "F12",
+        // 특수키
+        ["VK_RETURN"] = "Enter", ["VK_SPACE"] = "Space", ["VK_TAB"] = "Tab",
+        ["VK_BACK"] = "Backspace", ["VK_ESCAPE"] = "Esc",
+        // 수식자
+        ["VK_SHIFT"] = "Shift", ["VK_CONTROL"] = "Ctrl", ["VK_MENU"] = "Alt",
+        ["VK_LSHIFT"] = "LShift", ["VK_RSHIFT"] = "RShift",
+        ["VK_LCONTROL"] = "LCtrl", ["VK_RCONTROL"] = "RCtrl",
+        ["VK_LMENU"] = "LAlt", ["VK_RMENU"] = "RAlt",
+        ["VK_LWIN"] = "Win", ["VK_RWIN"] = "RWin",
+        // 화살표
+        ["VK_LEFT"] = "←", ["VK_UP"] = "↑", ["VK_RIGHT"] = "→", ["VK_DOWN"] = "↓",
+        // 탐색
+        ["VK_HOME"] = "Home", ["VK_END"] = "End", ["VK_PRIOR"] = "PageUp", ["VK_NEXT"] = "PageDown",
+        ["VK_INSERT"] = "Insert", ["VK_DELETE"] = "Delete",
+        // 한글
+        ["VK_HANGUL"] = "한/영", ["VK_HANJA"] = "한자", ["VK_CAPITAL"] = "CapsLock",
+        // 기타
+        ["VK_NUMLOCK"] = "NumLock", ["VK_SCROLL"] = "ScrollLock",
+    };
+
     // ── 액션 타입 목록 ─────────────────────────────────────────────────────────
     public static IReadOnlyList<string> ActionTypes { get; } =
     [
@@ -50,6 +92,11 @@ public partial class ActionBuilderViewModel : ObservableObject
         "VK_LWIN", "VK_RWIN", "VK_LSHIFT", "VK_RSHIFT",
         "VK_LCONTROL", "VK_RCONTROL", "VK_LMENU", "VK_RMENU"
     ];
+
+    public static IReadOnlyList<VkCodeItem> CommonVkCodesDisplay { get; } =
+        CommonVkCodes.Select(vk => new VkCodeItem(vk,
+            KeyDisplayNameMap.TryGetValue(vk, out var name) ? name : vk.Replace("VK_", "")))
+        .ToList();
 
     // ── 선택된 액션 타입 ───────────────────────────────────────────────────────
     [ObservableProperty]

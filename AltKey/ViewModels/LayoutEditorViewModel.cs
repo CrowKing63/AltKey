@@ -36,6 +36,18 @@ public partial class EditableKeyRowVm : ObservableObject
     public KeyRow ToKeyRow() => new(Keys.Select(k => k.ToKeySlot()).ToList());
 }
 
+// ── 편집 가능한 열 VM ────────────────────────────────────────────────────────
+
+public partial class EditableKeyColumnVm : ObservableObject
+{
+    [ObservableProperty] private double gap = 0.5;
+
+    [ObservableProperty]
+    private ObservableCollection<EditableKeyRowVm> rows = [];
+
+    public KeyColumn ToKeyColumn() => new(Gap, Rows.Select(r => r.ToKeyRow()).ToList());
+}
+
 // ── LayoutEditorViewModel ───────────────────────────────────────────────────
 
 public partial class LayoutEditorViewModel : ObservableObject
@@ -48,9 +60,21 @@ public partial class LayoutEditorViewModel : ObservableObject
     // ── 레이아웃 데이터 ────────────────────────────────────────────────────
     [ObservableProperty] private string layoutName = "";
 
-    [ObservableProperty] private ObservableCollection<EditableKeyRowVm> rows = [];
+    [ObservableProperty] private ObservableCollection<EditableKeyColumnVm> columns = [];
 
-    // ── 선택된 키 ─────────────────────────────────────────────────────────
+    // ── 선택된 열/행/키 ─────────────────────────────────────────────────────
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasSelectedColumn))]
+    private EditableKeyColumnVm? selectedColumn;
+
+    public bool HasSelectedColumn => SelectedColumn is not null;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasSelectedRow))]
+    private EditableKeyRowVm? selectedRow;
+
+    public bool HasSelectedRow => SelectedRow is not null;
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasSelectedKey))]
     private EditableKeySlotVm? selectedKey;
@@ -94,8 +118,35 @@ public partial class LayoutEditorViewModel : ObservableObject
 
         _currentFileName = fileName;
         LayoutName = config.Name;
-        Rows = new ObservableCollection<EditableKeyRowVm>(
-            config.Rows.Select(r => new EditableKeyRowVm
+
+        // Columns가 있으면 열 단위로 로드
+        if (config.Columns is { Count: > 0 })
+        {
+            Columns = new ObservableCollection<EditableKeyColumnVm>(
+                config.Columns.Select(col => new EditableKeyColumnVm
+                {
+                    Gap = col.Gap,
+                    Rows = new ObservableCollection<EditableKeyRowVm>(
+                        col.Rows?.Select(r => new EditableKeyRowVm
+                        {
+                            Keys = new ObservableCollection<EditableKeySlotVm>(
+                                r.Keys.Select(k => new EditableKeySlotVm
+                                {
+                                    EditLabel       = k.Label,
+                                    EditShiftLabel  = k.ShiftLabel,
+                                    EditWidth       = k.Width,
+                                    EditGapBefore   = k.GapBefore,
+                                    EditAction      = k.Action,
+                                    EnglishLabel     = k.EnglishLabel,
+                                    EnglishShiftLabel = k.EnglishShiftLabel,
+                                }).ToList())
+                        }).ToList() ?? [])
+                }).ToList());
+        }
+        else if (config.Rows is { Count: > 0 })
+        {
+            // Rows가 있으면 단일 열로 변환 (하위 호환)
+            var rowVms = config.Rows.Select(r => new EditableKeyRowVm
             {
                 Keys = new ObservableCollection<EditableKeySlotVm>(
                     r.Keys.Select(k => new EditableKeySlotVm
@@ -108,8 +159,18 @@ public partial class LayoutEditorViewModel : ObservableObject
                         EnglishLabel     = k.EnglishLabel,
                         EnglishShiftLabel = k.EnglishShiftLabel,
                     }).ToList())
-            }).ToList());
+            }).ToList();
 
+            Columns = [new EditableKeyColumnVm { Gap = 0, Rows = new ObservableCollection<EditableKeyRowVm>(rowVms) }];
+        }
+        else
+        {
+            // Columns와 Rows가 모두 없으면 빈 컬렉션
+            Columns = [];
+        }
+
+        SelectedColumn = null;
+        SelectedRow    = null;
         SelectedKey    = null;
         StatusMessage  = $"'{config.Name}' 불러옴";
     }
@@ -146,28 +207,85 @@ public partial class LayoutEditorViewModel : ObservableObject
         StatusMessage = "액션 적용됨";
     }
 
+    // ── 열 추가/삭제 ─────────────────────────────────────────────────────
+
+    [RelayCommand]
+    private void AddColumn()
+    {
+        var newColumn = new EditableKeyColumnVm { Gap = 0.5 };
+        Columns.Add(newColumn);
+        SelectedColumn = newColumn;
+        StatusMessage = "열 추가됨";
+    }
+
+    [RelayCommand]
+    private void RemoveColumn(EditableKeyColumnVm column)
+    {
+        // 해당 열의 행에 선택된 키가 있으면 초기화
+        if (SelectedKey is not null)
+        {
+            foreach (var row in column.Rows)
+            {
+                if (row.Keys.Contains(SelectedKey))
+                {
+                    SelectedKey = null;
+                    break;
+                }
+            }
+        }
+
+        if (SelectedRow is not null && column.Rows.Contains(SelectedRow))
+            SelectedRow = null;
+
+        if (SelectedColumn == column)
+            SelectedColumn = null;
+
+        Columns.Remove(column);
+        StatusMessage = "열 삭제됨";
+    }
+
     // ── 행 추가/삭제 ─────────────────────────────────────────────────────
 
     [RelayCommand]
     private void AddRow()
     {
-        Rows.Add(new EditableKeyRowVm
+        // 선택된 열이 없으면 첫 번째 열에 추가 (또는 새 열 생성)
+        var targetColumn = SelectedColumn ?? Columns.FirstOrDefault();
+        if (targetColumn is null)
         {
-            Keys = new ObservableCollection<EditableKeySlotVm>
-            {
-                new() { EditLabel = "Key" }
-            }
-        });
+            // 열이 없으면 새 열 생성 후 행 추가
+            targetColumn = new EditableKeyColumnVm { Gap = 0 };
+            Columns.Add(targetColumn);
+        }
+
+        var newRow = new EditableKeyRowVm();
+        targetColumn.Rows.Add(newRow);
+        SelectedColumn = targetColumn;
+        SelectedRow = newRow;
+        StatusMessage = "행 추가됨";
     }
 
     [RelayCommand]
     private void RemoveRow(EditableKeyRowVm row)
     {
+        // 해당 행에 선택된 키가 있으면 초기화
         if (SelectedKey is not null && row.Keys.Contains(SelectedKey))
-        {
             SelectedKey = null;
+
+        if (SelectedRow == row)
+            SelectedRow = null;
+
+        // 행이 속한 열에서 제거
+        foreach (var column in Columns)
+        {
+            if (column.Rows.Contains(row))
+            {
+                column.Rows.Remove(row);
+                break;
+            }
         }
-        Rows.Remove(row);
+
+        StatusMessage = "행 삭제됨";
     }
 
     // ── 키 추가/삭제 ─────────────────────────────────────────────────────
@@ -181,8 +299,18 @@ public partial class LayoutEditorViewModel : ObservableObject
     [RelayCommand]
     private void RemoveKey(EditableKeySlotVm key)
     {
-        foreach (var row in Rows)
-            row.Keys.Remove(key);
+        // 모든 열의 모든 행에서 해당 키 제거
+        foreach (var column in Columns)
+        {
+            foreach (var row in column.Rows)
+            {
+                if (row.Keys.Contains(key))
+                {
+                    row.Keys.Remove(key);
+                    break;
+                }
+            }
+        }
 
         if (SelectedKey == key)
             SelectedKey = null;
@@ -217,5 +345,5 @@ public partial class LayoutEditorViewModel : ObservableObject
     // ── 내부 헬퍼 ─────────────────────────────────────────────────────────
 
     private LayoutConfig BuildLayoutConfig() =>
-        new(LayoutName, null, Rows.Select(r => r.ToKeyRow()).ToList());
+        new(LayoutName, null, Columns.Select(c => c.ToKeyColumn()).ToList());
 }

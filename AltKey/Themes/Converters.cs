@@ -53,3 +53,16 @@ public class WidthToPixelConverter : IValueConverter
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         => throw new NotSupportedException();
 }
+
+/// Gap 값(double) → 우측 여백 Thickness(0,0,gap*Unit,0) 변환
+[ValueConversion(typeof(double), typeof(Thickness))]
+public class GapToRightMarginConverter : IValueConverter
+{
+    private const double Unit = 50.0;
+
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        => new Thickness(0, 0, (value is double g ? g : 0.0) * Unit, 0);
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
