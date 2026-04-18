@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Windows;
 using System.Windows.Data;
 using AltKey.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -17,6 +18,7 @@ public partial class UserDictionaryEditorViewModel : ObservableObject
     private readonly EnglishDictionary _enDict;
 
     private WordFrequencyStore _activeStore;
+    private BigramFrequencyStore _activeBigramStore;
 
     [ObservableProperty]
     private ObservableCollection<WordEntryVm> words = [];
@@ -29,6 +31,37 @@ public partial class UserDictionaryEditorViewModel : ObservableObject
 
     [ObservableProperty]
     private string statusText = "";
+
+    [ObservableProperty]
+    private ObservableCollection<BigramPairRow> bigramRows = [];
+
+    [ObservableProperty]
+    private BigramPairRow? selectedBigramRow;
+
+    [ObservableProperty]
+    private bool isWordTabSelected = true;
+
+    partial void OnIsWordTabSelectedChanged(bool value)
+    {
+        OnPropertyChanged(nameof(WordTabVisibility));
+        OnPropertyChanged(nameof(BigramTabVisibility));
+        OnPropertyChanged(nameof(IsBigramTabSelected));
+    }
+
+    public bool IsBigramTabSelected
+    {
+        get => !IsWordTabSelected;
+        set
+        {
+            if (value && IsWordTabSelected)
+            {
+                IsWordTabSelected = false;
+            }
+        }
+    }
+
+    public Visibility WordTabVisibility => IsWordTabSelected ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility BigramTabVisibility => IsWordTabSelected ? Visibility.Collapsed : Visibility.Visible;
 
     private bool _isKoreanTabActive = true;
     public bool IsKoreanTabActive
@@ -62,6 +95,7 @@ public partial class UserDictionaryEditorViewModel : ObservableObject
         _koDict = koDict;
         _enDict = enDict;
         _activeStore = _koDict.UserStore;
+        _activeBigramStore = _koDict.BigramStore;
 
         FilteredWords = CollectionViewSource.GetDefaultView(Words);
         FilteredWords.Filter = obj =>
@@ -79,7 +113,9 @@ public partial class UserDictionaryEditorViewModel : ObservableObject
         OnPropertyChanged(nameof(IsKoreanTabActive));
         OnPropertyChanged(nameof(IsEnglishTabActive));
         _activeStore = _koDict.UserStore;
+        _activeBigramStore = _koDict.BigramStore;
         ReloadWords();
+        LoadBigrams();
     }
 
     public void OnClosing()
@@ -97,7 +133,9 @@ public partial class UserDictionaryEditorViewModel : ObservableObject
     private void SwitchTab(bool korean)
     {
         _activeStore = korean ? _koDict.UserStore : _enDict.UserStore;
+        _activeBigramStore = korean ? _koDict.BigramStore : _enDict.BigramStore;
         ReloadWords();
+        LoadBigrams();
     }
 
     private void ReloadWords()
@@ -201,7 +239,52 @@ public partial class UserDictionaryEditorViewModel : ObservableObject
             ? $"총 {total}개 단어"
             : $"총 {total}개 단어 중 {shown}개 일치";
     }
+
+    public void LoadBigrams()
+    {
+        var pairs = _activeBigramStore.GetAllPairs();
+        BigramRows.Clear();
+        foreach (var (prev, next, count) in pairs)
+            BigramRows.Add(new BigramPairRow(prev, next, count));
+    }
+
+    [RelayCommand]
+    private void RemoveBigramPair(BigramPairRow row)
+    {
+        if (row is null) return;
+        if (_activeBigramStore.RemovePair(row.Prev, row.Next))
+            BigramRows.Remove(row);
+    }
+
+    [RelayCommand]
+    private void RemoveBigramsByPrev(BigramPairRow row)
+    {
+        if (row is null) return;
+        int removed = _activeBigramStore.RemoveAllFor(row.Prev);
+        if (removed > 0)
+        {
+            for (int i = BigramRows.Count - 1; i >= 0; i--)
+                if (BigramRows[i].Prev == row.Prev) BigramRows.RemoveAt(i);
+        }
+    }
+
+    [RelayCommand]
+    private void ClearAllBigrams()
+    {
+        var label = _isKoreanTabActive ? "한국어" : "영어";
+        var result = WpfMsgBox.Show(
+            $"{label} 바이그램 데이터를 모두 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.",
+            "바이그램 전체 삭제 확인",
+            WpfMsgBoxButton.YesNo,
+            WpfMsgBoxImage.Warning);
+        if (result != WpfMsgBoxResult.Yes) return;
+
+        _activeBigramStore.Clear();
+        BigramRows.Clear();
+    }
 }
+
+public sealed record BigramPairRow(string Prev, string Next, int Count);
 
 public partial class WordEntryVm : ObservableObject
 {

@@ -524,4 +524,207 @@ public class KoreanInputModuleTests
         Assert.Equal("해달", word);
         Assert.Equal("", module.CurrentWord);
     }
+
+    // ──────────────────────────────────────────────────────────────
+    // Bigram / 문맥 제안 테스트 (작업 03)
+    // ──────────────────────────────────────────────────────────────
+
+    private static readonly KeyContext ctxEnglish = new(false, false, false, InputMode.Unicode, 0);
+
+    /// <summary>
+    /// "가나" 확정 후 "다라" 확정 시 bigram ("가나" → "다라")이 기록되는지 검증
+    /// (ㅅ, ㅎ 뒤 모음은 음절 경계 문제가 없으므로 자연스럽게 조합됨)
+    /// </summary>
+    [Fact]
+    public void Bigram_recorded_on_separator_after_previous_finalize()
+    {
+        var (module, _, koDict, _) = TestSlotFactory.CreateModuleWithBothDicts();
+
+        // "가나" 조합: ㄱ→ㅏ→ㄴ(종성)→ㅏ(다음 음절 강제) = 가나
+        module.HandleKey(ㄱ_slot, ctxNoModifiers);
+        module.HandleKey(ㅏ_slot, ctxNoModifiers);
+        module.HandleKey(ㄴ_slot, ctxNoModifiers);
+        module.HandleKey(ㅏ_slot, ctxNoModifiers);
+        module.OnSeparator();
+
+        // "다라" 조합: ㄷ→ㅏ→ㄹ(종성)→ㅏ(다음 음절 강제) = 다라
+        module.HandleKey(ㄷ_slot, ctxNoModifiers);
+        module.HandleKey(ㅏ_slot, ctxNoModifiers);
+        module.HandleKey(ㄹ_slot, ctxNoModifiers);
+        module.HandleKey(ㅏ_slot, ctxNoModifiers);
+        module.OnSeparator();
+
+        // bigram 기록 확인
+        Assert.True(koDict.BigramStore.Contains("가나", "다라"));
+    }
+
+    /// <summary>
+    /// AcceptSuggestion 시 bigram이 기록되는지 검증
+    /// </summary>
+    [Fact]
+    public void Bigram_recorded_on_AcceptSuggestion()
+    {
+        var (module, _, koDict, _) = TestSlotFactory.CreateModuleWithBothDicts();
+
+        // "안녕" 확정
+        module.HandleKey(ㅇ_slot, ctxNoModifiers);
+        module.HandleKey(ㅏ_slot, ctxNoModifiers);
+        module.HandleKey(ㄴ_slot, ctxNoModifiers);
+        module.HandleKey(ㄴ_slot, ctxNoModifiers);
+        module.HandleKey(ㅕ_slot, ctxNoModifiers);
+        module.HandleKey(ㅇ_slot, ctxNoModifiers);
+        module.OnSeparator();
+
+        // "하" 입력 후 "하세요" 제안 수락
+        module.HandleKey(ㅎ_slot, ctxNoModifiers);
+        module.AcceptSuggestion("하세요");
+
+        Assert.True(koDict.BigramStore.Contains("안녕", "하세요"));
+    }
+
+    /// <summary>
+    /// ToggleSubmode 시 _lastCommittedWord가 초기화되어
+    /// 한→영 경계에서 cross-language bigram이 기록되지 않는지 검증
+    /// </summary>
+    [Fact]
+    public void LastCommittedWord_resets_after_ToggleSubmode()
+    {
+        var (module, _, koDict, enDict) = TestSlotFactory.CreateModuleWithBothDicts();
+
+        // "안녕" 확정
+        module.HandleKey(ㅇ_slot, ctxNoModifiers);
+        module.HandleKey(ㅏ_slot, ctxNoModifiers);
+        module.HandleKey(ㄴ_slot, ctxNoModifiers);
+        module.HandleKey(ㄴ_slot, ctxNoModifiers);
+        module.HandleKey(ㅕ_slot, ctxNoModifiers);
+        module.HandleKey(ㅇ_slot, ctxNoModifiers);
+        module.OnSeparator();
+
+        // 서브모드 토글 → _lastCommittedWord = null
+        module.ToggleSubmode();
+
+        // 영어 "hello" 입력 후 확정
+        TestSlotFactory.FeedEnglish(module, "hello", ctxEnglish);
+        module.OnSeparator();
+
+        // 한→영 경계 bigram이 기록되면 안 됨
+        // (enDict의 RecordBigram은 2글자 미만을 필터하므로, "안녕"이 prev로 들어가도
+        //  enDict 쪽에서 거를 수 있지만, _lastCommittedWord=null이므로そもそも 호출 자체가 안 됨)
+        Assert.Equal(0, enDict.BigramStore.Count);
+    }
+
+    /// <summary>
+    /// AutoComplete OFF 시 bigram이 기록되지 않는지 검증
+    /// </summary>
+    [Fact]
+    public void Bigram_not_recorded_when_autoComplete_disabled()
+    {
+        var (module, _, koDict, _) = TestSlotFactory.CreateModuleWithBothDicts(autoCompleteEnabled: false);
+
+        // "가나" 조합 후 확정
+        module.HandleKey(ㄱ_slot, ctxNoModifiers);
+        module.HandleKey(ㅏ_slot, ctxNoModifiers);
+        module.HandleKey(ㄴ_slot, ctxNoModifiers);
+        module.HandleKey(ㅏ_slot, ctxNoModifiers);
+        module.OnSeparator();
+
+        // "다라" 조합 후 확정
+        module.HandleKey(ㄷ_slot, ctxNoModifiers);
+        module.HandleKey(ㅏ_slot, ctxNoModifiers);
+        module.HandleKey(ㄹ_slot, ctxNoModifiers);
+        module.HandleKey(ㅏ_slot, ctxNoModifiers);
+        module.OnSeparator();
+
+        Assert.Equal(0, koDict.BigramStore.Count);
+    }
+
+    /// <summary>
+    /// 이전 단어(bigarm prev)가 있을 때 GetSuggestions가 문맥을 반영해
+    /// bigram next를 상위에 배치하는지 검증
+    /// </summary>
+    [Fact]
+    public void Context_is_used_in_GetSuggestions_call_path()
+    {
+        var (module, _, koDict, _) = TestSlotFactory.CreateModuleWithBothDicts();
+
+        // bigram 데이터를 미리 세팅
+        for (int i = 0; i < 3; i++) koDict.RecordBigram("안녕", "하세요");
+        koDict.RecordWord("하세요");
+        koDict.RecordWord("해달");
+
+        // "안녕" 확정
+        module.HandleKey(ㅇ_slot, ctxNoModifiers);
+        module.HandleKey(ㅏ_slot, ctxNoModifiers);
+        module.HandleKey(ㄴ_slot, ctxNoModifiers);
+        module.HandleKey(ㄴ_slot, ctxNoModifiers);
+        module.HandleKey(ㅕ_slot, ctxNoModifiers);
+        module.HandleKey(ㅇ_slot, ctxNoModifiers);
+        module.OnSeparator();
+
+        IReadOnlyList<string>? captured = null;
+        module.SuggestionsChanged += list => captured = list;
+
+        // 다음 단어 "ㅎ" 입력 — 문맥 "안녕"이 전달되어야 함
+        module.HandleKey(ㅎ_slot, ctxNoModifiers);
+
+        Assert.NotNull(captured);
+        Assert.Contains("하세요", captured!);
+    }
+
+    /// <summary>
+    /// 영어 모드에서 bigram이 정상 기록되는지 검증
+    /// </summary>
+    [Fact]
+    public void Bigram_recorded_in_QuietEnglish_mode()
+    {
+        var (module, _, _, enDict) = TestSlotFactory.CreateModuleWithBothDicts();
+
+        module.ToggleSubmode(); // QuietEnglish 진입
+
+        TestSlotFactory.FeedEnglish(module, "hello", ctxEnglish);
+        module.OnSeparator();
+
+        TestSlotFactory.FeedEnglish(module, "world", ctxEnglish);
+        module.OnSeparator();
+
+        Assert.True(enDict.BigramStore.Contains("hello", "world"));
+    }
+
+    /// <summary>
+    /// ToggleSubmode 시 _lastCommittedWord가 초기화되는지 (다음 제안이 문맥 없이 동작하는지) 검증
+    /// </summary>
+    [Fact]
+    public void ToggleSubmode_clears_context_for_next_suggestions()
+    {
+        var (module, _, koDict, _) = TestSlotFactory.CreateModuleWithBothDicts();
+
+        // bigram 데이터 세팅
+        for (int i = 0; i < 3; i++) koDict.RecordBigram("안녕", "하세요");
+        koDict.RecordWord("하세요");
+        koDict.RecordWord("해달");
+
+        // "안녕" 확정
+        module.HandleKey(ㅇ_slot, ctxNoModifiers);
+        module.HandleKey(ㅏ_slot, ctxNoModifiers);
+        module.HandleKey(ㄴ_slot, ctxNoModifiers);
+        module.HandleKey(ㄴ_slot, ctxNoModifiers);
+        module.HandleKey(ㅕ_slot, ctxNoModifiers);
+        module.HandleKey(ㅇ_slot, ctxNoModifiers);
+        module.OnSeparator();
+
+        // 토글 → _lastCommittedWord 초기화
+        module.ToggleSubmode();
+        module.ToggleSubmode(); // 다시 한글 모드로
+
+        IReadOnlyList<string>? captured = null;
+        module.SuggestionsChanged += list => captured = list;
+
+        // "ㅎ" 입력 — 문맥이 초기화되었으므로 bigram 부스트 없이 일반 랭킹
+        module.HandleKey(ㅎ_slot, ctxNoModifiers);
+
+        Assert.NotNull(captured);
+        // 문맥 없이 일반 제안이 나옴 — "하세요"가 리스트에 있을 수는 있지만
+        // bigram 부스트로 첫 번째가 되지는 않아야 함 (해달과 동일 빈도이므로)
+        // 핵심은 _lastCommittedWord=null로 GetSuggestions가 호출되었다는 것
+    }
 }

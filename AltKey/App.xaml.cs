@@ -62,6 +62,7 @@ public partial class App : System.Windows.Application
             services.AddSingleton<InstallerService>();
             // T-9.3: 자동 완성 서비스
             services.AddSingleton<Func<string, WordFrequencyStore>>(_ => lang => new WordFrequencyStore(lang));
+            services.AddSingleton<Func<string, BigramFrequencyStore>>(_ => lang => new BigramFrequencyStore(lang));
             services.AddSingleton<KoreanDictionary>();
             services.AddSingleton<EnglishDictionary>();
             services.AddSingleton<KoreanInputModule>();

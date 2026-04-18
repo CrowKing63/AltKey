@@ -80,7 +80,8 @@ internal sealed class KoreanDictionaryTestable : KoreanDictionary
     private readonly WordFrequencyStoreInMemory _store;
     public int UserWordCount => _store.UserWordCount;
 
-    public KoreanDictionaryTestable() : base(lang => CreateStore(lang))
+    public KoreanDictionaryTestable()
+        : base(lang => CreateStore(lang), lang => new BigramFrequencyStore(lang))
     {
         _store = s_lastCreated!;
     }
@@ -99,7 +100,9 @@ internal sealed class KoreanDictionaryTestable : KoreanDictionary
 /// </summary>
 internal sealed class EnglishDictionaryTestable : EnglishDictionary
 {
-    public EnglishDictionaryTestable() : base(_ => new WordFrequencyStoreInMemory()) { }
+    public EnglishDictionaryTestable()
+        : base(_ => new WordFrequencyStoreInMemory(), lang => new BigramFrequencyStore(lang))
+    { }
 }
 
 /// <summary>
@@ -136,5 +139,67 @@ internal static class TestSlotFactory
         config.Current.AutoCompleteEnabled = autoCompleteEnabled;
         var module = new KoreanInputModule(input, koDict, enDict, config);
         return (module, input, koDict);
+    }
+
+    /// <summary>Bigram 테스트용: 양쪽 사전 모두 접근 가능한 팩토리</summary>
+    internal static (KoreanInputModule module, FakeInputService input, KoreanDictionaryTestable koDict, EnglishDictionaryTestable enDict) CreateModuleWithBothDicts(
+        bool autoCompleteEnabled = true)
+    {
+        var input = new FakeInputService();
+        var koDict = new KoreanDictionaryTestable();
+        var enDict = new EnglishDictionaryTestable();
+        var config = new ConfigService();
+        config.Current.AutoCompleteEnabled = autoCompleteEnabled;
+        var module = new KoreanInputModule(input, koDict, enDict, config);
+        return (module, input, koDict, enDict);
+    }
+
+    /// <summary>한글 음절 문자열을 자모로 분해해 HandleKey로 주입하는 헬퍼.</summary>
+    internal static void FeedSyllables(KoreanInputModule module, string text, KeyContext ctx)
+    {
+        foreach (char syllable in text)
+        {
+            if (syllable < '\uAC00' || syllable > '\uD7A3')
+            {
+                // 한글 음절이 아니면 자모 그대로 시도
+                var directSlot = Jamo(syllable.ToString(), null, (VirtualKeyCode)(0x41 + syllable % 26));
+                module.HandleKey(directSlot, ctx);
+                continue;
+            }
+
+            int offset = syllable - '\uAC00';
+            int choIdx = offset / (21 * 28);
+            int jungIdx = (offset % (21 * 28)) / 28;
+            int jongIdx = offset % 28;
+
+            const string choseong = "ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ";
+            const string jungseong = "ㅏㅐㅑㅒㅓㅔㅕㅖㅗㅘㅙㅚㅛㅜㅝㅞㅟㅠㅡㅢㅣ";
+            const string jongseong = "\0ㄱㄲㄳㄴㄵㄶㄷㄹㄺㄻㄼㄽㄾㄿㅀㅁㅂㅄㅅㅆㅇㅈㅊㅋㅌㅍㅎ";
+
+            // VK 코드는 충돌만 없으면 아무거나 OK — Label이 실제 자모를 결정
+            VirtualKeyCode baseVk = (VirtualKeyCode)(0x41 + (choIdx * 7 + jungIdx) % 26);
+
+            module.HandleKey(Jamo(choseong[choIdx].ToString(), null, baseVk), ctx);
+
+            VirtualKeyCode jungVk = (VirtualKeyCode)(0x42 + (choIdx * 7 + jungIdx) % 26);
+            module.HandleKey(Jamo(jungseong[jungIdx].ToString(), null, jungVk), ctx);
+
+            if (jongIdx > 0)
+            {
+                VirtualKeyCode jongVk = (VirtualKeyCode)(0x43 + (choIdx * 7 + jungIdx + jongIdx) % 26);
+                module.HandleKey(Jamo(jongseong[jongIdx].ToString(), null, jongVk), ctx);
+            }
+        }
+    }
+
+    /// <summary>영어 문자열을 한 글자씩 QuietEnglish 경로로 주입하는 헬퍼.</summary>
+    internal static void FeedEnglish(KoreanInputModule module, string text, KeyContext ctx)
+    {
+        foreach (char ch in text)
+        {
+            var vk = (VirtualKeyCode)(0x41 + (char.ToUpperInvariant(ch) - 'A'));
+            var slot = English(ch.ToString(), null, vk);
+            module.HandleKey(slot, ctx);
+        }
     }
 }

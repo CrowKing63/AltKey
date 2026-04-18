@@ -50,7 +50,6 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
@@ -75,115 +74,213 @@
         <!-- ── 탭 ── -->
         <Border Grid.Row="1" Background="#FF181826" Padding="12,4">
             <StackPanel Orientation="Horizontal">
-                <RadioButton Content="한국어"
+                <RadioButton Content="단어"
                              Foreground="#EEFFFFFF"
-                             IsChecked="{Binding IsKoreanTabActive, Mode=TwoWay}"
+                             IsChecked="{Binding IsWordTabSelected, Mode=TwoWay}"
                              Margin="0,0,12,0" Padding="6,3"
-                             GroupName="DictTab"/>
-                <RadioButton Content="영어"
+                             GroupName="MainTab"/>
+                <RadioButton Content="바이그램"
                              Foreground="#EEFFFFFF"
-                             IsChecked="{Binding IsEnglishTabActive, Mode=TwoWay}"
+                             IsChecked="{Binding IsBigramTabSelected, Mode=TwoWay}"
                              Padding="6,3"
-                             GroupName="DictTab"/>
+                             GroupName="MainTab"/>
             </StackPanel>
         </Border>
 
-        <!-- ── 툴바 ── -->
-        <Border Grid.Row="2" Background="#FF12121F" Padding="12,8">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
+        <!-- ── 단어 탭 ── -->
+        <Grid Grid.Row="2" Visibility="{Binding WordTabVisibility}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
 
-                <!-- 검색 + 추가 -->
-                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="검색:" Foreground="#AAFFFFFF"
-                               VerticalAlignment="Center" Margin="0,0,6,0"/>
-                    <TextBox Text="{Binding SearchQuery, UpdateSourceTrigger=PropertyChanged, Delay=150}"
-                             Style="{StaticResource InputBox}"
-                             Width="200" Height="26" Margin="0,0,12,0"/>
-
-                    <TextBox Text="{Binding NewWord, UpdateSourceTrigger=PropertyChanged}"
-                             Style="{StaticResource InputBox}"
-                             Width="150" Height="26" Margin="0,0,4,0"
-                             ToolTip="추가할 단어 입력"/>
-                    <Button Content="+ 추가"
-                            Command="{Binding AddWordCommand}"
-                            Style="{StaticResource AccentBtn}"/>
+            <!-- 언어 탭 -->
+            <Border Grid.Row="0" Background="#FF181826" Padding="12,4">
+                <StackPanel Orientation="Horizontal">
+                    <RadioButton Content="한국어"
+                                 Foreground="#EEFFFFFF"
+                                 IsChecked="{Binding IsKoreanTabActive, Mode=TwoWay}"
+                                 Margin="0,0,12,0" Padding="6,3"
+                                 GroupName="DictTab"/>
+                    <RadioButton Content="영어"
+                                 Foreground="#EEFFFFFF"
+                                 IsChecked="{Binding IsEnglishTabActive, Mode=TwoWay}"
+                                 Padding="6,3"
+                                 GroupName="DictTab"/>
                 </StackPanel>
+            </Border>
 
-                <!-- 제거 버튼 -->
-                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button Content="선택 항목 제거"
-                            Command="{Binding RemoveSelectedCommand}"
-                            Style="{StaticResource DarkBtn}"
-                            ToolTip="체크된 단어를 삭제합니다"/>
-                    <Button Content="전체 삭제"
-                            Command="{Binding ClearAllCommand}"
-                            Style="{StaticResource DangerBtn}"
-                            ToolTip="현재 탭의 모든 사용자 단어를 삭제합니다"/>
+            <!-- 툴바 -->
+            <Border Grid.Row="1" Background="#FF12121F" Padding="12,8">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- 검색 + 추가 -->
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="검색:" Foreground="#AAFFFFFF"
+                                   VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBox Text="{Binding SearchQuery, UpdateSourceTrigger=PropertyChanged, Delay=150}"
+                                 Style="{StaticResource InputBox}"
+                                 Width="200" Height="26" Margin="0,0,12,0"/>
+
+                        <TextBox Text="{Binding NewWord, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{StaticResource InputBox}"
+                                 Width="150" Height="26" Margin="0,0,4,0"
+                                 ToolTip="추가할 단어 입력"/>
+                        <Button Content="+ 추가"
+                                Command="{Binding AddWordCommand}"
+                                Style="{StaticResource AccentBtn}"/>
+                    </StackPanel>
+
+                    <!-- 제거 버튼 -->
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button Content="선택 항목 제거"
+                                Command="{Binding RemoveSelectedCommand}"
+                                Style="{StaticResource DarkBtn}"
+                                ToolTip="체크된 단어를 삭제합니다"/>
+                        <Button Content="전체 삭제"
+                                Command="{Binding ClearAllCommand}"
+                                Style="{StaticResource DangerBtn}"
+                                ToolTip="현재 탭의 모든 사용자 단어를 삭제합니다"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- 목록 -->
+            <DataGrid Grid.Row="2"
+                      ItemsSource="{Binding FilteredWords}"
+                      AutoGenerateColumns="False"
+                      CanUserAddRows="False"
+                      CanUserDeleteRows="False"
+                      CanUserReorderColumns="False"
+                      GridLinesVisibility="Horizontal"
+                      HorizontalGridLinesBrush="#22FFFFFF"
+                      Background="#FF1A1A2A"
+                      Foreground="#EEFFFFFF"
+                      RowBackground="Transparent"
+                      AlternatingRowBackground="#0AFFFFFF"
+                      BorderBrush="#33FFFFFF"
+                      SelectionMode="Extended"
+                      SelectionUnit="FullRow"
+                      FontSize="12">
+                <DataGrid.Columns>
+                    <DataGridCheckBoxColumn Header="✓"
+                                            Binding="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}"
+                                            Width="36"/>
+                    <DataGridTextColumn Header="단어"
+                                        Binding="{Binding Word}"
+                                        Width="*"
+                                        IsReadOnly="True"/>
+                    <DataGridTemplateColumn Header="빈도" Width="100">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBox Text="{Binding Frequency, UpdateSourceTrigger=LostFocus}"
+                                         Background="Transparent"
+                                         Foreground="#EEFFFFFF"
+                                         BorderThickness="0"
+                                         HorizontalAlignment="Center"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn Header="" Width="40">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Button Content="✕"
+                                        Command="{Binding DataContext.RemoveOneCommand,
+                                            RelativeSource={RelativeSource AncestorType=Window}}"
+                                        CommandParameter="{Binding}"
+                                        Background="Transparent"
+                                        Foreground="#88FFFFFF"
+                                        BorderThickness="0"
+                                        Cursor="Hand"
+                                        FontSize="11"
+                                        ToolTip="이 단어 제거"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Grid>
+
+        <!-- ── 바이그램 탭 ── -->
+        <Grid Grid.Row="2" Visibility="{Binding BigramTabVisibility}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- 언어 필터 -->
+            <Border Grid.Row="0" Background="#FF181826" Padding="12,4">
+                <StackPanel Orientation="Horizontal">
+                    <RadioButton Content="한국어"
+                                 Foreground="#EEFFFFFF"
+                                 IsChecked="{Binding IsKoreanTabActive, Mode=TwoWay}"
+                                 Margin="0,0,12,0" Padding="6,3"
+                                 GroupName="BigramDictTab"/>
+                    <RadioButton Content="English"
+                                 Foreground="#EEFFFFFF"
+                                 IsChecked="{Binding IsEnglishTabActive, Mode=TwoWay}"
+                                 Padding="6,3"
+                                 GroupName="BigramDictTab"/>
                 </StackPanel>
-            </Grid>
-        </Border>
+            </Border>
 
-        <!-- ── 목록 ── -->
-        <DataGrid Grid.Row="3"
-                  ItemsSource="{Binding FilteredWords}"
-                  AutoGenerateColumns="False"
-                  CanUserAddRows="False"
-                  CanUserDeleteRows="False"
-                  CanUserReorderColumns="False"
-                  GridLinesVisibility="Horizontal"
-                  HorizontalGridLinesBrush="#22FFFFFF"
-                  Background="#FF1A1A2A"
-                  Foreground="#EEFFFFFF"
-                  RowBackground="Transparent"
-                  AlternatingRowBackground="#0AFFFFFF"
-                  BorderBrush="#33FFFFFF"
-                  SelectionMode="Extended"
-                  SelectionUnit="FullRow"
-                  FontSize="12">
-            <DataGrid.Columns>
-                <DataGridCheckBoxColumn Header="✓"
-                                        Binding="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}"
-                                        Width="36"/>
-                <DataGridTextColumn Header="단어"
-                                    Binding="{Binding Word}"
-                                    Width="*"
-                                    IsReadOnly="True"/>
-                <DataGridTemplateColumn Header="빈도" Width="100">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <TextBox Text="{Binding Frequency, UpdateSourceTrigger=LostFocus}"
-                                     Background="Transparent"
-                                     Foreground="#EEFFFFFF"
-                                     BorderThickness="0"
-                                     HorizontalAlignment="Center"/>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
-                <DataGridTemplateColumn Header="" Width="40">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <Button Content="✕"
-                                    Command="{Binding DataContext.RemoveOneCommand,
-                                        RelativeSource={RelativeSource AncestorType=Window}}"
-                                    CommandParameter="{Binding}"
-                                    Background="Transparent"
-                                    Foreground="#88FFFFFF"
-                                    BorderThickness="0"
-                                    Cursor="Hand"
-                                    FontSize="11"
-                                    ToolTip="이 단어 제거"/>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
-            </DataGrid.Columns>
-        </DataGrid>
+            <!-- 바이그램 목록 -->
+            <DataGrid Grid.Row="1"
+                      ItemsSource="{Binding BigramRows}"
+                      SelectedItem="{Binding SelectedBigramRow}"
+                      AutoGenerateColumns="False"
+                      CanUserAddRows="False"
+                      CanUserDeleteRows="False"
+                      CanUserReorderColumns="False"
+                      GridLinesVisibility="Horizontal"
+                      HorizontalGridLinesBrush="#22FFFFFF"
+                      Background="#FF1A1A2A"
+                      Foreground="#EEFFFFFF"
+                      RowBackground="Transparent"
+                      AlternatingRowBackground="#0AFFFFFF"
+                      BorderBrush="#33FFFFFF"
+                      SelectionMode="Single"
+                      SelectionUnit="FullRow"
+                      FontSize="12">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="이전 단어" Binding="{Binding Prev}" Width="*"/>
+                    <DataGridTextColumn Header="다음 단어" Binding="{Binding Next}" Width="*"/>
+                    <DataGridTextColumn Header="빈도" Binding="{Binding Count}" Width="80"/>
+                    <DataGridTemplateColumn Header="" Width="100">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Button Content="삭제"
+                                        Command="{Binding DataContext.RemoveBigramPairCommand,
+                                            RelativeSource={RelativeSource AncestorType=Window}}"
+                                        CommandParameter="{Binding}"
+                                        Style="{StaticResource DarkBtn}"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+
+            <!-- 하단 버튼 -->
+            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="8">
+                <Button Content="선택된 이전 단어 전체 삭제"
+                        Command="{Binding RemoveBigramsByPrevCommand}"
+                        CommandParameter="{Binding SelectedBigramRow}"
+                        Style="{StaticResource DarkBtn}"
+                        AutomationProperties.Name="선택된 이전 단어의 모든 다음 단어 삭제"/>
+                <Button Content="모두 비우기"
+                        Command="{Binding ClearAllBigramsCommand}"
+                        Style="{StaticResource DangerBtn}"
+                        AutomationProperties.Name="바이그램 데이터 전체 삭제"/>
+            </StackPanel>
+        </Grid>
 
         <!-- ── 상태바 ── -->
-        <Border Grid.Row="4" Background="#FF12121F" Padding="12,8">
+        <Border Grid.Row="3" Background="#FF12121F" Padding="12,8">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>

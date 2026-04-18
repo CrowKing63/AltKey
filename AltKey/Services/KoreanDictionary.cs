@@ -8,14 +8,19 @@ namespace AltKey.Services;
 public class KoreanDictionary
 {
     private static readonly string Choseong19 = "ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ";
+    private const int BigramBoost = 3;
 
     private readonly WordFrequencyStore _userStore;
+    private readonly BigramFrequencyStore _bigramStore;
     private readonly IReadOnlyList<string> _builtIn;
     private readonly Dictionary<char, List<string>> _builtInByChoseong = new();
 
-    public KoreanDictionary(Func<string, WordFrequencyStore> storeFactory)
+    public KoreanDictionary(
+        Func<string, WordFrequencyStore> userStoreFactory,
+        Func<string, BigramFrequencyStore> bigramStoreFactory)
     {
-        _userStore = storeFactory("ko");
+        _userStore = userStoreFactory("ko");
+        _bigramStore = bigramStoreFactory("ko");
         _builtIn = LoadBuiltIn();
         IndexBuiltInByChoseong();
     }
@@ -117,14 +122,86 @@ public class KoreanDictionary
     }
 
     public WordFrequencyStore UserStore => _userStore;
+    public BigramFrequencyStore BigramStore => _bigramStore;
 
     /// 사용자 학습 저장소에서 단어를 제거. 내장 사전은 건드리지 않음.
     /// 단어가 없거나 내장 전용이면 false.
     public bool TryRemoveUserWord(string word) =>
         !string.IsNullOrWhiteSpace(word) && _userStore.RemoveWord(word.Trim());
 
+    /// (prev, next) 쌍을 bigram 저장소에 기록. prev·next 중 하나라도 학습 부적격이면 no-op.
+    public void RecordBigram(string prevWord, string nextWord)
+    {
+        if (!IsBigramEligible(prevWord) || !IsBigramEligible(nextWord)) return;
+        _bigramStore.Record(prevWord.Trim(), nextWord.Trim());
+    }
+
+    private static bool IsBigramEligible(string w)
+    {
+        if (string.IsNullOrWhiteSpace(w)) return false;
+        w = w.Trim();
+        int syllables = 0;
+        foreach (var ch in w)
+            if (ch >= '\uAC00' && ch <= '\uD7A3') syllables++;
+        return syllables >= 2;
+    }
+
+    /// 이전 확정 단어(prevWord)가 있을 때의 문맥 반영 제안.
+    /// prevWord가 null·빈 문자열이면 기존 GetSuggestions와 동일 결과.
+    public IReadOnlyList<string> GetSuggestions(string prefix, string? prevWord, int count = 5)
+    {
+        var baseList = GetSuggestions(prefix, count);
+
+        if (string.IsNullOrEmpty(prevWord)) return baseList;
+
+        var bigramHits = _bigramStore.GetNexts(prevWord, prefix, count * 2);
+        if (bigramHits.Count == 0) return baseList;
+
+        var baseIndex = new Dictionary<string, int>(StringComparer.Ordinal);
+        for (int i = 0; i < baseList.Count; i++)
+            baseIndex[baseList[i]] = i;
+
+        int maxNewInserts = count / 2;
+        int newInserts = 0;
+
+        var scored = new List<(string Word, double Score)>();
+        foreach (var w in baseList)
+        {
+            double rank = baseList.Count - baseIndex[w];
+            double boost = 0;
+            foreach (var (next, c) in bigramHits)
+            {
+                if (next.Equals(w, StringComparison.Ordinal)) { boost = c * BigramBoost; break; }
+            }
+            scored.Add((w, rank + boost));
+        }
+
+        foreach (var (next, c) in bigramHits)
+        {
+            if (baseIndex.ContainsKey(next)) continue;
+            if (newInserts >= maxNewInserts) break;
+            scored.Add((next, c * BigramBoost));
+            newInserts++;
+        }
+
+        return scored
+            .OrderByDescending(t => t.Score)
+            .ThenBy(t => t.Word, StringComparer.Ordinal)
+            .Take(count)
+            .Select(t => t.Word)
+            .ToList();
+    }
+
+    /// 편집기에서 호출: 사용자가 특정 쌍 삭제.
+    public bool TryRemoveBigramPair(string prev, string next) =>
+        _bigramStore.RemovePair(prev, next);
+
     /// 앱 종료 시 호출 — 사용자 학습 데이터 즉시 저장
-    public void Flush() => _userStore.Flush();
+    public void Flush()
+    {
+        _userStore.Flush();
+        _bigramStore.Flush();
+    }
 
     private static IReadOnlyList<string> LoadBuiltIn()
     {

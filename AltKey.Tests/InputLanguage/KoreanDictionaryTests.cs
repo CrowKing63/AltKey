@@ -99,4 +99,54 @@ public class KoreanDictionaryTests
         var sugg = dict.GetSuggestions("ㅎ", 5);
         Assert.Contains("해달", sugg);
     }
+
+    [Fact]
+    public void GetSuggestions_with_prev_null_is_same_as_no_context()
+    {
+        var dict = new KoreanDictionaryTestable();
+        dict.RecordWord("해달");
+        var a = dict.GetSuggestions("해");
+        var b = dict.GetSuggestions("해", null);
+        Assert.Equal(a, b);
+    }
+
+    [Fact]
+    public void GetSuggestions_with_prev_promotes_bigram_match_to_top()
+    {
+        var dict = new KoreanDictionaryTestable();
+        dict.RecordWord("하세요");
+        dict.RecordWord("해달");
+        for (int i = 0; i < 3; i++) dict.RecordBigram("안녕", "하세요");
+
+        var withCtx = dict.GetSuggestions("하", "안녕", 5);
+        Assert.Equal("하세요", withCtx[0]);
+    }
+
+    [Fact]
+    public void GetSuggestions_new_bigram_candidate_is_inserted_but_capped()
+    {
+        var dict = new KoreanDictionaryTestable();
+        dict.RecordWord("가족");
+        dict.RecordBigram("우리", "가나다");
+        var sugg = dict.GetSuggestions("가", "우리", 5);
+        Assert.Contains("가나다", sugg);
+        Assert.True(sugg.Count <= 5);
+    }
+
+    [Fact]
+    public void RecordBigram_skips_when_either_side_is_single_syllable()
+    {
+        var dict = new KoreanDictionaryTestable();
+        dict.RecordBigram("가", "하세요");
+        dict.RecordBigram("안녕", "해");
+        Assert.Equal(0, dict.BigramStore.Count);
+    }
+
+    [Fact]
+    public void RecordBigram_accepts_two_syllable_pair()
+    {
+        var dict = new KoreanDictionaryTestable();
+        dict.RecordBigram("안녕", "하세요");
+        Assert.True(dict.BigramStore.Contains("안녕", "하세요"));
+    }
 }
