@@ -111,7 +111,7 @@ public sealed class KoreanInputModule : IInputLanguageModule
 
         char ch = GetEnglishCharFromSlot(slot, ctx.ShowUpperCase);
 
-        if (ctx.HasActiveModifiers || ctx.InputMode == InputMode.VirtualKey)
+        if (ctx.HasActiveModifiersExcludingShift || ctx.InputMode == InputMode.VirtualKey)
         {
             TrackEnglishKey(ch != '\0' ? ch : VkToEnglishChar(vk, ctx.ShowUpperCase));
             return false;
