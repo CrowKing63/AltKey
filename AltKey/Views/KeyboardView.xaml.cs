@@ -25,11 +25,13 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
     private double _appliedBarHeight = 0;
     private bool _autoCompleteBarAdded = false;
     private bool _initialized = false;
+    private double _lastExpandedKeyRowHeight = 0;
 
     // 비율 고정 리사이즈: 드래그 시작 시 캡처한 가로/세로 비율
     private double _resizeAspectRatio = 900.0 / 350.0;
 
     private ConfigService? _configService;
+    private const double CollapsedWindowHeight = 28.0;
 
     public KeyboardView()
     {
@@ -51,6 +53,7 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
 
             if (DataContext is MainViewModel mainVm)
             {
+                _lastExpandedKeyRowHeight = mainVm.Keyboard.KeyRowHeight;
                 mainVm.Keyboard.LiveRegionChanged += AnnounceLiveRegion;
 
                 // 레이아웃 교체/편집기 저장으로 메트릭이 바뀌면 KeyUnit 재계산
@@ -65,9 +68,12 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
                     }
                     else if (e.PropertyName is nameof(KeyboardViewModel.KeyUnit))
                     {
+                        if (!_isCollapsed)
+                            _lastExpandedKeyRowHeight = mainVm.Keyboard.KeyRowHeight;
+
                         // 바가 켜져 있으면, 현재 KeyRowHeight로 applied 값을 갱신.
                         // (창 높이는 건드리지 않음 — 사용자의 리사이즈 동작 방해 방지)
-                        if (_autoCompleteBarAdded)
+                        if (_autoCompleteBarAdded && !_isCollapsed)
                             _appliedBarHeight = mainVm.Keyboard.KeyRowHeight;
                     }
                 };
@@ -95,14 +101,34 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
         // 런타임 토글: 키보드 면적 유지를 위해 창 높이를 ±KeyRowHeight 만큼 조정.
         if (wantBar && !_autoCompleteBarAdded)
         {
-            var h = vm.Keyboard.KeyRowHeight;
-            window.Height += h;
+            var h = _isCollapsed
+                ? (_lastExpandedKeyRowHeight > 0 ? _lastExpandedKeyRowHeight : vm.Keyboard.KeyRowHeight)
+                : vm.Keyboard.KeyRowHeight;
+            if (_isCollapsed)
+            {
+                if (_expandedHeight <= 0)
+                    _expandedHeight = Math.Max(window.Height, AbsMinWindowHeight);
+                _expandedHeight += h;
+            }
+            else
+            {
+                AdjustWindowHeight(window, h);
+            }
             _appliedBarHeight = h;
             _autoCompleteBarAdded = true;
         }
         else if (!wantBar && _autoCompleteBarAdded)
         {
-            window.Height -= _appliedBarHeight;
+            var h = _appliedBarHeight > 0 ? _appliedBarHeight : vm.Keyboard.KeyRowHeight;
+            if (_isCollapsed)
+            {
+                if (_expandedHeight > 0)
+                    _expandedHeight = Math.Max(AbsMinWindowHeight, _expandedHeight - h);
+            }
+            else
+            {
+                AdjustWindowHeight(window, -h);
+            }
             _appliedBarHeight = 0;
             _autoCompleteBarAdded = false;
         }
@@ -252,27 +278,55 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
 
         if (!_isCollapsed)
         {
+            CaptureAndClearHeightAnimation(window);
+            if (DataContext is MainViewModel vm)
+                _lastExpandedKeyRowHeight = vm.Keyboard.KeyRowHeight;
             _expandedHeight = window.Height;
-            var anim = new DoubleAnimation(28, TimeSpan.FromMilliseconds(150))
-            {
-                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
-            };
-            window.BeginAnimation(Window.HeightProperty, anim);
+            AnimateWindowHeight(window, CollapsedWindowHeight);
             if (FindName("CollapseIcon") is TextBlock collapseIcon)
                 collapseIcon.Text = "▼";
             _isCollapsed = true;
         }
         else
         {
-            var anim = new DoubleAnimation(_expandedHeight, TimeSpan.FromMilliseconds(150))
-            {
-                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
-            };
-            window.BeginAnimation(Window.HeightProperty, anim);
+            var targetHeight = _expandedHeight > 0 ? _expandedHeight : Math.Max(window.Height, AbsMinWindowHeight);
+            AnimateWindowHeight(window, targetHeight);
             if (FindName("CollapseIcon") is TextBlock collapseIcon)
                 collapseIcon.Text = "▲";
             _isCollapsed = false;
         }
+    }
+
+    private static void CaptureAndClearHeightAnimation(Window window)
+    {
+        var current = window.ActualHeight > 0 ? window.ActualHeight : window.Height;
+        window.BeginAnimation(Window.HeightProperty, null);
+        window.Height = current;
+    }
+
+    private static void AnimateWindowHeight(Window window, double targetHeight)
+    {
+        CaptureAndClearHeightAnimation(window);
+
+        var from = window.Height;
+        var anim = new DoubleAnimation(from, targetHeight, TimeSpan.FromMilliseconds(150))
+        {
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
+            FillBehavior = FillBehavior.Stop
+        };
+        anim.Completed += (_, _) =>
+        {
+            window.BeginAnimation(Window.HeightProperty, null);
+            window.Height = targetHeight;
+        };
+        window.BeginAnimation(Window.HeightProperty, anim);
+    }
+
+    private static void AdjustWindowHeight(Window window, double delta)
+    {
+        if (Math.Abs(delta) < 0.01) return;
+        CaptureAndClearHeightAnimation(window);
+        window.Height = Math.Max(AbsMinWindowHeight, window.Height + delta);
     }
 
     // 화면 가장자리 이동 버튼 핸들러

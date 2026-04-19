@@ -39,7 +39,7 @@ public class AppConfig
     public bool AutoCompleteEnabled   { get; set; } = false;
 
     // T-10: 키 반복 입력 (접근성 - 물리적 키보드처럼 홀드 시 반복)
-    public bool KeyRepeatEnabled      { get; set; } = true;
+    public bool KeyRepeatEnabled      { get; set; } = false;
     public int  KeyRepeatDelayMs      { get; set; } = 300;
     public int  KeyRepeatIntervalMs   { get; set; } = 50;
 }

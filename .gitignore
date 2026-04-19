@@ -98,3 +98,6 @@ installer/Output/
 
 # AltKey: issue notes
 docs/Problems/
+
+# dotnet build log
+.dotnet

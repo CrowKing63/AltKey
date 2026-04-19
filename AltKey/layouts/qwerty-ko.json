@@ -74,7 +74,7 @@
     {
       "keys": [
         { "label": "Ctrl",  "action": { "type": "ToggleSticky", "vk": "VK_CONTROL" }, "width": 1.25 },
-        { "label": "Win",   "action": { "type": "SendKey",      "vk": "VK_LWIN" },    "width": 1.0  },
+        { "label": "Win",   "action": { "type": "ToggleSticky", "vk": "VK_LWIN" },    "width": 1.0  },
         { "label": "Alt",   "action": { "type": "ToggleSticky", "vk": "VK_MENU" },    "width": 1.25 },
         { "label": "한자",  "action": { "type": "SendKey",      "vk": "VK_HANJA" },   "width": 1.0  },
         { "label": "Space", "action": { "type": "SendKey",      "vk": "VK_SPACE" },   "width": 2.75  },

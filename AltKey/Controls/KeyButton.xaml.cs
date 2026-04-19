@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
+using AltKey.Models;
 using AltKey.ViewModels;
 
 namespace AltKey.Controls;
@@ -82,7 +83,7 @@ public class KeyButton : System.Windows.Controls.Button
     public static readonly DependencyProperty KeyRepeatEnabledProperty =
         DependencyProperty.Register(
             nameof(KeyRepeatEnabled), typeof(bool), typeof(KeyButton),
-            new PropertyMetadata(true));
+            new PropertyMetadata(false));
 
     public static readonly DependencyProperty KeyRepeatDelayMsProperty =
         DependencyProperty.Register(
@@ -218,13 +219,14 @@ public class KeyButton : System.Windows.Controls.Button
             return;
         }
 
-        if (KeyRepeatEnabled)
+        if (CanStartRepeat())
         {
             e.Handled = true;
+            CancelRepeat();
             _isRepeating = false;
             ExecuteKeyPress();
 
-            _repeatDelayTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(KeyRepeatDelayMs) };
+            _repeatDelayTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(Math.Max(1, KeyRepeatDelayMs)) };
             _repeatDelayTimer.Tick += RepeatDelayTick;
             _repeatDelayTimer.Start();
         }
@@ -242,7 +244,7 @@ public class KeyButton : System.Windows.Controls.Button
             return;
         }
 
-        if (KeyRepeatEnabled)
+        if (CanStartRepeat())
         {
             e.Handled = true;
             CancelRepeat();
@@ -255,15 +257,19 @@ public class KeyButton : System.Windows.Controls.Button
 
     private void RepeatDelayTick(object? sender, EventArgs e)
     {
-        _repeatDelayTimer?.Stop();
+        if (_repeatDelayTimer is not null)
+        {
+            _repeatDelayTimer.Tick -= RepeatDelayTick;
+            _repeatDelayTimer.Stop();
+        }
         _repeatDelayTimer = null;
 
-        if (!KeyRepeatEnabled) return;
+        if (!CanStartRepeat()) return;
 
         System.Diagnostics.Debug.WriteLine($"[KeyButton] Repeat started");
         _isRepeating = true;
 
-        _repeatTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(KeyRepeatIntervalMs) };
+        _repeatTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(Math.Max(1, KeyRepeatIntervalMs)) };
         _repeatTimer.Tick += RepeatTick;
         _repeatTimer.Start();
     }
@@ -287,10 +293,33 @@ public class KeyButton : System.Windows.Controls.Button
     private void CancelRepeat()
     {
         _isRepeating = false;
-        _repeatDelayTimer?.Stop();
+        if (_repeatDelayTimer is not null)
+        {
+            _repeatDelayTimer.Tick -= RepeatDelayTick;
+            _repeatDelayTimer.Stop();
+        }
         _repeatDelayTimer = null;
-        _repeatTimer?.Stop();
+        if (_repeatTimer is not null)
+        {
+            _repeatTimer.Tick -= RepeatTick;
+            _repeatTimer.Stop();
+        }
         _repeatTimer = null;
+    }
+
+    private bool CanStartRepeat()
+    {
+        if (!KeyRepeatEnabled)
+            return false;
+
+        if (Slot?.Slot.Action is not SendKeyAction { Vk: var vkText })
+            return false;
+
+        if (!Enum.TryParse<VirtualKeyCode>(vkText, ignoreCase: true, out var vk))
+            return true;
+
+        // Sticky 키로 쓸 수 있는 modifier들은 홀드 반복을 허용하지 않는다.
+        return !vk.IsModifier();
     }
 
     private void DwellTick(object? sender, EventArgs e)
