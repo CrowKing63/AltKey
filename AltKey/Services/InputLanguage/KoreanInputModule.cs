@@ -179,7 +179,12 @@ public sealed class KoreanInputModule : IInputLanguageModule
 
         if (_submode == InputSubmode.HangulJamo)
         {
-            bsCount = _composer.CompletedLength + _composer.CompositionDepth;
+            // Unicode 모드는 이미 합성된 음절을 화면에 출력하므로 BS = 화면 문자 수.
+            // VirtualKey 모드는 OS IME의 조합 상태를 자모 단위로 되돌려야 하므로
+            // `CompletedLength + CompositionDepth`를 유지한다.
+            bsCount = _input.Mode == InputMode.Unicode
+                ? _composer.Current.Length
+                : _composer.CompletedLength + _composer.CompositionDepth;
             if (learningEnabled)
             {
                 _koDict.RecordWord(suggestion);

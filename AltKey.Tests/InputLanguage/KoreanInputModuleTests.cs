@@ -100,9 +100,29 @@ public class KoreanInputModuleTests
     }
 
     [Fact]
-    public void AcceptSuggestion_in_HangulJamo_returns_correct_bsCount()
+    public void AcceptSuggestion_in_HangulJamo_Unicode_returns_onscreen_char_count()
     {
+        // Unicode 모드에선 이미 합성된 "해"(1글자)가 화면에 있으므로 BS=1.
+        // (과거엔 CompositionDepth(=2)를 썼으나, Unicode 모드에선 앞 공백/문자를
+        // 추가로 삭제해버리는 버그가 있었다 — 2026-04-19 수정.)
         var module = CreateModule(out _);
+        module.HandleKey(ㅎ_slot, ctxNoModifiers);
+        module.HandleKey(ㅐ_slot, ctxNoModifiers);
+
+        var (bs, word) = module.AcceptSuggestion("해달");
+
+        Assert.Equal(1, bs);
+        Assert.Equal("해달", word);
+    }
+
+    [Fact]
+    public void AcceptSuggestion_in_HangulJamo_VirtualKey_returns_jamo_depth()
+    {
+        // VirtualKey 모드는 OS IME의 조합 상태를 자모 단위로 되돌려야 하므로
+        // CompletedLength(0) + CompositionDepth(2) = 2.
+        var module = CreateModule(out var input);
+        Assert.True(input.TrySetMode(InputMode.VirtualKey));
+
         module.HandleKey(ㅎ_slot, ctxNoModifiers);
         module.HandleKey(ㅐ_slot, ctxNoModifiers);
 
@@ -520,7 +540,8 @@ public class KoreanInputModuleTests
 
         var (bs, word) = module.AcceptSuggestion("해달");
 
-        Assert.Equal(2, bs);
+        // Unicode 모드: 화면에 "해"(1글자) 상태이므로 BS=1.
+        Assert.Equal(1, bs);
         Assert.Equal("해달", word);
         Assert.Equal("", module.CurrentWord);
     }
