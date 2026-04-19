@@ -43,9 +43,10 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private bool isSettingsOpen;
 
-    // T-9.5: 업데이트 배너 바인딩용 속성
+    // T-9.5: 업데이트 인디케이터 바인딩용 속성
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasUpdate))]
+    [NotifyPropertyChangedFor(nameof(UpdateIndicatorTooltip))]
     private string? updateVersion;
 
     [ObservableProperty]
@@ -54,14 +55,21 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string? updateInstallerUrl;
 
-    /// 업데이트 배너 표시 여부 (BoolToVis 바인딩용)
+    /// 업데이트 인디케이터 표시 여부 (BoolToVis 바인딩용)
     public bool HasUpdate => UpdateVersion is not null;
+
+    /// 업데이트 인디케이터 툴팁 텍스트
+    public string UpdateIndicatorTooltip => IsDownloading
+        ? $"다운로드 중... {DownloadProgress:P0}"
+        : $"새 버전 {UpdateVersion} — 클릭하여 설치";
 
     /// T-9.5: 설치형 앱 자동 업데이트 관련 상태
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(UpdateIndicatorTooltip))]
     private bool isDownloading;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(UpdateIndicatorTooltip))]
     private double downloadProgress;
 
     [ObservableProperty]

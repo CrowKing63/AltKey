@@ -25,6 +25,12 @@ public partial class SuggestionBarViewModel : ObservableObject
     [ObservableProperty]
     private bool isVisible;
 
+    [ObservableProperty]
+    private string currentWord = "";
+
+    [ObservableProperty]
+    private bool hasCurrentWord;
+
     public SuggestionBarViewModel(
         AutoCompleteService autoComplete,
         InputService inputService,
@@ -56,8 +62,11 @@ public partial class SuggestionBarViewModel : ObservableObject
 
     private void OnSuggestionsChanged(IReadOnlyList<string> newSuggestions)
     {
+        string captured = _autoComplete.CurrentWord;
         WpfApp.Current.Dispatcher.Invoke(() =>
         {
+            CurrentWord = captured;
+            HasCurrentWord = captured.Length > 0;
             Suggestions = new ObservableCollection<string>(newSuggestions);
             HasSuggestions = Suggestions.Count > 0;
         });
@@ -79,6 +88,22 @@ public partial class SuggestionBarViewModel : ObservableObject
             if (fullWord.Length > 0)
                 _inputService.SendUnicode(fullWord);
         }
+    }
+
+    [RelayCommand]
+    private void CommitCurrentWord()
+    {
+        _autoComplete.CommitCurrentWord();
+        CurrentWord = "";
+        HasCurrentWord = false;
+    }
+
+    [RelayCommand]
+    private void CancelCurrentWord()
+    {
+        _autoComplete.CancelComposition();
+        CurrentWord = "";
+        HasCurrentWord = false;
     }
 
     [RelayCommand]

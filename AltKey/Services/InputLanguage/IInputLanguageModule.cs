@@ -42,6 +42,12 @@ public interface IInputLanguageModule
 
     /// 레이아웃 전환 등 상태 초기화.
     void Reset();
+
+    /// 첫 번째 슬롯 좌클릭: 텍스트 변경 없이 사전에만 기록.
+    void CommitCurrentWord();
+
+    /// 첫 번째 슬롯 우클릭: 취소 플래그 설정 (이후 FinalizeComposition에서 학습 건너뜀).
+    void CancelComposition();
 }
 
 /// HandleKey / AcceptSuggestion 호출 시 필요한 런타임 문맥.

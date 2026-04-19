@@ -7,36 +7,63 @@
              xmlns:vm="clr-namespace:AltKey.ViewModels"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance vm:SuggestionBarViewModel}">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+    </UserControl.Resources>
     <Border Background="{DynamicResource PanelBg}" Padding="4,2" ClipToBounds="True">
-        <ItemsControl ItemsSource="{Binding Suggestions}">
-            <ItemsControl.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <StackPanel Orientation="Horizontal"/>
-                </ItemsPanelTemplate>
-            </ItemsControl.ItemsPanel>
-            <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                    <Button Content="{Binding}"
-                            Command="{Binding DataContext.AcceptSuggestionCommand,
-                                RelativeSource={RelativeSource AncestorType=UserControl}}"
-                            CommandParameter="{Binding}"
-                            Padding="8,4" Margin="2,0"
-                            Background="Transparent"
-                            Foreground="{DynamicResource PanelFg}"
-                            BorderBrush="{DynamicResource PanelBorder}" BorderThickness="1"
-                            Cursor="Hand" FontSize="12"
-                            ToolTip="좌클릭: 입력 · 우클릭: 관리">
-                        <Button.ContextMenu>
-                            <ContextMenu>
-                                <MenuItem Header="사용자 사전에서 제거"
-                                          Command="{Binding DataContext.RemoveSuggestionCommand,
-                                              Source={x:Reference SuggestionRoot}}"
-                                          CommandParameter="{Binding}"/>
-                            </ContextMenu>
-                        </Button.ContextMenu>
-                    </Button>
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
+        <StackPanel Orientation="Horizontal">
+
+            <!-- 첫 번째 슬롯: 현재 조합 중인 단어 -->
+            <Button Content="{Binding CurrentWord}"
+                    Visibility="{Binding HasCurrentWord, Converter={StaticResource BoolToVis}}"
+                    Command="{Binding CommitCurrentWordCommand}"
+                    Padding="8,4" Margin="2,0"
+                    Background="{DynamicResource AccentBrush}"
+                    Foreground="{DynamicResource KeyFg}"
+                    BorderBrush="{DynamicResource PanelBorder}" BorderThickness="1"
+                    Cursor="Hand" FontSize="12" FontWeight="SemiBold"
+                    ToolTip="좌클릭: 저장 · 우클릭: 취소">
+                <Button.InputBindings>
+                    <MouseBinding MouseAction="RightClick" Command="{Binding CancelCurrentWordCommand}"/>
+                </Button.InputBindings>
+            </Button>
+
+            <!-- 구분선 -->
+            <Separator Visibility="{Binding HasCurrentWord, Converter={StaticResource BoolToVis}}"
+                       Margin="2,2"/>
+
+            <!-- 기존 제안 목록 -->
+            <ItemsControl ItemsSource="{Binding Suggestions}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Button Content="{Binding}"
+                                Command="{Binding DataContext.AcceptSuggestionCommand,
+                                    RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                CommandParameter="{Binding}"
+                                Padding="8,4" Margin="2,0"
+                                Background="Transparent"
+                                Foreground="{DynamicResource PanelFg}"
+                                BorderBrush="{DynamicResource PanelBorder}" BorderThickness="1"
+                                Cursor="Hand" FontSize="12"
+                                ToolTip="좌클릭: 입력 · 우클릭: 관리">
+                            <Button.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Header="사용자 사전에서 제거"
+                                              Command="{Binding DataContext.RemoveSuggestionCommand,
+                                                  Source={x:Reference SuggestionRoot}}"
+                                              CommandParameter="{Binding}"/>
+                                </ContextMenu>
+                            </Button.ContextMenu>
+                        </Button>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+        </StackPanel>
     </Border>
 </UserControl>

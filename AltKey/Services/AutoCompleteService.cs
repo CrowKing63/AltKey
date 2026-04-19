@@ -36,6 +36,9 @@ public sealed class AutoCompleteService
     /// Submode 토글을 외부에 노출 — "가/A" 버튼 액션에서 사용.
     public void ToggleKoreanSubmode() => _module.ToggleSubmode();
 
+    public void CommitCurrentWord() => _module.CommitCurrentWord();
+    public void CancelComposition() => _module.CancelComposition();
+
     public InputSubmode ActiveSubmode => _module.ActiveSubmode;
     public string ComposeStateLabel => _module.ComposeStateLabel;
 }
