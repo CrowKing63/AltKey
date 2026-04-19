@@ -77,7 +77,8 @@ Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; \
 Filename: "{app}\{#AppExeName}"; \
     Description: "{#AppName} 실행"; \
     Flags: nowait postinstall skipifsilent
-Filename: "{app}\{#AppExeName}"; \
+Filename: "explorer.exe"; \
+    Parameters: """{app}\{#AppExeName}"""; \
     Flags: nowait; \
     Check: IsAutoRestart
 

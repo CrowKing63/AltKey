@@ -360,26 +360,59 @@ public partial class SettingsViewModel : ObservableObject
     [RelayCommand]
     private void RestartAsAdmin()
     {
+        var executablePath = Environment.ProcessPath;
+        if (string.IsNullOrEmpty(executablePath)) return;
+
         var psi = new ProcessStartInfo
         {
-            FileName       = Environment.ProcessPath,
-            Verb           = "runas",
+            FileName = executablePath,
+            Verb = "runas",
             UseShellExecute = true,
         };
+
         try
         {
             Process.Start(psi);
-            WpfApp.Current.Dispatcher.Invoke(() =>
-            {
-                if (WpfApp.Current.MainWindow is MainWindow mw)
-                    mw.IsShuttingDown = true;
-                WpfApp.Current.Shutdown();
-            });
+            ShutdownCurrentApp();
         }
         catch (Win32Exception)
         {
-            // 사용자가 UAC 취소
+            // 사용자가 UAC를 취소한 경우는 무시
         }
+    }
+
+    [RelayCommand]
+    private void RestartAsUser()
+    {
+        var executablePath = Environment.ProcessPath;
+        if (string.IsNullOrEmpty(executablePath)) return;
+
+        var psi = new ProcessStartInfo
+        {
+            FileName = "explorer.exe",
+            Arguments = $"\"{executablePath}\"",
+            UseShellExecute = true
+        };
+
+        try
+        {
+            Process.Start(psi);
+            ShutdownCurrentApp();
+        }
+        catch (Win32Exception)
+        {
+            // explorer start failed: keep current process running
+        }
+    }
+
+    private static void ShutdownCurrentApp()
+    {
+        WpfApp.Current.Dispatcher.Invoke(() =>
+        {
+            if (WpfApp.Current.MainWindow is MainWindow mw)
+                mw.IsShuttingDown = true;
+            WpfApp.Current.Shutdown();
+        });
     }
 
     // ── T-9.5: 업데이트 확인 및 자동 설치 ───────────────────────────────────
@@ -399,7 +432,7 @@ public partial class SettingsViewModel : ObservableObject
             if (string.IsNullOrEmpty(version))
             {
                 UpdateStatusMessage = "업데이트 확인 실패 (네트워크 오류)";
-                ShowUpdateMessage("업데이트를 확인할 수 없습니다.\n네트워크 연결을 확인해주세요.");
+                ShowUpdateMessage("업데이트를 확인할 수 없습니다.\n네트워크 연결을 확인해 주세요.");
                 return;
             }
 
@@ -415,7 +448,7 @@ public partial class SettingsViewModel : ObservableObject
             else
             {
                 HasUpdateAvailable = false;
-                UpdateStatusMessage = "최신 버전입니다";
+                UpdateStatusMessage = "최신 버전입니다.";
                 ShowUpdateMessage($"현재 최신 버전을 사용 중입니다.\n현재 버전: {CurrentVersion}");
             }
         }
