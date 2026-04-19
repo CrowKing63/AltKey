@@ -213,9 +213,11 @@
 
             <!-- T-9.3: 자동 완성 제안 바 (제안이 있을 때만 표시) -->
             <views:SuggestionBar
+                x:Name="AutoCompleteBar"
                 DockPanel.Dock="Top"
                 DataContext="{Binding AutoComplete}"
-                Visibility="{Binding IsVisible, Converter={StaticResource BoolToVis}}"/>
+                Visibility="{Binding IsVisible, Converter={StaticResource BoolToVis}}"
+                Height="{Binding DataContext.Keyboard.KeyRowHeight, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
 
             <!-- 08: LiveRegion 공지 (Narrator용) -->
             <TextBlock x:Name="ModeAnnouncer"

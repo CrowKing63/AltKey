@@ -110,9 +110,6 @@ public partial class MainWindow : Window
             var saveHeight = Height;
             if (KeyboardViewControl?.IsCollapsed == true && KeyboardViewControl.ExpandedHeight > 0)
                 saveHeight = KeyboardViewControl.ExpandedHeight;
-            // 자동 완성 바 높이를 제외한 기본 높이만 저장 (런타임에 다시 추가됨)
-            if (_configService.Current.AutoCompleteEnabled)
-                saveHeight -= 28; // SuggestionBarHeight
 
             _configService.Update(c =>
             {

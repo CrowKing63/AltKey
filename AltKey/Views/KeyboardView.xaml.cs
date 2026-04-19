@@ -19,8 +19,12 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
 
     public bool IsCollapsed => _isCollapsed;
     public double ExpandedHeight => _expandedHeight;
-    private const double SuggestionBarHeight = 28.0;
+
+    /// AutoComplete가 켜져 있는 동안 창 높이에 반영된 바 높이(= 당시 KeyRowHeight).
+    /// 런타임에 바를 끌 때 정확히 같은 픽셀만큼 창을 줄이기 위해 추적한다.
+    private double _appliedBarHeight = 0;
     private bool _autoCompleteBarAdded = false;
+    private bool _initialized = false;
 
     // 비율 고정 리사이즈: 드래그 시작 시 캡처한 가로/세로 비율
     private double _resizeAspectRatio = 900.0 / 350.0;
@@ -59,6 +63,13 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
                         Dispatcher.InvokeAsync(() =>
                             UpdateKeyUnit(Window.GetWindow(this)?.Width ?? ActualWidth));
                     }
+                    else if (e.PropertyName is nameof(KeyboardViewModel.KeyUnit))
+                    {
+                        // 바가 켜져 있으면, 현재 KeyRowHeight로 applied 값을 갱신.
+                        // (창 높이는 건드리지 않음 — 사용자의 리사이즈 동작 방해 방지)
+                        if (_autoCompleteBarAdded)
+                            _appliedBarHeight = mainVm.Keyboard.KeyRowHeight;
+                    }
                 };
             }
         }
@@ -67,17 +78,32 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
     private void ApplySuggestionBarHeight()
     {
         if (Window.GetWindow(this) is not { } window) return;
+        if (DataContext is not MainViewModel vm) return;
 
         var wantBar = _configService?.Current.AutoCompleteEnabled == true;
 
+        if (!_initialized)
+        {
+            // 최초 Loaded: 저장된 창 높이를 그대로 사용.
+            // UpdateKeyUnit의 폐쇄형 계산이 바 유무에 따라 KeyUnit을 자동 조정한다.
+            _autoCompleteBarAdded = wantBar;
+            _appliedBarHeight = wantBar ? vm.Keyboard.KeyRowHeight : 0;
+            _initialized = true;
+            return;
+        }
+
+        // 런타임 토글: 키보드 면적 유지를 위해 창 높이를 ±KeyRowHeight 만큼 조정.
         if (wantBar && !_autoCompleteBarAdded)
         {
-            window.Height += SuggestionBarHeight;
+            var h = vm.Keyboard.KeyRowHeight;
+            window.Height += h;
+            _appliedBarHeight = h;
             _autoCompleteBarAdded = true;
         }
         else if (!wantBar && _autoCompleteBarAdded)
         {
-            window.Height -= SuggestionBarHeight;
+            window.Height -= _appliedBarHeight;
+            _appliedBarHeight = 0;
             _autoCompleteBarAdded = false;
         }
     }
@@ -122,7 +148,8 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
     private const double AbsMinWindowHeight = 180.0;
 
     // T-4.10: KeyUnit = min(가로 기준, 세로 기준) — Stretch=Uniform 동작 재현
-    // KeyboardBorder.ActualHeight 를 직접 사용하므로 패널 토글 시에도 자동으로 재조정됨
+    // 바가 KeyRowHeight(= KeyUnit + 4) 에 바인딩되어 KeyUnit과 상호 의존하므로,
+    // 고정점을 한 번에 계산하도록 폐쇄형 식(rows+1 분모)을 사용한다.
     private void UpdateKeyUnit(double windowWidth)
     {
         if (DataContext is not MainViewModel vm) return;
@@ -131,13 +158,20 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
         double wKeys  = Math.Max(1, vm.Keyboard.MaxRowCount);
         double rows   = Math.Max(1, vm.Keyboard.RowCount);
 
+        // DockPanel이 실제로 바에 할당한 공간을 기준으로 삼는다
+        // (AutoComplete 꺼짐 + 제안 없음 양쪽 모두 Collapsed가 되어 0 공간)
+        bool barVisible = AutoCompleteBar?.Visibility == Visibility.Visible;
+        double barH = barVisible ? AutoCompleteBar!.ActualHeight : 0;
+
         double availW = windowWidth - KbHorizontalPad;
-        double availH = KeyboardBorder.ActualHeight - KbVerticalPad;
+        double totalBudget = KeyboardBorder.ActualHeight + barH;
+        double availH = totalBudget - KbVerticalPad - (barVisible ? 4.0 : 0);
 
         if (availH < 1) return; // 레이아웃 완료 전 무시
 
+        double rowsDiv = rows + (barVisible ? 1 : 0);
         double kW = (availW - wKeys * KeyMargin) / units;
-        double kH = (availH - rows  * KeyMargin) / rows;
+        double kH = (availH - rows  * KeyMargin) / rowsDiv;
 
         vm.Keyboard.KeyUnit = Math.Max(MinKeyUnit, Math.Min(MaxKeyUnit, Math.Min(kW, kH)));
     }
@@ -156,7 +190,7 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
 
         // 키보드 바깥(헤더·경고 배너·자동완성 바 등)이 차지하는 높이
         double nonKeyboardH = window.ActualHeight - KeyboardBorder.ActualHeight;
-        if (nonKeyboardH < 1) nonKeyboardH = 28;
+        if (nonKeyboardH < 1) nonKeyboardH = vm.Keyboard.KeyRowHeight;
 
         double minH = rows * MinKeyUnit + rows * KeyMargin + KbVerticalPad + nonKeyboardH;
 
