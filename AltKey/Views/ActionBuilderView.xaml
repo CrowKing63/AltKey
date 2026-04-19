@@ -181,5 +181,10 @@
                      Margin="0,0,0,6"/>
         </StackPanel>
 
+        <!-- ── ToggleKoreanSubmode ── -->
+        <StackPanel Visibility="{Binding IsToggleKoreanSubmode, Converter={StaticResource BoolToVis}}">
+            <TextBlock Text="한/영 입력 모드 전환 키 (파라미터 없음)" Style="{StaticResource HintText}"/>
+        </StackPanel>
+
     </StackPanel>
 </UserControl>

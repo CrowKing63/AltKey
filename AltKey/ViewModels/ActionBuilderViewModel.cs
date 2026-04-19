@@ -67,7 +67,8 @@ public partial class ActionBuilderViewModel : ObservableObject
     public static IReadOnlyList<string> ActionTypes { get; } =
     [
         "SendKey", "SendCombo", "ToggleSticky", "SwitchLayout",
-        "RunApp", "Boilerplate", "ShellCommand", "VolumeControl", "ClipboardPaste"
+        "RunApp", "Boilerplate", "ShellCommand", "VolumeControl", "ClipboardPaste",
+        "ToggleKoreanSubmode"
     ];
 
     public static IReadOnlyList<string> ShellTypes  { get; } = ["cmd", "powershell"];
@@ -109,18 +110,20 @@ public partial class ActionBuilderViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(IsShellCommand))]
     [NotifyPropertyChangedFor(nameof(IsVolumeControl))]
     [NotifyPropertyChangedFor(nameof(IsClipboardPaste))]
+    [NotifyPropertyChangedFor(nameof(IsToggleKoreanSubmode))]
     private string selectedActionType = "SendKey";
 
     // ── Visibility 계산 프로퍼티 ───────────────────────────────────────────────
-    public bool IsSendKey       => SelectedActionType == "SendKey";
-    public bool IsSendCombo     => SelectedActionType == "SendCombo";
-    public bool IsToggleSticky  => SelectedActionType == "ToggleSticky";
-    public bool IsSwitchLayout  => SelectedActionType == "SwitchLayout";
-    public bool IsRunApp        => SelectedActionType == "RunApp";
-    public bool IsBoilerplate   => SelectedActionType == "Boilerplate";
-    public bool IsShellCommand  => SelectedActionType == "ShellCommand";
-    public bool IsVolumeControl => SelectedActionType == "VolumeControl";
-    public bool IsClipboardPaste => SelectedActionType == "ClipboardPaste";
+    public bool IsSendKey              => SelectedActionType == "SendKey";
+    public bool IsSendCombo            => SelectedActionType == "SendCombo";
+    public bool IsToggleSticky         => SelectedActionType == "ToggleSticky";
+    public bool IsSwitchLayout         => SelectedActionType == "SwitchLayout";
+    public bool IsRunApp               => SelectedActionType == "RunApp";
+    public bool IsBoilerplate          => SelectedActionType == "Boilerplate";
+    public bool IsShellCommand         => SelectedActionType == "ShellCommand";
+    public bool IsVolumeControl        => SelectedActionType == "VolumeControl";
+    public bool IsClipboardPaste       => SelectedActionType == "ClipboardPaste";
+    public bool IsToggleKoreanSubmode  => SelectedActionType == "ToggleKoreanSubmode";
 
     // ── 각 타입별 파라미터 ─────────────────────────────────────────────────────
 
@@ -200,6 +203,9 @@ public partial class ActionBuilderViewModel : ObservableObject
                 SelectedActionType = "ClipboardPaste";
                 ClipboardText = a.Text;
                 break;
+            case ToggleKoreanSubmodeAction:
+                SelectedActionType = "ToggleKoreanSubmode";
+                break;
             default:
                 SelectedActionType = "SendKey";
                 break;
@@ -219,8 +225,9 @@ public partial class ActionBuilderViewModel : ObservableObject
         "Boilerplate"  => new BoilerplateAction(BoilerplateText),
         "ShellCommand" => new ShellCommandAction(ShellCmd.Trim(), SelectedShell),
         "VolumeControl"=> new VolumeControlAction(VolumeDirection, VolumeStep),
-        "ClipboardPaste"=> new ClipboardPasteAction(ClipboardText),
-        _              => null
+        "ClipboardPaste"      => new ClipboardPasteAction(ClipboardText),
+        "ToggleKoreanSubmode" => new ToggleKoreanSubmodeAction(),
+        _                     => null
     };
 
     // ── RunApp 파일 찾아보기 ───────────────────────────────────────────────────

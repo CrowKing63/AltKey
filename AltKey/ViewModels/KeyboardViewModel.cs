@@ -100,12 +100,7 @@ public class KeySlotVm(KeySlot slot, AutoCompleteService autoComplete) : Observa
         }
     }
 
-    public string GetSubLabel(bool upperCase)
-    {
-        if (Slot.EnglishLabel is null) return "";
-        if (_activeSubmode == InputSubmode.HangulJamo) return "";
-        return upperCase && Slot.EnglishShiftLabel is { } hs ? hs : Slot.EnglishLabel;
-    }
+    public string GetSubLabel(bool upperCase) => "";
 
     // ── Accessibility ────────────────────────────────────────────────────────
 

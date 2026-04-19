@@ -101,3 +101,6 @@ docs/Problems/
 
 # dotnet build log
 .dotnet
+
+# wiki
+Wiki/
