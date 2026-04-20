@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:AltKey.ViewModels"
              xmlns:conv="clr-namespace:AltKey.Themes"
+             xmlns:ctrl="clr-namespace:AltKey.Controls"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              mc:Ignorable="d"
@@ -73,26 +74,26 @@
                                   Margin="0,0,0,16"/>
 
                         <!-- 유휴 투명도 -->
-                        <TextBlock Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4">
-                            <Run Text="유휴 투명도: "/>
-                            <Run Text="{Binding OpacityIdle, StringFormat=P0}"/>
-                        </TextBlock>
-                        <Slider Minimum="0.1" Maximum="1.0" TickFrequency="0.05"
-                                IsSnapToTickEnabled="True"
-                                Value="{Binding OpacityIdle}"
-                                Foreground="{StaticResource KeyFgSticky}"
-                                Margin="0,0,0,16"/>
+                        <TextBlock Text="유휴 투명도" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
+                        <ctrl:NumericAdjuster Value="{Binding OpacityIdle}"
+                                              Minimum="0.1" Maximum="1.0" Step="0.05" DecimalPlaces="2"
+                                              ButtonBackground="{DynamicResource SettingsHighlight}"
+                                              ButtonForeground="{DynamicResource SettingsFg}"
+                                              TextBoxBackground="{DynamicResource SettingsHighlight}"
+                                              TextBoxForeground="{DynamicResource SettingsFg}"
+                                              TextBoxBorderBrush="{DynamicResource SettingsBorder}"
+                                              Margin="0,0,0,16"/>
 
                         <!-- 페이딩 딜레이 -->
-                        <TextBlock Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4">
-                            <Run Text="페이딩 딜레이: "/>
-                            <Run Text="{Binding FadeDelaySec, StringFormat={}{0}초}"/>
-                        </TextBlock>
-                        <Slider Minimum="1" Maximum="30" TickFrequency="1"
-                                IsSnapToTickEnabled="True"
-                                Value="{Binding FadeDelaySec}"
-                                Foreground="{StaticResource KeyFgSticky}"
-                                Margin="0,0,0,16"/>
+                        <TextBlock Text="페이딩 딜레이" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
+                        <ctrl:NumericAdjuster Value="{Binding FadeDelaySec}"
+                                              Minimum="1" Maximum="30" Step="1" DecimalPlaces="0"
+                                              ButtonBackground="{DynamicResource SettingsHighlight}"
+                                              ButtonForeground="{DynamicResource SettingsFg}"
+                                              TextBoxBackground="{DynamicResource SettingsHighlight}"
+                                              TextBoxForeground="{DynamicResource SettingsFg}"
+                                              TextBoxBorderBrush="{DynamicResource SettingsBorder}"
+                                              Margin="0,0,0,16"/>
 
                         <!-- 레이아웃 -->
                         <TextBlock Text="기본 레이아웃" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
@@ -184,16 +185,16 @@
                                   Foreground="{DynamicResource SettingsFg}"
                                   IsChecked="{Binding DwellEnabled}"
                                   Margin="0,0,0,8"/>
-                        <TextBlock Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="16,0,0,4">
-                            <Run Text="체류 시간: "/>
-                            <Run Text="{Binding DwellTimeMs, StringFormat={}{0}ms}"/>
-                        </TextBlock>
-                        <Slider Minimum="200" Maximum="3000" TickFrequency="100"
-                                IsSnapToTickEnabled="True"
-                                Value="{Binding DwellTimeMs}"
-                                IsEnabled="{Binding DwellEnabled}"
-                                Foreground="{StaticResource KeyFgSticky}"
-                                Margin="16,0,0,16"/>
+                        <TextBlock Text="체류 시간" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="16,0,0,4"/>
+                        <ctrl:NumericAdjuster Value="{Binding DwellTimeMs}"
+                                              Minimum="200" Maximum="3000" Step="100" DecimalPlaces="0"
+                                              IsEnabled="{Binding DwellEnabled}"
+                                              ButtonBackground="{DynamicResource SettingsHighlight}"
+                                              ButtonForeground="{DynamicResource SettingsFg}"
+                                              TextBoxBackground="{DynamicResource SettingsHighlight}"
+                                              TextBoxForeground="{DynamicResource SettingsFg}"
+                                              TextBoxBorderBrush="{DynamicResource SettingsBorder}"
+                                              Margin="16,0,0,16"/>
 
                         <!-- 키 반복 입력 -->
                         <TextBlock Text="키 반복 입력 (접근성)"
@@ -205,26 +206,26 @@
                                   Foreground="{DynamicResource SettingsFg}"
                                   IsChecked="{Binding KeyRepeatEnabled}"
                                   Margin="0,0,0,8"/>
-                        <TextBlock Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="16,0,0,4">
-                            <Run Text="초기 지연: "/>
-                            <Run Text="{Binding KeyRepeatDelayMs, StringFormat={}{0}ms}"/>
-                        </TextBlock>
-                        <Slider Minimum="100" Maximum="1000" TickFrequency="50"
-                                IsSnapToTickEnabled="True"
-                                Value="{Binding KeyRepeatDelayMs}"
-                                IsEnabled="{Binding KeyRepeatEnabled}"
-                                Foreground="{StaticResource KeyFgSticky}"
-                                Margin="16,0,0,8"/>
-                        <TextBlock Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="16,0,0,4">
-                            <Run Text="반복 간격: "/>
-                            <Run Text="{Binding KeyRepeatIntervalMs, StringFormat={}{0}ms}"/>
-                        </TextBlock>
-                        <Slider Minimum="20" Maximum="200" TickFrequency="10"
-                                IsSnapToTickEnabled="True"
-                                Value="{Binding KeyRepeatIntervalMs}"
-                                IsEnabled="{Binding KeyRepeatEnabled}"
-                                Foreground="{StaticResource KeyFgSticky}"
-                                Margin="16,0,0,16"/>
+                        <TextBlock Text="초기 지연" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="16,0,0,4"/>
+                        <ctrl:NumericAdjuster Value="{Binding KeyRepeatDelayMs}"
+                                              Minimum="100" Maximum="1000" Step="50" DecimalPlaces="0"
+                                              IsEnabled="{Binding KeyRepeatEnabled}"
+                                              ButtonBackground="{DynamicResource SettingsHighlight}"
+                                              ButtonForeground="{DynamicResource SettingsFg}"
+                                              TextBoxBackground="{DynamicResource SettingsHighlight}"
+                                              TextBoxForeground="{DynamicResource SettingsFg}"
+                                              TextBoxBorderBrush="{DynamicResource SettingsBorder}"
+                                              Margin="16,0,0,8"/>
+                        <TextBlock Text="반복 간격" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="16,0,0,4"/>
+                        <ctrl:NumericAdjuster Value="{Binding KeyRepeatIntervalMs}"
+                                              Minimum="20" Maximum="200" Step="10" DecimalPlaces="0"
+                                              IsEnabled="{Binding KeyRepeatEnabled}"
+                                              ButtonBackground="{DynamicResource SettingsHighlight}"
+                                              ButtonForeground="{DynamicResource SettingsFg}"
+                                              TextBoxBackground="{DynamicResource SettingsHighlight}"
+                                              TextBoxForeground="{DynamicResource SettingsFg}"
+                                              TextBoxBorderBrush="{DynamicResource SettingsBorder}"
+                                              Margin="16,0,0,16"/>
 
                         <Separator Background="{DynamicResource SettingsHighlight}" Margin="0,0,0,16"/>
 

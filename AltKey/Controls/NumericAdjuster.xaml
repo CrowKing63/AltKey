@@ -1,0 +1,45 @@
+<UserControl x:Class="AltKey.Controls.NumericAdjuster"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+
+        <Button x:Name="DecreaseButton"
+                Grid.Column="0"
+                Content="−"
+                Width="28" Height="26"
+                FontSize="16" FontWeight="Bold"
+                VerticalAlignment="Center"
+                BorderThickness="1"
+                Cursor="Hand"
+                Background="{Binding ButtonBackground, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                Foreground="{Binding ButtonForeground, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+
+        <TextBox x:Name="ValueTextBox"
+                 Grid.Column="1"
+                 TextAlignment="Center"
+                 VerticalAlignment="Center"
+                 VerticalContentAlignment="Center"
+                 Height="26"
+                 Margin="2,0"
+                 Padding="4,0"
+                 Background="{Binding TextBoxBackground, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                 Foreground="{Binding TextBoxForeground, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                 BorderBrush="{Binding TextBoxBorderBrush, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+
+        <Button x:Name="IncreaseButton"
+                Grid.Column="2"
+                Content="+"
+                Width="28" Height="26"
+                FontSize="16" FontWeight="Bold"
+                VerticalAlignment="Center"
+                BorderThickness="1"
+                Cursor="Hand"
+                Background="{Binding ButtonBackground, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                Foreground="{Binding ButtonForeground, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+    </Grid>
+</UserControl>

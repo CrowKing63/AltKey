@@ -6,6 +6,7 @@
         xmlns:vm="clr-namespace:AltKey.ViewModels"
         xmlns:views="clr-namespace:AltKey.Views"
         xmlns:conv="clr-namespace:AltKey.Themes"
+        xmlns:ctrl="clr-namespace:AltKey.Controls"
         mc:Ignorable="d"
         Title="레이아웃 편집기"
         Width="920" Height="620"
@@ -291,23 +292,25 @@
                                          UpdateSourceTrigger=PropertyChanged}"
                                      Style="{StaticResource InputBox}"/>
 
-                            <TextBlock Style="{StaticResource LabelText}">
-                                <Run Text="너비: "/>
-                                <Run Text="{Binding SelectedKey.EditWidth, StringFormat=F1}"/>
-                            </TextBlock>
-                            <Slider Minimum="0.5" Maximum="6.0" TickFrequency="0.5"
-                                    IsSnapToTickEnabled="True"
-                                    Value="{Binding SelectedKey.EditWidth}"
-                                    Margin="0,0,0,8"/>
+                            <TextBlock Text="너비" Style="{StaticResource LabelText}"/>
+                            <ctrl:NumericAdjuster Value="{Binding SelectedKey.EditWidth}"
+                                                  Minimum="0.5" Maximum="6.0" Step="0.1" DecimalPlaces="1"
+                                                  ButtonBackground="#33FFFFFF"
+                                                  ButtonForeground="#EEFFFFFF"
+                                                  TextBoxBackground="#33FFFFFF"
+                                                  TextBoxForeground="#EEFFFFFF"
+                                                  TextBoxBorderBrush="#55FFFFFF"
+                                                  Margin="0,0,0,8"/>
 
-                            <TextBlock Style="{StaticResource LabelText}">
-                                <Run Text="앞 여백: "/>
-                                <Run Text="{Binding SelectedKey.EditGapBefore, StringFormat=F1}"/>
-                            </TextBlock>
-                            <Slider Minimum="0.0" Maximum="4.0" TickFrequency="0.5"
-                                    IsSnapToTickEnabled="True"
-                                    Value="{Binding SelectedKey.EditGapBefore}"
-                                    Margin="0,0,0,12"/>
+                            <TextBlock Text="앞 여백" Style="{StaticResource LabelText}"/>
+                            <ctrl:NumericAdjuster Value="{Binding SelectedKey.EditGapBefore}"
+                                                  Minimum="0.0" Maximum="4.0" Step="0.1" DecimalPlaces="1"
+                                                  ButtonBackground="#33FFFFFF"
+                                                  ButtonForeground="#EEFFFFFF"
+                                                  TextBoxBackground="#33FFFFFF"
+                                                  TextBoxForeground="#EEFFFFFF"
+                                                  TextBoxBorderBrush="#55FFFFFF"
+                                                  Margin="0,0,0,12"/>
 
                             <Separator Background="#33FFFFFF" Margin="0,0,0,10"/>
 

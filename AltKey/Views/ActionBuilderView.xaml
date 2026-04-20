@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:vm="clr-namespace:AltKey.ViewModels"
+             xmlns:ctrl="clr-namespace:AltKey.Controls"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance vm:ActionBuilderViewModel}">
     <UserControl.Resources>
@@ -162,13 +163,15 @@
             <ComboBox ItemsSource="{Binding VolumeDirections}"
                       SelectedItem="{Binding VolumeDirection}"
                       Style="{StaticResource InputCombo}"/>
-            <TextBlock Style="{StaticResource HintText}">
-                <Run Text="단계: "/><Run Text="{Binding VolumeStep}"/>
-            </TextBlock>
-            <Slider Minimum="2" Maximum="20" TickFrequency="2"
-                    IsSnapToTickEnabled="True"
-                    Value="{Binding VolumeStep}"
-                    Margin="0,0,0,6"/>
+            <TextBlock Text="단계" Style="{StaticResource HintText}"/>
+            <ctrl:NumericAdjuster Value="{Binding VolumeStep}"
+                                  Minimum="2" Maximum="20" Step="1" DecimalPlaces="0"
+                                  ButtonBackground="#33FFFFFF"
+                                  ButtonForeground="#EEFFFFFF"
+                                  TextBoxBackground="#33FFFFFF"
+                                  TextBoxForeground="#EEFFFFFF"
+                                  TextBoxBorderBrush="#55FFFFFF"
+                                  Margin="0,0,0,6"/>
         </StackPanel>
 
         <!-- ── ClipboardPaste ── -->
