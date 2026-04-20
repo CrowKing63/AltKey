@@ -10,3 +10,12 @@
   - 테스트 프로젝트: `C:\Users\UITAEK\AltKey\AltKey.Tests\AltKey.Tests.csproj`
 - **PowerShell 환경에서는 `&&` 연산자가 작동하지 않으므로, 여러 명령어를 실행할 때는 `;`를 사용하거나 각 명령어를 별도로 실행할 것.**
 - 사용자 변수 조정 기능에는 슬라이더 대신 NumericAdjuster 기반으로 구현할 것.
+- **테스트 파일 구조**: `KoreanInputModuleTests.cs`는 분할되어 더 이상 존재하지 않는다. 테스트는 다음 4개 파일로 구성되어 있다.
+  - `KoreanInputModuleTestBase.cs` — 공통 slots, contexts, `CreateModule` 팩토리 (상속용)
+  - `KoreanInputModuleHangulTests.cs` — 한글 조합·제안·bigram 테스트
+  - `KoreanInputModuleQuietEnglishTests.cs` — 영어 입력·대문자·숫자/기호 테스트
+  - `KoreanInputModuleBackspaceTests.cs` — 한글/영어 백스페이스 테스트
+- **테스트 작성 시 주의사항**:
+  - 새 테스트는 기능별로 알맞은 파일에 추가할 것. 한 줄도 400줄을 넘지 않게 유지한다.
+  - 과거 버그 기반 주석(예: "HasActiveModifiers=true이면 SendUnicode는 호출되지 않음")은 버그 수정 후 잘못된 정보가 되므로, 테스트 주석에는 **무엇을 검증하는지**만 적고 구현 내부 동작 추측은 적지 않는다.
+  - `FakeInputService`, `KoreanDictionaryTestable`, `EnglishDictionaryTestable`, `TestSlotFactory`는 `public`이며 `TestHelpers.cs`에 정의되어 있다. 새 테스트에서 자유롭게 사용할 수 있다.

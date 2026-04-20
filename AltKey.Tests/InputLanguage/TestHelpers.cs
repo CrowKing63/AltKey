@@ -8,7 +8,7 @@ namespace AltKey.Tests.InputLanguage;
 /// <summary>
 /// 테스트용 가짜 InputService — 실제 SendInput을 호출하지 않고 기록만 남김.
 /// </summary>
-internal sealed class FakeInputService : InputService
+public sealed class FakeInputService : InputService
 {
     public ConcurrentBag<string> SentUnicodes { get; } = new();
     public ConcurrentBag<(int prevLen, string next)> AtomicReplaces { get; } = new();
@@ -75,7 +75,7 @@ internal sealed class WordFrequencyStoreInMemory : WordFrequencyStore
 /// <summary>
 /// 테스트용 KoreanDictionary — 인메모리 스토어 사용.
 /// </summary>
-internal sealed class KoreanDictionaryTestable : KoreanDictionary
+public sealed class KoreanDictionaryTestable : KoreanDictionary
 {
     private readonly WordFrequencyStoreInMemory _store;
     public int UserWordCount => _store.UserWordCount;
@@ -98,7 +98,7 @@ internal sealed class KoreanDictionaryTestable : KoreanDictionary
 /// <summary>
 /// 테스트용 EnglishDictionary — 인메모리 스토어 사용.
 /// </summary>
-internal sealed class EnglishDictionaryTestable : EnglishDictionary
+public sealed class EnglishDictionaryTestable : EnglishDictionary
 {
     public EnglishDictionaryTestable()
         : base(_ => new WordFrequencyStoreInMemory(), lang => new BigramFrequencyStore(lang))
