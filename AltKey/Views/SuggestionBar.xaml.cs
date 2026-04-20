@@ -6,4 +6,9 @@ public partial class SuggestionBar : System.Windows.Controls.UserControl
     {
         InitializeComponent();
     }
+
+    private void CurrentWordSlot_RightClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        e.Handled = true;
+    }
 }

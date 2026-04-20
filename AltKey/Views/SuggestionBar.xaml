@@ -22,7 +22,9 @@
                     Foreground="{DynamicResource KeyFg}"
                     BorderBrush="{DynamicResource PanelBorder}" BorderThickness="1"
                     Cursor="Hand" FontSize="12" FontWeight="SemiBold"
-                    ToolTip="좌클릭: 저장 · 우클릭: 취소">
+                    ToolTip="좌클릭: 저장 · 우클릭: 취소"
+                    ContextMenu="{x:Null}"
+                    PreviewMouseRightButtonUp="CurrentWordSlot_RightClick">
                 <Button.InputBindings>
                     <MouseBinding MouseAction="RightClick" Command="{Binding CancelCurrentWordCommand}"/>
                 </Button.InputBindings>
