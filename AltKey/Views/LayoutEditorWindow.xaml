@@ -269,6 +269,18 @@
                         <StackPanel Visibility="{Binding HasSelectedKey,
                                         Converter={StaticResource BoolToVis}}">
 
+                            <TextBlock Text="키 위치" Style="{StaticResource LabelText}"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                <Button Content="◀ 왼쪽으로"
+                                        Command="{Binding MoveKeyLeftCommand}"
+                                        Style="{StaticResource DarkBtn}" FontSize="10"
+                                        IsEnabled="{Binding CanMoveKeyLeft}"/>
+                                <Button Content="오른쪽으로 ▶"
+                                        Command="{Binding MoveKeyRightCommand}"
+                                        Style="{StaticResource DarkBtn}" FontSize="10"
+                                        IsEnabled="{Binding CanMoveKeyRight}"/>
+                            </StackPanel>
+
                             <TextBlock Text="라벨" Style="{StaticResource LabelText}"/>
                             <TextBox Text="{Binding SelectedKey.EditLabel,
                                          UpdateSourceTrigger=PropertyChanged}"

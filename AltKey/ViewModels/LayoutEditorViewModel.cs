@@ -77,9 +77,33 @@ public partial class LayoutEditorViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasSelectedKey))]
+    [NotifyPropertyChangedFor(nameof(CanMoveKeyLeft))]
+    [NotifyPropertyChangedFor(nameof(CanMoveKeyRight))]
     private EditableKeySlotVm? selectedKey;
 
     public bool HasSelectedKey => SelectedKey is not null;
+
+    public bool CanMoveKeyLeft
+    {
+        get
+        {
+            if (SelectedKey is null) return false;
+            var row = FindRowContaining(SelectedKey);
+            if (row is null) return false;
+            return row.Keys.IndexOf(SelectedKey) > 0;
+        }
+    }
+
+    public bool CanMoveKeyRight
+    {
+        get
+        {
+            if (SelectedKey is null) return false;
+            var row = FindRowContaining(SelectedKey);
+            if (row is null) return false;
+            return row.Keys.IndexOf(SelectedKey) < row.Keys.Count - 1;
+        }
+    }
 
     // ── 저장 결과 알림 메시지 ─────────────────────────────────────────────
     [ObservableProperty] private string statusMessage = "";
@@ -187,6 +211,8 @@ public partial class LayoutEditorViewModel : ObservableObject
     {
         if (oldValue is not null) oldValue.IsSelected = false;
         if (newValue is not null) newValue.IsSelected = true;
+        OnPropertyChanged(nameof(CanMoveKeyLeft));
+        OnPropertyChanged(nameof(CanMoveKeyRight));
     }
 
     // ── 키 선택 / 편집 ────────────────────────────────────────────────────
@@ -289,6 +315,41 @@ public partial class LayoutEditorViewModel : ObservableObject
     }
 
     // ── 키 추가/삭제 ─────────────────────────────────────────────────────
+
+    [RelayCommand]
+    private void MoveKeyLeft()
+    {
+        if (SelectedKey is null) return;
+        var row = FindRowContaining(SelectedKey);
+        if (row is null) return;
+        var idx = row.Keys.IndexOf(SelectedKey);
+        if (idx <= 0) return;
+        row.Keys.Move(idx, idx - 1);
+        OnPropertyChanged(nameof(CanMoveKeyLeft));
+        OnPropertyChanged(nameof(CanMoveKeyRight));
+    }
+
+    [RelayCommand]
+    private void MoveKeyRight()
+    {
+        if (SelectedKey is null) return;
+        var row = FindRowContaining(SelectedKey);
+        if (row is null) return;
+        var idx = row.Keys.IndexOf(SelectedKey);
+        if (idx < 0 || idx >= row.Keys.Count - 1) return;
+        row.Keys.Move(idx, idx + 1);
+        OnPropertyChanged(nameof(CanMoveKeyLeft));
+        OnPropertyChanged(nameof(CanMoveKeyRight));
+    }
+
+    private EditableKeyRowVm? FindRowContaining(EditableKeySlotVm key)
+    {
+        foreach (var column in Columns)
+            foreach (var row in column.Rows)
+                if (row.Keys.Contains(key))
+                    return row;
+        return null;
+    }
 
     [RelayCommand]
     private void AddKeyToRow(EditableKeyRowVm row)
