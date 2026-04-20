@@ -44,6 +44,7 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty] private int    dwellTimeMs    = 800;
     [ObservableProperty] private string selectedLayout = "";
     [ObservableProperty] private string globalHotkey   = "Ctrl+Alt+K";
+    [ObservableProperty] private int    windowScale    = 100;
 
     // T-8.1: 자동 실행
     [ObservableProperty] private bool runOnStartup;
@@ -149,6 +150,7 @@ public partial class SettingsViewModel : ObservableObject
             DwellTimeMs    = c.DwellTimeMs;
             SelectedLayout = c.DefaultLayout;
             GlobalHotkey   = c.GlobalHotkey;
+            WindowScale    = c.Window.Scale;
 
             // T-8.1: 자동 실행
             RunOnStartup = _startupService.IsEnabled;
@@ -241,6 +243,14 @@ public partial class SettingsViewModel : ObservableObject
             if (hwnd != IntPtr.Zero)
                 _hotkeyService.Reregister(hwnd, value);
         }
+    }
+
+    partial void OnWindowScaleChanged(int value)
+    {
+        if (_isLoading) return;
+        var clamped = Math.Clamp(value, 60, 200);
+        if (clamped != value) { WindowScale = clamped; return; }
+        _configService.Update(c => c.Window.Scale = clamped, "Window.Scale");
     }
 
     // ── T-8.1: 자동 실행 ────────────────────────────────────────────────────

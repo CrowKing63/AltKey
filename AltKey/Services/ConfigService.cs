@@ -1,5 +1,6 @@
 using System.IO;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Threading;
 using AltKey.Models;
 
@@ -25,10 +26,33 @@ public class ConfigService
         {
             var json = File.ReadAllText(PathResolver.ConfigPath);
             Current = JsonSerializer.Deserialize<AppConfig>(json, JsonOptions.Default) ?? new();
+            MigrateWindowConfig(json);
         }
         catch
         {
             Current = new AppConfig();
+        }
+    }
+
+    private void MigrateWindowConfig(string json)
+    {
+        try
+        {
+            var node = JsonNode.Parse(json)?["Window"]?.AsObject();
+            if (node == null) return;
+
+            if (node.ContainsKey("Scale")) return;
+
+            if (node.TryGetPropertyValue("Width", out var widthNode) && widthNode != null)
+            {
+                var width = (double)widthNode;
+                var scale = (int)Math.Round(width / 900.0 * 100);
+                Current.Window.Scale = Math.Clamp(scale, 60, 200);
+            }
+        }
+        catch
+        {
+            // 마이그레이션 실패 시 기본값(100) 유지
         }
     }
 

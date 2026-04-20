@@ -9,3 +9,4 @@
   - 메인 프로젝트(빌드): `C:\Users\UITAEK\AltKey\AltKey\AltKey.csproj`
   - 테스트 프로젝트: `C:\Users\UITAEK\AltKey\AltKey.Tests\AltKey.Tests.csproj`
 - **PowerShell 환경에서는 `&&` 연산자가 작동하지 않으므로, 여러 명령어를 실행할 때는 `;`를 사용하거나 각 명령어를 별도로 실행할 것.**
+- 사용자 변수 조정 기능에는 슬라이더 대신 NumericAdjuster 기반으로 구현할 것.

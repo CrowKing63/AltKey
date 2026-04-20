@@ -1,7 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media.Animation;
 using System.Windows.Automation.Peers;
@@ -14,21 +13,12 @@ namespace AltKey.Views;
 
 public partial class KeyboardView : System.Windows.Controls.UserControl
 {
-    private double _expandedHeight = 0;
     private bool _isCollapsed = false;
 
     public bool IsCollapsed => _isCollapsed;
-    public double ExpandedHeight => _expandedHeight;
-    public double AppliedBarHeight => _appliedBarHeight;
-    public bool AutoCompleteBarApplied => _autoCompleteBarAdded;
-
-    private double _appliedBarHeight = 0;
     private bool _autoCompleteBarAdded = false;
-    private bool _initialized = false;
-    private double _lastExpandedKeyRowHeight = 0;
 
-    // 비율 고정 리사이즈: 드래그 시작 시 캡처한 가로/세로 비율
-    private double _resizeAspectRatio = 900.0 / 350.0;
+
 
     private ConfigService? _configService;
     private const double CollapsedWindowHeight = 28.0;
@@ -43,38 +33,25 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
     {
         if (Window.GetWindow(this) is { } window)
         {
-            UpdateKeyUnit(window.Width);
-            window.SizeChanged += OnWindowSizeChanged;
-
             _configService = App.Services.GetRequiredService<ConfigService>();
             _configService.ConfigChanged += OnConfigChanged;
 
             ApplySuggestionBarHeight();
+            ApplyScale();
+
+            window.SizeChanged += OnWindowSizeChanged;
 
             if (DataContext is MainViewModel mainVm)
             {
-                _lastExpandedKeyRowHeight = mainVm.Keyboard.KeyRowHeight;
                 mainVm.Keyboard.LiveRegionChanged += AnnounceLiveRegion;
 
-                // 레이아웃 교체/편집기 저장으로 메트릭이 바뀌면 KeyUnit 재계산
                 mainVm.Keyboard.PropertyChanged += (_, e) =>
                 {
                     if (e.PropertyName is nameof(KeyboardViewModel.MaxRowUnits)
                                        or nameof(KeyboardViewModel.MaxRowCount)
                                        or nameof(KeyboardViewModel.RowCount))
                     {
-                        Dispatcher.InvokeAsync(() =>
-                            UpdateKeyUnit(Window.GetWindow(this)?.Width ?? ActualWidth));
-                    }
-                    else if (e.PropertyName is nameof(KeyboardViewModel.KeyUnit))
-                    {
-                        if (!_isCollapsed)
-                            _lastExpandedKeyRowHeight = mainVm.Keyboard.KeyRowHeight;
-
-                        // 바가 켜져 있으면, 현재 KeyRowHeight로 applied 값을 갱신.
-                        // (창 높이는 건드리지 않음 — 사용자의 리사이즈 동작 방해 방지)
-                        if (_autoCompleteBarAdded && !_isCollapsed)
-                            _appliedBarHeight = mainVm.Keyboard.KeyRowHeight;
+                        Dispatcher.InvokeAsync(() => ApplyScale());
                     }
                 };
             }
@@ -83,60 +60,23 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
 
     private void ApplySuggestionBarHeight()
     {
-        if (Window.GetWindow(this) is not { } window) return;
         if (DataContext is not MainViewModel vm) return;
 
         var wantBar = _configService?.Current.AutoCompleteEnabled == true;
-
-        if (!_initialized)
-        {
-            _autoCompleteBarAdded = wantBar;
-            _appliedBarHeight = wantBar ? vm.Keyboard.KeyRowHeight : 0;
-            _initialized = true;
-            return;
-        }
-
-        // 런타임 토글: 키보드 면적 유지를 위해 창 높이를 ±KeyRowHeight 만큼 조정.
-        if (wantBar && !_autoCompleteBarAdded)
-        {
-            var h = _isCollapsed
-                ? (_lastExpandedKeyRowHeight > 0 ? _lastExpandedKeyRowHeight : vm.Keyboard.KeyRowHeight)
-                : vm.Keyboard.KeyRowHeight;
-            if (_isCollapsed)
-            {
-                if (_expandedHeight <= 0)
-                    _expandedHeight = Math.Max(window.Height, AbsMinWindowHeight);
-                _expandedHeight += h;
-            }
-            else
-            {
-                AdjustWindowHeight(window, h);
-            }
-            _appliedBarHeight = h;
-            _autoCompleteBarAdded = true;
-        }
-        else if (!wantBar && _autoCompleteBarAdded)
-        {
-            var h = _appliedBarHeight > 0 ? _appliedBarHeight : vm.Keyboard.KeyRowHeight;
-            if (_isCollapsed)
-            {
-                if (_expandedHeight > 0)
-                    _expandedHeight = Math.Max(AbsMinWindowHeight, _expandedHeight - h);
-            }
-            else
-            {
-                AdjustWindowHeight(window, -h);
-            }
-            _appliedBarHeight = 0;
-            _autoCompleteBarAdded = false;
-        }
+        _autoCompleteBarAdded = wantBar;
     }
 
     private void OnConfigChanged(string? propertyName)
     {
-        if (propertyName is null or nameof(AppConfig.AutoCompleteEnabled))
+        if (propertyName is null
+            or nameof(AppConfig.AutoCompleteEnabled)
+            or "Window.Scale")
         {
-            Dispatcher.InvokeAsync(() => ApplySuggestionBarHeight());
+            Dispatcher.InvokeAsync(() =>
+            {
+                ApplySuggestionBarHeight();
+                ApplyScale();
+            });
         }
     }
 
@@ -166,6 +106,11 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
     private const double KbHorizontalPad = 12.0; // KeyboardBorder Padding 좌+우
     private const double KbVerticalPad   = 8.0;  // KeyboardBorder Padding 상+하
     private const double KeyMargin       = 4.0;  // 키 1개당 마진 총합 (Margin="2")
+
+    private const double BaseKeyUnit  = 50.0;
+    private const double HeaderHeight = 28.0;
+    private const int    MinScale     = 60;
+    private const int    MaxScale     = 200;
 
     // 엣지케이스 방어용 절대 하한 (공백 레이아웃 등)
     private const double AbsMinWindowWidth  = 400.0;
@@ -200,25 +145,46 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
         vm.Keyboard.KeyUnit = Math.Max(MinKeyUnit, Math.Min(MaxKeyUnit, Math.Min(kW, kH)));
     }
 
-    /// 현재 레이아웃 × MinKeyUnit 기준 최소 창 크기 계산
-    private (double W, double H) ComputeMinWindowSize()
+    private (double Width, double Height) ComputeBaseSize()
     {
-        if (DataContext is not MainViewModel vm || Window.GetWindow(this) is not { } window)
-            return (AbsMinWindowWidth, AbsMinWindowHeight);
+        if (DataContext is not MainViewModel vm)
+            return (900.0, 320.0);
 
-        double units = Math.Max(1, vm.Keyboard.MaxRowUnits);
-        double wKeys = Math.Max(1, vm.Keyboard.MaxRowCount);
-        double rows  = Math.Max(1, vm.Keyboard.RowCount);
+        double units  = Math.Max(1, vm.Keyboard.MaxRowUnits);
+        double wKeys  = Math.Max(1, vm.Keyboard.MaxRowCount);
+        double rows   = Math.Max(1, vm.Keyboard.RowCount);
 
-        double minW = units * MinKeyUnit + wKeys * KeyMargin + KbHorizontalPad;
+        double baseW = units * BaseKeyUnit
+                     + wKeys * KeyMargin
+                     + KbHorizontalPad;
 
-        // 키보드 바깥(헤더·경고 배너·자동완성 바 등)이 차지하는 높이
-        double nonKeyboardH = window.ActualHeight - KeyboardBorder.ActualHeight;
-        if (nonKeyboardH < 1) nonKeyboardH = vm.Keyboard.KeyRowHeight;
+        double keyboardH = rows * BaseKeyUnit
+                         + rows * KeyMargin
+                         + KbVerticalPad;
 
-        double minH = rows * MinKeyUnit + rows * KeyMargin + KbVerticalPad + nonKeyboardH;
+        double barH = _autoCompleteBarAdded ? (BaseKeyUnit + 4.0) : 0;
 
-        return (Math.Max(minW, AbsMinWindowWidth), Math.Max(minH, AbsMinWindowHeight));
+        double baseH = HeaderHeight + barH + keyboardH;
+
+        return (
+            Math.Max(baseW, AbsMinWindowWidth),
+            Math.Max(baseH, AbsMinWindowHeight)
+        );
+    }
+
+    public void ApplyScale()
+    {
+        if (Window.GetWindow(this) is not { } window) return;
+
+        var scale = _configService?.Current.Window.Scale ?? 100;
+        scale = Math.Clamp(scale, MinScale, MaxScale);
+
+        var (baseW, baseH) = ComputeBaseSize();
+
+        window.Width  = baseW * scale / 100.0;
+        window.Height = _isCollapsed
+            ? CollapsedWindowHeight
+            : baseH * scale / 100.0;
     }
 
     // T-1.5: 창 드래그 이동
@@ -228,38 +194,6 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
         {
             window.DragMove();
         }
-    }
-
-    // T-1.9: 창 리사이즈 핸들 — 드래그 시작 시 현재 비율 캡처
-    private void ResizeGrip_DragStarted(object sender, DragStartedEventArgs e)
-    {
-        if (Window.GetWindow(this) is { } window && window.Height > 0)
-            _resizeAspectRatio = window.Width / window.Height;
-    }
-
-    // T-1.9: 비율 고정(대각선) 리사이즈
-    // 가로 변화량을 주 축으로 삼아 가로/세로 비율을 유지한 채 크기 조절
-    // 최소 크기는 현재 레이아웃 × MinKeyUnit 기준으로 동적 계산
-    private void ResizeGrip_DragDelta(object sender, DragDeltaEventArgs e)
-    {
-        if (Window.GetWindow(this) is not { } window) return;
-
-        var (minWidth, minHeight) = ComputeMinWindowSize();
-
-        // 가로·세로 변화량을 대각선으로 합산해 비율 유지
-        double diagChange = (e.HorizontalChange + e.VerticalChange * _resizeAspectRatio) / 2.0;
-
-        double newWidth  = Math.Max(minWidth, window.Width + diagChange);
-        double newHeight = newWidth / _resizeAspectRatio;
-
-        if (newHeight < minHeight)
-        {
-            newHeight = minHeight;
-            newWidth  = Math.Max(minWidth, newHeight * _resizeAspectRatio);
-        }
-
-        window.Width  = newWidth;
-        window.Height = newHeight;
     }
 
     // T-7.2: 닫기 버튼 → 트레이로 숨기기
@@ -276,10 +210,6 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
 
         if (!_isCollapsed)
         {
-            CaptureAndClearHeightAnimation(window);
-            if (DataContext is MainViewModel vm)
-                _lastExpandedKeyRowHeight = vm.Keyboard.KeyRowHeight;
-            _expandedHeight = window.Height;
             AnimateWindowHeight(window, CollapsedWindowHeight);
             if (FindName("CollapseIcon") is TextBlock collapseIcon)
                 collapseIcon.Text = "▼";
@@ -287,11 +217,10 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
         }
         else
         {
-            var targetHeight = _expandedHeight > 0 ? _expandedHeight : Math.Max(window.Height, AbsMinWindowHeight);
-            AnimateWindowHeight(window, targetHeight);
+            _isCollapsed = false;
+            ApplyScale();
             if (FindName("CollapseIcon") is TextBlock collapseIcon)
                 collapseIcon.Text = "▲";
-            _isCollapsed = false;
         }
     }
 
@@ -320,12 +249,6 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
         window.BeginAnimation(Window.HeightProperty, anim);
     }
 
-    private static void AdjustWindowHeight(Window window, double delta)
-    {
-        if (Math.Abs(delta) < 0.01) return;
-        CaptureAndClearHeightAnimation(window);
-        window.Height = Math.Max(AbsMinWindowHeight, window.Height + delta);
-    }
 
     // 화면 가장자리 이동 버튼 핸들러
     private void EdgeLeftBtn_Click(object sender, RoutedEventArgs e)  => MoveToScreenEdge("Left");

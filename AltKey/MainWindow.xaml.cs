@@ -110,18 +110,10 @@ public partial class MainWindow : Window
         {
             if (!ResetPending)
             {
-                // 실제 종료 — 설정 저장
-                // 접힌 상태면 펼쳤을 때 높이를 저장 (현재 Height=28이 저장되는 것 방지)
-                var saveHeight = Height;
-                if (KeyboardViewControl?.IsCollapsed == true && KeyboardViewControl.ExpandedHeight > 0)
-                    saveHeight = KeyboardViewControl.ExpandedHeight;
-
                 _configService.Update(c =>
                 {
                     c.Window.Left   = Left;
                     c.Window.Top    = Top;
-                    c.Window.Width  = Width;
-                    c.Window.Height = saveHeight;
                 });
             }
         }
@@ -129,17 +121,17 @@ public partial class MainWindow : Window
         base.OnClosing(e);
     }
 
-    // T-1.6: 창 위치/크기 복원 (화면 경계 밖이면 중앙 하단으로 초기화)
+    // T-1.6: 창 위치 복원 (화면 경계 밖이면 중앙 하단으로 초기화)
+    // 창 크기는 KeyboardView.ApplyScale()이 담당.
     private void RestoreWindowPosition()
     {
         var cfg = _configService.Current.Window;
+        var scale = Math.Clamp(cfg.Scale, 60, 200) / 100.0;
 
-        // 저장된 크기를 그대로 복원 (사용자가 줄인 크기가 다음 실행에서 커지지 않도록).
-        // 절대 하한은 KeyboardView.AbsMinWindow* 와 일치.
-        Width  = Math.Max(400, cfg.Width);
-        Height = Math.Max(180, cfg.Height);
+        // 위치 계산용 예상 크기 (실제 창 크기는 ApplyScale()에서 설정)
+        var expectedWidth  = 900 * scale;
+        var expectedHeight = 320 * scale;
 
-        // 화면 작업 영역 (가상 스크린 전체)
         var screen = System.Windows.SystemParameters.WorkArea;
 
         double left = cfg.Left;
@@ -147,15 +139,15 @@ public partial class MainWindow : Window
 
         // -1이거나 화면 밖이면 화면 중앙 하단으로 초기화
         bool offScreen = left < 0 || top < 0
-            || left + Width  > screen.Right  + 200   // 일부 걸쳐 있으면 허용
-            || top  + Height > screen.Bottom + 200
+            || left + expectedWidth  > screen.Right  + 200
+            || top  + expectedHeight > screen.Bottom + 200
             || left < screen.Left - 200
             || top  < screen.Top  - 200;
 
         if (offScreen)
         {
-            Left = screen.Left + (screen.Width  - Width)  / 2;
-            Top  = screen.Top  + (screen.Height - Height) * 0.75; // 화면 하단 쪽
+            Left = screen.Left + (screen.Width  - expectedWidth)  / 2;
+            Top  = screen.Top  + (screen.Height - expectedHeight) * 0.75;
         }
         else
         {

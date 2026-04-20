@@ -4,8 +4,9 @@ public class WindowConfig
 {
     public double Left   { get; set; } = -1;   // -1 = 미설정, RestoreWindowPosition에서 화면 중앙 하단으로 계산
     public double Top    { get; set; } = -1;
-    public double Width  { get; set; } = 900;
-    public double Height { get; set; } = 320;
+
+    /// 창 크기 비율 (퍼센트). 기본 100. 허용 범위 60~200.
+    public int Scale { get; set; } = 100;
 }
 
 public class AppConfig

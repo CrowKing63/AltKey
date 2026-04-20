@@ -268,25 +268,6 @@
 
         </DockPanel>
 
-        <!-- 우하단 리사이즈 그립 (T-1.9) — Grid에 직접 배치해 항상 최상단에 표시 -->
-        <Thumb x:Name="ResizeGrip"
-               Width="20" Height="20"
-               HorizontalAlignment="Right" VerticalAlignment="Bottom"
-               Cursor="SizeNWSE"
-               Panel.ZIndex="5"
-               DragStarted="ResizeGrip_DragStarted"
-               DragDelta="ResizeGrip_DragDelta">
-            <Thumb.Template>
-                <ControlTemplate>
-                    <Grid Background="Transparent">
-                        <Path Data="M 10 2 L 18 2 L 18 10 M 10 10 L 18 10 L 18 18"
-                              Stroke="{DynamicResource TitleFg}" StrokeThickness="1.5" Fill="Transparent"
-                              HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </Grid>
-                </ControlTemplate>
-            </Thumb.Template>
-        </Thumb>
-
         <!-- T-8.3: 이모지 패널 오버레이 (헤더 바 바로 아래, 키보드 위에 표시) -->
         <views:EmojiPanel
             DataContext="{Binding Emoji}"

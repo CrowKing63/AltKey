@@ -73,6 +73,17 @@
                                   IsChecked="{Binding AlwaysOnTop}"
                                   Margin="0,0,0,16"/>
 
+                        <!-- 창 크기 (Scale %) -->
+                        <TextBlock Text="창 크기 (%)" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
+                        <ctrl:NumericAdjuster Value="{Binding WindowScale}"
+                                              Minimum="60" Maximum="200" Step="10" DecimalPlaces="0"
+                                              ButtonBackground="{DynamicResource SettingsHighlight}"
+                                              ButtonForeground="{DynamicResource SettingsFg}"
+                                              TextBoxBackground="{DynamicResource SettingsHighlight}"
+                                              TextBoxForeground="{DynamicResource SettingsFg}"
+                                              TextBoxBorderBrush="{DynamicResource SettingsBorder}"
+                                              Margin="0,0,0,16"/>
+
                         <!-- 유휴 투명도 -->
                         <TextBlock Text="유휴 투명도" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
                         <ctrl:NumericAdjuster Value="{Binding OpacityIdle}"
