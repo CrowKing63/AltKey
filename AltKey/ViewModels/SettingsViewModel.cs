@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Windows;
+using AltKey.Models;
 using AltKey.Services;
 using WpfApp = System.Windows.Application;
 using WpfMsgBox = System.Windows.MessageBox;
@@ -356,6 +357,33 @@ public partial class SettingsViewModel : ObservableObject
     }
 
     // ── T-5.12: 관리자 권한으로 재시작 ──────────────────────────────────────
+
+    [RelayCommand]
+    private void ResetWindowLayout()
+    {
+        _configService.Update(c =>
+        {
+            c.Window = new WindowConfig();
+            c.AutoCompleteEnabled = false;
+        });
+
+        var executablePath = Environment.ProcessPath;
+        if (string.IsNullOrEmpty(executablePath)) return;
+
+        try
+        {
+            if (WpfApp.Current.MainWindow is MainWindow mw)
+                mw.ResetPending = true;
+
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = executablePath,
+                UseShellExecute = true,
+            });
+            ShutdownCurrentApp();
+        }
+        catch (Win32Exception) { }
+    }
 
     [RelayCommand]
     private void RestartAsAdmin()

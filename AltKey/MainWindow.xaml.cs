@@ -22,6 +22,9 @@ public partial class MainWindow : Window
     /// T-5.6: 실제 종료(Shutdown) 여부 플래그
     public bool IsShuttingDown { get; set; }
 
+    /// 창 레이아웃 초기화 후 종료 시 현재 창 설정 저장을 건너뛴다.
+    public bool ResetPending { get; set; }
+
     /// T-5.6: 트레이 풍선 알림이 이미 표시됐는지
     private bool _trayNotified;
 
@@ -105,19 +108,22 @@ public partial class MainWindow : Window
         }
         else
         {
-            // 실제 종료 — 설정 저장
-            // 접힌 상태면 펼쳤을 때 높이를 저장 (현재 Height=28이 저장되는 것 방지)
-            var saveHeight = Height;
-            if (KeyboardViewControl?.IsCollapsed == true && KeyboardViewControl.ExpandedHeight > 0)
-                saveHeight = KeyboardViewControl.ExpandedHeight;
-
-            _configService.Update(c =>
+            if (!ResetPending)
             {
-                c.Window.Left   = Left;
-                c.Window.Top    = Top;
-                c.Window.Width  = Width;
-                c.Window.Height = saveHeight;
-            });
+                // 실제 종료 — 설정 저장
+                // 접힌 상태면 펼쳤을 때 높이를 저장 (현재 Height=28이 저장되는 것 방지)
+                var saveHeight = Height;
+                if (KeyboardViewControl?.IsCollapsed == true && KeyboardViewControl.ExpandedHeight > 0)
+                    saveHeight = KeyboardViewControl.ExpandedHeight;
+
+                _configService.Update(c =>
+                {
+                    c.Window.Left   = Left;
+                    c.Window.Top    = Top;
+                    c.Window.Width  = Width;
+                    c.Window.Height = saveHeight;
+                });
+            }
         }
 
         base.OnClosing(e);

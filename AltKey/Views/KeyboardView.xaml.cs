@@ -19,9 +19,9 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
 
     public bool IsCollapsed => _isCollapsed;
     public double ExpandedHeight => _expandedHeight;
+    public double AppliedBarHeight => _appliedBarHeight;
+    public bool AutoCompleteBarApplied => _autoCompleteBarAdded;
 
-    /// AutoComplete가 켜져 있는 동안 창 높이에 반영된 바 높이(= 당시 KeyRowHeight).
-    /// 런타임에 바를 끌 때 정확히 같은 픽셀만큼 창을 줄이기 위해 추적한다.
     private double _appliedBarHeight = 0;
     private bool _autoCompleteBarAdded = false;
     private bool _initialized = false;
@@ -90,8 +90,6 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
 
         if (!_initialized)
         {
-            // 최초 Loaded: 저장된 창 높이를 그대로 사용.
-            // UpdateKeyUnit의 폐쇄형 계산이 바 유무에 따라 KeyUnit을 자동 조정한다.
             _autoCompleteBarAdded = wantBar;
             _appliedBarHeight = wantBar ? vm.Keyboard.KeyRowHeight : 0;
             _initialized = true;
