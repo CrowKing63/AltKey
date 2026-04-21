@@ -86,12 +86,14 @@ dist/
 
 # AltKey: agent working directories
 .agent/
+AGENTS.md
 .claude/
 .gemini/
 .qwen/
 
 # Testing notes
 TESTING.md
+TODO List.md
 
 # Installer build output
 installer/Output/

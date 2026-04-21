@@ -16,6 +16,6 @@
   - `KoreanInputModuleQuietEnglishTests.cs` — 영어 입력·대문자·숫자/기호 테스트
   - `KoreanInputModuleBackspaceTests.cs` — 한글/영어 백스페이스 테스트
 - **테스트 작성 시 주의사항**:
-  - 새 테스트는 기능별로 알맞은 파일에 추가할 것. 한 줄도 400줄을 넘지 않게 유지한다.
+  - 새 테스트는 기능별로 알맞은 파일에 추가할 것. 한 파일도 400줄을 넘지 않게 유지한다.
   - 과거 버그 기반 주석(예: "HasActiveModifiers=true이면 SendUnicode는 호출되지 않음")은 버그 수정 후 잘못된 정보가 되므로, 테스트 주석에는 **무엇을 검증하는지**만 적고 구현 내부 동작 추측은 적지 않는다.
   - `FakeInputService`, `KoreanDictionaryTestable`, `EnglishDictionaryTestable`, `TestSlotFactory`는 `public`이며 `TestHelpers.cs`에 정의되어 있다. 새 테스트에서 자유롭게 사용할 수 있다.
