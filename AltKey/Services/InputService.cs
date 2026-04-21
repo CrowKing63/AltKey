@@ -155,6 +155,16 @@ public class InputService
             StickyStateChanged?.Invoke();
     }
 
+    /// 모든 수식자 키(sticky + locked)를 즉시 해제한다. 창 닫힘/숨김 시 호출.
+    public void ReleaseAllModifiers()
+    {
+        foreach (var mod in _stickyKeys.Union(_lockedKeys))
+            SendKeyUp(mod);
+        _stickyKeys.Clear();
+        _lockedKeys.Clear();
+        StickyStateChanged?.Invoke();
+    }
+
     // ── T-2.6: KeyAction 디스패처 ────────────────────────────────────────────
     public void HandleAction(KeyAction action)
     {

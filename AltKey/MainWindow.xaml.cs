@@ -16,6 +16,7 @@ public partial class MainWindow : Window
     private readonly TrayService    _trayService;
     private readonly HotkeyService  _hotkeyService;
     private readonly MainViewModel  _viewModel;
+    private readonly InputService   _inputService;
 
     private DispatcherTimer _fadeTimer = null!;
 
@@ -33,7 +34,8 @@ public partial class MainWindow : Window
         ConfigService  configService,
         TrayService    trayService,
         HotkeyService  hotkeyService,
-        MainViewModel  viewModel)
+        MainViewModel  viewModel,
+        InputService   inputService)
     {
         InitializeComponent();
         DataContext = viewModel;
@@ -43,6 +45,7 @@ public partial class MainWindow : Window
         _trayService   = trayService;
         _hotkeyService = hotkeyService;
         _viewModel     = viewModel;
+        _inputService  = inputService;
 
         // T-5.5: 트레이 초기화
         _trayService.Initialize(this);
@@ -93,6 +96,8 @@ public partial class MainWindow : Window
     // T-1.6 / T-5.6: 창 닫기 처리
     protected override void OnClosing(CancelEventArgs e)
     {
+        _inputService.ReleaseAllModifiers();
+
         if (!IsShuttingDown)
         {
             // 트레이로 숨기기

@@ -14,6 +14,8 @@
         <Setter Property="FontSize"         Value="{DynamicResource KeyFontSize}"/>
         <Setter Property="Margin"           Value="2"/>
         <Setter Property="Cursor"           Value="Hand"/>
+        <Setter Property="Focusable"        Value="False"/>
+        <Setter Property="IsTabStop"        Value="False"/>
         <Setter Property="AutomationProperties.Name" Value="{Binding AccessibleName}"/>
         <Setter Property="AutomationProperties.HelpText" Value="{Binding AccessibleHelp}"/>
         <Setter Property="AutomationProperties.AutomationId" Value="{Binding AutomationId}"/>

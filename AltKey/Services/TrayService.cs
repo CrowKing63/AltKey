@@ -165,7 +165,6 @@ public class TrayService : IDisposable
             else
             {
                 _mainWindow.Show();
-                _mainWindow.Activate();
             }
         });
     }
