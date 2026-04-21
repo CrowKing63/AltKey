@@ -39,10 +39,6 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private ObservableCollection<string> availableLayouts = [];
 
-    /// T-5.10: 설정 패널 표시 여부
-    [ObservableProperty]
-    private bool isSettingsOpen;
-
     // T-9.5: 업데이트 인디케이터 바인딩용 속성
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasUpdate))]
@@ -409,9 +405,6 @@ public partial class MainViewModel : ObservableObject
         DownloadProgress = 0;
         UpdateStatusMessage = "다운로드가 취소되었습니다.";
     }
-
-    [RelayCommand]
-    private void ToggleSettings() => IsSettingsOpen = !IsSettingsOpen;
 
     [RelayCommand]
     private void ToggleEmojiPanel() => Emoji.IsVisible = !Emoji.IsVisible;

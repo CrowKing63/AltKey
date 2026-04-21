@@ -100,7 +100,7 @@ public class TrayService : IDisposable
 
         menu.Items.Add("설정", null, (_, _) =>
             Application.Current.Dispatcher.Invoke(() =>
-                _mainViewModel.IsSettingsOpen = true));
+                _mainViewModel.Settings.OpenSettingsCommand.Execute(null)));
         menu.Items.Add("종료", null, (_, _) =>
             Application.Current.Dispatcher.Invoke(() =>
             {

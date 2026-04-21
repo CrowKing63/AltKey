@@ -360,6 +360,28 @@ public partial class KeyboardViewModel : ObservableObject
             return;
         }
 
+        if (_inputService.IsForegroundOwnWindow())
+        {
+            _autoComplete.CancelComposition();
+
+            if (FocusTracker.LastFocused is { IsVisible: true } tb)
+                System.Windows.Input.Keyboard.Focus(tb);
+
+            if (IsSeparatorKey(slot))
+            {
+                if (slot.Action is not null)
+                    _inputService.HandleAction(slot.Action);
+            }
+            else if (slot.Action is not null)
+            {
+                _inputService.HandleAction(slot.Action);
+            }
+
+            UpdateModifierState();
+            KeyTapped?.Invoke();
+            return;
+        }
+
         if (IsSeparatorKey(slot))
         {
             _autoComplete.OnSeparator();

@@ -17,7 +17,6 @@ using CommunityToolkit.Mvvm.Input;
 
 namespace AltKey.ViewModels;
 
-/// T-5.10 / T-5.12 / T-8 / T-9.5: 설정 패널 ViewModel
 public partial class SettingsViewModel : ObservableObject
 {
     private readonly ConfigService        _configService;
@@ -33,6 +32,8 @@ public partial class SettingsViewModel : ObservableObject
     private readonly InstallerService     _installerService;
 
     private CancellationTokenSource?      _downloadCts;
+
+    private AltKey.Views.SettingsWindow? _settingsWindow;
 
     // ── Observable 속성 ─────────────────────────────────────────────────────
 
@@ -341,6 +342,26 @@ public partial class SettingsViewModel : ObservableObject
                 .Where(p => !string.IsNullOrWhiteSpace(p.ProcessName))
                 .ToDictionary(p => p.ProcessName.ToLower(), p => p.LayoutName));
     }
+
+    // ── 설정 창 열기 (싱글톤) ──────────────────────────────────────────────
+
+    [RelayCommand]
+    private void OpenSettings()
+    {
+        if (_settingsWindow is { } win)
+        {
+            win.Activate();
+            return;
+        }
+
+        _settingsWindow = new AltKey.Views.SettingsWindow(this)
+        {
+            Owner = WpfApp.Current.MainWindow
+        };
+        _settingsWindow.Show();
+    }
+
+    internal void OnSettingsWindowClosed() => _settingsWindow = null;
 
     // ── T-9.4: 레이아웃 편집기 열기 ──────────────────────────────────────────
 

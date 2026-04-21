@@ -1,5 +1,4 @@
 using System.Windows;
-using System.Windows.Input;
 using AltKey.Services;
 using AltKey.ViewModels;
 
@@ -7,16 +6,15 @@ using WpfKeyEventArgs = System.Windows.Input.KeyEventArgs;
 
 namespace AltKey.Views;
 
-public partial class UserDictionaryEditorWindow : Window
+public partial class SettingsWindow : Window
 {
-    private readonly UserDictionaryEditorViewModel _vm;
+    private readonly SettingsViewModel _vm;
 
-    public UserDictionaryEditorWindow(UserDictionaryEditorViewModel vm)
+    public SettingsWindow(SettingsViewModel vm)
     {
         InitializeComponent();
         _vm = vm;
         DataContext = vm;
-        _vm.OnLoaded();
         FocusTracker.Register(this);
     }
 
@@ -24,13 +22,13 @@ public partial class UserDictionaryEditorWindow : Window
 
     protected override void OnKeyDown(WpfKeyEventArgs e)
     {
-        if (e.Key == Key.Escape) { Close(); return; }
+        if (e.Key == System.Windows.Input.Key.Escape) { Close(); return; }
         base.OnKeyDown(e);
     }
 
     protected override void OnClosed(System.EventArgs e)
     {
-        _vm.OnClosing();
+        _vm.OnSettingsWindowClosed();
         base.OnClosed(e);
     }
 }

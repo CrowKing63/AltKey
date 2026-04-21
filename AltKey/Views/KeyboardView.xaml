@@ -155,7 +155,7 @@
                         HorizontalAlignment="Right" Margin="0,0,96,0"
                         Background="Transparent" Foreground="{DynamicResource TitleFg}"
                         BorderThickness="0" Cursor="Hand"
-                        Command="{Binding ToggleSettingsCommand}"
+                        Command="{Binding Settings.OpenSettingsCommand}"
                         ToolTip="설정"
                         AutomationProperties.Name="설정">
                     <TextBlock Text="⚙" FontSize="14"/>
@@ -309,15 +309,5 @@
             Margin="0,28,0,0"
             Panel.ZIndex="6"/>
 
-        <!-- T-5.10: 설정 패널 오버레이 (키보드 전체 위에 표시) -->
-        <views:SettingsView
-            x:Name="SettingsPanel"
-            DataContext="{Binding Settings}"
-            Visibility="{Binding DataContext.IsSettingsOpen,
-                RelativeSource={RelativeSource AncestorType=UserControl},
-                Converter={StaticResource BoolToVis}}"
-            Panel.ZIndex="10"
-            Margin="8,4,8,4"/>
-
-    </Grid>
+        </Grid>
 </UserControl>

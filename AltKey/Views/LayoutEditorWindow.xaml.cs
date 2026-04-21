@@ -1,4 +1,5 @@
 using System.Windows;
+using AltKey.Services;
 using AltKey.ViewModels;
 
 namespace AltKey.Views;
@@ -12,6 +13,7 @@ public partial class LayoutEditorWindow : Window
         InitializeComponent();
         _vm = vm;
         DataContext = vm;
+        FocusTracker.Register(this);
     }
 
     private void SaveAsButton_Click(object sender, RoutedEventArgs e)

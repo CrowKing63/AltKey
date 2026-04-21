@@ -17,10 +17,21 @@ public enum InputMode
 public class InputService
 {
     private readonly bool _isElevated;
+    private static readonly uint _ownProcessId = (uint)Environment.ProcessId;
 
     public InputMode Mode { get; private set; }
 
     public bool IsElevated => _isElevated;
+
+    /// 포그라운드 윈도우가 AltKey 프로세스 소유인지 확인.
+    /// true면 한글 조합을 건너뛰고 가상 키만 전송.
+    public bool IsForegroundOwnWindow()
+    {
+        var hwnd = Win32.GetForegroundWindow();
+        if (hwnd == IntPtr.Zero) return false;
+        Win32.GetWindowThreadProcessId(hwnd, out var pid);
+        return pid == _ownProcessId;
+    }
 
     public event Action<InputMode>? ModeChanged;
 
