@@ -13,7 +13,7 @@ public class WindowService
     {
         int exStyle = GetWindowLong(hwnd, GWL_EXSTYLE);
         SetWindowLong(hwnd, GWL_EXSTYLE,
-            exStyle | WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW);
+            exStyle | WS_EX_NOACTIVATE);
     }
 
     /// <summary>

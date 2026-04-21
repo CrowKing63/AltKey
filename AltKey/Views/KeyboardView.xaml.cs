@@ -196,7 +196,12 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
         }
     }
 
-    // T-7.2: 닫기 버튼 → 트레이로 숨기기
+    private void MinimizeButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (Window.GetWindow(this) is { } window)
+            window.WindowState = WindowState.Minimized;
+    }
+
     private void CloseButton_Click(object sender, RoutedEventArgs e)
     {
         Window.GetWindow(this)?.Hide();

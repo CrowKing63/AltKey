@@ -56,6 +56,15 @@ public partial class MainWindow : Window
             PlayOpenAnimation();
         };
 
+        StateChanged += (_, _) =>
+        {
+            if (WindowState == WindowState.Normal)
+            {
+                Opacity = 1.0;
+                BeginAnimation(OpacityProperty, null);
+            }
+        };
+
     }
 
     protected override void OnSourceInitialized(EventArgs e)

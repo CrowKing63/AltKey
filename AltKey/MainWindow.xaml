@@ -10,7 +10,7 @@
         Background="Transparent"
         ShowActivated="False"
         Topmost="True"
-        ShowInTaskbar="False"
+        ShowInTaskbar="True"
         ResizeMode="NoResize"
         Focusable="False"
         KeyboardNavigation.TabNavigation="None"

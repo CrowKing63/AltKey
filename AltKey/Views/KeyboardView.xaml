@@ -90,31 +90,9 @@
                     </Grid>
                 </Border>
 
-                <!-- T-5.10 / T-7.2: 기어(설정) 버튼 -->
-                <Button x:Name="SettingsButton" Width="32" Height="28"
-                        HorizontalAlignment="Right" Margin="0,0,248,0"
-                        Background="Transparent" Foreground="{DynamicResource TitleFg}"
-                        BorderThickness="0" Cursor="Hand"
-                        Command="{Binding ToggleSettingsCommand}"
-                        ToolTip="설정"
-                        AutomationProperties.Name="설정">
-                    <TextBlock Text="⚙" FontSize="14"/>
-                </Button>
-
-                <!-- T-8.3: 이모지 패널 토글 버튼 -->
+                <!-- 클립보드 패널 토글 버튼 -->
                 <Button Width="32" Height="28"
-                        HorizontalAlignment="Right" Margin="0,0,208,0"
-                        Background="Transparent" Foreground="{DynamicResource TitleFg}"
-                        BorderThickness="0" Cursor="Hand"
-                        Command="{Binding ToggleEmojiPanelCommand}"
-                        ToolTip="이모지 패널"
-                        AutomationProperties.Name="이모지 패널">
-                    <TextBlock Text="😊" FontSize="14"/>
-                </Button>
-
-                <!-- T-8.4: 클립보드 패널 토글 버튼 -->
-                <Button Width="32" Height="28"
-                        HorizontalAlignment="Right" Margin="0,0,168,0"
+                        HorizontalAlignment="Right" Margin="0,0,232,0"
                         Background="Transparent" Foreground="{DynamicResource TitleFg}"
                         BorderThickness="0" Cursor="Hand"
                         Command="{Binding ToggleClipboardPanelCommand}"
@@ -123,21 +101,20 @@
                     <TextBlock Text="📋" FontSize="14"/>
                 </Button>
 
-                <!-- 07: OS IME 한/영 비상 버튼 -->
-                <Button Width="40" Height="28"
-                        HorizontalAlignment="Right" Margin="0,0,80,0"
+                <!-- 이모지 패널 토글 버튼 -->
+                <Button Width="32" Height="28"
+                        HorizontalAlignment="Right" Margin="0,0,200,0"
                         Background="Transparent" Foreground="{DynamicResource TitleFg}"
                         BorderThickness="0" Cursor="Hand"
-                        Command="{Binding SendOsImeHangulCommand}"
-                        ToolTip="OS IME 한/영 전환 (거의 쓸 일이 없는 비상 버튼)"
-                        AutomationProperties.Name="OS IME 한영 전환"
-                        AutomationProperties.HelpText="거의 사용할 일이 없는 비상용 버튼입니다.">
-                    <TextBlock Text="한/영" FontSize="10"/>
+                        Command="{Binding ToggleEmojiPanelCommand}"
+                        ToolTip="이모지 패널"
+                        AutomationProperties.Name="이모지 패널">
+                    <TextBlock Text="😊" FontSize="14"/>
                 </Button>
 
-                <!-- T-9.3 / 06: 자동완성 토글 버튼 -->
+                <!-- 자동완성 토글 버튼 -->
                 <ToggleButton Width="32" Height="28"
-                        HorizontalAlignment="Right" Margin="0,0,128,0"
+                        HorizontalAlignment="Right" Margin="0,0,168,0"
                         Background="{Binding AutoCompleteEnabled, Converter={StaticResource BoolToVis}, ConverterParameter=Background}"
                         Foreground="{DynamicResource TitleFg}"
                         BorderThickness="0" Cursor="Hand"
@@ -149,9 +126,32 @@
                     <TextBlock Text="AC" FontWeight="Bold" FontSize="12"/>
                 </ToggleButton>
 
-                <!-- T-7.2: 접기/펼치기 버튼 -->
+                <!-- OS IME 한/영 비상 버튼 -->
+                <Button Width="40" Height="28"
+                        HorizontalAlignment="Right" Margin="0,0,128,0"
+                        Background="Transparent" Foreground="{DynamicResource TitleFg}"
+                        BorderThickness="0" Cursor="Hand"
+                        Command="{Binding SendOsImeHangulCommand}"
+                        ToolTip="OS IME 한/영 전환 (거의 쓸 일이 없는 비상 버튼)"
+                        AutomationProperties.Name="OS IME 한영 전환"
+                        AutomationProperties.HelpText="거의 사용할 일이 없는 비상용 버튼입니다.">
+                    <TextBlock Text="한/영" FontSize="10"/>
+                </Button>
+
+                <!-- 기어(설정) 버튼 -->
+                <Button x:Name="SettingsButton" Width="32" Height="28"
+                        HorizontalAlignment="Right" Margin="0,0,96,0"
+                        Background="Transparent" Foreground="{DynamicResource TitleFg}"
+                        BorderThickness="0" Cursor="Hand"
+                        Command="{Binding ToggleSettingsCommand}"
+                        ToolTip="설정"
+                        AutomationProperties.Name="설정">
+                    <TextBlock Text="⚙" FontSize="14"/>
+                </Button>
+
+                <!-- 접기/펼치기 버튼 -->
                 <Button x:Name="CollapseButton" Width="32" Height="28"
-                        HorizontalAlignment="Right" Margin="0,0,32,0"
+                        HorizontalAlignment="Right" Margin="0,0,64,0"
                         Background="Transparent" Foreground="{DynamicResource TitleFg}"
                         BorderThickness="0" Cursor="Hand"
                         Click="CollapseButton_Click"
@@ -160,7 +160,18 @@
                     <TextBlock x:Name="CollapseIcon" Text="▲" FontSize="10"/>
                 </Button>
 
-                <!-- T-7.2: 닫기 버튼 → 트레이로 숨기기 -->
+                <!-- 최소화 버튼 -->
+                <Button x:Name="MinimizeButton" Width="32" Height="28"
+                        HorizontalAlignment="Right" Margin="0,0,32,0"
+                        Background="Transparent" Foreground="{DynamicResource TitleFg}"
+                        BorderThickness="0" Cursor="Hand"
+                        Click="MinimizeButton_Click"
+                        ToolTip="최소화"
+                        AutomationProperties.Name="최소화">
+                    <TextBlock Text="▬" FontSize="12"/>
+                </Button>
+
+                <!-- 닫기 버튼 → 트레이로 숨기기 -->
                 <Button x:Name="CloseButton" Width="32" Height="28"
                         HorizontalAlignment="Right"
                         Background="Transparent" Foreground="{DynamicResource TitleFg}"
