@@ -400,4 +400,247 @@ public class KoreanInputModuleHangulTests : KoreanInputModuleTestBase
 
         Assert.NotNull(captured);
     }
+
+    [Fact]
+    public void CancelComposition_resets_composer_and_tracked_length()
+    {
+        var (module, input, _) = TestSlotFactory.CreateModuleWithInput();
+
+        module.HandleKey(ㅅ_slot, ctxNoModifiers);
+        module.HandleKey(ㅣ_slot, ctxNoModifiers);
+        module.HandleKey(ㄱ_slot, ctxNoModifiers);
+        module.HandleKey(ㅏ_slot, ctxNoModifiers);
+        module.HandleKey(ㄴ_slot, ctxNoModifiers);
+
+        Assert.Equal("시간", module.CurrentWord);
+
+        module.CancelComposition();
+
+        Assert.Equal("", module.CurrentWord);
+        Assert.Equal(0, input.TrackedOnScreenLength);
+    }
+
+    [Fact]
+    public void CancelComposition_resets_lastCommittedWord_and_suggestionContext()
+    {
+        var (module, _, koDict, _) = TestSlotFactory.CreateModuleWithBothDicts();
+
+        module.HandleKey(ㄱ_slot, ctxNoModifiers);
+        module.HandleKey(ㅏ_slot, ctxNoModifiers);
+        module.HandleKey(ㄴ_slot, ctxNoModifiers);
+        module.HandleKey(ㅏ_slot, ctxNoModifiers);
+        module.OnSeparator();
+
+        module.HandleKey(ㄷ_slot, ctxNoModifiers);
+        module.HandleKey(ㅏ_slot, ctxNoModifiers);
+        module.HandleKey(ㄹ_slot, ctxNoModifiers);
+        module.HandleKey(ㅏ_slot, ctxNoModifiers);
+        module.CancelComposition();
+
+        module.HandleKey(ㄱ_slot, ctxNoModifiers);
+        module.HandleKey(ㅏ_slot, ctxNoModifiers);
+        module.HandleKey(ㄴ_slot, ctxNoModifiers);
+        module.HandleKey(ㅏ_slot, ctxNoModifiers);
+        module.OnSeparator();
+
+        Assert.False(koDict.BigramStore.Contains("다라", "가나"));
+    }
+
+    [Fact]
+    public void AcceptSuggestion_then_next_word_no_bigram_context()
+    {
+        var (module, _, koDict, _) = TestSlotFactory.CreateModuleWithBothDicts();
+
+        for (int i = 0; i < 3; i++) koDict.RecordBigram("안녕", "하세요");
+        koDict.RecordWord("하세요");
+
+        module.HandleKey(ㅇ_slot, ctxNoModifiers);
+        module.HandleKey(ㅏ_slot, ctxNoModifiers);
+        module.HandleKey(ㄴ_slot, ctxNoModifiers);
+        module.HandleKey(ㄴ_slot, ctxNoModifiers);
+        module.HandleKey(ㅕ_slot, ctxNoModifiers);
+        module.HandleKey(ㅇ_slot, ctxNoModifiers);
+        module.OnSeparator();
+
+        module.HandleKey(ㅎ_slot, ctxNoModifiers);
+        module.AcceptSuggestion("하세요");
+
+        module.HandleKey(ㅇ_slot, ctxNoModifiers);
+        module.HandleKey(ㅏ_slot, ctxNoModifiers);
+        module.HandleKey(ㅇ_slot, ctxNoModifiers);
+        module.OnSeparator();
+
+        Assert.False(koDict.BigramStore.Contains("하세요", "아앙"));
+    }
+
+    [Fact]
+    public void CommitCurrentWord_then_next_word_no_bigram_context()
+    {
+        var (module, _, koDict, _) = TestSlotFactory.CreateModuleWithBothDicts();
+
+        module.HandleKey(ㅅ_slot, ctxNoModifiers);
+        module.HandleKey(ㅣ_slot, ctxNoModifiers);
+        module.HandleKey(ㄱ_slot, ctxNoModifiers);
+        module.HandleKey(ㅏ_slot, ctxNoModifiers);
+        module.HandleKey(ㄴ_slot, ctxNoModifiers);
+        module.CommitCurrentWord();
+
+        module.HandleKey(ㅇ_slot, ctxNoModifiers);
+        module.HandleKey(ㅣ_slot, ctxNoModifiers);
+        module.OnSeparator();
+
+        Assert.False(koDict.BigramStore.Contains("시간", "이"));
+    }
+
+    [Fact]
+    public void FinalizeComposition_then_next_word_has_bigram_context()
+    {
+        var (module, _, koDict, _) = TestSlotFactory.CreateModuleWithBothDicts();
+
+        module.HandleKey(ㅅ_slot, ctxNoModifiers);
+        module.HandleKey(ㅣ_slot, ctxNoModifiers);
+        module.HandleKey(ㄱ_slot, ctxNoModifiers);
+        module.HandleKey(ㅏ_slot, ctxNoModifiers);
+        module.HandleKey(ㄴ_slot, ctxNoModifiers);
+        module.OnSeparator();
+
+        module.HandleKey(ㅎ_slot, ctxNoModifiers);
+        module.HandleKey(ㅐ_slot, ctxNoModifiers);
+        module.HandleKey(ㄷ_slot, ctxNoModifiers);
+        module.HandleKey(ㅏ_slot, ctxNoModifiers);
+        module.HandleKey(ㄹ_slot, ctxNoModifiers);
+        module.OnSeparator();
+
+        Assert.True(koDict.BigramStore.Contains("시간", "해달"));
+    }
+
+    [Fact]
+    public void CancelComposition_does_not_learn_word()
+    {
+        var (module, _, dict) = TestSlotFactory.CreateModuleWithInput();
+
+        module.HandleKey(ㅅ_slot, ctxNoModifiers);
+        module.HandleKey(ㅣ_slot, ctxNoModifiers);
+        module.HandleKey(ㄱ_slot, ctxNoModifiers);
+        module.HandleKey(ㅏ_slot, ctxNoModifiers);
+        module.HandleKey(ㄴ_slot, ctxNoModifiers);
+        module.CancelComposition();
+
+        Assert.Equal(0, dict.UserWordCount);
+    }
+
+    [Fact]
+    public void AcceptSuggestion_then_type_new_word_with_realistic_tracked_length()
+    {
+        var (module, input, koDict) = TestSlotFactory.CreateModuleWithInput();
+
+        // "친척" = ㅊ ㅣ ㄴ ㅊ ㅓ ㄱ — 매 키마다 TrackedOnScreenLength 반영
+        module.HandleKey(ㅊ_slot, CtxFromInput(input));
+        module.HandleKey(ㅣ_slot, CtxFromInput(input));
+        module.HandleKey(ㄴ_slot, CtxFromInput(input));
+        module.HandleKey(ㅊ_slot, CtxFromInput(input));
+        module.HandleKey(ㅓ_slot, CtxFromInput(input));
+        module.HandleKey(ㄱ_slot, CtxFromInput(input));
+
+        Assert.Equal("친척", module.CurrentWord);
+
+        // AcceptSuggestion("친척")
+        var (bs, word) = module.AcceptSuggestion("친척");
+        input.SendAtomicReplace(bs, word);
+        input.ResetTrackedLength();
+
+        Assert.Equal("", module.CurrentWord);
+
+        // "ㅇ" 입력 — TrackedOnScreenLength = 0 (리셋된 상태)
+        module.HandleKey(ㅇ_slot, CtxFromInput(input));
+        Assert.Equal("ㅇ", module.CurrentWord);
+
+        // "ㅔ" → "에"
+        module.HandleKey(ㅔ_slot, CtxFromInput(input));
+        Assert.Equal("에", module.CurrentWord);
+
+        // "ㄱ" → 종성 → "엑"
+        module.HandleKey(ㄱ_slot, CtxFromInput(input));
+        Assert.Equal("엑", module.CurrentWord);
+
+        // "ㅔ" → 종성→초성 전이 → "에게"
+        module.HandleKey(ㅔ_slot, CtxFromInput(input));
+        Assert.Equal("에게", module.CurrentWord);
+
+        // 스페이스
+        module.OnSeparator();
+
+        Assert.DoesNotContain("친척에게", koDict.GetSuggestions("친척", 10));
+    }
+
+    [Fact]
+    public void DEBUG_AcceptSuggestion_then_type_new_word()
+    {
+        var (module, input, koDict) = TestSlotFactory.CreateModuleWithInput();
+
+        // 1. "시간" 입력
+        module.HandleKey(ㅅ_slot, ctxNoModifiers);
+        module.HandleKey(ㅣ_slot, ctxNoModifiers);
+        module.HandleKey(ㄱ_slot, ctxNoModifiers);
+        module.HandleKey(ㅏ_slot, ctxNoModifiers);
+        module.HandleKey(ㄴ_slot, ctxNoModifiers);
+
+        Assert.Equal("시간", module.CurrentWord);
+
+        // 2. AcceptSuggestion("시간")
+        var (bs, word) = module.AcceptSuggestion("시간");
+        input.SendAtomicReplace(bs, word);
+        input.ResetTrackedLength();
+
+        // 3. "이" 입력
+        module.HandleKey(TestSlotFactory.Jamo("ㅇ", null, VirtualKeyCode.VK_D), ctxNoModifiers);
+        module.HandleKey(TestSlotFactory.Jamo("ㅣ", null, VirtualKeyCode.VK_I), ctxNoModifiers);
+
+        // 이 시점 CurrentWord가 "이"여야 함
+        Assert.Equal("이", module.CurrentWord);
+
+        // 4. 스페이스
+        module.OnSeparator();
+
+        // "시간이"는 학습되지 않아야 함
+        Assert.DoesNotContain("시간이", koDict.GetSuggestions("시간", 5));
+    }
+
+    [Fact]
+    public void CommitCurrentWord_resets_composer_and_tracked_length()
+    {
+        var (module, input, koDict) = TestSlotFactory.CreateModuleWithInput();
+
+        // "친척" 입력 — 매 키마다 TrackedOnScreenLength 반영
+        module.HandleKey(ㅊ_slot, CtxFromInput(input));
+        module.HandleKey(ㅣ_slot, CtxFromInput(input));
+        module.HandleKey(ㄴ_slot, CtxFromInput(input));
+        module.HandleKey(ㅊ_slot, CtxFromInput(input));
+        module.HandleKey(ㅓ_slot, CtxFromInput(input));
+        module.HandleKey(ㄱ_slot, CtxFromInput(input));
+
+        Assert.Equal("친척", module.CurrentWord);
+
+        // CommitCurrentWord (첫 번째 슬롯 클릭)
+        module.CommitCurrentWord();
+
+        // composer가 리셋되었는지 확인
+        Assert.Equal("", module.CurrentWord);
+        Assert.Equal(0, input.TrackedOnScreenLength);
+
+        // "ㅇ" 입력 — 이전 단어가 남아있지 않아야 함
+        module.HandleKey(ㅇ_slot, CtxFromInput(input));
+        Assert.Equal("ㅇ", module.CurrentWord);
+
+        // "에게" 완성
+        module.HandleKey(ㅔ_slot, CtxFromInput(input));
+        module.HandleKey(ㄱ_slot, CtxFromInput(input));
+        module.HandleKey(ㅔ_slot, CtxFromInput(input));
+        Assert.Equal("에게", module.CurrentWord);
+
+        // 스페이스
+        module.OnSeparator();
+
+        Assert.DoesNotContain("친척에게", koDict.GetSuggestions("친척", 10));
+    }
 }

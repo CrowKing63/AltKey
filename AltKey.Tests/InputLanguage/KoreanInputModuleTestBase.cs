@@ -16,6 +16,10 @@ public abstract class KoreanInputModuleTestBase
     protected static KeySlot ㄴ_slot => TestSlotFactory.Jamo("ㄴ", null, VirtualKeyCode.VK_N);
     protected static KeySlot ㅣ_slot => TestSlotFactory.Jamo("ㅣ", null, VirtualKeyCode.VK_I);
     protected static KeySlot ㅕ_slot => TestSlotFactory.Jamo("ㅕ", null, VirtualKeyCode.VK_J);
+    protected static KeySlot ㅅ_slot => TestSlotFactory.Jamo("ㅅ", null, VirtualKeyCode.VK_T);
+    protected static KeySlot ㅊ_slot => TestSlotFactory.Jamo("ㅊ", null, VirtualKeyCode.VK_C);
+    protected static KeySlot ㅓ_slot => TestSlotFactory.Jamo("ㅓ", null, VirtualKeyCode.VK_F);
+    protected static KeySlot ㅔ_slot => TestSlotFactory.Jamo("ㅔ", null, VirtualKeyCode.VK_P);
     protected static KeySlot ㅅ_with_shift_ㅆ_slot => TestSlotFactory.Jamo("ㅅ", "ㅆ", VirtualKeyCode.VK_T);
     protected static KeySlot ㅃ_slot => TestSlotFactory.Jamo("ㅂ", "ㅃ", VirtualKeyCode.VK_Q);
     protected static KeySlot ㅉ_slot => TestSlotFactory.Jamo("ㅈ", "ㅉ", VirtualKeyCode.VK_W);
@@ -29,6 +33,9 @@ public abstract class KoreanInputModuleTestBase
     protected static KeyContext ctxNoModifiers => new(false, false, false, InputMode.Unicode, 0);
     protected static KeyContext ctxShiftOnly => new(true, true, false, InputMode.Unicode, 1);
     protected static KeyContext ctxCtrlShift => new(true, true, true, InputMode.Unicode, 0);
+
+    protected static KeyContext CtxFromInput(FakeInputService input) =>
+        new(false, false, false, InputMode.Unicode, input.TrackedOnScreenLength);
 
     protected KoreanInputModule CreateModule(out FakeInputService input, bool autoCompleteEnabled = true)
     {

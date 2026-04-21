@@ -19,3 +19,9 @@
   - 새 테스트는 기능별로 알맞은 파일에 추가할 것. 한 파일도 400줄을 넘지 않게 유지한다.
   - 과거 버그 기반 주석(예: "HasActiveModifiers=true이면 SendUnicode는 호출되지 않음")은 버그 수정 후 잘못된 정보가 되므로, 테스트 주석에는 **무엇을 검증하는지**만 적고 구현 내부 동작 추측은 적지 않는다.
   - `FakeInputService`, `KoreanDictionaryTestable`, `EnglishDictionaryTestable`, `TestSlotFactory`는 `public`이며 `TestHelpers.cs`에 정의되어 있다. 새 테스트에서 자유롭게 사용할 수 있다.
+  - 디버그를 위한 로그는 텍스트 파일로 출력되도록 작성한다.
+- **버그 디버깅 교훈 (2026-04-21 CommitCurrentWord 버그)**:
+  - 테스트에서 재현 안 되는 버그는 실제 앱에 파일 로깅을 추가해 어떤 코드 경로가 실행되는지 먼저 확인할 것. 이번엔 AcceptSuggestion 버그라 가정했으나 실제로는 CommitCurrentWord 경로였음.
+  - `FakeInputService`는 `TrackedOnScreenLength`를 갱신하지 않아 실제 앱과 다른 동작을 보일 수 있음. `SendAtomicReplace` 오버라이드 시 `TrackedOnScreenLength = next.Length` 추가로 해결함.
+  - 상태를 리셋하는 메서드(`AcceptSuggestion`, `CancelComposition`, `FinalizeComposition`)와 상태를 유지하는 메서드(`CommitCurrentWord`)의 차이를 명확히 할 것. 이번 버그는 "저장" 의미의 CommitCurrentWord가 composer를 리셋하지 않아 발생.
+  

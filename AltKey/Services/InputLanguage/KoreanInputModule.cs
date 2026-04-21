@@ -13,6 +13,7 @@ public sealed class KoreanInputModule : IInputLanguageModule
     private InputSubmode _submode = InputSubmode.HangulJamo;
     private string _englishPrefix = "";
     private string? _lastCommittedWord;
+    private string? _suggestionContext;
     private bool _compositionCancelled = false;
     private bool _wordAlreadyCommitted = false;
 
@@ -81,14 +82,14 @@ public sealed class KoreanInputModule : IInputLanguageModule
             _composer.Feed(jamo);
             string newOutput = _composer.Current;
             _input.SendAtomicReplace(prevLen, newOutput);
-            SuggestionsChanged?.Invoke(_koDict.GetSuggestions(newOutput, _lastCommittedWord));
+            SuggestionsChanged?.Invoke(_koDict.GetSuggestions(newOutput, _suggestionContext));
             return true;
         }
 
         _compositionCancelled = false;
         _wordAlreadyCommitted = false;
         _composer.Feed(jamo);
-        SuggestionsChanged?.Invoke(_koDict.GetSuggestions(_composer.Current, _lastCommittedWord));
+        SuggestionsChanged?.Invoke(_koDict.GetSuggestions(_composer.Current, _suggestionContext));
         return false;
     }
 
@@ -147,7 +148,7 @@ public sealed class KoreanInputModule : IInputLanguageModule
         if (_submode == InputSubmode.QuietEnglish && _englishPrefix.Length > 0)
         {
             _englishPrefix = _englishPrefix[..^1];
-            SuggestionsChanged?.Invoke(_enDict.GetSuggestions(_englishPrefix, _lastCommittedWord));
+            SuggestionsChanged?.Invoke(_enDict.GetSuggestions(_englishPrefix, _suggestionContext));
             return false;
         }
 
@@ -157,14 +158,14 @@ public sealed class KoreanInputModule : IInputLanguageModule
             _composer.Backspace();
             string newOutput = _composer.Current;
             _input.SendAtomicReplace(prevLen, newOutput);
-            SuggestionsChanged?.Invoke(_koDict.GetSuggestions(newOutput, _lastCommittedWord));
+            SuggestionsChanged?.Invoke(_koDict.GetSuggestions(newOutput, _suggestionContext));
             return true;
         }
 
         if (_composer.HasComposition)
         {
             _composer.Backspace();
-            SuggestionsChanged?.Invoke(_koDict.GetSuggestions(_composer.Current, _lastCommittedWord));
+            SuggestionsChanged?.Invoke(_koDict.GetSuggestions(_composer.Current, _suggestionContext));
         }
         return false;
     }
@@ -176,7 +177,7 @@ public sealed class KoreanInputModule : IInputLanguageModule
             _compositionCancelled = false;
             _wordAlreadyCommitted = false;
             _englishPrefix += ch;
-            SuggestionsChanged?.Invoke(_enDict.GetSuggestions(_englishPrefix, _lastCommittedWord));
+            SuggestionsChanged?.Invoke(_enDict.GetSuggestions(_englishPrefix, _suggestionContext));
         }
     }
 
@@ -187,9 +188,6 @@ public sealed class KoreanInputModule : IInputLanguageModule
 
         if (_submode == InputSubmode.HangulJamo)
         {
-            // Unicode 모드는 이미 합성된 음절을 화면에 출력하므로 BS = 화면 문자 수.
-            // VirtualKey 모드는 OS IME의 조합 상태를 자모 단위로 되돌려야 하므로
-            // `CompletedLength + CompositionDepth`를 유지한다.
             bsCount = _input.Mode == InputMode.Unicode
                 ? _composer.Current.Length
                 : _composer.CompletedLength + _composer.CompositionDepth;
@@ -214,6 +212,7 @@ public sealed class KoreanInputModule : IInputLanguageModule
         }
 
         _lastCommittedWord = suggestion;
+        _suggestionContext = null;
 
         SuggestionsChanged?.Invoke(Array.Empty<string>());
         return (bsCount, suggestion);
@@ -224,6 +223,7 @@ public sealed class KoreanInputModule : IInputLanguageModule
         FinalizeComposition();
 
         _lastCommittedWord = null;
+        _suggestionContext = null;
 
         _submode = _submode == InputSubmode.HangulJamo
             ? InputSubmode.QuietEnglish
@@ -241,6 +241,7 @@ public sealed class KoreanInputModule : IInputLanguageModule
         _englishPrefix = "";
         _submode = InputSubmode.HangulJamo;
         _lastCommittedWord = null;
+        _suggestionContext = null;
         _compositionCancelled = false;
         _wordAlreadyCommitted = false;
         SuggestionsChanged?.Invoke(Array.Empty<string>());
@@ -276,11 +277,23 @@ public sealed class KoreanInputModule : IInputLanguageModule
         }
 
         _wordAlreadyCommitted = true;
+        _suggestionContext = null;
+        _composer.Reset();
+        _englishPrefix = "";
+        _input.ResetTrackedLength();
+        SuggestionsChanged?.Invoke(Array.Empty<string>());
     }
 
     public void CancelComposition()
     {
         _compositionCancelled = true;
+
+        _composer.Reset();
+        _englishPrefix = "";
+        _lastCommittedWord = null;
+        _suggestionContext = null;
+        SuggestionsChanged?.Invoke(Array.Empty<string>());
+        _input.ResetTrackedLength();
     }
 
     private void FinalizeComposition()
@@ -322,6 +335,7 @@ public sealed class KoreanInputModule : IInputLanguageModule
         _wordAlreadyCommitted = false;
         _composer.Reset();
         _englishPrefix = "";
+        _suggestionContext = _lastCommittedWord;
         SuggestionsChanged?.Invoke(Array.Empty<string>());
         _input.ResetTrackedLength();
     }
