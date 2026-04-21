@@ -258,6 +258,13 @@ public partial class MainViewModel : ObservableObject
         AvailableLayouts = new ObservableCollection<string>(displayNames);
 
         var defaultName = _configService.Current.DefaultLayout;
+        if (!fileNames.Contains(defaultName) && fileNames.Count > 0)
+        {
+            var fallback = fileNames[0];
+            System.Diagnostics.Debug.WriteLine($"기본 레이아웃 '{defaultName}'이(가) 존재하지 않아 '{fallback}'(으)로 폴백합니다.");
+            defaultName = fallback;
+            _configService.Update(c => c.DefaultLayout = fallback, "DefaultLayout");
+        }
         SwitchLayout(defaultName);
         return Task.CompletedTask;
     }

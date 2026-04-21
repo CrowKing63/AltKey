@@ -13,20 +13,22 @@ public class AccessibilitySafetyTests
     }
 
     [Fact]
-    public void KoreanQwertyLayout_WinKey_uses_toggle_sticky()
+    public void BagicLayout_WinKey_uses_toggle_sticky()
     {
         var layoutPath = Path.GetFullPath(Path.Combine(
             AppContext.BaseDirectory,
             "..", "..", "..", "..",
-            "AltKey", "layouts", "qwerty-ko.json"));
+            "AltKey", "layouts", "Bagic.json"));
 
         var json = File.ReadAllText(layoutPath);
         var layout = JsonSerializer.Deserialize<LayoutConfig>(json, JsonOptions.Default);
 
         Assert.NotNull(layout);
-        var winKey = layout!.Rows!
-            .SelectMany(r => r.Keys)
-            .First(k => k.Label == "Win");
+        var allKeys = layout!.Columns?
+            .SelectMany(c => c.Rows!.SelectMany(r => r.Keys))
+            ?? layout.Rows!.SelectMany(r => r.Keys);
+
+        var winKey = allKeys.First(k => k.Label == "Win");
 
         var action = Assert.IsType<ToggleStickyAction>(winKey.Action);
         Assert.Equal("VK_LWIN", action.Vk);

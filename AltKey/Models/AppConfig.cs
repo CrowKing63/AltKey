@@ -12,7 +12,7 @@ public class WindowConfig
 public class AppConfig
 {
     public string Version           { get; set; } = "1.0.0";
-    public string DefaultLayout     { get; set; } = "qwerty-ko";
+    public string DefaultLayout     { get; set; } = "Bagic";
     public bool   AlwaysOnTop       { get; set; } = true;
     public double OpacityIdle       { get; set; } = 0.4;
     public double OpacityActive     { get; set; } = 1.0;

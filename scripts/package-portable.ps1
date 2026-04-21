@@ -42,7 +42,7 @@ if (Test-Path $layoutsSrc) {
 $defaultConfig = @{
     version        = "1.0.0"
     language       = "ko"
-    default_layout = "qwerty-ko"
+    default_layout = "Bagic"
 } | ConvertTo-Json -Depth 2
 $defaultConfig | Out-File -Encoding UTF8 "$out/config.json"
 
