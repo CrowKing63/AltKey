@@ -426,6 +426,13 @@ public partial class MainViewModel : ObservableObject
         _liveRegion.Announce("OS IME 한영 전환 신호 전송됨");
     }
 
+    [RelayCommand]
+    private void SendOsk()
+    {
+        _inputService.SendCombo([VirtualKeyCode.VK_LWIN, VirtualKeyCode.VK_LCONTROL, VirtualKeyCode.VK_O]);
+        _liveRegion.Announce("화면 키보드 호출");
+    }
+
     // T-5.4: 앱 프로필 자동 전환
     private void OnForegroundAppChanged(string processName)
     {

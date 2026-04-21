@@ -92,7 +92,7 @@
 
                 <!-- 클립보드 패널 토글 버튼 -->
                 <Button Width="32" Height="28"
-                        HorizontalAlignment="Right" Margin="0,0,232,0"
+                        HorizontalAlignment="Right" Margin="0,0,264,0"
                         Background="Transparent" Foreground="{DynamicResource TitleFg}"
                         BorderThickness="0" Cursor="Hand"
                         Command="{Binding ToggleClipboardPanelCommand}"
@@ -103,7 +103,7 @@
 
                 <!-- 이모지 패널 토글 버튼 -->
                 <Button Width="32" Height="28"
-                        HorizontalAlignment="Right" Margin="0,0,200,0"
+                        HorizontalAlignment="Right" Margin="0,0,232,0"
                         Background="Transparent" Foreground="{DynamicResource TitleFg}"
                         BorderThickness="0" Cursor="Hand"
                         Command="{Binding ToggleEmojiPanelCommand}"
@@ -114,7 +114,7 @@
 
                 <!-- 자동완성 토글 버튼 -->
                 <ToggleButton Width="32" Height="28"
-                        HorizontalAlignment="Right" Margin="0,0,168,0"
+                        HorizontalAlignment="Right" Margin="0,0,200,0"
                         Background="{Binding AutoCompleteEnabled, Converter={StaticResource BoolToVis}, ConverterParameter=Background}"
                         Foreground="{DynamicResource TitleFg}"
                         BorderThickness="0" Cursor="Hand"
@@ -126,9 +126,21 @@
                     <TextBlock Text="AC" FontWeight="Bold" FontSize="12"/>
                 </ToggleButton>
 
+                <!-- OSK(화면 키보드) 호출 버튼 -->
+                <Button Width="32" Height="28"
+                        HorizontalAlignment="Right" Margin="0,0,128,0"
+                        Background="Transparent" Foreground="{DynamicResource TitleFg}"
+                        BorderThickness="0" Cursor="Hand"
+                        Command="{Binding SendOskCommand}"
+                        ToolTip="화면 키보드"
+                        AutomationProperties.Name="화면 키보드"
+                        AutomationProperties.HelpText="윈도우 화면 키보드를 엽니다">
+                    <TextBlock Text="⌨" FontSize="14"/>
+                </Button>
+
                 <!-- OS IME 한/영 비상 버튼 -->
                 <Button Width="40" Height="28"
-                        HorizontalAlignment="Right" Margin="0,0,128,0"
+                        HorizontalAlignment="Right" Margin="0,0,160,0"
                         Background="Transparent" Foreground="{DynamicResource TitleFg}"
                         BorderThickness="0" Cursor="Hand"
                         Command="{Binding SendOsImeHangulCommand}"

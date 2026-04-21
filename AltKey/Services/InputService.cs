@@ -244,7 +244,7 @@ public class InputService
             SendKeyPress((VirtualKeyCode)vk);
     }
 
-    private void SendCombo(List<VirtualKeyCode> keys)
+    public void SendCombo(List<VirtualKeyCode> keys)
     {
         foreach (var k in keys) SendKeyDown(k);
         foreach (var k in Enumerable.Reverse(keys)) SendKeyUp(k);
