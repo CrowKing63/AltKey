@@ -1,0 +1,1050 @@
+{
+  "name": "Bagic",
+  "language": null,
+  "columns": [
+    {
+      "gap": 0,
+      "rows": [
+        {
+          "keys": [
+            {
+              "label": "ESC",
+              "shift_label": "",
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_ESCAPE"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null
+            },
+            {
+              "label": "1",
+              "shift_label": "!",
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_1"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null
+            },
+            {
+              "label": "2",
+              "shift_label": "@",
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_2"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null
+            },
+            {
+              "label": "3",
+              "shift_label": "#",
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_3"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null
+            },
+            {
+              "label": "4",
+              "shift_label": "$",
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_4"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null
+            },
+            {
+              "label": "5",
+              "shift_label": "%",
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_5"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null
+            },
+            {
+              "label": "6",
+              "shift_label": "^",
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_6"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null
+            },
+            {
+              "label": "7",
+              "shift_label": "\u0026",
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_7"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null
+            },
+            {
+              "label": "8",
+              "shift_label": "*",
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_8"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null
+            },
+            {
+              "label": "9",
+              "shift_label": "(",
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_9"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null
+            },
+            {
+              "label": "0",
+              "shift_label": ")",
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_0"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null
+            },
+            {
+              "label": "-",
+              "shift_label": "_",
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_OEM_MINUS"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null
+            },
+            {
+              "label": "=",
+              "shift_label": "\u002B",
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_OEM_PLUS"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null
+            },
+            {
+              "label": "\u232B",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_BACK"
+              },
+              "width": 2,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null
+            }
+          ]
+        },
+        {
+          "keys": [
+            {
+              "label": "Tab",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_TAB"
+              },
+              "width": 1.5,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null
+            },
+            {
+              "label": "\u3142",
+              "shift_label": "\u3143",
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_Q"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": "q",
+              "english_shift_label": null
+            },
+            {
+              "label": "\u3148",
+              "shift_label": "\u3149",
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_W"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": "w",
+              "english_shift_label": null
+            },
+            {
+              "label": "\u3137",
+              "shift_label": "\u3138",
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_E"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": "e",
+              "english_shift_label": null
+            },
+            {
+              "label": "\u3131",
+              "shift_label": "\u3132",
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_R"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": "r",
+              "english_shift_label": null
+            },
+            {
+              "label": "\u3145",
+              "shift_label": "\u3146",
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_T"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": "t",
+              "english_shift_label": null
+            },
+            {
+              "label": "\u315B",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_Y"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": "y",
+              "english_shift_label": null
+            },
+            {
+              "label": "\u3155",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_U"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": "u",
+              "english_shift_label": null
+            },
+            {
+              "label": "\u3151",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_I"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": "i",
+              "english_shift_label": null
+            },
+            {
+              "label": "\u3150",
+              "shift_label": "\u3152",
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_O"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": "o",
+              "english_shift_label": null
+            },
+            {
+              "label": "\u3154",
+              "shift_label": "\u3156",
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_P"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": "p",
+              "english_shift_label": null
+            },
+            {
+              "label": "[",
+              "shift_label": "{",
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_OEM_4"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null
+            },
+            {
+              "label": "]",
+              "shift_label": "}",
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_OEM_6"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null
+            },
+            {
+              "label": "\\",
+              "shift_label": "|",
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_OEM_5"
+              },
+              "width": 1.5,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null
+            }
+          ]
+        },
+        {
+          "keys": [
+            {
+              "label": "CapsLock",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_CAPITAL"
+              },
+              "width": 1.75,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null
+            },
+            {
+              "label": "\u3141",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_A"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": "a",
+              "english_shift_label": null
+            },
+            {
+              "label": "\u3134",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_S"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": "s",
+              "english_shift_label": null
+            },
+            {
+              "label": "\u3147",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_D"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": "d",
+              "english_shift_label": null
+            },
+            {
+              "label": "\u3139",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_F"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": "f",
+              "english_shift_label": null
+            },
+            {
+              "label": "\u314E",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_G"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": "g",
+              "english_shift_label": null
+            },
+            {
+              "label": "\u3157",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_H"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": "h",
+              "english_shift_label": null
+            },
+            {
+              "label": "\u3153",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_J"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": "j",
+              "english_shift_label": null
+            },
+            {
+              "label": "\u314F",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_K"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": "k",
+              "english_shift_label": null
+            },
+            {
+              "label": "\u3163",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_L"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": "l",
+              "english_shift_label": null
+            },
+            {
+              "label": ";",
+              "shift_label": ":",
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_OEM_1"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null
+            },
+            {
+              "label": "\u0027",
+              "shift_label": "\u0022",
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_OEM_7"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null
+            },
+            {
+              "label": "Enter",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_RETURN"
+              },
+              "width": 2.25,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null
+            }
+          ]
+        },
+        {
+          "keys": [
+            {
+              "label": "Shift",
+              "shift_label": null,
+              "action": {
+                "type": "ToggleSticky",
+                "vk": "VK_SHIFT"
+              },
+              "width": 2,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null
+            },
+            {
+              "label": "\u314B",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_Z"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": "z",
+              "english_shift_label": null
+            },
+            {
+              "label": "\u314C",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_X"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": "x",
+              "english_shift_label": null
+            },
+            {
+              "label": "\u314A",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_C"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": "c",
+              "english_shift_label": null
+            },
+            {
+              "label": "\u314D",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_V"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": "v",
+              "english_shift_label": null
+            },
+            {
+              "label": "\u3160",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_B"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": "b",
+              "english_shift_label": null
+            },
+            {
+              "label": "\u315C",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_N"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": "n",
+              "english_shift_label": null
+            },
+            {
+              "label": "\u3161",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_M"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": "m",
+              "english_shift_label": null
+            },
+            {
+              "label": ",",
+              "shift_label": "\u003C",
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_OEM_COMMA"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null
+            },
+            {
+              "label": ".",
+              "shift_label": "\u003E",
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_OEM_PERIOD"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null
+            },
+            {
+              "label": "/",
+              "shift_label": "?",
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_OEM_2"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null
+            },
+            {
+              "label": "\u2191",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_UP"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null
+            },
+            {
+              "label": "Shift",
+              "shift_label": null,
+              "action": {
+                "type": "ToggleSticky",
+                "vk": "VK_SHIFT"
+              },
+              "width": 2,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null
+            }
+          ]
+        },
+        {
+          "keys": [
+            {
+              "label": "Ctrl",
+              "shift_label": null,
+              "action": {
+                "type": "ToggleSticky",
+                "vk": "VK_CONTROL"
+              },
+              "width": 1.25,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null
+            },
+            {
+              "label": "Win",
+              "shift_label": null,
+              "action": {
+                "type": "ToggleSticky",
+                "vk": "VK_LWIN"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null
+            },
+            {
+              "label": "Alt",
+              "shift_label": null,
+              "action": {
+                "type": "ToggleSticky",
+                "vk": "VK_MENU"
+              },
+              "width": 1.25,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null
+            },
+            {
+              "label": "\uD55C\uC790",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_HANJA"
+              },
+              "width": 1.2,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null
+            },
+            {
+              "label": "Space",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_SPACE"
+              },
+              "width": 2.75,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null
+            },
+            {
+              "label": "\uAC00",
+              "shift_label": null,
+              "action": {
+                "type": "ToggleKoreanSubmode"
+              },
+              "width": 1.25,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null
+            },
+            {
+              "label": "Alt",
+              "shift_label": null,
+              "action": {
+                "type": "ToggleSticky",
+                "vk": "VK_MENU"
+              },
+              "width": 1.2,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null
+            },
+            {
+              "label": "Ctrl",
+              "shift_label": null,
+              "action": {
+                "type": "ToggleSticky",
+                "vk": "VK_CONTROL"
+              },
+              "width": 1.2,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null
+            },
+            {
+              "label": "\u2190",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_LEFT"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null
+            },
+            {
+              "label": "\u2193",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_DOWN"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null
+            },
+            {
+              "label": "\u2192",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_RIGHT"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null
+            },
+            {
+              "label": "\uD55C/\uC601",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_HANGUL"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "gap": 0.5,
+      "rows": [
+        {
+          "keys": [
+            {
+              "label": "Del",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_DELETE"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null
+            }
+          ]
+        },
+        {
+          "keys": [
+            {
+              "label": "Home",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_HOME"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null
+            }
+          ]
+        },
+        {
+          "keys": [
+            {
+              "label": "End",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_END"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null
+            }
+          ]
+        },
+        {
+          "keys": [
+            {
+              "label": "PgUp",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_PRIOR"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null
+            }
+          ]
+        },
+        {
+          "keys": [
+            {
+              "label": "PgDn",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_NEXT"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "rows": null
+}
