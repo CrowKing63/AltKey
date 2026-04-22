@@ -99,7 +99,7 @@ public class BigramFrequencyStore
         ScheduleSave();
     }
 
-    public IReadOnlyList<(string Next, int Count)> GetNexts(string prev, string prefix, int count = 5)
+    public IReadOnlyList<(string Next, int Count)> GetNexts(string prev, string prefix, int count = 20)
     {
         if (string.IsNullOrWhiteSpace(prev)) return [];
         prev = prev.Trim();

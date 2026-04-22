@@ -24,7 +24,7 @@ public class EnglishDictionary
     public WordFrequencyStore UserStore => _userStore;
     public BigramFrequencyStore BigramStore => _bigramStore;
 
-    public IReadOnlyList<string> GetSuggestions(string prefix, int count = 5)
+    public IReadOnlyList<string> GetSuggestions(string prefix, int count = 20)
     {
         if (prefix.Length < 2) return [];
 
@@ -68,7 +68,7 @@ public class EnglishDictionary
     }
 
     /// 이전 확정 단어(prevWord)가 있을 때의 문맥 반영 제안.
-    public IReadOnlyList<string> GetSuggestions(string prefix, string? prevWord, int count = 5)
+    public IReadOnlyList<string> GetSuggestions(string prefix, string? prevWord, int count = 20)
     {
         var baseList = GetSuggestions(prefix, count);
 

@@ -125,7 +125,7 @@ public class WordFrequencyStore
     }
 
     /// prefix 로 시작하는 단어 제안 (빈도 내림차순)
-    public IReadOnlyList<string> GetSuggestions(string prefix, int count = 5)
+    public IReadOnlyList<string> GetSuggestions(string prefix, int count = 20)
     {
         if (string.IsNullOrEmpty(prefix)) return [];
         lock (_saveLock)
@@ -141,7 +141,7 @@ public class WordFrequencyStore
     }
 
     /// 초성(호환 자모)으로 시작하는 단어 제안 (첫 음절의 초성이 일치하는 단어)
-    public IReadOnlyList<string> GetSuggestionsByChoseong(char choseong, int count = 5)
+    public IReadOnlyList<string> GetSuggestionsByChoseong(char choseong, int count = 20)
     {
         lock (_saveLock)
         {

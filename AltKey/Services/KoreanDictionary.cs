@@ -49,7 +49,7 @@ public class KoreanDictionary
     }
 
     /// prefix로 시작하는 한국어 단어 제안 (사용자 학습 우선, 그 다음 내장 사전)
-    public IReadOnlyList<string> GetSuggestions(string prefix, int count = 5)
+    public IReadOnlyList<string> GetSuggestions(string prefix, int count = 20)
     {
         if (prefix.Length < 1) return [];
 
@@ -148,7 +148,7 @@ public class KoreanDictionary
 
     /// 이전 확정 단어(prevWord)가 있을 때의 문맥 반영 제안.
     /// prevWord가 null·빈 문자열이면 기존 GetSuggestions와 동일 결과.
-    public IReadOnlyList<string> GetSuggestions(string prefix, string? prevWord, int count = 5)
+    public IReadOnlyList<string> GetSuggestions(string prefix, string? prevWord, int count = 20)
     {
         var baseList = GetSuggestions(prefix, count);
 
