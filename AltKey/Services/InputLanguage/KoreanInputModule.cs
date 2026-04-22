@@ -356,7 +356,8 @@ public sealed class KoreanInputModule : IInputLanguageModule
     {
         if (vk is VirtualKeyCode.VK_SPACE or VirtualKeyCode.VK_RETURN
             or VirtualKeyCode.VK_TAB or VirtualKeyCode.VK_OEM_PERIOD
-            or VirtualKeyCode.VK_OEM_COMMA)
+            or VirtualKeyCode.VK_OEM_COMMA or VirtualKeyCode.VK_ESCAPE
+            or VirtualKeyCode.VK_DELETE)
         {
             return true;
         }

@@ -699,6 +699,8 @@ public class KoreanInputModuleHangulTests : KoreanInputModuleTestBase
             (vk: VirtualKeyCode.VK_OEM_1, isShifted: true),  // :
             (vk: VirtualKeyCode.VK_9, isShifted: true),      // (
             (vk: VirtualKeyCode.VK_0, isShifted: true),      // )
+            (vk: VirtualKeyCode.VK_ESCAPE, isShifted: false), // ESC
+            (vk: VirtualKeyCode.VK_DELETE, isShifted: false)  // Delete
         };
 
         foreach (var (vk, isShifted) in keysToTest)
