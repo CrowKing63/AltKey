@@ -79,7 +79,7 @@ public class KeyButton : System.Windows.Controls.Button
             nameof(DwellProgress), typeof(double), typeof(KeyButton),
             new PropertyMetadata(0.0));
 
-    // T-10: 키 반복 입력 DependencyProperties
+// T-10: 키 반복 입력 DependencyProperties
     public static readonly DependencyProperty KeyRepeatEnabledProperty =
         DependencyProperty.Register(
             nameof(KeyRepeatEnabled), typeof(bool), typeof(KeyButton),
@@ -94,6 +94,17 @@ public class KeyButton : System.Windows.Controls.Button
         DependencyProperty.Register(
             nameof(KeyRepeatIntervalMs), typeof(int), typeof(KeyButton),
             new PropertyMetadata(50));
+
+    // L1: 포커스 가시화 + 탭 탐색 모드
+    public static readonly DependencyProperty KeyboardA11yNavigationEnabledProperty =
+        DependencyProperty.Register(
+            nameof(KeyboardA11yNavigationEnabled), typeof(bool), typeof(KeyButton),
+            new PropertyMetadata(false, OnKeyboardA11yNavigationEnabledChanged));
+
+    public static readonly DependencyProperty IsA11yFocusedProperty =
+        DependencyProperty.Register(
+            nameof(IsA11yFocused), typeof(bool), typeof(KeyButton),
+            new PropertyMetadata(false));
 
     // ── Properties ──────────────────────────────────────────────────────────
 
@@ -179,6 +190,18 @@ public class KeyButton : System.Windows.Controls.Button
     {
         get => (int)GetValue(KeyRepeatIntervalMsProperty);
         set => SetValue(KeyRepeatIntervalMsProperty, value);
+    }
+
+    public bool KeyboardA11yNavigationEnabled
+    {
+        get => (bool)GetValue(KeyboardA11yNavigationEnabledProperty);
+        set => SetValue(KeyboardA11yNavigationEnabledProperty, value);
+    }
+
+    public bool IsA11yFocused
+    {
+        get => (bool)GetValue(IsA11yFocusedProperty);
+        set => SetValue(IsA11yFocusedProperty, value);
     }
 
     // ── 체류 클릭 타이머 ─────────────────────────────────────────────────────
@@ -392,6 +415,16 @@ public class KeyButton : System.Windows.Controls.Button
     {
         if (d is KeyButton kb)
             kb.UpdateSize();
+    }
+
+    private static void OnKeyboardA11yNavigationEnabledChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is KeyButton kb)
+        {
+            var enabled = (bool)e.NewValue;
+            kb.Focusable = enabled;
+            kb.IsTabStop = enabled;
+        }
     }
 
     private void UpdateSize()

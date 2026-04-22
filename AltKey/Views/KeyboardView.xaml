@@ -267,6 +267,7 @@
                                                       IsDimmed="{Binding IsDimmed}"
                                                       IsSticky="{Binding IsSticky}"
                                                       IsLocked="{Binding IsLocked}"
+                                                      IsA11yFocused="{Binding IsA11yFocused}"
                                                       KeyUnit="{Binding DataContext.Keyboard.KeyUnit,
                                                           RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                       DwellEnabled="{Binding DataContext.DwellEnabled,
@@ -278,6 +279,8 @@
                                                       KeyRepeatDelayMs="{Binding DataContext.KeyRepeatDelayMs,
                                                           RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                       KeyRepeatIntervalMs="{Binding DataContext.KeyRepeatIntervalMs,
+                                                          RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                      KeyboardA11yNavigationEnabled="{Binding DataContext.KeyboardA11yNavigationEnabled,
                                                           RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                       Command="{Binding DataContext.Keyboard.KeyPressedCommand,
                                                           RelativeSource={RelativeSource AncestorType=UserControl}}"

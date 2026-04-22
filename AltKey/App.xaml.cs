@@ -57,6 +57,7 @@ public partial class App : System.Windows.Application
             services.AddSingleton<TrayService>();
             services.AddSingleton<ThemeService>();
             services.AddSingleton<HotkeyService>();
+            services.AddSingleton<AccessibilityNavigationService>();
             services.AddSingleton<StartupService>();
             services.AddSingleton<SoundService>();
             services.AddSingleton<ClipboardService>();
@@ -127,6 +128,9 @@ public partial class App : System.Windows.Application
 
             var window = Services.GetRequiredService<MainWindow>();
             window.Show();
+
+            // L1: 접근성 탭 탐색(물리 Tab/Enter/Space) 훅 시작
+            Services.GetRequiredService<AccessibilityNavigationService>().Start();
 
             // T-9.5: 백그라운드 업데이트 확인 (창 표시 후 비동기 실행)
             _ = Task.Run(async () =>

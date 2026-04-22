@@ -44,6 +44,9 @@ public class AppConfig
     public int  KeyRepeatDelayMs      { get; set; } = 300;
     public int  KeyRepeatIntervalMs   { get; set; } = 50;
 
-    // L1: 큰 텍스트 모드 (접근성 - 키 라벨 배율)
+// L1: 큰 텍스트 모드 (접근성 - 키 라벨 배율)
     public int  KeyFontScalePercent   { get; set; } = 100; // 범위 80~220
+
+    // L1: 포커스 가시화 + 탭 탐색 모드 (접근성)
+    public bool KeyboardA11yNavigationEnabled { get; set; } = false;
 }

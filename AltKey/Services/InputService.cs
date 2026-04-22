@@ -17,6 +17,8 @@ public enum InputMode
 public class InputService
 {
     private static readonly uint OwnProcessId = (uint)Environment.ProcessId;
+    private static readonly IntPtr InputExtraInfoTag =
+        unchecked((IntPtr)(long)Win32.INPUT_EXTRAINFO_ALTKEY);
     private static readonly HashSet<VirtualKeyCode> HighRiskModifiers =
     [
         VirtualKeyCode.VK_CONTROL,
@@ -315,24 +317,24 @@ public class InputService
     private static Win32.INPUT MakeUnicodeKeyDown(char ch) => new()
     {
         Type = Win32.INPUT_KEYBOARD,
-        U = new() { Ki = new() { WVk = 0, WScan = ch, DwFlags = Win32.KEYEVENTF_UNICODE } }
+        U = new() { Ki = new() { WVk = 0, WScan = ch, DwFlags = Win32.KEYEVENTF_UNICODE, DwExtraInfo = InputExtraInfoTag } }
     };
 
     private static Win32.INPUT MakeUnicodeKeyUp(char ch) => new()
     {
         Type = Win32.INPUT_KEYBOARD,
-        U = new() { Ki = new() { WVk = 0, WScan = ch, DwFlags = Win32.KEYEVENTF_UNICODE | Win32.KEYEVENTF_KEYUP } }
+        U = new() { Ki = new() { WVk = 0, WScan = ch, DwFlags = Win32.KEYEVENTF_UNICODE | Win32.KEYEVENTF_KEYUP, DwExtraInfo = InputExtraInfoTag } }
     };
 
     private static Win32.INPUT MakeKeyDown(ushort vk) => new()
     {
         Type = Win32.INPUT_KEYBOARD,
-        U = new() { Ki = new() { WVk = vk } }
+        U = new() { Ki = new() { WVk = vk, DwExtraInfo = InputExtraInfoTag } }
     };
 
     private static Win32.INPUT MakeKeyUp(ushort vk) => new()
     {
         Type = Win32.INPUT_KEYBOARD,
-        U = new() { Ki = new() { WVk = vk, DwFlags = Win32.KEYEVENTF_KEYUP } }
+        U = new() { Ki = new() { WVk = vk, DwFlags = Win32.KEYEVENTF_KEYUP, DwExtraInfo = InputExtraInfoTag } }
     };
 }

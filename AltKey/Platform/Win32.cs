@@ -130,7 +130,9 @@ internal static class Win32
     // ── 전역 저수준 키보드 훅 (WH_KEYBOARD_LL) ────────────────────────────
     public const int WH_KEYBOARD_LL  = 13;
     public const int WM_KEYDOWN      = 0x0100;
+    public const int WM_KEYUP        = 0x0101;
     public const int WM_SYSKEYDOWN   = 0x0104;
+    public const int WM_SYSKEYUP     = 0x0105;
 
     public delegate IntPtr LowLevelKeyboardProc(int nCode, IntPtr wParam, IntPtr lParam);
 
@@ -248,4 +250,7 @@ internal static class Win32
     public const uint KEYEVENTF_EXTENDEDKEY = 0x0001;
 
     public const int ERROR_ACCESS_DENIED = 5;
+
+    // AltKey가 SendInput으로 생성한 이벤트 식별용 태그
+    public const ulong INPUT_EXTRAINFO_ALTKEY = 0xA17A11UL;
 }

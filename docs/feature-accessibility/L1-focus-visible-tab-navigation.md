@@ -49,3 +49,25 @@
 - Keyboard accessibility: https://learn.microsoft.com/en-us/windows/apps/design/accessibility/keyboard-accessibility
 - WPF FocusVisualStyle: https://learn.microsoft.com/en-us/dotnet/desktop/wpf/advanced/styling-for-focus-in-controls-and-focusvisualstyle
 
+---
+
+## 2026-04-22 구현 메모 (운영 반영)
+
+- 접근성 탐색 입력원은 `물리 키보드/외부 스위치` 기준으로 정리한다.
+- 접근성 모드 ON 시:
+  - `Tab` / `Shift+Tab`: AltKey 내부 키 하이라이트 이동
+  - `Enter` / `Space`: 현재 하이라이트 키 실행
+- 가상 키보드의 `Tab` 버튼은 접근성 탐색 트리거가 아니라, 대상 앱으로 `Tab` 입력을 보내는 본래 동작을 유지한다.
+
+### 버그 교훈
+
+- 전역 키 훅 도입 시, AltKey가 `SendInput`으로 생성한 이벤트를 재처리하면 순환 버그가 생긴다.
+- 해결 기준:
+  - `SendInput` 이벤트에 AltKey 고유 `dwExtraInfo` 태그를 부여
+  - 접근성 훅에서 해당 태그 이벤트는 무시
+
+### 다음 보강 후보
+
+- 스캔 접근성 확장: 시간 기반 자동 스캔(다음 키 자동 이동) + 단일 스위치 확정 입력
+- 상태 피드백 보강: 현재 하이라이트 키 이름을 LiveRegion으로 읽어주기(ON/OFF 옵션)
+- 탐색 범위 옵션: 전체 키 / 입력 키만 / 헤더 버튼 포함 범위 선택

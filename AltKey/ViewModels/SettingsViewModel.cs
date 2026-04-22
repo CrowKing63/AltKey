@@ -68,6 +68,10 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private int keyFontScalePercent = 100;
 
+    // L1: 포커스 가시화 + 탭 탐색 모드
+    [ObservableProperty]
+    private bool keyboardA11yNavigationEnabled;
+
     // T-9.5: 현재 버전 표시
     [ObservableProperty] private string currentVersion = "";
 
@@ -174,6 +178,9 @@ public partial class SettingsViewModel : ObservableObject
 
              // L1: 큰 텍스트 모드
              KeyFontScalePercent = c.KeyFontScalePercent;
+
+             // L1: 포커스 가시화 + 탭 탐색 모드
+             KeyboardA11yNavigationEnabled = c.KeyboardA11yNavigationEnabled;
 
             // T-8.5: 프로필
             Profiles = new ObservableCollection<ProfileEntry>(
@@ -334,6 +341,13 @@ public partial class SettingsViewModel : ObservableObject
          var clamped = Math.Clamp(value, 80, 220);
          if (clamped != value) { KeyFontScalePercent = clamped; return; }
          _configService.Update(c => c.KeyFontScalePercent = clamped, "KeyFontScalePercent");
+     }
+
+     // L1: 포커스 가시화 + 탭 탐색 모드
+     partial void OnKeyboardA11yNavigationEnabledChanged(bool value)
+     {
+         if (_isLoading) return;
+         _configService.Update(c => c.KeyboardA11yNavigationEnabled = value, "KeyboardA11yNavigationEnabled");
      }
 
     // ── T-8.5: 앱별 레이아웃 프로필 ────────────────────────────────────────

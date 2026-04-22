@@ -20,8 +20,10 @@ public class KeySlotVm(KeySlot slot, AutoCompleteService autoComplete) : Observa
 
     private bool _isSticky;
     private bool _isLocked;
+    private bool _isA11yFocused;
     public bool IsSticky { get => _isSticky; set => SetProperty(ref _isSticky, value); }
     public bool IsLocked { get => _isLocked; set => SetProperty(ref _isLocked, value); }
+    public bool IsA11yFocused { get => _isA11yFocused; set => SetProperty(ref _isA11yFocused, value); }
 
     public VirtualKeyCode? StickyVk =>
         Slot.Action is ToggleStickyAction ta &&
@@ -207,6 +209,8 @@ public partial class KeyboardViewModel : ObservableObject
     private readonly AutoCompleteService _autoComplete;
     private readonly ConfigService _configService;
     private readonly LiveRegionService _liveRegion;
+    private readonly List<KeySlotVm> _a11yNavigableSlots = [];
+    private int _a11yFocusIndex = -1;
 
     private readonly DispatcherTimer _capsLockTimer;
 
@@ -293,6 +297,7 @@ public partial class KeyboardViewModel : ObservableObject
         _liveRegion = liveRegion;
         _inputService.StickyStateChanged += UpdateModifierState;
         _inputService.ElevatedAppDetected += OnElevatedAppDetected;
+        _configService.ConfigChanged += OnConfigChanged;
 
         _autoComplete.SubmodeChanged += OnSubmodeChanged;
 
@@ -343,6 +348,7 @@ public partial class KeyboardViewModel : ObservableObject
 
         _autoComplete.ResetState();
         RefreshKeyLabels(_autoComplete.ActiveSubmode);
+        ResetA11yNavigationState();
     }
 
     public event Action? KeyTapped;
@@ -405,6 +411,95 @@ public partial class KeyboardViewModel : ObservableObject
 
         UpdateModifierState();
         KeyTapped?.Invoke();
+    }
+
+    public void MoveA11yFocus(bool reverse)
+    {
+        if (!_configService.Current.KeyboardA11yNavigationEnabled)
+            return;
+
+        RebuildA11yNavigableSlots();
+        if (_a11yNavigableSlots.Count == 0)
+            return;
+
+        int count = _a11yNavigableSlots.Count;
+        int nextIndex;
+
+        if (_a11yFocusIndex < 0 || _a11yFocusIndex >= count)
+        {
+            nextIndex = reverse ? count - 1 : 0;
+        }
+        else
+        {
+            nextIndex = reverse
+                ? (_a11yFocusIndex - 1 + count) % count
+                : (_a11yFocusIndex + 1) % count;
+        }
+
+        SetA11yFocus(nextIndex);
+    }
+
+    public void ActivateA11yFocused()
+    {
+        if (!_configService.Current.KeyboardA11yNavigationEnabled)
+            return;
+
+        RebuildA11yNavigableSlots();
+        if (_a11yNavigableSlots.Count == 0)
+            return;
+
+        if (_a11yFocusIndex < 0 || _a11yFocusIndex >= _a11yNavigableSlots.Count)
+        {
+            SetA11yFocus(0);
+            return;
+        }
+
+        var focused = _a11yNavigableSlots[_a11yFocusIndex];
+        KeyPressed(focused.Slot);
+    }
+
+    private void RebuildA11yNavigableSlots()
+    {
+        _a11yNavigableSlots.Clear();
+        foreach (var vm in EnumerateSlotVms())
+            _a11yNavigableSlots.Add(vm);
+    }
+
+    private IEnumerable<KeySlotVm> EnumerateSlotVms()
+    {
+        foreach (var col in Columns)
+        foreach (var row in col.Rows)
+        foreach (var slotVm in row.Keys)
+            yield return slotVm;
+    }
+
+    private void SetA11yFocus(int nextIndex)
+    {
+        if (_a11yFocusIndex >= 0 && _a11yFocusIndex < _a11yNavigableSlots.Count)
+            _a11yNavigableSlots[_a11yFocusIndex].IsA11yFocused = false;
+
+        _a11yFocusIndex = nextIndex;
+
+        if (_a11yFocusIndex >= 0 && _a11yFocusIndex < _a11yNavigableSlots.Count)
+            _a11yNavigableSlots[_a11yFocusIndex].IsA11yFocused = true;
+    }
+
+    private void ResetA11yNavigationState()
+    {
+        foreach (var vm in EnumerateSlotVms())
+            vm.IsA11yFocused = false;
+
+        _a11yNavigableSlots.Clear();
+        _a11yFocusIndex = -1;
+    }
+
+    private void OnConfigChanged(string? propertyName)
+    {
+        if (propertyName is null or nameof(AppConfig.KeyboardA11yNavigationEnabled))
+        {
+            if (!_configService.Current.KeyboardA11yNavigationEnabled)
+                ResetA11yNavigationState();
+        }
     }
 
     private static bool IsSeparatorKey(KeySlot slot) => slot.Action switch

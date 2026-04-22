@@ -154,6 +154,21 @@
                             <Setter Property="Foreground" Value="#FF555555"/>
                         </Trigger>
 
+                        <!-- L1: 포커스 가시화 -->
+                        <Trigger Property="IsFocused" Value="True">
+                            <Setter TargetName="Root" Property="BorderBrush"
+                                    Value="{DynamicResource AccentBrush}"/>
+                            <Setter TargetName="Root" Property="BorderThickness"
+                                    Value="3"/>
+                        </Trigger>
+
+                        <Trigger Property="controls:KeyButton.IsA11yFocused" Value="True">
+                            <Setter TargetName="Root" Property="BorderBrush"
+                                    Value="{DynamicResource AccentBrush}"/>
+                            <Setter TargetName="Root" Property="BorderThickness"
+                                    Value="3"/>
+                        </Trigger>
+
                         <!-- T-4.7: Sticky 상태 (고정) -->
                         <Trigger Property="controls:KeyButton.IsSticky" Value="True">
                             <Setter TargetName="Root" Property="Background"

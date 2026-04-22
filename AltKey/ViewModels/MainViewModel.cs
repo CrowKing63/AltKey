@@ -159,6 +159,17 @@ public partial class MainViewModel : ObservableObject
         }
     }
 
+    /// L1: 포커스 가시화 + 탭 탐색 모드 (KeyButton 바인딩용)
+    public bool KeyboardA11yNavigationEnabled
+    {
+        get => _configService.Current.KeyboardA11yNavigationEnabled;
+        set
+        {
+            _configService.Current.KeyboardA11yNavigationEnabled = value;
+            OnPropertyChanged();
+        }
+    }
+
     public MainViewModel(
         ConfigService          configService,
         LayoutService          layoutService,
@@ -216,6 +227,7 @@ public partial class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(KeyRepeatEnabled));
         OnPropertyChanged(nameof(KeyRepeatDelayMs));
         OnPropertyChanged(nameof(KeyRepeatIntervalMs));
+        OnPropertyChanged(nameof(KeyboardA11yNavigationEnabled));
     }
 
     private void OnLayoutsChanged()
