@@ -643,4 +643,74 @@ public class KoreanInputModuleHangulTests : KoreanInputModuleTestBase
 
         Assert.DoesNotContain("친척에게", koDict.GetSuggestions("친척", 10));
     }
+
+    [Fact]
+    public void Feed_exclamation_mark_records_word()
+    {
+        var (module, _, _) = TestSlotFactory.CreateModuleWithInput();
+
+        module.HandleKey(ㅎ_slot, ctxNoModifiers);
+        module.HandleKey(ㅐ_slot, ctxNoModifiers);
+        
+        var exclamationSlot = TestSlotFactory.Symbol("1", "!", VirtualKeyCode.VK_1);
+        module.HandleKey(exclamationSlot, ctxShiftOnly);
+
+        Assert.Equal("", module.CurrentWord);
+    }
+
+    [Fact]
+    public void Feed_number_one_without_shift_does_not_record_word()
+    {
+        var (module, _, _) = TestSlotFactory.CreateModuleWithInput();
+
+        module.HandleKey(ㅎ_slot, ctxNoModifiers);
+        module.HandleKey(ㅐ_slot, ctxNoModifiers);
+
+        var exclamationSlot = TestSlotFactory.Symbol("1", "!", VirtualKeyCode.VK_1);
+        module.HandleKey(exclamationSlot, ctxNoModifiers);
+
+        Assert.Equal("해", module.CurrentWord);
+    }
+
+    [Fact]
+    public void Feed_quotes_records_word()
+    {
+        var (module, _, _) = TestSlotFactory.CreateModuleWithInput();
+
+        module.HandleKey(ㅎ_slot, ctxNoModifiers);
+        module.HandleKey(ㅐ_slot, ctxNoModifiers);
+
+        var quoteSlot = TestSlotFactory.Symbol("'", "\"", VirtualKeyCode.VK_OEM_7);
+        module.HandleKey(quoteSlot, ctxNoModifiers);
+
+        Assert.Equal("", module.CurrentWord);
+    }
+
+    [Fact]
+    public void Feed_new_punctuation_records_word()
+    {
+        var keysToTest = new[]
+        {
+            (vk: VirtualKeyCode.VK_OEM_4, isShifted: false), // [
+            (vk: VirtualKeyCode.VK_OEM_4, isShifted: true),  // {
+            (vk: VirtualKeyCode.VK_OEM_6, isShifted: false), // ]
+            (vk: VirtualKeyCode.VK_OEM_6, isShifted: true),  // }
+            (vk: VirtualKeyCode.VK_OEM_1, isShifted: false), // ;
+            (vk: VirtualKeyCode.VK_OEM_1, isShifted: true),  // :
+            (vk: VirtualKeyCode.VK_9, isShifted: true),      // (
+            (vk: VirtualKeyCode.VK_0, isShifted: true),      // )
+        };
+
+        foreach (var (vk, isShifted) in keysToTest)
+        {
+            var (module, _, _) = TestSlotFactory.CreateModuleWithInput();
+            module.HandleKey(ㅎ_slot, ctxNoModifiers);
+            module.HandleKey(ㅐ_slot, ctxNoModifiers);
+            
+            var slot = TestSlotFactory.Symbol("test", "test", vk);
+            module.HandleKey(slot, isShifted ? ctxShiftOnly : ctxNoModifiers);
+            
+            Assert.Equal("", module.CurrentWord);
+        }
+    }
 }

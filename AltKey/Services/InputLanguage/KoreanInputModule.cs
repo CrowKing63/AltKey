@@ -60,7 +60,7 @@ public sealed class KoreanInputModule : IInputLanguageModule
                 return HandleBackspace(ctx);
             }
 
-            if (IsSeparator(vk))
+            if (IsSeparator(vk, ctx.ShowUpperCase))
             {
                 FinalizeComposition();
                 return false;
@@ -104,7 +104,7 @@ public sealed class KoreanInputModule : IInputLanguageModule
             return HandleBackspace(ctx);
         }
 
-        if (IsSeparator(vk))
+        if (IsSeparator(vk, ctx.ShowUpperCase))
         {
             FinalizeComposition();
             return false;
@@ -352,10 +352,29 @@ public sealed class KoreanInputModule : IInputLanguageModule
     private static bool IsHangulJamo(string s) =>
         s.Length == 1 && (s[0] >= '\u3131' && s[0] <= '\u3163' || s[0] >= '\uAC00' && s[0] <= '\uD7A3');
 
-    private static bool IsSeparator(VirtualKeyCode vk) =>
-        vk is VirtualKeyCode.VK_SPACE or VirtualKeyCode.VK_RETURN
+    private static bool IsSeparator(VirtualKeyCode vk, bool isShifted)
+    {
+        if (vk is VirtualKeyCode.VK_SPACE or VirtualKeyCode.VK_RETURN
             or VirtualKeyCode.VK_TAB or VirtualKeyCode.VK_OEM_PERIOD
-            or VirtualKeyCode.VK_OEM_COMMA;
+            or VirtualKeyCode.VK_OEM_COMMA)
+        {
+            return true;
+        }
+
+        if (vk is VirtualKeyCode.VK_OEM_7 or VirtualKeyCode.VK_OEM_4 or 
+            VirtualKeyCode.VK_OEM_6 or VirtualKeyCode.VK_OEM_1)
+        {
+            return true;
+        }
+
+        if (isShifted && (vk is VirtualKeyCode.VK_1 or VirtualKeyCode.VK_OEM_2 or 
+                          VirtualKeyCode.VK_9 or VirtualKeyCode.VK_0))
+        {
+            return true;
+        }
+
+        return false;
+    }
 
     private static char VkToEnglishChar(VirtualKeyCode vk, bool upperCase)
     {
