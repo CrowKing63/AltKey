@@ -9,19 +9,37 @@
              d:DataContext="{d:DesignInstance vm:SuggestionBarViewModel}">
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        <Style x:Key="SuggestionTextButtonStyle" TargetType="Button">
+            <Setter Property="FontSize" Value="{DynamicResource ScaledKeyFontSize}"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="Margin" Value="2,0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource PanelBorder}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="ContentTemplate">
+                <Setter.Value>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding}"
+                                   TextTrimming="CharacterEllipsis"
+                                   TextWrapping="NoWrap"/>
+                    </DataTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </UserControl.Resources>
     <Border Background="{DynamicResource PanelBg}" Padding="4,2" ClipToBounds="True">
         <StackPanel Orientation="Horizontal">
 
             <!-- 첫 번째 슬롯: 현재 조합 중인 단어 -->
             <Button Content="{Binding CurrentWord}"
+                    Style="{StaticResource SuggestionTextButtonStyle}"
                     Visibility="{Binding HasCurrentWord, Converter={StaticResource BoolToVis}}"
                     Command="{Binding CommitCurrentWordCommand}"
-                    Padding="8,4" Margin="2,0"
                     Background="{DynamicResource AccentBrush}"
                     Foreground="{DynamicResource PanelFg}"
-                    BorderBrush="{DynamicResource PanelBorder}" BorderThickness="1"
-                    Cursor="Hand" FontSize="12" FontWeight="SemiBold"
+                    FontWeight="SemiBold"
                     ToolTip="좌클릭: 저장 · 우클릭: 취소"
                     ContextMenu="{x:Null}"
                     PreviewMouseRightButtonUp="CurrentWordSlot_RightClick">
@@ -44,14 +62,12 @@
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
                         <Button Content="{Binding}"
+                                Style="{StaticResource SuggestionTextButtonStyle}"
                                 Command="{Binding DataContext.AcceptSuggestionCommand,
                                     RelativeSource={RelativeSource AncestorType=UserControl}}"
                                 CommandParameter="{Binding}"
-                                Padding="8,4" Margin="2,0"
                                 Background="Transparent"
                                 Foreground="{DynamicResource PanelFg}"
-                                BorderBrush="{DynamicResource PanelBorder}" BorderThickness="1"
-                                Cursor="Hand" FontSize="12"
                                 ToolTip="좌클릭: 입력 · 우클릭: 관리">
                             <Button.ContextMenu>
                                 <ContextMenu>

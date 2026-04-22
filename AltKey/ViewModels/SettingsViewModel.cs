@@ -64,6 +64,10 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private int keyRepeatIntervalMs;
 
+    // L1: 큰 텍스트 모드
+    [ObservableProperty]
+    private int keyFontScalePercent = 100;
+
     // T-9.5: 현재 버전 표시
     [ObservableProperty] private string currentVersion = "";
 
@@ -163,10 +167,13 @@ public partial class SettingsViewModel : ObservableObject
 
 
 
-            // T-10: 키 반복 입력
-            KeyRepeatEnabled = c.KeyRepeatEnabled;
-            KeyRepeatDelayMs = c.KeyRepeatDelayMs;
-            KeyRepeatIntervalMs = c.KeyRepeatIntervalMs;
+             // T-10: 키 반복 입력
+             KeyRepeatEnabled = c.KeyRepeatEnabled;
+             KeyRepeatDelayMs = c.KeyRepeatDelayMs;
+             KeyRepeatIntervalMs = c.KeyRepeatIntervalMs;
+
+             // L1: 큰 텍스트 모드
+             KeyFontScalePercent = c.KeyFontScalePercent;
 
             // T-8.5: 프로필
             Profiles = new ObservableCollection<ProfileEntry>(
@@ -314,11 +321,20 @@ public partial class SettingsViewModel : ObservableObject
         _configService.Update(c => c.KeyRepeatDelayMs = value);
     }
 
-    partial void OnKeyRepeatIntervalMsChanged(int value)
-    {
-        if (_isLoading) return;
-        _configService.Update(c => c.KeyRepeatIntervalMs = value);
-    }
+     partial void OnKeyRepeatIntervalMsChanged(int value)
+     {
+         if (_isLoading) return;
+         _configService.Update(c => c.KeyRepeatIntervalMs = value);
+     }
+
+     // L1: 큰 텍스트 모드
+     partial void OnKeyFontScalePercentChanged(int value)
+     {
+         if (_isLoading) return;
+         var clamped = Math.Clamp(value, 80, 220);
+         if (clamped != value) { KeyFontScalePercent = clamped; return; }
+         _configService.Update(c => c.KeyFontScalePercent = clamped, "KeyFontScalePercent");
+     }
 
     // ── T-8.5: 앱별 레이아웃 프로필 ────────────────────────────────────────
 

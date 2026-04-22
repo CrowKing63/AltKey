@@ -11,7 +11,8 @@
         <Setter Property="BorderBrush"      Value="{DynamicResource KeyBorder}"/>
         <Setter Property="BorderThickness"  Value="1"/>
         <Setter Property="FontFamily"       Value="{DynamicResource KeyFont}"/>
-        <Setter Property="FontSize"         Value="{DynamicResource KeyFontSize}"/>
+        <Setter Property="FontSize"         Value="{DynamicResource ScaledKeyFontSize}"/>
+        <Setter Property="Padding"          Value="2"/>
         <Setter Property="Margin"           Value="2"/>
         <Setter Property="Cursor"           Value="Hand"/>
         <Setter Property="Focusable"        Value="False"/>
@@ -39,16 +40,25 @@
                                            Text="{Binding RelativeSource={RelativeSource TemplatedParent},
                                                           Path=SubLabel}"
                                            FontSize="9"
+                                           TextTrimming="CharacterEllipsis"
+                                           TextWrapping="NoWrap"
                                            HorizontalAlignment="Right"
                                            VerticalAlignment="Top"
                                            Margin="0,2,4,0"
                                            Opacity="0.65"
                                            IsHitTestVisible="False"
                                            AutomationProperties.Name=""/>
-                                <ContentPresenter x:Name="MainLabel"
-                                                  HorizontalAlignment="Center"
-                                                  VerticalAlignment="Center"
-                                                  RecognizesAccessKey="False"/>
+                                <TextBlock x:Name="MainLabel"
+                                           Text="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=DisplayLabel}"
+                                           FontSize="{TemplateBinding FontSize}"
+                                           Margin="4,0,4,0"
+                                           TextTrimming="CharacterEllipsis"
+                                           TextWrapping="NoWrap"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           TextAlignment="Center"
+                                           IsHitTestVisible="False"
+                                           AutomationProperties.Name=""/>
                                 <!-- T-4.7: Locked 상태 자물쇠 오버레이 -->
                                 <TextBlock x:Name="LockIcon"
                                            Text="🔒"

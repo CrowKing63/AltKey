@@ -13,10 +13,11 @@
     <CornerRadius x:Key="KeyboardRadius">16</CornerRadius>
     <Thickness x:Key="KeyboardPadding">12</Thickness>
 
-    <!-- ── 폰트 ─────────────────────────────────────────────────────────── -->
-    <FontFamily x:Key="KeyFont">Segoe UI Variable, Segoe UI, sans-serif</FontFamily>
-    <sys:Double x:Key="KeyFontSize">13</sys:Double>
-    <sys:Double x:Key="KeyFontSizeSmall">10</sys:Double>
+<!-- ── 폰트 ─────────────────────────────────────────────────────────── -->
+<FontFamily x:Key="KeyFont">Segoe UI Variable, Segoe UI, sans-serif</FontFamily>
+<sys:Double x:Key="KeyFontSize">13</sys:Double>
+<sys:Double x:Key="ScaledKeyFontSize">13</sys:Double>
+<sys:Double x:Key="KeyFontSizeSmall">10</sys:Double>
 
     <!-- ── 애니메이션 시간 ────────────────────────────────────────────────── -->
     <Duration x:Key="TransitionFast">0:0:0.12</Duration>

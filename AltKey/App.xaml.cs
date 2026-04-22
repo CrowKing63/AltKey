@@ -5,12 +5,16 @@ using Microsoft.Extensions.DependencyInjection;
 using AltKey.Services;
 using AltKey.Services.InputLanguage;
 using AltKey.ViewModels;
+using AltKey.Models;
 
 namespace AltKey;
 
 public partial class App : System.Windows.Application
 {
     public static IServiceProvider Services { get; private set; } = null!;
+    
+    // L1: 큰 텍스트 모드
+    private ConfigService? _configService;
 
     // T-6.6: 앱 시작 시간 측정
     private static readonly long _startTick = Environment.TickCount64;
@@ -94,6 +98,11 @@ public partial class App : System.Windows.Application
             var config       = Services.GetRequiredService<ConfigService>();
             themeService.Apply(config.Current.Theme);
 
+            // 글꼴 배율 적용
+            _configService = config;
+            _configService.ConfigChanged += OnConfigChanged;
+            UpdateScaledFontSize();
+
             // T-5.3: 포그라운드 앱 감지 시작
             var profileService = Services.GetRequiredService<ProfileService>();
             profileService.Start();
@@ -175,6 +184,32 @@ public partial class App : System.Windows.Application
         // 서비스 정리
         if (Services is IDisposable d) d.Dispose();
         base.OnExit(e);
+    }
+
+    // L1: 큰 텍스트 모드
+    private void OnConfigChanged(string? propertyName)
+    {
+        if (propertyName == nameof(AppConfig.KeyFontScalePercent))
+        {
+            UpdateScaledFontSize();
+        }
+    }
+
+    private void UpdateScaledFontSize()
+    {
+        if (_configService == null) return;
+
+        int scalePercent = _configService.Current.KeyFontScalePercent;
+        double baseSize = 13.0; // KeyFontSize in Generic.xaml
+        double scaled = baseSize * scalePercent / 100.0;
+
+        // Apply the scaled font size to the application resource.
+        // Direct assignment works with merged dictionaries as well.
+        var currentApp = System.Windows.Application.Current;
+        if (currentApp != null)
+        {
+            currentApp.Resources["ScaledKeyFontSize"] = scaled;
+        }
     }
 
     // T-6.7: 파일 로깅
