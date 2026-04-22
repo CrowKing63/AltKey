@@ -81,7 +81,7 @@
                         <!-- 창 크기 (Scale %) -->
                         <TextBlock Text="창 크기 (%)" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
                         <ctrl:NumericAdjuster Value="{Binding WindowScale}"
-                                              Minimum="60" Maximum="200" Step="10" DecimalPlaces="0"
+                                              Minimum="60" Maximum="200" Step="5" DecimalPlaces="0"
                                               ButtonBackground="{DynamicResource SettingsHighlight}"
                                               ButtonForeground="{DynamicResource SettingsFg}"
                                               TextBoxBackground="{DynamicResource SettingsHighlight}"
