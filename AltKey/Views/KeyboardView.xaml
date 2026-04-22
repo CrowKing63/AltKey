@@ -18,13 +18,8 @@
 
             <!-- 상단 헤더 바: 드래그 핸들 + 버튼들 (T-1.5, T-4.8, T-7.2) -->
             <Grid DockPanel.Dock="Top" Height="28">
-                <!-- 드래그 핸들 (배경 영역 전체) -->
-                <Border x:Name="DragHandle"
-                        Background="Transparent"
-                        Cursor="SizeAll"
-                        MouseLeftButtonDown="DragHandle_MouseLeftButtonDown"
-                        MouseEnter="DragHandle_MouseEnter"
-                        MouseLeave="DragHandle_MouseLeave">
+                <!-- 헤더 배경 레이어 -->
+                <Border Background="Transparent">
                     <Grid>
                         <!-- 앱 타이틀 + 업데이트 인디케이터 (좌측) -->
                         <StackPanel Orientation="Horizontal"
@@ -66,14 +61,24 @@
                                     Cursor="Hand" Padding="0" FontSize="10"
                                     Click="EdgeUpBtn_Click"
                                     AutomationProperties.Name="위쪽으로 이동"/>
-                            <Rectangle x:Name="DragPill"
-                                       Width="36" Height="4"
-                                       Fill="{DynamicResource TitleFg}"
-                                       Opacity="0.25"
-                                       RadiusX="2" RadiusY="2"
-                                       Margin="6,0"
-                                       VerticalAlignment="Center"
-                                        IsHitTestVisible="False"/>
+
+                            <!-- 드래그 가능한 영역을 중앙 바(DragPill) 주변으로 제한 -->
+                            <Border x:Name="DragHandle"
+                                    Background="Transparent"
+                                    Cursor="SizeAll"
+                                    Margin="2,0" Padding="4,12"
+                                    MouseLeftButtonDown="DragHandle_MouseLeftButtonDown"
+                                    MouseEnter="DragHandle_MouseEnter"
+                                    MouseLeave="DragHandle_MouseLeave">
+                                <Rectangle x:Name="DragPill"
+                                           Width="36" Height="4"
+                                           Fill="{DynamicResource TitleFg}"
+                                           Opacity="0.25"
+                                           RadiusX="2" RadiusY="2"
+                                           VerticalAlignment="Center"
+                                           IsHitTestVisible="False"/>
+                            </Border>
+
                             <Button Width="18" Height="18" Content="↓" ToolTip="화면 아래쪽으로 이동"
                                     Background="Transparent" BorderThickness="0"
                                     Foreground="{DynamicResource TitleFg}" Opacity="0.45"
