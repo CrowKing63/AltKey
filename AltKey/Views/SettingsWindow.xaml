@@ -61,16 +61,18 @@
                     <!-- ── 왼쪽 컬럼: 기본 설정 ─────────────────────────────── -->
                     <StackPanel Grid.Column="0">
 
-                        <!-- 테마 -->
-                        <TextBlock Text="테마" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,6"/>
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
-                            <RadioButton Content="시스템 따라" Foreground="{DynamicResource SettingsFg}"
-                                         IsChecked="{Binding ThemeIsSystem}" Margin="0,0,12,0"/>
-                            <RadioButton Content="라이트"     Foreground="{DynamicResource SettingsFg}"
-                                         IsChecked="{Binding ThemeIsLight}"  Margin="0,0,12,0"/>
-                            <RadioButton Content="다크"       Foreground="{DynamicResource SettingsFg}"
-                                         IsChecked="{Binding ThemeIsDark}"/>
-                        </StackPanel>
+                         <!-- 테마 -->
+                         <TextBlock Text="테마" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,6"/>
+                         <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                             <RadioButton Content="시스템 따라" Foreground="{DynamicResource SettingsFg}"
+                                          IsChecked="{Binding ThemeIsSystem}" Margin="0,0,12,0"/>
+                             <RadioButton Content="라이트"     Foreground="{DynamicResource SettingsFg}"
+                                          IsChecked="{Binding ThemeIsLight}"  Margin="0,0,12,0"/>
+                             <RadioButton Content="다크"       Foreground="{DynamicResource SettingsFg}"
+                                          IsChecked="{Binding ThemeIsDark}" Margin="0,0,12,0"/>
+                             <RadioButton Content="고대비"    Foreground="{DynamicResource SettingsFg}"
+                                          IsChecked="{Binding ThemeIsHighContrast}"/>
+                         </StackPanel>
 
                         <!-- 항상 위 -->
                         <CheckBox Content="항상 위에 표시"

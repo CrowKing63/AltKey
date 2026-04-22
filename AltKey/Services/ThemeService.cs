@@ -42,6 +42,10 @@ public class ThemeService
 
     private static string DetectSystemTheme()
     {
+        // 고대비 모드가 켜져 있으면 고대비 테마 반환
+        if (SystemParameters.HighContrast)
+            return "HighContrast";
+        
         try
         {
             using var key = Registry.CurrentUser.OpenSubKey(

@@ -1,0 +1,42 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- 고대비 테마: 최대한의 대비를 위해 검은색과 흰색 사용 -->
+    <!-- 키보드 컨테이너: 검정색 -->
+    <SolidColorBrush x:Key="KeyboardBg"   Color="#FF000000"/>
+    <!-- 키 배경: 흰색 -->
+    <SolidColorBrush x:Key="KeyBg"        Color="#FFFFFFFF"/>
+    <SolidColorBrush x:Key="KeyBgHover"   Color="#FFE6E6E6"/>
+    <SolidColorBrush x:Key="KeyBgPressed" Color="#FFCCCCCC"/>
+    <!-- Sticky: 노란색 (검은 배경에서 잘 보임) -->
+    <SolidColorBrush x:Key="KeyBgSticky"  Color="#FFFFFF00"/>
+    <SolidColorBrush x:Key="KeyFg"        Color="#FF000000"/>
+    <SolidColorBrush x:Key="KeyFgSticky"  Color="#FF000000"/>
+    <!-- 키 경계선: 흰색 -->
+    <SolidColorBrush x:Key="KeyBorder"    Color="#FFFFFFFF"/>
+    <SolidColorBrush x:Key="KeyShadow"    Color="#33000000"/>
+    <!-- 제목/버튼용: 흰색 -->
+    <SolidColorBrush x:Key="TitleFg"      Color="#FFFFFFFF"/>
+    <!-- 전체 창 배경: 검정색 -->
+    <SolidColorBrush x:Key="WindowBg"     Color="#FF000000"/>
+    <!-- 이모지/클립보드 패널 배경: 검정색 -->
+    <SolidColorBrush x:Key="PanelBg"      Color="#FF000000"/>
+    <SolidColorBrush x:Key="PanelFg"      Color="#FFFFFFFF"/>
+    <SolidColorBrush x:Key="PanelBorder"  Color="#FFFFFFFF"/>
+    <!-- 설정 패널 전용 -->
+    <SolidColorBrush x:Key="SettingsBg"        Color="#FF000000"/>
+    <SolidColorBrush x:Key="SettingsFg"        Color="#FFFFFFFF"/>
+    <SolidColorBrush x:Key="SettingsFgSub"     Color="#FFCCCCCC"/>
+    <SolidColorBrush x:Key="SettingsFgHint"    Color="#FF999999"/>
+    <SolidColorBrush x:Key="SettingsHighlight" Color="#FF333333"/>
+    <SolidColorBrush x:Key="SettingsBorder"    Color="#FFFFFFFF"/>
+    <!-- UAC 경고 배너 -->
+    <SolidColorBrush x:Key="ElevatedWarningBg"  Color="#FFFF0000"/>
+    <SolidColorBrush x:Key="ElevatedWarningFg"  Color="#FF000000"/>
+    <!-- 관리자 상태 안내 -->
+    <SolidColorBrush x:Key="AdminWarningBg"     Color="#FFFF0000"/>
+    <SolidColorBrush x:Key="AdminWarningFg"     Color="#FF000000"/>
+    <SolidColorBrush x:Key="AdminOkBg"          Color="#FF00FF00"/>
+    <SolidColorBrush x:Key="AdminOkFg"          Color="#FF000000"/>
+    <!-- 07: 가/A 서브모드 토글 키 강조 -->
+    <SolidColorBrush x:Key="AccentBrush"        Color="#FF0000FF"/>
+</ResourceDictionary>

@@ -89,10 +89,11 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private ObservableCollection<string> availableLayouts = [];
 
-    // 라디오 버튼 바인딩용 (Theme)
-    public bool ThemeIsSystem { get => ThemeMode == "system"; set { if (value) ThemeMode = "system"; } }
-    public bool ThemeIsLight  { get => ThemeMode == "Light";  set { if (value) ThemeMode = "Light";  } }
-    public bool ThemeIsDark   { get => ThemeMode == "Dark";   set { if (value) ThemeMode = "Dark";   } }
+     // 라디오 버튼 바인딩용 (Theme)
+     public bool ThemeIsSystem { get => ThemeMode == "system"; set { if (value) ThemeMode = "system"; } }
+     public bool ThemeIsLight  { get => ThemeMode == "Light";  set { if (value) ThemeMode = "Light";  } }
+     public bool ThemeIsDark   { get => ThemeMode == "Dark";   set { if (value) ThemeMode = "Dark";   } }
+     public bool ThemeIsHighContrast { get => ThemeMode == "HighContrast"; set { if (value) ThemeMode = "HighContrast"; } }
 
     // ── 생성자 ──────────────────────────────────────────────────────────────
 
