@@ -13,15 +13,17 @@ public class TrayService : IDisposable
     private readonly LayoutService _layoutService;
     private readonly MainViewModel _mainViewModel;
     private readonly UpdateService _updateService;
+    private readonly InputService _inputService;
 
     private NotifyIcon _notifyIcon = null!;
     private Window?    _mainWindow;
 
-    public TrayService(LayoutService layoutService, MainViewModel mainViewModel, UpdateService updateService)
+    public TrayService(LayoutService layoutService, MainViewModel mainViewModel, UpdateService updateService, InputService inputService)
     {
         _layoutService = layoutService;
         _mainViewModel = mainViewModel;
         _updateService = updateService;
+        _inputService = inputService;
 
         _layoutService.LayoutsChanged += OnLayoutsChanged;
     }
@@ -161,7 +163,10 @@ public class TrayService : IDisposable
         {
             if (_mainWindow is null) return;
             if (_mainWindow.IsVisible)
+            {
+                ModifierSafety.PrepareForWindowHide(_inputService, "TrayService.ToggleVisibility");
                 _mainWindow.Hide();
+            }
             else
             {
                 _mainWindow.Show();

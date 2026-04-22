@@ -204,6 +204,8 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
 
     private void CloseButton_Click(object sender, RoutedEventArgs e)
     {
+        var inputService = App.Services.GetRequiredService<InputService>();
+        ModifierSafety.PrepareForWindowHide(inputService, "KeyboardView.CloseButton");
         Window.GetWindow(this)?.Hide();
     }
 

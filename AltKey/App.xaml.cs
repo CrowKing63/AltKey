@@ -157,6 +157,13 @@ public partial class App : System.Windows.Application
 
     protected override void OnExit(ExitEventArgs e)
     {
+        try
+        {
+            if (Services.GetService<InputService>() is { } inputService)
+                ModifierSafety.PrepareForAppExit(inputService, "App.OnExit");
+        }
+        catch { /* 종료 방어 실패는 앱 종료를 막지 않는다. */ }
+
         // TASK-05: 자동완성 학습 데이터 즉시 저장 (디버운스 타이머 Flush)
         try
         {

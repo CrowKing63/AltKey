@@ -16,29 +16,48 @@ public enum InputMode
 
 public class InputService
 {
+    private static readonly uint OwnProcessId = (uint)Environment.ProcessId;
+    private static readonly HashSet<VirtualKeyCode> HighRiskModifiers =
+    [
+        VirtualKeyCode.VK_CONTROL,
+        VirtualKeyCode.VK_LCONTROL,
+        VirtualKeyCode.VK_RCONTROL,
+        VirtualKeyCode.VK_MENU,
+        VirtualKeyCode.VK_LMENU,
+        VirtualKeyCode.VK_RMENU,
+        VirtualKeyCode.VK_LWIN,
+        VirtualKeyCode.VK_RWIN,
+    ];
+
     private readonly bool _isElevated;
-    private static readonly uint _ownProcessId = (uint)Environment.ProcessId;
+    private readonly HashSet<VirtualKeyCode> _stickyKeys = [];
+    private readonly HashSet<VirtualKeyCode> _lockedKeys = [];
 
     public InputMode Mode { get; private set; }
 
     public bool IsElevated => _isElevated;
 
-    /// 포그라운드 윈도우가 AltKey 프로세스 소유인지 확인.
-    /// true면 한글 조합을 건너뛰고 가상 키만 전송.
-    public bool IsForegroundOwnWindow()
-    {
-        var hwnd = Win32.GetForegroundWindow();
-        if (hwnd == IntPtr.Zero) return false;
-        Win32.GetWindowThreadProcessId(hwnd, out var pid);
-        return pid == _ownProcessId;
-    }
+    public int TrackedOnScreenLength { get; set; }
+
+    public IReadOnlySet<VirtualKeyCode> StickyKeys => _stickyKeys;
+    public IReadOnlySet<VirtualKeyCode> LockedKeys => _lockedKeys;
 
     public event Action<InputMode>? ModeChanged;
+    public event Action? StickyStateChanged;
+    public event Action? ElevatedAppDetected;
 
     public InputService()
     {
         _isElevated = CheckElevated();
         Mode = _isElevated ? InputMode.VirtualKey : InputMode.Unicode;
+    }
+
+    public bool IsForegroundOwnWindow()
+    {
+        var hwnd = Win32.GetForegroundWindow();
+        if (hwnd == IntPtr.Zero) return false;
+        Win32.GetWindowThreadProcessId(hwnd, out var pid);
+        return pid == OwnProcessId;
     }
 
     public bool TrySetMode(InputMode target)
@@ -52,44 +71,14 @@ public class InputService
         return true;
     }
 
-    // ── Unicode 모드에서 화면에 전송한 조합 문자열 길이 추적 ──────────────
-    public int TrackedOnScreenLength { get; set; }
-
-    /// 조합 완료(공백/엔터 등) 후 추적 길이를 리셋.
     public void ResetTrackedLength() => TrackedOnScreenLength = 0;
 
-    private static bool CheckElevated()
-    {
-        using var identity = WindowsIdentity.GetCurrent();
-        var principal = new WindowsPrincipal(identity);
-        return principal.IsInRole(WindowsBuiltInRole.Administrator);
-    }
-
-    // ── Sticky / Lock 상태 ────────────────────────────────────────────────────
-    private readonly HashSet<VirtualKeyCode> _stickyKeys = [];
-    private readonly HashSet<VirtualKeyCode> _lockedKeys = [];
-
-    public IReadOnlySet<VirtualKeyCode> StickyKeys => _stickyKeys;
-    public IReadOnlySet<VirtualKeyCode> LockedKeys => _lockedKeys;
-
-    // ── 이벤트 ───────────────────────────────────────────────────────────────
-    /// Sticky / Lock 상태 변경 시 발생 (UI 갱신용)
-    public event Action? StickyStateChanged;
-
-    /// SendInput이 ERROR_ACCESS_DENIED를 반환했을 때 발생 (T-2.10)
-    public event Action? ElevatedAppDetected;
-
-    /// T-2.10b: 외부에서 관리자 권한 앱 감지를 알릴 때 호출
     public void NotifyElevatedApp() => ElevatedAppDetected?.Invoke();
 
-    // ── T-2.7: Caps Lock 상태 조회 ──────────────────────────────────────────
     public bool IsCapsLockOn => (Win32.GetKeyState((int)VirtualKeyCode.VK_CAPITAL) & 0x0001) != 0;
 
-    // Unicode 모드에서 조합키(Ctrl+C 등) 판별용
-    public bool HasActiveModifiers =>
-        _stickyKeys.Count > 0 || _lockedKeys.Count > 0;
+    public bool HasActiveModifiers => _stickyKeys.Count > 0 || _lockedKeys.Count > 0;
 
-    /// Shift만 활성된 경우는 false. 한국어 쌍자음/쌍모음 입력과 "조합키"를 구분하기 위해 사용.
     public bool HasActiveModifiersExcludingShift
     {
         get
@@ -99,16 +88,17 @@ public class InputService
                 if (vk is not VirtualKeyCode.VK_SHIFT and not VirtualKeyCode.VK_LSHIFT and not VirtualKeyCode.VK_RSHIFT)
                     return true;
             }
+
             foreach (var vk in _lockedKeys)
             {
                 if (vk is not VirtualKeyCode.VK_SHIFT and not VirtualKeyCode.VK_LSHIFT and not VirtualKeyCode.VK_RSHIFT)
                     return true;
             }
+
             return false;
         }
     }
 
-    // ── T-2.4: 단일 키 전송 ──────────────────────────────────────────────────
     public virtual void SendKeyPress(VirtualKeyCode vk)
     {
         var inputs = new Win32.INPUT[] { MakeKeyDown((ushort)vk), MakeKeyUp((ushort)vk) };
@@ -116,21 +106,15 @@ public class InputService
     }
 
     public virtual void SendKeyDown(VirtualKeyCode vk)
-        => DispatchInput([MakeKeyDown((ushort)vk)]);
-
-    public virtual void SendKeyUp(VirtualKeyCode vk)
-        => DispatchInput([MakeKeyUp((ushort)vk)]);
-
-    // ── T-2.10: Win32 SendInput 래퍼 (권한 오류 감지) ────────────────────────
-    private void DispatchInput(Win32.INPUT[] inputs)
     {
-        uint sent = Win32.SendInput((uint)inputs.Length, inputs, Marshal.SizeOf<Win32.INPUT>());
-        if (sent == 0 && Marshal.GetLastWin32Error() == Win32.ERROR_ACCESS_DENIED)
-            ElevatedAppDetected?.Invoke();
+        DispatchInput([MakeKeyDown((ushort)vk)]);
     }
 
-    // ── T-2.5: 고정 키(Sticky Keys) 상태 관리 ────────────────────────────────
-    /// 수식자 키 토글: 미고정 → 일회성 고정 → 영구 잠금 → 해제 순환
+    public virtual void SendKeyUp(VirtualKeyCode vk)
+    {
+        DispatchInput([MakeKeyUp((ushort)vk)]);
+    }
+
     public void ToggleModifier(VirtualKeyCode vk)
     {
         if (_lockedKeys.Contains(vk))
@@ -142,7 +126,6 @@ public class InputService
         else if (_stickyKeys.Contains(vk))
         {
             _lockedKeys.Add(vk);
-            // 영구 잠금 진입 — KeyDown 이미 유지 중
         }
         else
         {
@@ -153,8 +136,7 @@ public class InputService
         StickyStateChanged?.Invoke();
     }
 
-    /// 일반 키 입력 후 일회성 고정 수식자를 해제한다 (잠금 키는 유지).
-    internal void ReleaseTransientModifiers()
+    internal void ReleaseTransientModifiers(string reason = "input-complete")
     {
         var transient = _stickyKeys.Except(_lockedKeys).ToList();
         foreach (var mod in transient)
@@ -162,21 +144,42 @@ public class InputService
             SendKeyUp(mod);
             _stickyKeys.Remove(mod);
         }
+
         if (transient.Count > 0)
             StickyStateChanged?.Invoke();
     }
 
-    /// 모든 수식자 키(sticky + locked)를 즉시 해제한다. 창 닫힘/숨김 시 호출.
-    public void ReleaseAllModifiers()
+    public virtual void ReleaseAllModifiers(string reason = "manual")
     {
-        foreach (var mod in _stickyKeys.Union(_lockedKeys))
+        var active = _stickyKeys.Union(_lockedKeys).Distinct().ToList();
+        foreach (var mod in active)
             SendKeyUp(mod);
+
         _stickyKeys.Clear();
         _lockedKeys.Clear();
+
         StickyStateChanged?.Invoke();
     }
 
-    // ── T-2.6: KeyAction 디스패처 ────────────────────────────────────────────
+    public virtual void ReleaseHighRiskModifiers(string reason)
+    {
+        var released = _stickyKeys
+            .Union(_lockedKeys)
+            .Where(IsHighRiskModifier)
+            .Distinct()
+            .ToList();
+
+        foreach (var mod in released)
+        {
+            SendKeyUp(mod);
+            _stickyKeys.Remove(mod);
+            _lockedKeys.Remove(mod);
+        }
+
+        if (released.Count > 0)
+            StickyStateChanged?.Invoke();
+    }
+
     public void HandleAction(KeyAction action)
     {
         switch (action)
@@ -185,7 +188,7 @@ public class InputService
                 if (Enum.TryParse<VirtualKeyCode>(vkStr, out var vk))
                 {
                     SendKeyPress(vk);
-                    ReleaseTransientModifiers();
+                    ReleaseTransientModifiers("SendKeyAction");
                 }
                 break;
 
@@ -203,11 +206,9 @@ public class InputService
                     ToggleModifier(modVk);
                 break;
 
-            // ── T-9.1 신규 액션 핸들러 ───────────────────────────────────────
-
             case RunAppAction { Path: var path, Args: var args }:
                 try { Process.Start(new ProcessStartInfo(path, args) { UseShellExecute = true }); }
-                catch (Exception ex) { Debug.WriteLine($"[RunApp] 실패: {path} — {ex.Message}"); }
+                catch (Exception ex) { Debug.WriteLine($"[RunApp] 실패: {path} / {ex.Message}"); }
                 break;
 
             case BoilerplateAction { Text: var bText }:
@@ -220,10 +221,10 @@ public class InputService
                 var psi = new ProcessStartInfo(shellExe, shellArg)
                 {
                     UseShellExecute = false,
-                    CreateNoWindow  = hidden
+                    CreateNoWindow = hidden
                 };
                 try { Process.Start(psi); }
-                catch (Exception ex) { Debug.WriteLine($"[ShellCommand] 실패: {cmd} — {ex.Message}"); }
+                catch (Exception ex) { Debug.WriteLine($"[ShellCommand] 실패: {cmd} / {ex.Message}"); }
                 break;
 
             case VolumeControlAction { Direction: var dir, Step: var step }:
@@ -237,29 +238,11 @@ public class InputService
         }
     }
 
-    // ── T-9.1: 볼륨 제어 (VK_VOLUME_UP / DOWN / MUTE 반복 전송) ────────────
-    private void HandleVolumeControl(string direction, int step)
-    {
-        var vk = direction switch
-        {
-            "up"   => (ushort)0xAF, // VK_VOLUME_UP
-            "down" => (ushort)0xAE, // VK_VOLUME_DOWN
-            "mute" => (ushort)0xAD, // VK_VOLUME_MUTE
-            _      => (ushort)0
-        };
-        if (vk == 0) return;
-
-        // step/2 횟수만큼 반복 전송 (볼륨 키는 보통 2씩 변화)
-        int repeat = Math.Max(1, step / 2);
-        for (int i = 0; i < repeat; i++)
-            SendKeyPress((VirtualKeyCode)vk);
-    }
-
     public void SendCombo(List<VirtualKeyCode> keys)
     {
         foreach (var k in keys) SendKeyDown(k);
         foreach (var k in Enumerable.Reverse(keys)) SendKeyUp(k);
-        ReleaseTransientModifiers();
+        ReleaseTransientModifiers("SendCombo");
     }
 
     public virtual void SendUnicode(string text)
@@ -270,11 +253,11 @@ public class InputService
             inputs.Add(MakeUnicodeKeyDown(ch));
             inputs.Add(MakeUnicodeKeyUp(ch));
         }
+
         DispatchInput(inputs.ToArray());
-        ReleaseTransientModifiers();
+        ReleaseTransientModifiers("SendUnicode");
     }
 
-    // ── Unicode 모드: 이전 출력을 백스페이스로 지우고 새 출력을 원자적 전송 ──
     public virtual void SendAtomicReplace(int prevLen, string newOutput)
     {
         var inputs = new List<Win32.INPUT>();
@@ -283,16 +266,51 @@ public class InputService
             inputs.Add(MakeKeyDown((ushort)VirtualKeyCode.VK_BACK));
             inputs.Add(MakeKeyUp((ushort)VirtualKeyCode.VK_BACK));
         }
+
         foreach (var ch in newOutput)
         {
             inputs.Add(MakeUnicodeKeyDown(ch));
             inputs.Add(MakeUnicodeKeyUp(ch));
         }
+
         if (inputs.Count > 0)
             DispatchInput(inputs.ToArray());
+
         TrackedOnScreenLength = newOutput.Length;
-        ReleaseTransientModifiers();
+        ReleaseTransientModifiers("SendAtomicReplace");
     }
+
+    private static bool CheckElevated()
+    {
+        using var identity = WindowsIdentity.GetCurrent();
+        var principal = new WindowsPrincipal(identity);
+        return principal.IsInRole(WindowsBuiltInRole.Administrator);
+    }
+
+    private void DispatchInput(Win32.INPUT[] inputs)
+    {
+        uint sent = Win32.SendInput((uint)inputs.Length, inputs, Marshal.SizeOf<Win32.INPUT>());
+        if (sent == 0 && Marshal.GetLastWin32Error() == Win32.ERROR_ACCESS_DENIED)
+            ElevatedAppDetected?.Invoke();
+    }
+
+    private void HandleVolumeControl(string direction, int step)
+    {
+        var vk = direction switch
+        {
+            "up" => (ushort)0xAF,
+            "down" => (ushort)0xAE,
+            "mute" => (ushort)0xAD,
+            _ => (ushort)0
+        };
+        if (vk == 0) return;
+
+        int repeat = Math.Max(1, step / 2);
+        for (int i = 0; i < repeat; i++)
+            SendKeyPress((VirtualKeyCode)vk);
+    }
+
+    private static bool IsHighRiskModifier(VirtualKeyCode vk) => HighRiskModifiers.Contains(vk);
 
     private static Win32.INPUT MakeUnicodeKeyDown(char ch) => new()
     {
@@ -306,7 +324,6 @@ public class InputService
         U = new() { Ki = new() { WVk = 0, WScan = ch, DwFlags = Win32.KEYEVENTF_UNICODE | Win32.KEYEVENTF_KEYUP } }
     };
 
-    // ── 내부 헬퍼 ────────────────────────────────────────────────────────────
     private static Win32.INPUT MakeKeyDown(ushort vk) => new()
     {
         Type = Win32.INPUT_KEYBOARD,

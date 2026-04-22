@@ -105,7 +105,7 @@ public partial class MainWindow : Window
     // T-1.6 / T-5.6: 창 닫기 처리
     protected override void OnClosing(CancelEventArgs e)
     {
-        _inputService.ReleaseAllModifiers();
+        _inputService.ReleaseAllModifiers("MainWindow.OnClosing");
 
         if (!IsShuttingDown)
         {
