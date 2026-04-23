@@ -83,9 +83,8 @@ public class AccessibilitySafetyTests
         var layout = JsonSerializer.Deserialize<LayoutConfig>(json, JsonOptions.Default);
 
         Assert.NotNull(layout);
-        var allKeys = layout!.Columns?
-            .SelectMany(c => c.Rows!.SelectMany(r => r.Keys))
-            ?? layout.Rows!.SelectMany(r => r.Keys);
+        var allKeys = layout!.Columns!
+            .SelectMany(c => c.Rows!.SelectMany(r => r.Keys));
 
         var winKey = allKeys.First(k => k.Label == "Win");
 

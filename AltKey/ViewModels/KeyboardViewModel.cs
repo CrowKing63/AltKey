@@ -353,15 +353,6 @@ public partial class KeyboardViewModel : ObservableObject
                 ))
             );
         }
-        else if (layout.Rows is { Count: > 0 })
-        {
-            // 하위 호환: rows만 있는 JSON을 단일 열로 감싼다
-            var rowVms = layout.Rows.Select(r => new KeyRowVm(
-                r.Keys.Select(k => new KeySlotVm(k, _autoComplete)).ToList()
-            )).ToList();
-
-            Columns = [new KeyColumnVm(0, rowVms)];
-        }
         else
         {
             Columns = [];

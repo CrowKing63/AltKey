@@ -9,7 +9,7 @@
         xmlns:ctrl="clr-namespace:AltKey.Controls"
         mc:Ignorable="d"
         Title="레이아웃 편집기"
-        Width="920" Height="620"
+        Width="1200" Height="750"
         MinWidth="700" MinHeight="450"
         WindowStartupLocation="CenterOwner"
         Background="#FF1E1E2E"
@@ -18,6 +18,7 @@
         <BooleanToVisibilityConverter     x:Key="BoolToVis"/>
         <conv:InverseBoolToVisibilityConverter x:Key="InvBoolToVis"/>
         <conv:WidthToPixelConverter       x:Key="WidthToPx"/>
+        <conv:NullToCollapsedConverter    x:Key="NullToCollapsed"/>
 
         <Style x:Key="DarkBtn" TargetType="Button">
             <Setter Property="Background"      Value="#33FFFFFF"/>
@@ -30,6 +31,14 @@
         <Style x:Key="AccentBtn" TargetType="Button">
             <Setter Property="Background"      Value="#3B82F6"/>
             <Setter Property="Foreground"      Value="#FFFFFFFF"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding"         Value="10,5"/>
+            <Setter Property="Margin"          Value="2,0"/>
+            <Setter Property="Cursor"          Value="Hand"/>
+        </Style>
+        <Style x:Key="DangerBtn" TargetType="Button">
+            <Setter Property="Background"      Value="#55FF4444"/>
+            <Setter Property="Foreground"      Value="#FFEEAAAA"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Padding"         Value="10,5"/>
             <Setter Property="Margin"          Value="2,0"/>
@@ -59,14 +68,14 @@
         <!-- ── 상단 툴바 ── -->
         <Border Grid.Row="0" Background="#FF12121F" Padding="12,8">
             <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
 
-                <!-- 레이아웃 선택 + 불러오기 -->
-                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                <!-- 1행: 레이아웃 선택 + 불러오기 / 새 레이아웃 -->
+                <StackPanel Grid.Row="0" Orientation="Horizontal" VerticalAlignment="Center"
+                            Margin="0,0,0,6">
                     <TextBlock Text="레이아웃:" Foreground="#AAFFFFFF"
                                VerticalAlignment="Center" Margin="0,0,6,0"/>
                     <ComboBox ItemsSource="{Binding AvailableLayouts}"
@@ -75,29 +84,57 @@
                     <Button Content="불러오기"
                             Command="{Binding LoadSelectedCommand}"
                             Style="{StaticResource DarkBtn}"/>
+                    <Button Content="새 레이아웃"
+                            Command="{Binding NewLayoutCommand}"
+                            Style="{StaticResource DarkBtn}"
+                            Margin="12,0,0,0"/>
                 </StackPanel>
 
-                <!-- 레이아웃 이름 -->
-                <StackPanel Grid.Column="1" Orientation="Horizontal"
-                            HorizontalAlignment="Center" VerticalAlignment="Center">
-                    <TextBlock Text="표시 이름:" Foreground="#AAFFFFFF"
-                               VerticalAlignment="Center" Margin="0,0,6,0"/>
-                    <TextBox Text="{Binding LayoutName, UpdateSourceTrigger=PropertyChanged}"
-                             Width="200" Height="26"
-                             Background="#33FFFFFF" Foreground="#EEFFFFFF"
-                             BorderBrush="#55FFFFFF" Padding="6,2"/>
-                </StackPanel>
+                <!-- 2행: 파일명 + 표시이름 + 저장/다른이름저장/삭제 -->
+                <Grid Grid.Row="1">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
 
-                <!-- 저장 버튼 -->
-                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button Content="저장"
-                            Command="{Binding SaveCommand}"
-                            Style="{StaticResource AccentBtn}"/>
-                    <Button x:Name="SaveAsButton"
-                            Content="다른 이름으로 저장"
-                            Click="SaveAsButton_Click"
-                            Style="{StaticResource DarkBtn}"/>
-                </StackPanel>
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center"
+                                Margin="0,0,16,0">
+                        <TextBlock Text="파일명:" Foreground="#AAFFFFFF"
+                                   VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBox Text="{Binding CurrentFileName, UpdateSourceTrigger=PropertyChanged}"
+                                 Width="160" Height="26"
+                                 Background="#33FFFFFF" Foreground="#EEFFFFFF"
+                                 BorderBrush="#55FFFFFF" Padding="6,2"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="표시 이름:" Foreground="#AAFFFFFF"
+                                   VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBox Text="{Binding LayoutName, UpdateSourceTrigger=PropertyChanged}"
+                                 Width="200" Height="26"
+                                 Background="#33FFFFFF" Foreground="#EEFFFFFF"
+                                 BorderBrush="#55FFFFFF" Padding="6,2"/>
+                    </StackPanel>
+
+                    <!-- 저장 버튼들 -->
+                    <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button Content="저장"
+                                Command="{Binding SaveCommand}"
+                                Style="{StaticResource AccentBtn}"/>
+                        <Button Content="다른 이름으로 저장"
+                                Command="{Binding SaveAsCommand}"
+                                Style="{StaticResource DarkBtn}"
+                                Visibility="{Binding IsExistingLayout,
+                                    Converter={StaticResource BoolToVis}}"/>
+                        <Button Content="삭제"
+                                Command="{Binding DeleteLayoutCommand}"
+                                Style="{StaticResource DangerBtn}"
+                                Visibility="{Binding CanDeleteLayout,
+                                    Converter={StaticResource BoolToVis}}"/>
+                    </StackPanel>
+                </Grid>
             </Grid>
         </Border>
 
@@ -147,15 +184,24 @@
                                         <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
                                             <TextBlock Text="열" Foreground="#AAFFFFFF"
                                                        VerticalAlignment="Center" Margin="0,0,6,0"/>
-                                            <TextBlock Text="{Binding Gap, StringFormat='간격: {0:F1}'}"
-                                                       Foreground="#88FFFFFF" FontSize="10"
-                                                       VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                            <TextBlock Text="간격:" Foreground="#88FFFFFF" FontSize="10"
+                                                       VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                            <ctrl:NumericAdjuster
+                                                Value="{Binding Gap}"
+                                                Minimum="0.0" Maximum="3.0" Step="0.1" DecimalPlaces="1"
+                                                ButtonBackground="#33FFFFFF"
+                                                ButtonForeground="#EEFFFFFF"
+                                                TextBoxBackground="#33FFFFFF"
+                                                TextBoxForeground="#EEFFFFFF"
+                                                TextBoxBorderBrush="#55FFFFFF"
+                                                Width="110" Height="22"/>
                                             <Button Content="행 추가"
                                                     Command="{Binding DataContext.AddRowCommand,
                                                         RelativeSource={RelativeSource AncestorType=Window}}"
-                                                    Style="{StaticResource DarkBtn}" FontSize="10"/>
+                                                    Style="{StaticResource DarkBtn}" FontSize="10"
+                                                    Margin="6,0,0,0"/>
                                             <Button Content="열 삭제"
-                                                    Command="{Binding DataContext.RemoveColumnCommand,
+                                                    Command="{Binding DataContext.RequestRemoveColumnCommand,
                                                         RelativeSource={RelativeSource AncestorType=Window}}"
                                                     CommandParameter="{Binding}"
                                                     Background="#55FF4444" Foreground="#FFEEAAAA"
@@ -195,7 +241,7 @@
                                                                 </ItemsControl.ItemsPanel>
                                                                 <ItemsControl.ItemTemplate>
                                                                     <DataTemplate DataType="{x:Type vm:EditableKeySlotVm}">
-                                                                        <Border Margin="1" MinWidth="30" MinHeight="28"
+                                                                        <Border Margin="1" MinWidth="30" MinHeight="50" Height="50"
                                                                                 Width="{Binding EditWidth, Converter={StaticResource WidthToPx}}"
                                                                                 CornerRadius="3" BorderThickness="1" Cursor="Hand">
                                                                             <Border.Style>
@@ -217,13 +263,24 @@
                                                                                     CommandParameter="{Binding}"/>
                                                                             </Border.InputBindings>
                                                                             <Grid>
-                                                                                <TextBlock Text="{Binding EditLabel}"
-                                                                                           Foreground="#EEFFFFFF"
-                                                                                           FontSize="10"
-                                                                                           HorizontalAlignment="Center"
-                                                                                           VerticalAlignment="Center"
-                                                                                           TextTrimming="CharacterEllipsis"
-                                                                                           Margin="1"/>
+                                                                                <StackPanel HorizontalAlignment="Center"
+                                                                                            VerticalAlignment="Center">
+                                                                                    <TextBlock Text="{Binding EditLabel}"
+                                                                                               Foreground="#EEFFFFFF"
+                                                                                               FontSize="12"
+                                                                                               HorizontalAlignment="Center"
+                                                                                               TextTrimming="CharacterEllipsis"
+                                                                                               Margin="1,0"/>
+                                                                                    <!-- 서브라벨 (영어/한글) -->
+                                                                                    <TextBlock Text="{Binding EnglishLabel}"
+                                                                                               Foreground="#66FFFFFF"
+                                                                                               FontSize="8"
+                                                                                               HorizontalAlignment="Center"
+                                                                                               Margin="0,-1,0,0"
+                                                                                               Visibility="{Binding EnglishLabel,
+                                                                                                   Converter={StaticResource NullToCollapsed},
+                                                                                                   FallbackValue=Collapsed}"/>
+                                                                                </StackPanel>
                                                                                 <Button Content="×"
                                                                                         Width="12" Height="12"
                                                                                         HorizontalAlignment="Right"
@@ -292,6 +349,16 @@
                                          UpdateSourceTrigger=PropertyChanged}"
                                      Style="{StaticResource InputBox}"/>
 
+                            <TextBlock Text="영어 라벨" Style="{StaticResource LabelText}"/>
+                            <TextBox Text="{Binding SelectedKey.EnglishLabel,
+                                         UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource InputBox}"/>
+
+                            <TextBlock Text="영어 Shift 라벨" Style="{StaticResource LabelText}"/>
+                            <TextBox Text="{Binding SelectedKey.EnglishShiftLabel,
+                                         UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource InputBox}"/>
+
                             <TextBlock Text="너비" Style="{StaticResource LabelText}"/>
                             <ctrl:NumericAdjuster Value="{Binding SelectedKey.EditWidth}"
                                                   Minimum="0.5" Maximum="6.0" Step="0.1" DecimalPlaces="1"
@@ -323,6 +390,13 @@
                                     Style="{StaticResource AccentBtn}"
                                     HorizontalAlignment="Stretch"
                                     Margin="0,8,0,0"/>
+
+                            <Button Content="라벨 자동 채우기 (VK 기반)"
+                                    Command="{Binding AutoFillLabelsCommand}"
+                                    Style="{StaticResource DarkBtn}"
+                                    HorizontalAlignment="Stretch"
+                                    Margin="0,4,0,0"
+                                    ToolTip="SendKey 액션의 VK 코드를 기반으로 한글/영어 라벨을 자동으로 설정합니다"/>
                         </StackPanel>
                     </StackPanel>
                 </ScrollViewer>
@@ -333,6 +407,39 @@
         <Border Grid.Row="2" Background="#FF12121F" Padding="12,5">
             <TextBlock Text="{Binding StatusMessage}"
                        Foreground="#88FFFFFF" FontSize="11"/>
+        </Border>
+
+        <!-- ── 열 삭제 확인 오버레이 ── -->
+        <Border Grid.RowSpan="3"
+                Background="#CC000000"
+                Visibility="{Binding ShowColumnDeleteDialog,
+                    Converter={StaticResource BoolToVis}}"
+                Panel.ZIndex="10">
+            <Border Background="#FF2D2D3F" CornerRadius="8"
+                    Padding="24,20" MaxWidth="400" MaxHeight="200"
+                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                    BorderBrush="#55FFFFFF" BorderThickness="1">
+                <StackPanel>
+                    <TextBlock Text="열 삭제 확인" Foreground="#EEFFFFFF"
+                               FontSize="14" FontWeight="SemiBold" Margin="0,0,0,12"/>
+                    <TextBlock Text="이 열에 행과 버튼이 있습니다. 어떻게 처리할까요?"
+                               Foreground="#AAFFFFFF" FontSize="12"
+                               TextWrapping="Wrap" Margin="0,0,0,16"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="취소"
+                                Command="{Binding CancelDeleteColumnCommand}"
+                                Style="{StaticResource DarkBtn}" Margin="0,0,6,0"/>
+                        <Button Content="앞 열로 이동"
+                                Command="{Binding ConfirmDeleteColumnMoveCommand}"
+                                Style="{StaticResource AccentBtn}" Margin="0,0,6,0"
+                                Visibility="{Binding CanMoveColumnContents,
+                                    Converter={StaticResource BoolToVis}}"/>
+                        <Button Content="통째로 삭제"
+                                Command="{Binding ConfirmDeleteColumnAllCommand}"
+                                Style="{StaticResource DangerBtn}"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
         </Border>
     </Grid>
 </Window>

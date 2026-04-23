@@ -17,8 +17,8 @@ public partial class EditableKeySlotVm : ObservableObject
     [ObservableProperty] private KeyAction? editAction;
     [ObservableProperty] private bool    isSelected      = false;
 
-    public string? EnglishLabel      { get; set; }
-    public string? EnglishShiftLabel { get; set; }
+    [ObservableProperty] private string? englishLabel;
+    [ObservableProperty] private string? englishShiftLabel;
 
     /// 편집 결과를 KeySlot 레코드로 변환
     public KeySlot ToKeySlot() =>
@@ -40,7 +40,7 @@ public partial class EditableKeyRowVm : ObservableObject
 
 public partial class EditableKeyColumnVm : ObservableObject
 {
-    [ObservableProperty] private double gap = 0.5;
+    [ObservableProperty] private double gap = 0;
 
     [ObservableProperty]
     private ObservableCollection<EditableKeyRowVm> rows = [];
@@ -53,9 +53,42 @@ public partial class EditableKeyColumnVm : ObservableObject
 public partial class LayoutEditorViewModel : ObservableObject
 {
     private readonly LayoutService _layoutService;
+    private readonly ConfigService _configService;
 
-    // 현재 편집 중인 파일명 (확장자 없이)
-    private string _currentFileName = "custom";
+    // ── VK → 한글 라벨 매핑 (QWERTY 한국어 표준 배열) ─────────────────────
+    private static readonly Dictionary<string, (string Label, string? ShiftLabel, string? EnglishLabel)> VkLabelMap
+        = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["VK_Q"] = ("ㅂ", "ㅃ", "q"), ["VK_W"] = ("ㅈ", "ㅉ", "w"),
+        ["VK_E"] = ("ㄷ", "ㄸ", "e"), ["VK_R"] = ("ㄱ", "ㄲ", "r"),
+        ["VK_T"] = ("ㅅ", "ㅆ", "t"), ["VK_Y"] = ("ㅛ", null, "y"),
+        ["VK_U"] = ("ㅕ", null, "u"), ["VK_I"] = ("ㅑ", null, "i"),
+        ["VK_O"] = ("ㅐ", "ㅒ", "o"), ["VK_P"] = ("ㅔ", "ㅖ", "p"),
+        ["VK_A"] = ("ㅁ", null, "a"), ["VK_S"] = ("ㄴ", null, "s"),
+        ["VK_D"] = ("ㅇ", null, "d"), ["VK_F"] = ("ㄹ", null, "f"),
+        ["VK_G"] = ("ㅎ", null, "g"), ["VK_H"] = ("ㅗ", null, "h"),
+        ["VK_J"] = ("ㅓ", null, "j"), ["VK_K"] = ("ㅏ", null, "k"),
+        ["VK_L"] = ("ㅣ", null, "l"),
+        ["VK_Z"] = ("ㅋ", null, "z"), ["VK_X"] = ("ㅌ", null, "x"),
+        ["VK_C"] = ("ㅊ", null, "c"), ["VK_V"] = ("ㅍ", null, "v"),
+        ["VK_B"] = ("ㅠ", null, "b"), ["VK_N"] = ("ㅜ", null, "n"),
+        ["VK_M"] = ("ㅡ", null, "m"),
+    };
+
+    // ── 현재 편집 중인 파일명 ────────────────────────────────────────────────
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsExistingLayout))]
+    [NotifyPropertyChangedFor(nameof(CanDeleteLayout))]
+    private string currentFileName = "";
+
+    /// 기존 파일에서 불러온 상태인지 (저장/다른 이름 저장 분기용)
+    public bool IsExistingLayout => !string.IsNullOrEmpty(CurrentFileName)
+        && _layoutService.GetAvailableLayouts().Contains(CurrentFileName);
+
+    /// 기본 레이아웃이 아닐 때만 삭제 가능
+    public bool CanDeleteLayout => IsExistingLayout
+        && !string.Equals(CurrentFileName, _configService.Current.DefaultLayout,
+            StringComparison.OrdinalIgnoreCase);
 
     // ── 레이아웃 데이터 ────────────────────────────────────────────────────
     [ObservableProperty] private string layoutName = "";
@@ -108,6 +141,17 @@ public partial class LayoutEditorViewModel : ObservableObject
     // ── 저장 결과 알림 메시지 ─────────────────────────────────────────────
     [ObservableProperty] private string statusMessage = "";
 
+    // ── 열 삭제 확인 다이얼로그 ──────────────────────────────────────────
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanMoveColumnContents))]
+    private bool showColumnDeleteDialog = false;
+
+    private EditableKeyColumnVm? _pendingDeleteColumn;
+
+    /// 앞 열이 있을 때만 '앞 열로 이동' 가능
+    public bool CanMoveColumnContents =>
+        _pendingDeleteColumn is not null && Columns.IndexOf(_pendingDeleteColumn) > 0;
+
     // ── 내장 ActionBuilder ────────────────────────────────────────────────
     public ActionBuilderViewModel ActionBuilder { get; } = new();
 
@@ -118,9 +162,10 @@ public partial class LayoutEditorViewModel : ObservableObject
     [ObservableProperty]
     private string selectedLayoutToLoad = "";
 
-    public LayoutEditorViewModel(LayoutService layoutService)
+    public LayoutEditorViewModel(LayoutService layoutService, ConfigService configService)
     {
         _layoutService = layoutService;
+        _configService = configService;
         RefreshAvailableLayouts();
     }
 
@@ -130,6 +175,8 @@ public partial class LayoutEditorViewModel : ObservableObject
             _layoutService.GetAvailableLayouts());
         if (AvailableLayouts.Count > 0 && string.IsNullOrEmpty(SelectedLayoutToLoad))
             SelectedLayoutToLoad = AvailableLayouts[0];
+        OnPropertyChanged(nameof(IsExistingLayout));
+        OnPropertyChanged(nameof(CanDeleteLayout));
     }
 
     // ── 레이아웃 로드 ──────────────────────────────────────────────────────
@@ -140,10 +187,9 @@ public partial class LayoutEditorViewModel : ObservableObject
         var config = _layoutService.TryLoad(fileName);
         if (config is null) return;
 
-        _currentFileName = fileName;
+        CurrentFileName = fileName;
         LayoutName = config.Name;
 
-        // Columns가 있으면 열 단위로 로드
         if (config.Columns is { Count: > 0 })
         {
             Columns = new ObservableCollection<EditableKeyColumnVm>(
@@ -167,29 +213,8 @@ public partial class LayoutEditorViewModel : ObservableObject
                         }).ToList() ?? [])
                 }).ToList());
         }
-        else if (config.Rows is { Count: > 0 })
-        {
-            // Rows가 있으면 단일 열로 변환 (하위 호환)
-            var rowVms = config.Rows.Select(r => new EditableKeyRowVm
-            {
-                Keys = new ObservableCollection<EditableKeySlotVm>(
-                    r.Keys.Select(k => new EditableKeySlotVm
-                    {
-                        EditLabel       = k.Label,
-                        EditShiftLabel  = k.ShiftLabel,
-                        EditWidth       = k.Width,
-                        EditGapBefore   = k.GapBefore,
-                        EditAction      = k.Action,
-                        EnglishLabel     = k.EnglishLabel,
-                        EnglishShiftLabel = k.EnglishShiftLabel,
-                    }).ToList())
-            }).ToList();
-
-            Columns = [new EditableKeyColumnVm { Gap = 0, Rows = new ObservableCollection<EditableKeyRowVm>(rowVms) }];
-        }
         else
         {
-            // Columns와 Rows가 모두 없으면 빈 컬렉션
             Columns = [];
         }
 
@@ -204,6 +229,19 @@ public partial class LayoutEditorViewModel : ObservableObject
     {
         if (!string.IsNullOrEmpty(SelectedLayoutToLoad))
             LoadLayout(SelectedLayoutToLoad);
+    }
+
+    // ── 새 레이아웃 생성 ─────────────────────────────────────────────────
+    [RelayCommand]
+    private void NewLayout()
+    {
+        CurrentFileName = "";
+        LayoutName = "새 레이아웃";
+        Columns = [];
+        SelectedColumn = null;
+        SelectedRow    = null;
+        SelectedKey    = null;
+        StatusMessage  = "새 레이아웃 생성됨";
     }
 
     // ── SelectedKey 변경 시 IsSelected 동기화 ────────────────────────────
@@ -233,21 +271,111 @@ public partial class LayoutEditorViewModel : ObservableObject
         StatusMessage = "액션 적용됨";
     }
 
+    /// 선택된 키의 VK 코드를 기반으로 한글/영어 라벨을 자동 채우기
+    [RelayCommand]
+    private void AutoFillLabels()
+    {
+        if (SelectedKey is null) return;
+
+        var action = SelectedKey.EditAction ?? ActionBuilder.BuildAction();
+        string? vk = action switch
+        {
+            SendKeyAction a => a.Vk,
+            _ => null
+        };
+
+        if (vk is null) { StatusMessage = "SendKey 액션이 아닙니다"; return; }
+
+        if (VkLabelMap.TryGetValue(vk, out var mapping))
+        {
+            SelectedKey.EditLabel       = mapping.Label;
+            SelectedKey.EditShiftLabel  = mapping.ShiftLabel;
+            SelectedKey.EnglishLabel     = mapping.EnglishLabel;
+            SelectedKey.EnglishShiftLabel = null;
+            StatusMessage = $"라벨 자동 채움: {mapping.Label} / {mapping.EnglishLabel}";
+        }
+        else if (ActionBuilderViewModel.KeyDisplayNameMap.TryGetValue(vk, out var displayName))
+        {
+            SelectedKey.EditLabel = displayName;
+            SelectedKey.EditShiftLabel  = null;
+            SelectedKey.EnglishLabel     = null;
+            SelectedKey.EnglishShiftLabel = null;
+            StatusMessage = $"라벨 자동 채움: {displayName}";
+        }
+        else
+        {
+            StatusMessage = $"'{vk}'에 대한 라벨 매핑 없음";
+        }
+    }
+
     // ── 열 추가/삭제 ─────────────────────────────────────────────────────
 
     [RelayCommand]
     private void AddColumn()
     {
-        var newColumn = new EditableKeyColumnVm { Gap = 0.5 };
+        var newColumn = new EditableKeyColumnVm { Gap = 0 };
         Columns.Add(newColumn);
         SelectedColumn = newColumn;
         StatusMessage = "열 추가됨";
     }
 
     [RelayCommand]
-    private void RemoveColumn(EditableKeyColumnVm column)
+    private void RequestRemoveColumn(EditableKeyColumnVm column)
     {
-        // 해당 열의 행에 선택된 키가 있으면 초기화
+        // 열에 내용물(행 또는 키)이 있으면 확인 다이얼로그 표시
+        bool hasContent = column.Rows.Count > 0 && column.Rows.Any(r => r.Keys.Count > 0);
+        if (hasContent)
+        {
+            _pendingDeleteColumn = column;
+            ShowColumnDeleteDialog = true;
+        }
+        else
+        {
+            // 빈 열이면 바로 삭제
+            ExecuteRemoveColumn(column);
+        }
+    }
+
+    [RelayCommand]
+    private void ConfirmDeleteColumnAll()
+    {
+        if (_pendingDeleteColumn is not null)
+        {
+            ExecuteRemoveColumn(_pendingDeleteColumn);
+            _pendingDeleteColumn = null;
+        }
+        ShowColumnDeleteDialog = false;
+    }
+
+    [RelayCommand]
+    private void ConfirmDeleteColumnMove()
+    {
+        if (_pendingDeleteColumn is not null)
+        {
+            int idx = Columns.IndexOf(_pendingDeleteColumn);
+            if (idx > 0)
+            {
+                var prevColumn = Columns[idx - 1];
+                // 삭제 대상 열의 행/키를 앞 열로 이동
+                foreach (var row in _pendingDeleteColumn.Rows)
+                    prevColumn.Rows.Add(row);
+            }
+            // 행을 이동한 후 열 제거
+            ExecuteRemoveColumn(_pendingDeleteColumn, clearSelection: true);
+            _pendingDeleteColumn = null;
+        }
+        ShowColumnDeleteDialog = false;
+    }
+
+    [RelayCommand]
+    private void CancelDeleteColumn()
+    {
+        _pendingDeleteColumn = null;
+        ShowColumnDeleteDialog = false;
+    }
+
+    private void ExecuteRemoveColumn(EditableKeyColumnVm column, bool clearSelection = false)
+    {
         if (SelectedKey is not null)
         {
             foreach (var row in column.Rows)
@@ -275,11 +403,9 @@ public partial class LayoutEditorViewModel : ObservableObject
     [RelayCommand]
     private void AddRow()
     {
-        // 선택된 열이 없으면 첫 번째 열에 추가 (또는 새 열 생성)
         var targetColumn = SelectedColumn ?? Columns.FirstOrDefault();
         if (targetColumn is null)
         {
-            // 열이 없으면 새 열 생성 후 행 추가
             targetColumn = new EditableKeyColumnVm { Gap = 0 };
             Columns.Add(targetColumn);
         }
@@ -294,14 +420,12 @@ public partial class LayoutEditorViewModel : ObservableObject
     [RelayCommand]
     private void RemoveRow(EditableKeyRowVm row)
     {
-        // 해당 행에 선택된 키가 있으면 초기화
         if (SelectedKey is not null && row.Keys.Contains(SelectedKey))
             SelectedKey = null;
 
         if (SelectedRow == row)
             SelectedRow = null;
 
-        // 행이 속한 열에서 제거
         foreach (var column in Columns)
         {
             if (column.Rows.Contains(row))
@@ -314,7 +438,7 @@ public partial class LayoutEditorViewModel : ObservableObject
         StatusMessage = "행 삭제됨";
     }
 
-    // ── 키 추가/삭제 ─────────────────────────────────────────────────────
+    // ── 키 추가/삭제/이동 ─────────────────────────────────────────────────
 
     [RelayCommand]
     private void MoveKeyLeft()
@@ -360,7 +484,6 @@ public partial class LayoutEditorViewModel : ObservableObject
     [RelayCommand]
     private void RemoveKey(EditableKeySlotVm key)
     {
-        // 모든 열의 모든 행에서 해당 키 제거
         foreach (var column in Columns)
         {
             foreach (var row in column.Rows)
@@ -377,16 +500,22 @@ public partial class LayoutEditorViewModel : ObservableObject
             SelectedKey = null;
     }
 
-    // ── 저장 ─────────────────────────────────────────────────────────────
+    // ── 저장 / 다른 이름으로 저장 / 삭제 ────────────────────────────────
 
     [RelayCommand]
     private void Save()
     {
+        if (string.IsNullOrWhiteSpace(CurrentFileName))
+        {
+            StatusMessage = "파일명을 입력하세요";
+            return;
+        }
+
         try
         {
-            _layoutService.Save(_currentFileName, BuildLayoutConfig());
+            _layoutService.Save(CurrentFileName, BuildLayoutConfig());
             RefreshAvailableLayouts();
-            StatusMessage = $"'{_currentFileName}' 저장 완료";
+            StatusMessage = $"'{CurrentFileName}' 저장 완료";
         }
         catch (Exception ex)
         {
@@ -395,12 +524,51 @@ public partial class LayoutEditorViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void SaveAs(string newFileName)
+    private void SaveAs()
     {
-        if (string.IsNullOrWhiteSpace(newFileName)) return;
-        _currentFileName = newFileName.Trim();
+        if (string.IsNullOrWhiteSpace(CurrentFileName))
+        {
+            StatusMessage = "파일명을 입력하세요";
+            return;
+        }
+
         Save();
-        SelectedLayoutToLoad = _currentFileName;
+        SelectedLayoutToLoad = CurrentFileName;
+    }
+
+    [RelayCommand]
+    private void DeleteLayout()
+    {
+        if (string.IsNullOrWhiteSpace(CurrentFileName)) return;
+
+        if (!CanDeleteLayout)
+        {
+            StatusMessage = "현재 사용 중인 기본 레이아웃은 삭제할 수 없습니다";
+            return;
+        }
+
+        try
+        {
+            if (_layoutService.Delete(CurrentFileName))
+            {
+                StatusMessage = $"'{CurrentFileName}' 삭제됨";
+                CurrentFileName = "";
+                LayoutName = "";
+                Columns = [];
+                SelectedColumn = null;
+                SelectedRow    = null;
+                SelectedKey    = null;
+                RefreshAvailableLayouts();
+            }
+            else
+            {
+                StatusMessage = "삭제 실패: 파일을 찾을 수 없음";
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"삭제 실패: {ex.Message}";
+        }
     }
 
     // ── 내부 헬퍼 ─────────────────────────────────────────────────────────

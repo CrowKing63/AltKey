@@ -84,6 +84,17 @@ public class LayoutService
         LayoutsChanged?.Invoke();
     }
 
+    /// <summary>레이아웃 파일 삭제</summary>
+    public bool Delete(string name)
+    {
+        var path = Path.Combine(_layoutsDir, name + ".json");
+        if (!File.Exists(path)) return false;
+        File.Delete(path);
+        InvalidateCache();
+        LayoutsChanged?.Invoke();
+        return true;
+    }
+
     /// <summary>config 변경 시 캐시 무효화</summary>
     public void InvalidateCache() => _cache.Clear();
 }

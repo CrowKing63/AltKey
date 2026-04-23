@@ -5,8 +5,7 @@ namespace AltKey.Models;
 public record LayoutConfig(
     string Name,
     string? Language,
-    List<KeyColumn>? Columns = null,
-    List<KeyRow>? Rows = null  // 하위 호환용
+    List<KeyColumn>? Columns = null
 );
 
 public record KeyColumn(
