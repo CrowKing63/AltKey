@@ -213,6 +213,7 @@ public partial class App : System.Windows.Application
         if (currentApp != null)
         {
             currentApp.Resources["ScaledKeyFontSize"] = scaled;
+            currentApp.Resources["ScaledSubLabelFontSize"] = 8.0 * scalePercent / 100.0;
         }
     }
 

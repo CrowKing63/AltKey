@@ -395,8 +395,9 @@ public class KeyButton : System.Windows.Controls.Button
     {
         if (Slot is null) return;
         Slot.RefreshDisplay();
-        Content = Slot.DisplayLabel;
-        SubLabel = Slot.GetSubLabel(ShowUpperCase);
+        // XAML 바인딩(DisplayLabel, SubLabel)이 끊어지지 않도록 SetCurrentValue 사용
+        SetCurrentValue(DisplayLabelProperty, Slot.DisplayLabel);
+        SetCurrentValue(SubLabelProperty, Slot.GetSubLabel(ShowUpperCase));
     }
 
     private static void OnDisplayLabelChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)

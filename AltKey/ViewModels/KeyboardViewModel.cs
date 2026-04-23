@@ -102,7 +102,28 @@ public class KeySlotVm(KeySlot slot, AutoCompleteService autoComplete) : Observa
         }
     }
 
-    public string GetSubLabel(bool upperCase) => "";
+    public string GetSubLabel(bool upperCase)
+    {
+        if (IsKoreanSubmodeToggle)
+            return "";
+
+        if (Slot.EnglishLabel is { Length: > 0 } eng)
+        {
+            if (_activeSubmode == InputSubmode.HangulJamo)
+            {
+                return upperCase
+                    ? (Slot.EnglishShiftLabel ?? eng.ToUpperInvariant())
+                    : eng;
+            }
+            else if (_activeSubmode == InputSubmode.QuietEnglish)
+            {
+                return upperCase && Slot.ShiftLabel is { Length: > 0 } s
+                    ? s
+                    : Slot.Label;
+            }
+        }
+        return "";
+    }
 
     // ── Accessibility ────────────────────────────────────────────────────────
 

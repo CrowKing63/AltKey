@@ -39,7 +39,7 @@
                                 <TextBlock x:Name="SubLabelText"
                                            Text="{Binding RelativeSource={RelativeSource TemplatedParent},
                                                           Path=SubLabel}"
-                                           FontSize="9"
+                                           FontSize="{DynamicResource ScaledSubLabelFontSize}"
                                            TextTrimming="CharacterEllipsis"
                                            TextWrapping="NoWrap"
                                            HorizontalAlignment="Right"
