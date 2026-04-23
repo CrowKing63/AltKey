@@ -159,9 +159,6 @@
                         <Button Content="+ 열 추가"
                                 Command="{Binding AddColumnCommand}"
                                 Style="{StaticResource DarkBtn}"/>
-                        <Button Content="+ 행 추가"
-                                Command="{Binding AddRowCommand}"
-                                Style="{StaticResource DarkBtn}"/>
                     </StackPanel>
                 </Border>
 
@@ -198,6 +195,7 @@
                                             <Button Content="행 추가"
                                                     Command="{Binding DataContext.AddRowCommand,
                                                         RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    CommandParameter="{Binding}"
                                                     Style="{StaticResource DarkBtn}" FontSize="10"
                                                     Margin="6,0,0,0"/>
                                             <Button Content="열 삭제"

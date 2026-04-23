@@ -415,9 +415,11 @@ public partial class LayoutEditorViewModel : ObservableObject
     // ── 행 추가/삭제 ─────────────────────────────────────────────────────
 
     [RelayCommand]
-    private void AddRow()
+    private void AddRow(EditableKeyColumnVm? targetColumn = null)
     {
-        var targetColumn = SelectedColumn ?? Columns.FirstOrDefault();
+        // CommandParameter로 전달된 열이 있으면 그것을 사용하고,
+        // 없으면 SelectedColumn을 사용하며, 그것도 없으면 첫 번째 열을 사용
+        targetColumn ??= SelectedColumn ?? Columns.FirstOrDefault();
         if (targetColumn is null)
         {
             targetColumn = new EditableKeyColumnVm { Gap = 0 };
