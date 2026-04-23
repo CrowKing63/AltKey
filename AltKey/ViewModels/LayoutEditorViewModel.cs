@@ -357,8 +357,22 @@ public partial class LayoutEditorViewModel : ObservableObject
             {
                 var prevColumn = Columns[idx - 1];
                 // 삭제 대상 열의 행/키를 앞 열로 이동
-                foreach (var row in _pendingDeleteColumn.Rows)
-                    prevColumn.Rows.Add(row);
+                // 같은 인덱스의 행이 있으면 그 행에 키를 추가하고,
+                // 없으면 새로운 행을 만들어서 추가
+                for (int i = 0; i < _pendingDeleteColumn.Rows.Count; i++)
+                {
+                    if (i < prevColumn.Rows.Count)
+                    {
+                        // 같은 인덱스의 행이 있으면, 그 행에 모든 키를 추가
+                        foreach (var key in _pendingDeleteColumn.Rows[i].Keys)
+                            prevColumn.Rows[i].Keys.Add(key);
+                    }
+                    else
+                    {
+                        // 같은 인덱스의 행이 없으면, 새로운 행을 만들어서 추가
+                        prevColumn.Rows.Add(_pendingDeleteColumn.Rows[i]);
+                    }
+                }
             }
             // 행을 이동한 후 열 제거
             ExecuteRemoveColumn(_pendingDeleteColumn, clearSelection: true);
