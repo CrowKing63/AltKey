@@ -38,13 +38,6 @@
                                Foreground="{DynamicResource SettingsFgSub}"
                                Margin="0,2,0,0"/>
                 </StackPanel>
-                <Button HorizontalAlignment="Right"
-                        Background="Transparent" BorderThickness="0"
-                        Foreground="{DynamicResource SettingsFgSub}" FontSize="16" Cursor="Hand"
-                        Click="CloseButton_Click"
-                        ToolTip="닫기 (Esc)">
-                    <TextBlock Text="✕"/>
-                </Button>
             </Grid>
 
             <!-- 설정 항목 (2단 레이아웃) -->

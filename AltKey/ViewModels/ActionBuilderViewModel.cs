@@ -61,6 +61,10 @@ public partial class ActionBuilderViewModel : ObservableObject
         ["VK_HANGUL"] = "한/영", ["VK_HANJA"] = "한자", ["VK_CAPITAL"] = "CapsLock",
         // 기타
         ["VK_NUMLOCK"] = "NumLock", ["VK_SCROLL"] = "ScrollLock",
+        ["VK_OEM_3"] = "`", ["VK_SNAPSHOT"] = "Print", ["VK_OEM_5"] = "\\",
+        ["VK_OEM_MINUS"] = "-", ["VK_OEM_PLUS"] = "=", ["VK_OEM_4"] = "[",
+        ["VK_OEM_6"] = "]", ["VK_OEM_1"] = ";", ["VK_OEM_7"] = "'",
+        ["VK_OEM_PERIOD"] = ".", ["VK_OEM_2"] = "/", ["VK_OEM_COMMA"] = ",",
     };
 
     // ── 액션 타입 목록 ─────────────────────────────────────────────────────────
@@ -80,15 +84,16 @@ public partial class ActionBuilderViewModel : ObservableObject
         "VK_H", "VK_I", "VK_J", "VK_K", "VK_L", "VK_M", "VK_N",
         "VK_O", "VK_P", "VK_Q", "VK_R", "VK_S", "VK_T", "VK_U",
         "VK_V", "VK_W", "VK_X", "VK_Y", "VK_Z",
-        "VK_0", "VK_1", "VK_2", "VK_3", "VK_4",
-        "VK_5", "VK_6", "VK_7", "VK_8", "VK_9",
+        "VK_OEM_3", "VK_1", "VK_2", "VK_3", "VK_4",
+        "VK_5", "VK_6", "VK_7", "VK_8", "VK_9", "VK_0", "VK_OEM_MINUS", "VK_OEM_PLUS",
+        "VK_OEM_4", "VK_OEM_6", "VK_OEM_5", "VK_OEM_1", "VK_OEM_7", "VK_OEM_COMMA", "VK_OEM_PERIOD", "VK_OEM_2",
         "VK_F1", "VK_F2", "VK_F3", "VK_F4", "VK_F5", "VK_F6",
         "VK_F7", "VK_F8", "VK_F9", "VK_F10", "VK_F11", "VK_F12",
         "VK_RETURN", "VK_SPACE", "VK_TAB", "VK_BACK", "VK_ESCAPE",
         "VK_SHIFT", "VK_CONTROL", "VK_MENU",
         "VK_LEFT", "VK_UP", "VK_RIGHT", "VK_DOWN",
         "VK_HOME", "VK_END", "VK_PRIOR", "VK_NEXT",
-        "VK_INSERT", "VK_DELETE", "VK_NUMLOCK", "VK_SCROLL",
+        "VK_INSERT", "VK_DELETE", "VK_NUMLOCK", "VK_SCROLL", "VK_SNAPSHOT",
         "VK_HANGUL", "VK_HANJA", "VK_CAPITAL",
         "VK_LWIN", "VK_RWIN", "VK_LSHIFT", "VK_RSHIFT",
         "VK_LCONTROL", "VK_RCONTROL", "VK_LMENU", "VK_RMENU"

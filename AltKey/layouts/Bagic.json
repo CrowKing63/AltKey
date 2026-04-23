@@ -1,5 +1,5 @@
 {
-  "name": "Bagic",
+  "name": "Full",
   "language": null,
   "columns": [
     {
@@ -8,11 +8,25 @@
         {
           "keys": [
             {
-              "label": "ESC",
-              "shift_label": "",
+              "label": "Esc",
+              "shift_label": null,
               "action": {
                 "type": "SendKey",
                 "vk": "VK_ESCAPE"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null
+            },
+            {
+              "label": "`",
+              "shift_label": "~",
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_OEM_3"
               },
               "width": 1,
               "height": 1,
@@ -107,7 +121,7 @@
             },
             {
               "label": "7",
-              "shift_label": "\u0026",
+              "shift_label": "&",
               "action": {
                 "type": "SendKey",
                 "vk": "VK_7"
@@ -177,7 +191,7 @@
             },
             {
               "label": "=",
-              "shift_label": "\u002B",
+              "shift_label": "+",
               "action": {
                 "type": "SendKey",
                 "vk": "VK_OEM_PLUS"
@@ -190,13 +204,13 @@
               "english_shift_label": null
             },
             {
-              "label": "\u232B",
+              "label": "⌫",
               "shift_label": null,
               "action": {
                 "type": "SendKey",
                 "vk": "VK_BACK"
               },
-              "width": 2,
+              "width": 1.4,
               "height": 1,
               "style_key": "",
               "gap_before": 0,
@@ -212,9 +226,9 @@
               "shift_label": null,
               "action": {
                 "type": "SendKey",
-                "vk": "VK_TAB"
+                "vk": "VK_ESCAPE"
               },
-              "width": 1.5,
+              "width": 1.6,
               "height": 1,
               "style_key": "",
               "gap_before": 0,
@@ -222,8 +236,8 @@
               "english_shift_label": null
             },
             {
-              "label": "\u3142",
-              "shift_label": "\u3143",
+              "label": "ㅂ",
+              "shift_label": "ㅃ",
               "action": {
                 "type": "SendKey",
                 "vk": "VK_Q"
@@ -236,8 +250,8 @@
               "english_shift_label": null
             },
             {
-              "label": "\u3148",
-              "shift_label": "\u3149",
+              "label": "ㅈ",
+              "shift_label": "ㅉ",
               "action": {
                 "type": "SendKey",
                 "vk": "VK_W"
@@ -250,8 +264,8 @@
               "english_shift_label": null
             },
             {
-              "label": "\u3137",
-              "shift_label": "\u3138",
+              "label": "ㄷ",
+              "shift_label": "ㄸ",
               "action": {
                 "type": "SendKey",
                 "vk": "VK_E"
@@ -264,8 +278,8 @@
               "english_shift_label": null
             },
             {
-              "label": "\u3131",
-              "shift_label": "\u3132",
+              "label": "ㄱ",
+              "shift_label": "ㄲ",
               "action": {
                 "type": "SendKey",
                 "vk": "VK_R"
@@ -278,8 +292,8 @@
               "english_shift_label": null
             },
             {
-              "label": "\u3145",
-              "shift_label": "\u3146",
+              "label": "ㅅ",
+              "shift_label": "ㅆ",
               "action": {
                 "type": "SendKey",
                 "vk": "VK_T"
@@ -292,7 +306,7 @@
               "english_shift_label": null
             },
             {
-              "label": "\u315B",
+              "label": "ㅛ",
               "shift_label": null,
               "action": {
                 "type": "SendKey",
@@ -306,7 +320,7 @@
               "english_shift_label": null
             },
             {
-              "label": "\u3155",
+              "label": "ㅕ",
               "shift_label": null,
               "action": {
                 "type": "SendKey",
@@ -320,7 +334,7 @@
               "english_shift_label": null
             },
             {
-              "label": "\u3151",
+              "label": "ㅑ",
               "shift_label": null,
               "action": {
                 "type": "SendKey",
@@ -334,8 +348,8 @@
               "english_shift_label": null
             },
             {
-              "label": "\u3150",
-              "shift_label": "\u3152",
+              "label": "ㅐ",
+              "shift_label": "ㅒ",
               "action": {
                 "type": "SendKey",
                 "vk": "VK_O"
@@ -348,8 +362,8 @@
               "english_shift_label": null
             },
             {
-              "label": "\u3154",
-              "shift_label": "\u3156",
+              "label": "ㅔ",
+              "shift_label": "ㅖ",
               "action": {
                 "type": "SendKey",
                 "vk": "VK_P"
@@ -396,7 +410,7 @@
                 "type": "SendKey",
                 "vk": "VK_OEM_5"
               },
-              "width": 1.5,
+              "width": 1.8,
               "height": 1,
               "style_key": "",
               "gap_before": 0,
@@ -414,7 +428,7 @@
                 "type": "SendKey",
                 "vk": "VK_CAPITAL"
               },
-              "width": 1.75,
+              "width": 2,
               "height": 1,
               "style_key": "",
               "gap_before": 0,
@@ -422,7 +436,7 @@
               "english_shift_label": null
             },
             {
-              "label": "\u3141",
+              "label": "ㅁ",
               "shift_label": null,
               "action": {
                 "type": "SendKey",
@@ -436,7 +450,7 @@
               "english_shift_label": null
             },
             {
-              "label": "\u3134",
+              "label": "ㄴ",
               "shift_label": null,
               "action": {
                 "type": "SendKey",
@@ -450,7 +464,7 @@
               "english_shift_label": null
             },
             {
-              "label": "\u3147",
+              "label": "ㅇ",
               "shift_label": null,
               "action": {
                 "type": "SendKey",
@@ -464,7 +478,7 @@
               "english_shift_label": null
             },
             {
-              "label": "\u3139",
+              "label": "ㄹ",
               "shift_label": null,
               "action": {
                 "type": "SendKey",
@@ -478,7 +492,7 @@
               "english_shift_label": null
             },
             {
-              "label": "\u314E",
+              "label": "ㅎ",
               "shift_label": null,
               "action": {
                 "type": "SendKey",
@@ -492,7 +506,7 @@
               "english_shift_label": null
             },
             {
-              "label": "\u3157",
+              "label": "ㅗ",
               "shift_label": null,
               "action": {
                 "type": "SendKey",
@@ -506,7 +520,7 @@
               "english_shift_label": null
             },
             {
-              "label": "\u3153",
+              "label": "ㅓ",
               "shift_label": null,
               "action": {
                 "type": "SendKey",
@@ -520,7 +534,7 @@
               "english_shift_label": null
             },
             {
-              "label": "\u314F",
+              "label": "ㅏ",
               "shift_label": null,
               "action": {
                 "type": "SendKey",
@@ -534,7 +548,7 @@
               "english_shift_label": null
             },
             {
-              "label": "\u3163",
+              "label": "ㅣ",
               "shift_label": null,
               "action": {
                 "type": "SendKey",
@@ -562,8 +576,8 @@
               "english_shift_label": null
             },
             {
-              "label": "\u0027",
-              "shift_label": "\u0022",
+              "label": "'",
+              "shift_label": "\"",
               "action": {
                 "type": "SendKey",
                 "vk": "VK_OEM_7"
@@ -582,7 +596,7 @@
                 "type": "SendKey",
                 "vk": "VK_RETURN"
               },
-              "width": 2.25,
+              "width": 2.5,
               "height": 1,
               "style_key": "",
               "gap_before": 0,
@@ -597,10 +611,10 @@
               "label": "Shift",
               "shift_label": null,
               "action": {
-                "type": "ToggleSticky",
-                "vk": "VK_SHIFT"
+                "type": "SendKey",
+                "vk": "VK_LSHIFT"
               },
-              "width": 2,
+              "width": 2.4,
               "height": 1,
               "style_key": "",
               "gap_before": 0,
@@ -608,7 +622,7 @@
               "english_shift_label": null
             },
             {
-              "label": "\u314B",
+              "label": "ㅋ",
               "shift_label": null,
               "action": {
                 "type": "SendKey",
@@ -622,7 +636,7 @@
               "english_shift_label": null
             },
             {
-              "label": "\u314C",
+              "label": "ㅌ",
               "shift_label": null,
               "action": {
                 "type": "SendKey",
@@ -636,7 +650,7 @@
               "english_shift_label": null
             },
             {
-              "label": "\u314A",
+              "label": "ㅊ",
               "shift_label": null,
               "action": {
                 "type": "SendKey",
@@ -650,7 +664,7 @@
               "english_shift_label": null
             },
             {
-              "label": "\u314D",
+              "label": "ㅍ",
               "shift_label": null,
               "action": {
                 "type": "SendKey",
@@ -664,7 +678,7 @@
               "english_shift_label": null
             },
             {
-              "label": "\u3160",
+              "label": "ㅠ",
               "shift_label": null,
               "action": {
                 "type": "SendKey",
@@ -678,7 +692,7 @@
               "english_shift_label": null
             },
             {
-              "label": "\u315C",
+              "label": "ㅜ",
               "shift_label": null,
               "action": {
                 "type": "SendKey",
@@ -692,7 +706,7 @@
               "english_shift_label": null
             },
             {
-              "label": "\u3161",
+              "label": "ㅡ",
               "shift_label": null,
               "action": {
                 "type": "SendKey",
@@ -707,7 +721,7 @@
             },
             {
               "label": ",",
-              "shift_label": "\u003C",
+              "shift_label": "<",
               "action": {
                 "type": "SendKey",
                 "vk": "VK_OEM_COMMA"
@@ -721,7 +735,7 @@
             },
             {
               "label": ".",
-              "shift_label": "\u003E",
+              "shift_label": ">",
               "action": {
                 "type": "SendKey",
                 "vk": "VK_OEM_PERIOD"
@@ -748,7 +762,7 @@
               "english_shift_label": null
             },
             {
-              "label": "\u2191",
+              "label": "↑",
               "shift_label": null,
               "action": {
                 "type": "SendKey",
@@ -765,8 +779,8 @@
               "label": "Shift",
               "shift_label": null,
               "action": {
-                "type": "ToggleSticky",
-                "vk": "VK_SHIFT"
+                "type": "SendKey",
+                "vk": "VK_RSHIFT"
               },
               "width": 2,
               "height": 1,
@@ -783,10 +797,10 @@
               "label": "Ctrl",
               "shift_label": null,
               "action": {
-                "type": "ToggleSticky",
-                "vk": "VK_CONTROL"
+                "type": "SendKey",
+                "vk": "VK_LCONTROL"
               },
-              "width": 1.25,
+              "width": 1.4,
               "height": 1,
               "style_key": "",
               "gap_before": 0,
@@ -797,7 +811,7 @@
               "label": "Win",
               "shift_label": null,
               "action": {
-                "type": "ToggleSticky",
+                "type": "SendKey",
                 "vk": "VK_LWIN"
               },
               "width": 1,
@@ -811,10 +825,10 @@
               "label": "Alt",
               "shift_label": null,
               "action": {
-                "type": "ToggleSticky",
-                "vk": "VK_MENU"
+                "type": "SendKey",
+                "vk": "VK_LMENU"
               },
-              "width": 1.25,
+              "width": 1.4,
               "height": 1,
               "style_key": "",
               "gap_before": 0,
@@ -822,13 +836,13 @@
               "english_shift_label": null
             },
             {
-              "label": "\uD55C\uC790",
+              "label": "한자",
               "shift_label": null,
               "action": {
                 "type": "SendKey",
                 "vk": "VK_HANJA"
               },
-              "width": 1.2,
+              "width": 1.4,
               "height": 1,
               "style_key": "",
               "gap_before": 0,
@@ -836,13 +850,13 @@
               "english_shift_label": null
             },
             {
-              "label": "Space",
+              "label": "",
               "shift_label": null,
               "action": {
                 "type": "SendKey",
                 "vk": "VK_SPACE"
               },
-              "width": 2.75,
+              "width": 4.1,
               "height": 1,
               "style_key": "",
               "gap_before": 0,
@@ -850,12 +864,12 @@
               "english_shift_label": null
             },
             {
-              "label": "\uAC00",
+              "label": "가",
               "shift_label": null,
               "action": {
                 "type": "ToggleKoreanSubmode"
               },
-              "width": 1.25,
+              "width": 1.4,
               "height": 1,
               "style_key": "",
               "gap_before": 0,
@@ -866,10 +880,10 @@
               "label": "Alt",
               "shift_label": null,
               "action": {
-                "type": "ToggleSticky",
-                "vk": "VK_MENU"
+                "type": "SendKey",
+                "vk": "VK_RMENU"
               },
-              "width": 1.2,
+              "width": 0.9,
               "height": 1,
               "style_key": "",
               "gap_before": 0,
@@ -877,21 +891,7 @@
               "english_shift_label": null
             },
             {
-              "label": "Ctrl",
-              "shift_label": null,
-              "action": {
-                "type": "ToggleSticky",
-                "vk": "VK_CONTROL"
-              },
-              "width": 1.2,
-              "height": 1,
-              "style_key": "",
-              "gap_before": 0,
-              "english_label": null,
-              "english_shift_label": null
-            },
-            {
-              "label": "\u2190",
+              "label": "←",
               "shift_label": null,
               "action": {
                 "type": "SendKey",
@@ -905,7 +905,7 @@
               "english_shift_label": null
             },
             {
-              "label": "\u2193",
+              "label": "↓",
               "shift_label": null,
               "action": {
                 "type": "SendKey",
@@ -919,7 +919,7 @@
               "english_shift_label": null
             },
             {
-              "label": "\u2192",
+              "label": "→",
               "shift_label": null,
               "action": {
                 "type": "SendKey",
@@ -933,13 +933,13 @@
               "english_shift_label": null
             },
             {
-              "label": "\uD55C/\uC601",
+              "label": "한/영",
               "shift_label": null,
               "action": {
                 "type": "SendKey",
                 "vk": "VK_HANGUL"
               },
-              "width": 1,
+              "width": 0.9,
               "height": 1,
               "style_key": "",
               "gap_before": 0,
@@ -951,7 +951,7 @@
       ]
     },
     {
-      "gap": 0.5,
+      "gap": 0,
       "rows": [
         {
           "keys": [

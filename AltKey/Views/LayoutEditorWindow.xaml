@@ -129,7 +129,7 @@
                                 Visibility="{Binding IsExistingLayout,
                                     Converter={StaticResource BoolToVis}}"/>
                         <Button Content="삭제"
-                                Command="{Binding DeleteLayoutCommand}"
+                                Command="{Binding RequestDeleteLayoutCommand}"
                                 Style="{StaticResource DangerBtn}"
                                 Visibility="{Binding CanDeleteLayout,
                                     Converter={StaticResource BoolToVis}}"/>
@@ -434,6 +434,34 @@
                                     Converter={StaticResource BoolToVis}}"/>
                         <Button Content="통째로 삭제"
                                 Command="{Binding ConfirmDeleteColumnAllCommand}"
+                                Style="{StaticResource DangerBtn}"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Border>
+
+        <!-- ── 레이아웃 삭제 확인 오버레이 ── -->
+        <Border Grid.RowSpan="3"
+                Background="#CC000000"
+                Visibility="{Binding ShowDeleteLayoutDialog,
+                    Converter={StaticResource BoolToVis}}"
+                Panel.ZIndex="11">
+            <Border Background="#FF2D2D3F" CornerRadius="8"
+                    Padding="24,20" MaxWidth="350" MaxHeight="150"
+                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                    BorderBrush="#55FFFFFF" BorderThickness="1">
+                <StackPanel>
+                    <TextBlock Text="레이아웃 삭제 확인" Foreground="#EEFFFFFF"
+                               FontSize="14" FontWeight="SemiBold" Margin="0,0,0,12"/>
+                    <TextBlock Text="정말로 이 레이아웃을 삭제하시겠습니까?"
+                               Foreground="#AAFFFFFF" FontSize="12"
+                               TextWrapping="Wrap" Margin="0,0,0,16"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="취소"
+                                Command="{Binding CancelDeleteLayoutCommand}"
+                                Style="{StaticResource DarkBtn}" Margin="0,0,6,0"/>
+                        <Button Content="삭제"
+                                Command="{Binding ConfirmDeleteLayoutCommand}"
                                 Style="{StaticResource DangerBtn}"/>
                     </StackPanel>
                 </StackPanel>

@@ -516,6 +516,68 @@ public partial class LayoutEditorViewModel : ObservableObject
             SelectedKey = null;
     }
 
+    // ── 레이아웃 삭제 확인 다이얼로그 ──────────────────────────────────────
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanDeletePendingLayout))]
+    private bool showDeleteLayoutDialog = false;
+
+    private string? _pendingDeleteLayoutName;
+
+    /// 삭제할 레이아웃이 기본 레이아웃이 아닌지 확인
+    public bool CanDeletePendingLayout =>
+        _pendingDeleteLayoutName is not null && !string.Equals(_pendingDeleteLayoutName,
+            _configService.Current.DefaultLayout, StringComparison.OrdinalIgnoreCase);
+
+    // ── 레이아웃 삭제 요청 ───────────────────────────────────────────────────
+    [RelayCommand]
+    private void RequestDeleteLayout()
+    {
+        if (string.IsNullOrWhiteSpace(CurrentFileName)) return;
+        _pendingDeleteLayoutName = CurrentFileName;
+        ShowDeleteLayoutDialog = true;
+    }
+
+    // ── 레이아웃 삭제 확인 ───────────────────────────────────────────────────
+    [RelayCommand]
+    private void ConfirmDeleteLayout()
+    {
+        if (_pendingDeleteLayoutName is null) return;
+
+        try
+        {
+            if (_layoutService.Delete(_pendingDeleteLayoutName))
+            {
+                StatusMessage = $"'{_pendingDeleteLayoutName}' 삭제됨";
+                CurrentFileName = "";
+                LayoutName = "";
+                Columns = [];
+                SelectedColumn = null;
+                SelectedRow    = null;
+                SelectedKey    = null;
+                RefreshAvailableLayouts();
+            }
+            else
+            {
+                StatusMessage = "삭제 실패: 파일을 찾을 수 없음";
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"삭제 실패: {ex.Message}";
+        }
+
+        _pendingDeleteLayoutName = null;
+        ShowDeleteLayoutDialog = false;
+    }
+
+    // ── 레이아웃 삭제 취소 ───────────────────────────────────────────────────
+    [RelayCommand]
+    private void CancelDeleteLayout()
+    {
+        _pendingDeleteLayoutName = null;
+        ShowDeleteLayoutDialog = false;
+    }
+
     // ── 저장 / 다른 이름으로 저장 / 삭제 ────────────────────────────────
 
     [RelayCommand]
@@ -550,41 +612,6 @@ public partial class LayoutEditorViewModel : ObservableObject
 
         Save();
         SelectedLayoutToLoad = CurrentFileName;
-    }
-
-    [RelayCommand]
-    private void DeleteLayout()
-    {
-        if (string.IsNullOrWhiteSpace(CurrentFileName)) return;
-
-        if (!CanDeleteLayout)
-        {
-            StatusMessage = "현재 사용 중인 기본 레이아웃은 삭제할 수 없습니다";
-            return;
-        }
-
-        try
-        {
-            if (_layoutService.Delete(CurrentFileName))
-            {
-                StatusMessage = $"'{CurrentFileName}' 삭제됨";
-                CurrentFileName = "";
-                LayoutName = "";
-                Columns = [];
-                SelectedColumn = null;
-                SelectedRow    = null;
-                SelectedKey    = null;
-                RefreshAvailableLayouts();
-            }
-            else
-            {
-                StatusMessage = "삭제 실패: 파일을 찾을 수 없음";
-            }
-        }
-        catch (Exception ex)
-        {
-            StatusMessage = $"삭제 실패: {ex.Message}";
-        }
     }
 
     // ── 내부 헬퍼 ─────────────────────────────────────────────────────────
