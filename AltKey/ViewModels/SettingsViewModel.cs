@@ -17,6 +17,10 @@ using CommunityToolkit.Mvvm.Input;
 
 namespace AltKey.ViewModels;
 
+/// <summary>
+/// [역할] 설정 화면(SettingsWindow)에서 보여지는 모든 데이터와 동작을 관리하는 비즈니스 로직 클래스입니다.
+/// [기능] 테마 변경, 투명도 조절, 레이아웃 선택, 자동 실행 설정, 앱 업데이트 등을 처리하며 변경된 내용을 파일에 저장합니다.
+/// </summary>
 public partial class SettingsViewModel : ObservableObject
 {
     private readonly ConfigService        _configService;
@@ -35,7 +39,8 @@ public partial class SettingsViewModel : ObservableObject
 
     private AltKey.Views.SettingsWindow? _settingsWindow;
 
-    // ── Observable 속성 ─────────────────────────────────────────────────────
+    // ── 화면에 표시되는 설정 값들 (UI와 직접 연결됨) ───────────────────────
+    // 이 값들을 수정하면 화면에 즉시 반영되며, 설정 파일(config.json)에도 저장됩니다.
 
     [ObservableProperty] private string themeMode      = "system";
     [ObservableProperty] private bool   alwaysOnTop    = true;
@@ -295,6 +300,9 @@ public partial class SettingsViewModel : ObservableObject
         _configService.Update(c => c.SoundFilePath = string.IsNullOrEmpty(value) ? null : value);
     }
 
+    /// <summary>
+    /// 효과음으로 사용할 파일을 직접 선택하는 창을 띄웁니다.
+    /// </summary>
     [RelayCommand]
     private void BrowseSoundFile()
     {
@@ -396,6 +404,9 @@ public partial class SettingsViewModel : ObservableObject
 
     // ── T-9.4: 레이아웃 편집기 열기 ──────────────────────────────────────────
 
+    /// <summary>
+    /// 키보드 레이아웃(키의 배치, 글자 등)을 직접 수정할 수 있는 편집기 창을 엽니다.
+    /// </summary>
     [RelayCommand]
     private void OpenLayoutEditor()
     {
@@ -508,6 +519,9 @@ public partial class SettingsViewModel : ObservableObject
     // ── T-9.5: 업데이트 확인 및 자동 설치 ───────────────────────────────────
 
     /// <summary>GitHub에서 새 버전 확인</summary>
+    /// <summary>
+    /// 인터넷(GitHub)을 통해 AltKey의 최신 버전이 있는지 확인합니다.
+    /// </summary>
     [RelayCommand]
     private async Task CheckForUpdate()
     {
