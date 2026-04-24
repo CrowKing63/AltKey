@@ -23,8 +23,21 @@ public partial class App : System.Windows.Application
     // T-6.6: 앱 시작 시간 측정
     private static readonly long _startTick = Environment.TickCount64;
 
+    // 단일 인스턴스 제한용 Mutex (설치형·무설치형 모두 공통)
+    private static Mutex? _instanceMutex;
+
     protected override void OnStartup(StartupEventArgs e)
     {
+        // 단일 인스턴스 제한: 이미 실행 중이면 즉시 종료
+        const string mutexName = "AltKey_SingleInstance_Mutex";
+        _instanceMutex = new Mutex(initiallyOwned: true, name: mutexName, out bool createdNew);
+        if (!createdNew)
+        {
+            _instanceMutex.Dispose();
+            _instanceMutex = null;
+            Shutdown();
+            return;
+        }
         // T-6.7: 전역 미처리 예외 핸들러 (동일 타입 에러는 한 번만 팝업)
         var _shownErrors = new System.Collections.Generic.HashSet<string>();
         DispatcherUnhandledException += (s, args) =>
@@ -191,6 +204,12 @@ public partial class App : System.Windows.Application
 
         // 서비스 정리
         if (Services is IDisposable d) d.Dispose();
+
+        // 단일 인스턴스 Mutex 해제
+        _instanceMutex?.ReleaseMutex();
+        _instanceMutex?.Dispose();
+        _instanceMutex = null;
+
         base.OnExit(e);
     }
 
