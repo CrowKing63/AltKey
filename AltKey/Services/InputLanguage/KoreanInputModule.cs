@@ -2,20 +2,24 @@ using AltKey.Models;
 
 namespace AltKey.Services.InputLanguage;
 
+/// <summary>
+/// [역할] 한국어 입력(한글 조합 및 제안)의 핵심 로직을 담당하는 모듈입니다.
+/// [기능] 키 입력을 받아 한글로 조합하거나, 영어 입력 모드(QuietEnglish)를 처리하고, 단어 추천 목록을 생성합니다.
+/// </summary>
 public sealed class KoreanInputModule : IInputLanguageModule
 {
     private readonly InputService      _input;
-    private readonly HangulComposer    _composer = new();
-    private readonly KoreanDictionary  _koDict;
-    private readonly EnglishDictionary _enDict;
-    private readonly ConfigService     _config;
+    private readonly HangulComposer    _composer = new(); // 한글 초/중/종성 조합기
+    private readonly KoreanDictionary  _koDict;   // 한글 단어 사전 및 추천 엔진
+    private readonly EnglishDictionary _enDict;   // 영어 단어 사전
+    private readonly ConfigService     _config;   // 설정 서비스
 
-    private InputSubmode _submode = InputSubmode.HangulJamo;
-    private string _englishPrefix = "";
-    private string? _lastCommittedWord;
-    private string? _suggestionContext;
-    private bool _compositionCancelled = false;
-    private bool _wordAlreadyCommitted = false;
+    private InputSubmode _submode = InputSubmode.HangulJamo; // 현재 '가'(한글) 또는 'A'(영어) 상태
+    private string _englishPrefix = ""; // 영어 모드에서 입력 중인 글자들
+    private string? _lastCommittedWord; // 직전에 입력 완료된 단어 (다음 단어 추천용)
+    private string? _suggestionContext; // 추천의 문맥 정보
+    private bool _compositionCancelled = false; // 조합이 취소되었는지 여부
+    private bool _wordAlreadyCommitted = false; // 이미 단어가 저장되었는지 여부
 
     public KoreanInputModule(InputService input, KoreanDictionary koDict, EnglishDictionary enDict, ConfigService config)
     {
@@ -29,6 +33,7 @@ public sealed class KoreanInputModule : IInputLanguageModule
     public InputSubmode ActiveSubmode => _submode;
     public string ComposeStateLabel => _submode == InputSubmode.HangulJamo ? "가" : "A";
 
+    // 현재 화면에 표시되거나 조합 중인 단어를 가져옵니다.
     public string CurrentWord => _submode == InputSubmode.HangulJamo
         ? _composer.Current
         : _englishPrefix;
@@ -36,22 +41,29 @@ public sealed class KoreanInputModule : IInputLanguageModule
     public event Action<IReadOnlyList<string>>? SuggestionsChanged;
     public event Action<InputSubmode>? SubmodeChanged;
 
+    /// <summary>
+    /// 사용자가 누른 키를 분석하여 한글 조합을 진행하거나 시스템에 키를 보냅니다.
+    /// </summary>
+    /// <returns>true면 이 모듈에서 입력을 완전히 처리했다는 뜻입니다.</returns>
     public bool HandleKey(KeySlot slot, KeyContext ctx)
     {
+        // 'A'(영어) 서브모드인 경우 별도 함수에서 처리합니다.
         if (_submode == InputSubmode.QuietEnglish)
         {
             return HandleQuietEnglish(slot, ctx);
         }
 
+        // 컨트롤(Ctrl), 알트(Alt) 등이 눌린 조합키는 한글 조합에서 제외합니다.
         bool isComboKey = ctx.HasActiveModifiersExcludingShift;
 
         if (isComboKey)
         {
             if (ctx.InputMode == InputMode.Unicode && ctx.TrackedOnScreenLength > 0)
-                FinalizeComposition();
+                FinalizeComposition(); // 조합 중이던 글자가 있다면 확정 지음
             return false;
         }
 
+        // 백스페이스나 공백, 엔터 등 특수키 처리
         if (slot.Action is SendKeyAction { Vk: var vkStr }
             && Enum.TryParse<VirtualKeyCode>(vkStr, out var vk))
         {
@@ -60,6 +72,7 @@ public sealed class KoreanInputModule : IInputLanguageModule
                 return HandleBackspace(ctx);
             }
 
+            // 단어를 구분하는 키(공백, 엔터 등)가 눌리면 현재 조합을 끝냅니다.
             if (IsSeparator(vk, ctx.ShowUpperCase))
             {
                 FinalizeComposition();
@@ -67,6 +80,7 @@ public sealed class KoreanInputModule : IInputLanguageModule
             }
         }
 
+        // 현재 버튼에 할당된 한글 자모(ㄱ, ㄴ, ㅏ 등)를 가져옵니다.
         string? jamo = GetHangulJamoFromSlot(slot, ctx.ShowUpperCase);
 
         if (jamo is null)
@@ -74,6 +88,7 @@ public sealed class KoreanInputModule : IInputLanguageModule
             return false;
         }
 
+        // 한글 조합기에 글자를 넣고 화면에 반영합니다.
         if (ctx.InputMode == InputMode.Unicode)
         {
             int prevLen = ctx.TrackedOnScreenLength;
@@ -81,7 +96,7 @@ public sealed class KoreanInputModule : IInputLanguageModule
             _wordAlreadyCommitted = false;
             _composer.Feed(jamo);
             string newOutput = _composer.Current;
-            _input.SendAtomicReplace(prevLen, newOutput);
+            _input.SendAtomicReplace(prevLen, newOutput); // 화면의 이전 글자를 지우고 새 조합 글자를 씀
             SuggestionsChanged?.Invoke(_koDict.GetSuggestions(newOutput, _suggestionContext));
             return true;
         }
@@ -93,6 +108,9 @@ public sealed class KoreanInputModule : IInputLanguageModule
         return false;
     }
 
+    /// <summary>
+    /// 한국어 레이아웃 내에서 'A'를 눌러 영어 입력 중일 때의 처리 로직입니다.
+    /// </summary>
     private bool HandleQuietEnglish(KeySlot slot, KeyContext ctx)
     {
         if (slot.Action is not SendKeyAction { Vk: var vkStr }
@@ -142,9 +160,11 @@ public sealed class KoreanInputModule : IInputLanguageModule
         return '\0';
     }
 
+    /// <summary>
+    /// 백스페이스 키 처리. 조합 중인 한글의 획을 하나 지우거나 입력된 영어를 지웁니다.
+    /// </summary>
     private bool HandleBackspace(KeyContext ctx)
     {
-        // QuietEnglish 모드에서는 prefix를 줄임
         if (_submode == InputSubmode.QuietEnglish && _englishPrefix.Length > 0)
         {
             _englishPrefix = _englishPrefix[..^1];
@@ -181,6 +201,11 @@ public sealed class KoreanInputModule : IInputLanguageModule
         }
     }
 
+    /// <summary>
+    /// 추천 단어 중 하나를 선택했을 때의 처리입니다.
+    /// </summary>
+    /// <param name="suggestion">사용자가 선택한 단어</param>
+    /// <returns>지워야 할 글자 수와 입력할 전체 단어</returns>
     public (int backspaceCount, string fullWord) AcceptSuggestion(string suggestion)
     {
         int bsCount;
@@ -193,9 +218,9 @@ public sealed class KoreanInputModule : IInputLanguageModule
                 : _composer.CompletedLength + _composer.CompositionDepth;
             if (learningEnabled)
             {
-                _koDict.RecordWord(suggestion);
+                _koDict.RecordWord(suggestion); // 사용자가 선택한 단어를 학습함
                 if (_lastCommittedWord is { Length: > 0 })
-                    _koDict.RecordBigram(_lastCommittedWord, suggestion);
+                    _koDict.RecordBigram(_lastCommittedWord, suggestion); // 앞 단어와의 관계를 학습함
             }
             _composer.Reset();
         }
@@ -218,6 +243,9 @@ public sealed class KoreanInputModule : IInputLanguageModule
         return (bsCount, suggestion);
     }
 
+    /// <summary>
+    /// '가'(한글) 모드와 'A'(영어) 모드를 서로 바꿉니다.
+    /// </summary>
     public void ToggleSubmode()
     {
         FinalizeComposition();
@@ -235,6 +263,9 @@ public sealed class KoreanInputModule : IInputLanguageModule
 
     public void OnSeparator() => FinalizeComposition();
 
+    /// <summary>
+    /// 모든 입력 상태를 초기값으로 되돌립니다.
+    /// </summary>
     public void Reset()
     {
         _composer.Reset();
@@ -247,6 +278,9 @@ public sealed class KoreanInputModule : IInputLanguageModule
         SuggestionsChanged?.Invoke(Array.Empty<string>());
     }
 
+    /// <summary>
+    /// 현재 입력 중인 단어를 확정하고 학습 엔진에 기록합니다.
+    /// </summary>
     public void CommitCurrentWord()
     {
         if (_compositionCancelled) return;
@@ -284,6 +318,9 @@ public sealed class KoreanInputModule : IInputLanguageModule
         SuggestionsChanged?.Invoke(Array.Empty<string>());
     }
 
+    /// <summary>
+    /// 현재 조합 중인 내용을 모두 버리고 초기화합니다. (Esc 키 등)
+    /// </summary>
     public void CancelComposition()
     {
         _compositionCancelled = true;
@@ -296,6 +333,9 @@ public sealed class KoreanInputModule : IInputLanguageModule
         _input.ResetTrackedLength();
     }
 
+    /// <summary>
+    /// 단어 입력이 끝났을 때(공백 등) 호출되어 현재까지의 내용을 사전 학습에 반영합니다.
+    /// </summary>
     private void FinalizeComposition()
     {
         if (!_composer.HasComposition && _englishPrefix.Length == 0) return;
@@ -349,9 +389,13 @@ public sealed class KoreanInputModule : IInputLanguageModule
         return null;
     }
 
+    /// 한글 자모 또는 완성형 한글인지 확인합니다.
     private static bool IsHangulJamo(string s) =>
         s.Length == 1 && (s[0] >= '\u3131' && s[0] <= '\u3163' || s[0] >= '\uAC00' && s[0] <= '\uD7A3');
 
+    /// <summary>
+    /// 특정 키(공백, 엔터, 쉼표 등)가 단어를 끝내는 구분자인지 판별합니다.
+    /// </summary>
     private static bool IsSeparator(VirtualKeyCode vk, bool isShifted)
     {
         if (vk is VirtualKeyCode.VK_SPACE or VirtualKeyCode.VK_RETURN
@@ -368,6 +412,7 @@ public sealed class KoreanInputModule : IInputLanguageModule
             return true;
         }
 
+        // Shift와 함께 눌린 숫자키 등도 구분자로 취급할 수 있습니다.
         if (isShifted && (vk is VirtualKeyCode.VK_1 or VirtualKeyCode.VK_OEM_2 or 
                           VirtualKeyCode.VK_9 or VirtualKeyCode.VK_0))
         {
@@ -386,6 +431,4 @@ public sealed class KoreanInputModule : IInputLanguageModule
         }
         return '\0';
     }
-
-
 }
