@@ -429,6 +429,26 @@ public partial class SettingsViewModel : ObservableObject
         win.Show();
     }
 
+    // ── 사용자 설정 데이터 폴더 열기 ──────────────────────────────────────
+
+    [RelayCommand]
+    private void OpenUserSettingsFolder()
+    {
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "explorer.exe",
+                Arguments = $"\"{PathResolver.DataDir}\"",
+                UseShellExecute = true
+            });
+        }
+        catch (Exception ex)
+        {
+            WpfMsgBox.Show($"폴더를 열 수 없습니다: {ex.Message}", "오류", WpfMsgBoxButton.OK, WpfMsgBoxImage.Error);
+        }
+    }
+
     // ── T-5.12: 관리자 권한으로 재시작 ──────────────────────────────────────
 
     [RelayCommand]
