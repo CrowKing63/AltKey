@@ -33,7 +33,7 @@ public enum VirtualKeyCode : ushort
     VK_OEM_MINUS  = 0xBD, VK_OEM_PERIOD = 0xBE, VK_OEM_2      = 0xBF,
     VK_OEM_3      = 0xC0, VK_OEM_4      = 0xDB, VK_OEM_5      = 0xDC,
     VK_OEM_6      = 0xDD, VK_OEM_7      = 0xDE,
-    VK_SNAPSHOT   = 0x2C, VK_NUMLOCK    = 0x90, VK_SCROLL     = 0x91,
+    VK_PRINT   = 0x2A, VK_NUMLOCK    = 0x90, VK_SCROLL     = 0x91,
 }
 
 public static class VirtualKeyCodeExtensions

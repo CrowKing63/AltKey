@@ -56,8 +56,8 @@ public static partial class KeyNotationParser
         ["prior"] = VirtualKeyCode.VK_PRIOR, ["next"] = VirtualKeyCode.VK_NEXT,
         ["insert"] = VirtualKeyCode.VK_INSERT, ["delete"] = VirtualKeyCode.VK_DELETE,
         ["numlock"] = VirtualKeyCode.VK_NUMLOCK, ["scroll"] = VirtualKeyCode.VK_SCROLL,
-        ["pause"] = VirtualKeyCode.VK_PAUSE, ["printscreen"] = VirtualKeyCode.VK_SNAPSHOT,
-        ["snapshot"] = VirtualKeyCode.VK_SNAPSHOT,
+        ["pause"] = VirtualKeyCode.VK_PAUSE, ["printscreen"] = VirtualKeyCode.VK_PRINT,
+        ["snapshot"] = VirtualKeyCode.VK_PRINT,
         ["hangul"] = VirtualKeyCode.VK_HANGUL, ["hanja"] = VirtualKeyCode.VK_HANJA,
         ["capslock"] = VirtualKeyCode.VK_CAPITAL, ["capital"] = VirtualKeyCode.VK_CAPITAL,
     };
