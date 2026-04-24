@@ -7,6 +7,10 @@ using AltKey.ViewModels;
 
 namespace AltKey.Controls;
 
+/// <summary>
+/// [역할] 가상 키보드의 개별 버튼 하나를 나타내는 커스텀 컨트롤입니다.
+/// [기능] 키 라벨 표시, 크기 조절, 체류 클릭(Dwell), 키 반복 입력(Repeat), 접근성 탐색 등을 담당합니다.
+/// </summary>
 public class KeyButton : System.Windows.Controls.Button
 {
     static KeyButton()
@@ -16,91 +20,99 @@ public class KeyButton : System.Windows.Controls.Button
             new FrameworkPropertyMetadata(typeof(KeyButton)));
     }
 
-    // ── Dependency Properties ────────────────────────────────────────────────
+    // ── Dependency Properties (WPF UI와 데이터 연결용) ────────────────────────
 
+    // 이 버튼이 나타내는 키의 데이터(글자, 크기 등)가 들어있는 객체입니다.
     public static readonly DependencyProperty SlotProperty =
         DependencyProperty.Register(
             nameof(Slot), typeof(KeySlotVm), typeof(KeyButton),
             new PropertyMetadata(null, OnSlotChanged));
 
+    // Shift 키나 Caps Lock이 켜져서 대문자를 보여줘야 하는지 여부입니다.
     public static readonly DependencyProperty ShowUpperCaseProperty =
         DependencyProperty.Register(
             nameof(ShowUpperCase), typeof(bool), typeof(KeyButton),
             new PropertyMetadata(false, OnShowUpperCaseChanged));
 
-    // 한글 서브 레이블 (통합 레이아웃: 키 우상단에 항상 표시)
+    // 키 우측 상단에 작게 표시되는 보조 라벨(예: 한글 입력 중의 영어 라벨)입니다.
     public static readonly DependencyProperty SubLabelProperty =
         DependencyProperty.Register(
             nameof(SubLabel), typeof(string), typeof(KeyButton),
             new PropertyMetadata(""));
 
-    // DisplayLabel — KeySlotVm.DisplayLabel 바인딩용
+    // 버튼 정중앙에 크게 표시되는 주 라벨입니다.
     public static readonly DependencyProperty DisplayLabelProperty =
         DependencyProperty.Register(
             nameof(DisplayLabel), typeof(string), typeof(KeyButton),
             new PropertyMetadata("", OnDisplayLabelChanged));
 
-    // IsDimmed — QuietEnglish에서 영어 라벨 없는 키 흐림 표시
+    // 현재 모드에서 사용할 수 없는 키를 흐리게 표시할지 여부입니다.
     public static readonly DependencyProperty IsDimmedProperty =
         DependencyProperty.Register(
             nameof(IsDimmed), typeof(bool), typeof(KeyButton),
             new PropertyMetadata(false, OnIsDimmedChanged));
 
-    // T-4.7: Sticky / Locked 상태 DependencyProperty
+    // Shift/Ctrl 등이 '한 번만 눌린 고정 상태'인지 나타냅니다.
     public static readonly DependencyProperty IsStickyProperty =
         DependencyProperty.Register(
             nameof(IsSticky), typeof(bool), typeof(KeyButton),
             new PropertyMetadata(false));
 
+    // Caps Lock 처럼 '영구적으로 고정된 상태'인지 나타냅니다.
     public static readonly DependencyProperty IsLockedProperty =
         DependencyProperty.Register(
             nameof(IsLocked), typeof(bool), typeof(KeyButton),
             new PropertyMetadata(false));
 
+    // 버튼의 크기 기준(픽셀)입니다. 이 값이 커지면 버튼이 커집니다.
     public static readonly DependencyProperty KeyUnitProperty =
         DependencyProperty.Register(
             nameof(KeyUnit), typeof(double), typeof(KeyButton),
             new PropertyMetadata(48.0, OnKeyUnitChanged));
 
-    // T-5.1: 체류 클릭 DependencyProperties
+    // [접근성] 마우스를 올리고만 있어도 클릭되는 기능의 활성화 여부입니다.
     public static readonly DependencyProperty DwellEnabledProperty =
         DependencyProperty.Register(
             nameof(DwellEnabled), typeof(bool), typeof(KeyButton),
             new PropertyMetadata(false));
 
+    // 체류 클릭이 발동되기까지 기다리는 시간(밀리초)입니다.
     public static readonly DependencyProperty DwellTimeProperty =
         DependencyProperty.Register(
             nameof(DwellTime), typeof(int), typeof(KeyButton),
             new PropertyMetadata(800));
 
-    // T-5.1/5.2: 체류 진행도 (0.0~1.0) — ControlTemplate 바인딩용
+    // 체류 클릭 진행도 (0.0 ~ 1.0). 버튼 테두리의 게이지 애니메이션에 사용됩니다.
     public static readonly DependencyProperty DwellProgressProperty =
         DependencyProperty.Register(
             nameof(DwellProgress), typeof(double), typeof(KeyButton),
             new PropertyMetadata(0.0));
 
-// T-10: 키 반복 입력 DependencyProperties
+    // 키를 꾹 누르고 있을 때 연속 입력이 되는 기능의 활성화 여부입니다.
     public static readonly DependencyProperty KeyRepeatEnabledProperty =
         DependencyProperty.Register(
             nameof(KeyRepeatEnabled), typeof(bool), typeof(KeyButton),
             new PropertyMetadata(false));
 
+    // 연속 입력이 시작되기 전까지의 대기 시간(밀리초)입니다.
     public static readonly DependencyProperty KeyRepeatDelayMsProperty =
         DependencyProperty.Register(
             nameof(KeyRepeatDelayMs), typeof(int), typeof(KeyButton),
             new PropertyMetadata(300));
 
+    // 연속 입력이 반복되는 간격(밀리초)입니다. 작을수록 빠르게 입력됩니다.
     public static readonly DependencyProperty KeyRepeatIntervalMsProperty =
         DependencyProperty.Register(
             nameof(KeyRepeatIntervalMs), typeof(int), typeof(KeyButton),
             new PropertyMetadata(50));
 
-    // L1: 포커스 가시화 + 탭 탐색 모드
+    // [접근성] 탭(Tab) 키로 버튼 사이를 이동하며 조작할 수 있는지 여부입니다.
     public static readonly DependencyProperty KeyboardA11yNavigationEnabledProperty =
         DependencyProperty.Register(
             nameof(KeyboardA11yNavigationEnabled), typeof(bool), typeof(KeyButton),
             new PropertyMetadata(false, OnKeyboardA11yNavigationEnabledChanged));
 
+    // 접근성 모드에서 현재 이 버튼이 선택(포커스)되어 있는지 나타냅니다.
     public static readonly DependencyProperty IsA11yFocusedProperty =
         DependencyProperty.Register(
             nameof(IsA11yFocused), typeof(bool), typeof(KeyButton),
@@ -305,6 +317,10 @@ public class KeyButton : System.Windows.Controls.Button
         }
     }
 
+    /// <summary>
+    /// 버튼을 실제로 '누르는' 처리를 수행합니다. 
+    /// 연결된 명령(Command)을 실행하여 텍스트를 입력하거나 기능을 동작시킵니다.
+    /// </summary>
     private void ExecuteKeyPress()
     {
         if (Command?.CanExecute(CommandParameter) == true)
@@ -428,6 +444,9 @@ public class KeyButton : System.Windows.Controls.Button
         }
     }
 
+    /// <summary>
+    /// 버튼의 가로/세로 크기를 계산된 KeyUnit에 맞춰 실시간으로 변경합니다.
+    /// </summary>
     private void UpdateSize()
     {
         if (Slot is null) return;

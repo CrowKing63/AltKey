@@ -4,6 +4,10 @@ using System.Windows.Input;
 
 namespace AltKey.Controls;
 
+/// <summary>
+/// [역할] 숫자를 직접 입력하거나 버튼을 눌러 미세하게 조절할 수 있는 커스텀 컨트롤입니다.
+/// [참고] 설정 화면에서 투명도, 크기 비율 등을 조절할 때 슬라이더 대신 사용됩니다.
+/// </summary>
 public partial class NumericAdjuster : System.Windows.Controls.UserControl
 {
     private bool _isUpdating;
@@ -22,8 +26,9 @@ public partial class NumericAdjuster : System.Windows.Controls.UserControl
         Loaded += (s, e) => UpdateTextBox();
     }
 
-    // ── DependencyProperty ──────────────────────────────────────────────────
+    // ── DependencyProperty (설정값 연결) ──────────────────────────────────
 
+    // 현재 설정된 숫자 값입니다.
     public double Value
     {
         get => (double)GetValue(ValueProperty);
@@ -37,6 +42,7 @@ public partial class NumericAdjuster : System.Windows.Controls.UserControl
                 FrameworkPropertyMetadataOptions.BindsTwoWayByDefault,
                 OnValueChanged));
 
+    // 입력 가능한 최소값입니다. 이보다 작은 숫자는 입력할 수 없습니다.
     public double Minimum
     {
         get => (double)GetValue(MinimumProperty);
@@ -48,6 +54,7 @@ public partial class NumericAdjuster : System.Windows.Controls.UserControl
             nameof(Minimum), typeof(double), typeof(NumericAdjuster),
             new PropertyMetadata(0.0));
 
+    // 입력 가능한 최대값입니다. 이보다 큰 숫자는 입력할 수 없습니다.
     public double Maximum
     {
         get => (double)GetValue(MaximumProperty);
@@ -59,6 +66,10 @@ public partial class NumericAdjuster : System.Windows.Controls.UserControl
             nameof(Maximum), typeof(double), typeof(NumericAdjuster),
             new PropertyMetadata(100.0));
 
+    /// <summary>
+    /// [중요] 화살표 버튼을 한 번 눌렀을 때 변화하는 수치 단위입니다.
+    /// 예를 들어 Step이 5라면, 버튼 클릭 시 5씩 커지거나 작아집니다.
+    /// </summary>
     public double Step
     {
         get => (double)GetValue(StepProperty);
@@ -70,6 +81,7 @@ public partial class NumericAdjuster : System.Windows.Controls.UserControl
             nameof(Step), typeof(double), typeof(NumericAdjuster),
             new PropertyMetadata(1.0));
 
+    // 화면에 보여줄 소수점 자리수입니다. (0이면 정수만 표시)
     public int DecimalPlaces
     {
         get => (int)GetValue(DecimalPlacesProperty);
@@ -149,6 +161,9 @@ public partial class NumericAdjuster : System.Windows.Controls.UserControl
         }
     }
 
+    /// <summary>
+    /// 현재 값을 지정된 양(delta)만큼 변화시키고 소수점과 범위를 맞춥니다.
+    /// </summary>
     private void ChangeValue(double delta)
     {
         Value = Clamp(this, Math.Round(Value + delta, DecimalPlaces));

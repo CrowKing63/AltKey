@@ -11,6 +11,10 @@ using WpfRect = System.Windows.Shapes.Rectangle;
 
 namespace AltKey.Views;
 
+/// <summary>
+/// [역할] 메인 키보드 창의 화면 표시와 사용자 인터페이스(UI) 동작을 제어하는 클래스입니다.
+/// [기능] 창 크기 배율 적용, 드래그 이동, 창 접기/펼치기, 화면 가장자리 이동 등을 처리합니다.
+/// </summary>
 public partial class KeyboardView : System.Windows.Controls.UserControl
 {
     private bool _isCollapsed = false;
@@ -18,9 +22,9 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
     public bool IsCollapsed => _isCollapsed;
     private bool _autoCompleteBarAdded = false;
 
-
-
     private ConfigService? _configService;
+    
+    // 키보드를 접었을 때의 최소 높이입니다.
     private const double CollapsedWindowHeight = 28.0;
 
     public KeyboardView()
@@ -80,11 +84,11 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
         }
     }
 
-    // T-4.10: 창 크기 변경 시 KeyUnit 재계산
+    // 창 크기가 수동으로 변경될 때 키 크기(KeyUnit)를 다시 계산합니다.
     private void OnWindowSizeChanged(object sender, SizeChangedEventArgs e)
         => UpdateKeyUnit(e.NewSize.Width);
 
-    // 키보드 여백(키가 없는 영역) 클릭 시 이모지/클립보드 패널 닫기
+    // 키보드 빈 공간을 클릭하면 열려있던 패널(이모지, 클립보드)을 닫습니다.
     private void KeyboardBorder_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         if (DataContext is MainViewModel vm)
@@ -94,31 +98,40 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
         }
     }
 
-    // T-4.10: KeyboardBorder 크기 변경 시 재계산 (이모지/클립보드 패널 토글 포함)
     private void KeyboardBorder_SizeChanged(object sender, SizeChangedEventArgs e)
         => UpdateKeyUnit(Window.GetWindow(this)?.Width ?? ActualWidth);
 
-    // 키 한 변의 최소/최대 픽셀 (너무 작아 터치 불가해지는 것 방지)
+    // ── UI 레이아웃 상수 (화면 배치 및 크기 계산용) ──────────────────────────
+
+    // 키보드 버튼의 최소/최대 크기(픽셀)입니다. 너무 작아져서 터치하기 어려워지는 것을 방지합니다.
     private const double MinKeyUnit = 28.0;
     private const double MaxKeyUnit = 80.0;
 
-    // 레이아웃 패딩/마진 상수
-    private const double KbHorizontalPad = 12.0; // KeyboardBorder Padding 좌+우
-    private const double KbVerticalPad   = 8.0;  // KeyboardBorder Padding 상+하
-    private const double KeyMargin       = 4.0;  // 키 1개당 마진 총합 (Margin="2")
+    // 키보드 전체 테두리의 안쪽 여백(Padding)입니다.
+    private const double KbHorizontalPad = 12.0; // 좌우 합계
+    private const double KbVerticalPad   = 8.0;  // 상하 합계
 
+    // 키 버튼 사이의 기본 마진입니다.
+    private const double KeyMargin       = 4.0;
+
+    // 크기 계산의 기준이 되는 기본 키 크기입니다.
     private const double BaseKeyUnit  = 50.0;
+
+    // 상단 드래그 핸들이나 버튼들이 위치한 헤더의 높이입니다.
     private const double HeaderHeight = 28.0;
+
+    // 사용자가 설정할 수 있는 창 크기 배율의 최소/최대 범위(%)입니다.
     private const int    MinScale     = 60;
     private const int    MaxScale     = 200;
 
-    // 엣지케이스 방어용 절대 하한 (공백 레이아웃 등)
+    // 어떤 상황에서도 유지해야 할 창의 최소 가로/세로 크기입니다.
     private const double AbsMinWindowWidth  = 400.0;
     private const double AbsMinWindowHeight = 180.0;
 
-    // T-4.10: KeyUnit = min(가로 기준, 세로 기준) — Stretch=Uniform 동작 재현
-    // 바가 KeyRowHeight(= KeyUnit + 4) 에 바인딩되어 KeyUnit과 상호 의존하므로,
-    // 고정점을 한 번에 계산하도록 폐쇄형 식(rows+1 분모)을 사용한다.
+    /// <summary>
+    /// 현재 윈도우 너비에 맞춰 버튼 하나하나의 크기(KeyUnit)를 조절합니다.
+    /// 창을 늘리거나 줄일 때 버튼들이 그에 맞춰 자연스럽게 커지거나 작아지게 합니다.
+    /// </summary>
     private void UpdateKeyUnit(double windowWidth)
     {
         if (DataContext is not MainViewModel vm) return;
@@ -127,8 +140,6 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
         double wKeys  = Math.Max(1, vm.Keyboard.MaxRowCount);
         double rows   = Math.Max(1, vm.Keyboard.RowCount);
 
-        // DockPanel이 실제로 바에 할당한 공간을 기준으로 삼는다
-        // (AutoComplete 꺼짐 + 제안 없음 양쪽 모두 Collapsed가 되어 0 공간)
         bool barVisible = AutoCompleteBar?.Visibility == Visibility.Visible;
         double barH = barVisible ? AutoCompleteBar!.ActualHeight : 0;
 
@@ -136,7 +147,7 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
         double totalBudget = KeyboardBorder.ActualHeight + barH;
         double availH = totalBudget - KbVerticalPad - (barVisible ? 4.0 : 0);
 
-        if (availH < 1) return; // 레이아웃 완료 전 무시
+        if (availH < 1) return;
 
         double rowsDiv = rows + (barVisible ? 1 : 0);
         double kW = (availW - wKeys * KeyMargin) / units;
@@ -145,6 +156,9 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
         vm.Keyboard.KeyUnit = Math.Max(MinKeyUnit, Math.Min(MaxKeyUnit, Math.Min(kW, kH)));
     }
 
+    /// <summary>
+    /// 레이아웃 데이터(행, 열 개수 등)를 바탕으로 키보드 창의 기본 너비와 높이를 계산합니다.
+    /// </summary>
     private (double Width, double Height) ComputeBaseSize()
     {
         if (DataContext is not MainViewModel vm)
@@ -172,6 +186,9 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
         );
     }
 
+    /// <summary>
+    /// 설정된 배율(Scale)을 바탕으로 실제 윈도우 창의 가로, 세로 크기를 계산하여 적용합니다.
+    /// </summary>
     public void ApplyScale()
     {
         if (Window.GetWindow(this) is not { } window) return;
@@ -187,7 +204,9 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
             : baseH * scale / 100.0;
     }
 
-    // T-1.5: 창 드래그 이동
+    /// <summary>
+    /// 상단 핸들을 마우스로 잡고 끌었을 때 키보드 창이 따라 움직이게 합니다.
+    /// </summary>
     private void DragHandle_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         if (Window.GetWindow(this) is { } window)
@@ -209,7 +228,10 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
         Window.GetWindow(this)?.Hide();
     }
 
-    // T-7.2: 접기/펼치기 버튼
+    /// <summary>
+    /// 접기(▼)/펼치기(▲) 버튼을 눌렀을 때 실행됩니다.
+    /// 창을 작게 줄여서 화면을 덜 차지하게 하거나 다시 원래 크기로 돌립니다.
+    /// </summary>
     private void CollapseButton_Click(object sender, RoutedEventArgs e)
     {
         var window = Window.GetWindow(this);
@@ -238,6 +260,9 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
         window.Height = current;
     }
 
+    /// <summary>
+    /// 창의 높이를 부드럽게 변화시키는 애니메이션 효과를 줍니다.
+    /// </summary>
     private static void AnimateWindowHeight(Window window, double targetHeight)
     {
         CaptureAndClearHeightAnimation(window);
@@ -256,14 +281,16 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
         window.BeginAnimation(Window.HeightProperty, anim);
     }
 
-
-    // 화면 가장자리 이동 버튼 핸들러
+    // ── 화면 가장자리 이동 기능 ─────────────────────────────────────────────
+    // 버튼 클릭 시 키보드를 화면의 왼쪽, 오른쪽, 위, 아래 끝으로 즉시 이동시킵니다.
     private void EdgeLeftBtn_Click(object sender, RoutedEventArgs e)  => MoveToScreenEdge("Left");
     private void EdgeRightBtn_Click(object sender, RoutedEventArgs e) => MoveToScreenEdge("Right");
     private void EdgeUpBtn_Click(object sender, RoutedEventArgs e)    => MoveToScreenEdge("Up");
     private void EdgeDownBtn_Click(object sender, RoutedEventArgs e)  => MoveToScreenEdge("Down");
 
+    /// <summary>
     /// 창을 지정 방향 화면 끝으로 이동한다 (반대축 위치는 유지).
+    /// </summary>
     private void MoveToScreenEdge(string direction)
     {
         var window = Window.GetWindow(this);
@@ -281,7 +308,7 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
         }
     }
 
-    // T-4.8: 드래그 핸들 hover 애니메이션
+    // 상단 드래그 핸들에 마우스를 올렸을 때 강조 효과를 줍니다.
     private void DragHandle_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
     {
         if (DragPill is WpfRect pill)
@@ -296,7 +323,9 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
                 new DoubleAnimation(0.25, TimeSpan.FromMilliseconds(150)));
     }
 
-    // 08: LiveRegion 공지
+    /// <summary>
+    /// [접근성] 시각 장애인을 위한 화면 읽기 기능(스크린 리더)에 현재 상태를 알립니다.
+    /// </summary>
     private void AnnounceLiveRegion()
     {
         Dispatcher.InvokeAsync(() =>
