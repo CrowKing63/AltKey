@@ -1,5 +1,5 @@
 {
-  "name": "Bagic",
+  "name": "Full",
   "language": null,
   "columns": [
     {
@@ -611,8 +611,8 @@
               "label": "Shift",
               "shift_label": null,
               "action": {
-                "type": "ToggleSticky",
-                "vk": "VK_SHIFT"
+                "type": "SendKey",
+                "vk": "VK_LSHIFT"
               },
               "width": 2.4,
               "height": 1,
@@ -779,8 +779,8 @@
               "label": "Shift",
               "shift_label": null,
               "action": {
-                "type": "ToggleSticky",
-                "vk": "VK_SHIFT"
+                "type": "SendKey",
+                "vk": "VK_RSHIFT"
               },
               "width": 2,
               "height": 1,
@@ -797,8 +797,8 @@
               "label": "Ctrl",
               "shift_label": null,
               "action": {
-                "type": "ToggleSticky",
-                "vk": "VK_CONTROL"
+                "type": "SendKey",
+                "vk": "VK_LCONTROL"
               },
               "width": 1.4,
               "height": 1,
@@ -811,7 +811,7 @@
               "label": "Win",
               "shift_label": null,
               "action": {
-                "type": "ToggleSticky",
+                "type": "SendKey",
                 "vk": "VK_LWIN"
               },
               "width": 1,
@@ -825,8 +825,8 @@
               "label": "Alt",
               "shift_label": null,
               "action": {
-                "type": "ToggleSticky",
-                "vk": "VK_MENU"
+                "type": "SendKey",
+                "vk": "VK_LMENU"
               },
               "width": 1.4,
               "height": 1,
@@ -880,8 +880,8 @@
               "label": "Alt",
               "shift_label": null,
               "action": {
-                "type": "ToggleSticky",
-                "vk": "VK_MENU"
+                "type": "SendKey",
+                "vk": "VK_RMENU"
               },
               "width": 0.9,
               "height": 1,
