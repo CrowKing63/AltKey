@@ -138,6 +138,14 @@
                                 BorderThickness="0" Cursor="Hand"
                                 ToolTip="자동완성에서 학습된 단어 목록을 확인·편집합니다"/>
 
+                        <!-- 사용자 설정 데이터 저장된 폴더 열기 -->
+                        <Button Content="사용자 설정 데이터 폴더 열기"
+                                Command="{Binding OpenUserSettingsFolderCommand}"
+                                Height="30" Margin="0,0,0,16"
+                                Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}"
+                                BorderThickness="0" Cursor="Hand"
+                                ToolTip="키보드 레이아웃, 사용자 단어, 앱별 레이아웃 등의 설정 데이터가 저장된 폴더를 엽니다"/>
+
                         <!-- 전역 단축키 -->
                         <TextBlock Text="전역 단축키" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
                         <TextBox Text="{Binding GlobalHotkey, UpdateSourceTrigger=LostFocus}"
