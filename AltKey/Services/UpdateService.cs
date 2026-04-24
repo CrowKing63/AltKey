@@ -4,11 +4,13 @@ using System.Text.Json;
 
 namespace AltKey.Services;
 
-/// <summary>T-6.4: GitHub Release 자동 업데이트 체크</summary>
+/// <summary>
+/// [역할] 인터넷(GitHub)에서 AltKey의 최신 버전을 확인하고 업데이트 정보를 가져오는 서비스입니다.
+/// </summary>
 public class UpdateService
 {
     private const string ApiUrl =
-        "https://api.github.com/repos/CrowKing63/altkey/releases/latest";
+        "https://api.github.com/repos/CrowKing63/altkey/releases/latest"; // 최신 출시 정보를 가져올 GitHub API 주소입니다.
 
     public async Task<(bool HasUpdate, string Version, string Url, string InstallerUrl)> CheckAsync()
     {

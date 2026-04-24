@@ -2,8 +2,10 @@ using System.Text;
 
 namespace AltKey.Services;
 
-/// 한글 자모를 순서대로 받아 현재 입력 문자열(음절 단위 조합 결과)을 추적한다.
-/// 두벌식 자판 기준으로 초성·중성·종성 조합을 처리한다.
+/// <summary>
+/// [역할] 사용자가 누르는 자음과 모음을 실시간으로 조합하여 완성된 한글 글자(음절)를 만드는 서비스입니다.
+/// [기능] 'ㄱ + ㅏ + ㄴ'을 '간'으로 합치고, 'ㄱ + ㅏ + ㄴ + ㅈ'를 '간' 뒤에 'ㅈ'이 오는 상황인지 '갅'인지 판단하는 복잡한 한글 조합 로직을 처리합니다.
+/// </summary>
 public class HangulComposer
 {
     static readonly string[] Choseong =

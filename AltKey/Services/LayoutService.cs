@@ -4,10 +4,14 @@ using AltKey.Models;
 
 namespace AltKey.Services;
 
+/// <summary>
+/// [역할] 키보드 버튼의 배치 정보가 담긴 레이아웃 파일(.json)들을 관리하는 서비스입니다.
+/// [기능] 설치된 레이아웃 목록 가져오기, 특정 레이아웃 불러오기, 편집한 레이아웃 저장하기 등을 처리합니다.
+/// </summary>
 public class LayoutService
 {
-    private readonly string _layoutsDir;
-    private readonly Dictionary<string, LayoutConfig> _cache = [];
+    private readonly string _layoutsDir; // 레이아웃 파일들이 저장된 폴더 경로입니다.
+    private readonly Dictionary<string, LayoutConfig> _cache = []; // 한 번 읽어온 레이아웃을 빠르게 다시 쓰기 위해 저장해두는 공간(캐시)입니다.
 
     public event Action? LayoutsChanged;
 

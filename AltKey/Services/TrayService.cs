@@ -7,10 +7,13 @@ using Application = System.Windows.Application;
 
 namespace AltKey.Services;
 
-/// T-5.5 / T-5.11 / T-9.5: 시스템 트레이 NotifyIcon + 레이아웃 서브메뉴 + 업데이트
+/// <summary>
+/// [역할] 윈도우 작업 표시줄의 알림 영역(트레이 아이콘)을 관리하는 서비스입니다.
+/// [기능] 트레이 아이콘 표시, 우클릭 메뉴(레이아웃 변경, 설정 등), 더블 클릭 시 키보드 보이기/숨기기 등을 처리합니다.
+/// </summary>
 public class TrayService : IDisposable
 {
-    private readonly LayoutService _layoutService;
+    private readonly LayoutService _layoutService; // 레이아웃 목록을 가져오기 위한 서비스
     private readonly MainViewModel _mainViewModel;
     private readonly UpdateService _updateService;
     private readonly InputService _inputService;

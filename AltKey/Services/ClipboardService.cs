@@ -3,6 +3,10 @@ using WpfClipboard = System.Windows.Clipboard;
 
 namespace AltKey.Services;
 
+/// <summary>
+/// [역할] 최근에 복사한 글자(클립보드)들의 목록을 관리하고 다시 사용할 수 있게 돕는 서비스입니다.
+/// [기능] 윈도우 클립보드를 주기적으로 감시하여 새로운 복사본을 기록하고, 최대 20개까지의 이력을 유지합니다.
+/// </summary>
 public class ClipboardService : IDisposable
 {
     private const int MaxHistory = 20;

@@ -13,9 +13,13 @@ using CommunityToolkit.Mvvm.Input;
 
 namespace AltKey.ViewModels;
 
+/// <summary>
+/// [역할] AltKey의 '심장'과 같은 역할을 하는 메인 뷰모델입니다.
+/// [기능] 키보드, 설정, 이모지, 클립보드 등 모든 하위 모듈을 하나로 묶어 관리하며, 레이아웃 전환이나 자동 업데이트 같은 앱의 전반적인 동작을 제어합니다.
+/// </summary>
 public partial class MainViewModel : ObservableObject
 {
-    private readonly ConfigService  _configService;
+    private readonly ConfigService  _configService; // 앱 설정을 담당하는 서비스
     private readonly LayoutService  _layoutService;
     private readonly ProfileService _profileService;
     private readonly AutoCompleteService _autoCompleteService;

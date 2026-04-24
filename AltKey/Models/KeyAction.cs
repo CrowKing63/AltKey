@@ -2,7 +2,10 @@ using System.Text.Json.Serialization;
 
 namespace AltKey.Models;
 
-// 판별 유니온 패턴 (System.Text.Json JsonDerivedType)
+/// <summary>
+/// [역할] 키보드 버튼을 눌렀을 때 실행될 '동작'의 종류를 정의합니다.
+/// [기능] 단순 키 입력부터 앱 실행, 볼륨 조절, 상용구 입력 등 버튼 하나로 할 수 있는 모든 명령 형식을 담고 있습니다.
+/// </summary>
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
 [JsonDerivedType(typeof(SendKeyAction),       "SendKey")]
 [JsonDerivedType(typeof(SendComboAction),     "SendCombo")]

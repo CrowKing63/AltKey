@@ -7,8 +7,8 @@ using WpfApp = System.Windows.Application;
 namespace AltKey.Services;
 
 /// <summary>
-/// 접근성 탭 탐색 모드에서 물리 키보드(또는 외부 스위치)의 Tab/Enter/Space를
-/// 가상 키보드 내부 탐색/실행으로 연결한다.
+/// [역할] 마우스를 쓰기 어려운 사용자가 물리 키보드(Tab, Enter 등)나 외부 스위치로 AltKey를 조작할 수 있게 돕는 서비스입니다.
+/// [기능] 물리 키보드의 Tab 키를 누르면 가상 키보드의 다음 버튼으로 초점이 이동하고, Enter 키를 누르면 해당 버튼이 클릭되도록 연결합니다.
 /// </summary>
 public sealed class AccessibilityNavigationService : IDisposable
 {

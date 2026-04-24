@@ -4,7 +4,10 @@ using AltKey.Platform;
 
 namespace AltKey.Services;
 
-/// T-5.3: WinEventHook으로 포그라운드 앱 전환 이벤트 구독
+/// <summary>
+/// [역할] 사용자가 현재 어떤 프로그램(메모장, 게임 등)을 쓰고 있는지 감시하는 서비스입니다.
+/// [기능] 활성화된 창이 바뀌면 이를 감지하여 해당 앱에 맞는 레이아웃으로 자동 전환하거나, 관리자 권한 앱 여부를 확인합니다.
+/// </summary>
 public class ProfileService : IDisposable
 {
     private IntPtr _hook;

@@ -4,9 +4,13 @@ using AltKey.Platform;
 namespace AltKey.Services;
 
 /// T-5.7 / T-5.8: 전역 단축키 등록 및 사용자 커스텀 파싱
+/// <summary>
+/// [역할] 윈도우 어디에서나 AltKey를 불러올 수 있는 전역 단축키(Global Hotkey)를 관리합니다.
+/// [기능] 단축키 등록/해제 및 "Ctrl+Alt+K" 같은 문자열을 시스템이 이해할 수 있는 코드로 변환합니다.
+/// </summary>
 public class HotkeyService : IDisposable
 {
-    private const int HOTKEY_ID = 9001;
+    private const int HOTKEY_ID = 9001; // 단축키를 식별하기 위한 고유 아이디입니다.
     private HwndSource? _source;
 
     public event Action? HotkeyPressed;

@@ -9,9 +9,13 @@ using AltKey.Models;
 
 namespace AltKey;
 
+/// <summary>
+/// [역할] AltKey 애플리케이션 그 자체를 정의하며, 프로그램이 처음 켜질 때와 꺼질 때의 모든 동작을 총괄합니다.
+/// [기능] 필요한 서비스(사전, 입력기 등)를 준비(의존성 주입)하고, 첫 창을 띄우며, 프로그램 종료 시 데이터를 안전하게 저장합니다.
+/// </summary>
 public partial class App : System.Windows.Application
 {
-    public static IServiceProvider Services { get; private set; } = null!;
+    public static IServiceProvider Services { get; private set; } = null!; // 앱 전체에서 사용할 서비스들을 담고 있는 저장소입니다.
     
     // L1: 큰 텍스트 모드
     private ConfigService? _configService;
