@@ -8,10 +8,19 @@ using CommunityToolkit.Mvvm.Input;
 
 namespace AltKey.ViewModels;
 
+/// <summary>
+/// [역할] 키보드의 한 줄(행)을 나타내며, 그 줄에 포함된 키들의 목록을 가집니다.
+/// </summary>
 public record KeyRowVm(IReadOnlyList<KeySlotVm> Keys);
 
+/// <summary>
+/// [역할] 키보드의 한 열(세로 줄)을 나타내며, 열 사이의 간격과 그 안의 행들을 관리합니다.
+/// </summary>
 public record KeyColumnVm(double Gap, IReadOnlyList<KeyRowVm> Rows);
 
+/// <summary>
+/// [역할] 키보드 버튼 하나하나의 상태(글자, 크기, 고정 여부 등)를 관리하는 뷰모델입니다.
+/// </summary>
 public class KeySlotVm(KeySlot slot, AutoCompleteService autoComplete) : ObservableObject
 {
     public KeySlot Slot { get; } = slot;
@@ -45,6 +54,9 @@ public class KeySlotVm(KeySlot slot, AutoCompleteService autoComplete) : Observa
         }
     }
 
+    /// <summary>
+    /// 현재 입력 모드(한글/영어)와 상태(Shift 여부)에 따라 버튼에 표시할 글자를 결정합니다.
+    /// </summary>
     public string GetLabel(bool upperCase, InputSubmode submode)
     {
         if (IsKoreanSubmodeToggle)
@@ -223,6 +235,10 @@ public class KeySlotVm(KeySlot slot, AutoCompleteService autoComplete) : Observa
     }
 }
 
+/// <summary>
+/// [역할] AltKey의 메인 키보드 화면을 제어하는 핵심 엔진입니다.
+/// [기능] 레이아웃 로딩, 키 입력 이벤트 처리, 입력 모드 전환, 접근성 내비게이션 등을 총괄합니다.
+/// </summary>
 public partial class KeyboardViewModel : ObservableObject
 {
     private readonly InputService _inputService;
@@ -239,9 +255,10 @@ public partial class KeyboardViewModel : ObservableObject
     private ObservableCollection<KeyColumnVm> columns = [];
 
     // 동적 크기 계산용 프로퍼티 (열 기준)
-    [ObservableProperty] private double maxRowUnits = 15.0;
-    [ObservableProperty] private double maxRowCount = 14.0;
-    [ObservableProperty] private double rowCount    = 5.0;
+    // 키보드 레이아웃을 계산할 때 기준이 되는 값들입니다. (사용자가 직접 수정하기보다 레이아웃 파일에 의해 결정됩니다.)
+    [ObservableProperty] private double maxRowUnits = 15.0; // 가장 긴 줄의 가로 길이 합계
+    [ObservableProperty] private double maxRowCount = 14.0; // 가장 많은 키가 들어있는 줄의 키 개수
+    [ObservableProperty] private double rowCount    = 5.0;  // 전체 줄 수
 
     /// 빈 행을 포함해 모든 행이 확보해야 할 픽셀 높이 (KeyUnit + 키 Margin 상하 합)
     public double KeyRowHeight => KeyUnit + 4.0;
@@ -302,6 +319,10 @@ public partial class KeyboardViewModel : ObservableObject
     [ObservableProperty]
     private bool showElevatedWarning;
 
+    /// <summary>
+    /// 키보드 버튼 하나의 기본 크기(단위: 픽셀)입니다. 
+    /// 이 값을 바꾸면 전체 키보드의 크기가 비례해서 커지거나 작아집니다.
+    /// </summary>
     [ObservableProperty]
     private double keyUnit = 48.0;
 
@@ -340,6 +361,9 @@ public partial class KeyboardViewModel : ObservableObject
         LiveRegionChanged?.Invoke();
     }
 
+    /// <summary>
+    /// 레이아웃 설정 파일(.json)을 읽어와서 실제 화면에 보일 버튼들로 변환하여 배치합니다.
+    /// </summary>
     public void LoadLayout(LayoutConfig layout)
     {
         if (layout.Columns is { Count: > 0 })
@@ -365,6 +389,10 @@ public partial class KeyboardViewModel : ObservableObject
 
     public event Action? KeyTapped;
 
+    /// <summary>
+    /// 사용자가 키보드의 버튼을 클릭했을 때 실행되는 핵심 함수입니다.
+    /// 한글/영어 전환, 실제 키 입력 전송, 사운드 재생 등을 여기서 처리합니다.
+    /// </summary>
     [RelayCommand]
     private void KeyPressed(KeySlot slot)
     {
