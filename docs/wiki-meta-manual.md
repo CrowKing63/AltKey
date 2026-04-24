@@ -22,24 +22,25 @@ Wiki/AltKey.wiki/
 ├── Home.md                    # 위키 홈 (목차 + 전체 네비게이션)
 ├── 소개.md                    # ✅ 작성 완료
 ├── 시작하기.md                # ✅ 작성 완료
-├── 화상키보드-기본.md          # ✅ 작성 완료
-├── 한국어-입력.md             # ✅ 작성 완료
-├── 자동완성.md                # 자동완성 제안, 사용자 사전
-├── 수식자-고정.md             # Sticky Keys (3단계 토글)
-├── 체류클릭.md                # Dwell Click
-├── 키-반복.md                 # Key Repeat
-├── 레이아웃-커스터마이징.md    # JSON 편집, 레이아웃 편집기
-├── 앱별-레이아웃.md           # 프로필 자동 전환
-├── 액션-키.md                 # 10종 키 액션
-├── 이모지.md                  # 이모지 패널
-├── 클립보드-히스토리.md       # 클립보드 패널
-├── 설정.md                    # 설정 패너 전체 가이드
-├── 테마와-외관.md             # 테마, 투명도, 페이딩
-├── 시스템-트레이.md           # 트레이 아이콘, 전역 단축키
-├── 업데이트.md                # 자동 업데이트
-├── 관리자-권한.md             # 권한 관련 안내
-├── 문제해결.md                # FAQ / 트러블슈팅
-└── 단축키-모음.md             # 전체 단축키 정리
+├── 화상키보드-기본.md          # ✅ 작성 완료 (Update됨)
+├── 한국어-입력.md             # ✅ 작성 완료 (Update됨)
+├── 자동완성.md                # ✅ 작성 완료 (Update됨)
+├── 수식자-고정.md             # ✅ 작성 완료
+├── 체류클릭.md                # ✅ 작성 완료
+├── 키-반복.md                 # ✅ 작성 완료
+├── 레이아웃-커스터마이징.md    # ✅ 작성 완료 (Update됨)
+├── 앱별-레이아웃.md           # ✅ 작성 완료
+├── 액션-키.md                 # ✅ 작성 완료
+├── 이모지.md                  # ✅ 작성 완료
+├── 클립보드-히스토리.md       # ✅ 작성 완료
+├── 설정.md                    # ✅ 작성 완료 (Update됨)
+├── 테마와-외관.md             # ✅ 작성 완료 (Update됨)
+├── 시스템-트레이.md           # ✅ 작성 완료 (Update됨)
+├── 업데이트.md                # ✅ 작성 완료
+├── 관리자-권한.md             # ✅ 작성 완료
+├── 문제해결.md                # ✅ 작성 완료
+├── 단축키-모음.md             # ✅ 작성 완료
+└── 접근성-탐색.md             # ✅ 작성 완료 (New)
 ```
 
 ---
@@ -93,32 +94,33 @@ Wiki/AltKey.wiki/
 ## 4. 진행 상태 체크리스트
 
 에이전트는 **자신이 할당받은 항목**만 작성한다.
-(따로 할당받지 않은 경우에는 대기 중인 최상단 항목 하나를 작성한다.)
 작성 완료 후 이 표의 상태를 `✅ 완료`로 변경하고, Wiki 파일명을 `산출물` 열에 기록한다.
+(코드 변경으로 인해 업데이트가 필요한 항목은 `대기 중`으로 리셋함)
 
 | # | 페이지 | 상태 | 산출물 | 비고 |
 |---|--------|------|--------|------|
 | W01 | 소개 | ✅ 완료 | 소개.md | 기존 작성됨 |
 | W02 | 시작하기 | ✅ 완료 | 시작하기.md | 기존 작성됨 |
-| W03 | 화상키보드-기본 | ✅ 완료 | 화상키보드-기본.md | 키보드 기본 조작, 창 이동/크기, 헤더 접기 |
-| W04 | 한국어-입력 | ✅ 완료 | 한국어-입력.md | 한글 조합, 가/A 토글, QuietEnglish |
-| W05 | 자동완성 | ✅ 완료 | 자동완성.md | 제안 바, 초성 검색, 빅그램, 사용자 사전 |
+| W03 | 화상키보드-기본 | ✅ 완료 | 화상키보드-기본.md | 조작 핸들(드래그 제한), 서브 라벨 업데이트 완료 |
+| W04 | 한국어-입력 | ✅ 완료 | 한국어-입력.md | QuietEnglish 서브모드 업데이트 완료 |
+| W05 | 자동완성 | ✅ 완료 | 자동완성.md | 동적 제안, 사용자 사전 편집기 업데이트 완료 |
 | W06 | 수식자-고정 | ✅ 완료 | 수식자-고정.md | Sticky Keys 3단계, UI 인디케이터 |
 | W07 | 체류클릭 | ✅ 완료 | 체류클릭.md | Dwell Click 설정, 프로그레스 링 |
 | W08 | 키-반복 | ✅ 완료 | 키-반복.md | Key Repeat 지연/간격 설정 |
-| W09 | 레이아웃-커스터마이징 | ✅ 완료 | 레이아웃-커스터마이징.md | JSON 구조, 편집기 사용법 |
+| W09 | 레이아웃-커스터마이징 | ✅ 완료 | 레이아웃-커스터마이징.md | JSON 내 `english_label` 등 업데이트 완료 |
 | W10 | 앱별-레이아웃 | ✅ 완료 | 앱별-레이아웃.md | 프로필 자동 전환 설정 |
 | W11 | 액션-키 | ✅ 완료 | 액션-키.md | 10종 키 액션 종류별 설명 |
 | W12 | 이모지 | ✅ 완료 | 이모지.md | 카테고리, 전송 방식 |
 | W13 | 클립보드-히스토리 | ✅ 완료 | 클립보드-히스토리.md | 히스토리 패널, 붙여넣기 |
-| W14 | 설정 | ✅ 완료 | 설정.md | 설정 패널 전체 가이드 |
-| W15 | 테마와-외관 | ✅ 완료 | 테마와-외관.md | 테마, 투명도, 자동 페이딩 |
-| W16 | 시스템-트레이 | ✅ 완료 | 시스템-트레이.md | 트레이 아이콘, 컨텍스트 메뉴, 전역 단축키 |
+| W14 | 설정 | ✅ 완료 | 설정.md | 효과음, 접근성 탐색 등 업데이트 완료 |
+| W15 | 테마와-외관 | ✅ 완료 | 테마와-외관.md | 테마 모드, 투명도, 효과음 업데이트 완료 |
+| W16 | 시스템-트레이 | ✅ 완료 | 시스템-트레이.md | 트레이 아이콘, 자동 실행 업데이트 완료 |
 | W17 | 업데이트 | ✅ 완료 | 업데이트.md | 자동 업데이트 흐름 |
 | W18 | 관리자-권한 | ✅ 완료 | 관리자-권한.md | 권한 모드, 제한사항 |
 | W19 | 문제해결 | ✅ 완료 | 문제해결.md | FAQ, 트러블슈팅 |
 | W20 | 단축키-모음 | ✅ 완료 | 단축키-모음.md | 전체 단축키 정리표 |
 | W21 | Home.md 갱신 | ✅ 완료 | Home.md | 모든 페이지 완료 후 목차 갱신 |
+| W22 | 접근성-탐색 | ✅ 완료 | 접근성-탐색.md | 물리 키보드/스위치 조작 (New) 작성 완료 |
 
 ---
 
@@ -157,29 +159,28 @@ Wiki/AltKey.wiki/
 ## 6. 소스 매핑 — 항목별 참조 파일
 
 에이전트는 자신에게 할당된 항목의 소스 파일만 읽으면 된다.
-**읽지 않아도 되는 파일은 건너뛴다.**
 
 | # | 항목 | 주요 소스 파일 (C:/Users/UITAEK/AltKey/AltKey/ 기준) |
 |---|------|--------------------------------------|
-| W03 | 화상키보드-기본 | `Views/KeyboardView.xaml`, `Controls/KeyButton.xaml`, `Controls/KeyButton.xaml.cs`, `ViewModels/KeyboardViewModel.cs` (키 렌더링·입력 부분만) |
+| W03 | 화상키보드-기본 | `Views/KeyboardView.xaml` (드래그 핸들), `Controls/KeyButton.xaml`, `ViewModels/KeyboardViewModel.cs` (서브 라벨, 레이아웃 메트릭), `Services/LiveRegionService.cs` |
 | W04 | 한국어-입력 | `Services/InputLanguage/KoreanInputModule.cs`, `Services/InputLanguage/InputSubmode.cs`, `Services/HangulComposer.cs`, `Services/InputLanguage/JamoNameResolver.cs` |
-| W05 | 자동완성 | `Services/AutoCompleteService.cs`, `Services/KoreanDictionary.cs`, `Services/EnglishDictionary.cs`, `Services/WordFrequencyStore.cs`, `Services/BigramFrequencyStore.cs`, `ViewModels/SuggestionBarViewModel.cs`, `Views/SuggestionBar.xaml` |
-| W06 | 수식자-고정 | `Services/InputService.cs` (StickyKeys, LockedKeys, ToggleModifier 부분), `Controls/KeyButton.xaml.cs` (IsSticky, IsLocked 부분), `ViewModels/KeyboardViewModel.cs` (수식자 상태 동기화 부분) |
-| W07 | 체류클릭 | `Controls/KeyButton.xaml.cs` (DwellEnabled, DwellTime, DwellProgress 부분), `ViewModels/MainViewModel.cs` (DwellEnabled, DwellTimeMs 부분) |
-| W08 | 키-반복 | `Controls/KeyButton.xaml.cs` (KeyRepeatEnabled, KeyRepeatDelayMs, KeyRepeatIntervalMs 부분) |
-| W09 | 레이아웃-커스터마이징 | `Services/LayoutService.cs`, `Models/LayoutConfig.cs`, `Models/KeySlot.cs`, `Models/KeyAction.cs`, `ViewModels/LayoutEditorViewModel.cs`, `ViewModels/ActionBuilderViewModel.cs`, `Views/LayoutEditorWindow.xaml`, `layouts/qwerty-ko.json` |
-| W10 | 앱별-레이아웃 | `Services/ProfileService.cs`, `ViewModels/SettingsViewModel.cs` (Profiles 부분), `ViewModels/MainViewModel.cs` (OnForegroundAppChanged 부분), `Models/AppConfig.cs` (Profiles 속성) |
-| W11 | 액션-키 | `Models/KeyAction.cs`, `Services/InputService.cs` (HandleAction 메서드), `ViewModels/ActionBuilderViewModel.cs`, `Services/KeyNotationParser.cs` |
+| W05 | 자동완성 | `Services/AutoCompleteService.cs`, `Services/KoreanDictionary.cs`, `Services/WordFrequencyStore.cs`, `ViewModels/SuggestionBarViewModel.cs`, `ViewModels/UserDictionaryEditorViewModel.cs` |
+| W06 | 수식자-고정 | `Services/InputService.cs` (StickyKeys, LockedKeys), `Controls/KeyButton.xaml.cs` (IsSticky, IsLocked), `ViewModels/KeyboardViewModel.cs` |
+| W07 | 체류클릭 | `Controls/KeyButton.xaml.cs` (DwellProgress), `ViewModels/MainViewModel.cs`, `Models/AppConfig.cs` (DwellTimeMs) |
+| W08 | 키-반복 | `Controls/KeyButton.xaml.cs` (KeyRepeat관련), `Models/AppConfig.cs` (KeyRepeatDelayMs, IntervalMs) |
+| W09 | 레이아웃-커스터마이징 | `Services/LayoutService.cs`, `Models/LayoutConfig.cs`, `Models/KeySlot.cs` (`english_label` 포함), `ViewModels/LayoutEditorViewModel.cs`, `layouts/Bagic.json` |
+| W10 | 앱별-레이아웃 | `Services/ProfileService.cs`, `ViewModels/SettingsViewModel.cs` (Profiles), `ViewModels/MainViewModel.cs` (OnForegroundAppChanged) |
+| W11 | 액션-키 | `Models/KeyAction.cs`, `Services/InputService.cs` (HandleAction), `Services/KeyNotationParser.cs` |
 | W12 | 이모지 | `ViewModels/EmojiViewModel.cs`, `Views/EmojiPanel.xaml`, `Assets/emoji.json` |
 | W13 | 클립보드-히스토리 | `Services/ClipboardService.cs`, `ViewModels/ClipboardViewModel.cs`, `Views/ClipboardPanel.xaml` |
-| W14 | 설정 | `ViewModels/SettingsViewModel.cs`, `Views/SettingsView.xaml`, `Services/ConfigService.cs`, `Models/AppConfig.cs` |
-| W15 | 테마와-외관 | `Services/ThemeService.cs`, `Services/WindowService.cs`, `Themes/LightTheme.xaml`, `Themes/DarkTheme.xaml`, `ViewModels/SettingsViewModel.cs` (ThemeMode, OpacityIdle, FadeDelaySec 부분) |
-| W16 | 시스템-트레이 | `Services/TrayService.cs`, `Services/HotkeyService.cs` |
-| W17 | 업데이트 | `Services/UpdateService.cs`, `Services/DownloadService.cs`, `Services/InstallerService.cs`, `ViewModels/SettingsViewModel.cs` (업데이트 관련 부분) |
-| W18 | 관리자-권한 | `Services/InputService.cs` (IsElevated, Mode, ElevatedAppDetected 부분), `Services/ProfileService.cs` (무결성 수준 확인 부분), `Platform/Win32.cs` (GetTokenInformation 관련), `ViewModels/SettingsViewModel.cs` (RestartAsAdmin/User 부분) |
-| W19 | 문제해결 | `Platform/Win32.cs` (제약사항), `docs/BLUEPRINT.md` (§ 알려진 제약사항), `Services/InputService.cs` (InputMode 전환), `docs/ime-korean-detection-problem.md` |
-| W20 | 단축키-모음 | `Services/HotkeyService.cs`, `Models/KeyAction.cs`, `layouts/qwerty-ko.json` (특수키 액션), `Services/InputService.cs` (HandleAction) |
-| W21 | Home.md 갱신 | `Wiki/AltKey.wiki/Home.md`, 이 문서 §4 체크리스트 |
+| W14 | 설정 | `ViewModels/SettingsViewModel.cs`, `Services/ConfigService.cs`, `Models/AppConfig.cs` (신규 설정값 전반), `Controls/NumericAdjuster.xaml.cs` |
+| W15 | 테마와-외관 | `Services/ThemeService.cs`, `Services/SoundService.cs` (효과음), `ViewModels/SettingsViewModel.cs` (OpacityIdle, KeyFontScalePercent) |
+| W16 | 시스템-트레이 | `Services/TrayService.cs`, `Services/StartupService.cs` (자동 실행), `Services/HotkeyService.cs` |
+| W17 | 업데이트 | `Services/UpdateService.cs`, `Services/DownloadService.cs`, `Services/InstallerService.cs` |
+| W18 | 관리자-권한 | `Services/InputService.cs` (IsElevated, Mode), `Platform/Win32.cs`, `ViewModels/SettingsViewModel.cs` |
+| W19 | 문제해결 | `Platform/Win32.cs` (제약), `docs/BLUEPRINT.md`, `docs/ime-korean-detection-problem.md` |
+| W20 | 단축키-모음 | `Services/HotkeyService.cs`, `layouts/Bagic.json` |
+| W22 | 접근성-탐색 | `Services/AccessibilityNavigationService.cs`, `ViewModels/KeyboardViewModel.cs` (MoveA11yFocus, ActivateA11yFocused), `Models/AppConfig.cs` (KeyboardA11yNavigationEnabled) |
 
 ---
 
@@ -188,13 +189,10 @@ Wiki/AltKey.wiki/
 사용자는 다음과 같이 간단히 지시하면 된다:
 
 ```
-"W04 한국어-입력 Wiki 페이지 작성해줘"
-"W06, W07 동시에 작성해줘"
-"W19 문제해결 페이지 작성해줘"
-"W21 Home.md 갱신해줘" (모든 페이지 완료 후)
+"W04 한국어-입력 Wiki 페이지 업데이트해줘"
+"W22 접근성-탐색 Wiki 페이지 새로 작성해줘"
+"W14 설정 페이지에 효과음이랑 자동 실행 설명 추가해줘"
 ```
-
-에이전트는 지시받은 번호의 §6 소스 매핑을 읽고, §3 템플릿으로 작성한다.
 
 ---
 
@@ -205,3 +203,4 @@ Wiki/AltKey.wiki/
 3. **존재하지 않는 기능을 설명하지 않는다.** 소스 코드에 실제 구현된 것만.
 4. **스크린샷은 자리 표시자로만 남긴다.** 실제 이미지 삽입은 사용자가 수동.
 5. **여러 에이전트가 동시 작업 시 같은 파일을 덮어쓰지 않도록 주의.** Home.md는 W21 전담.
+6. **NumericAdjuster**를 사용하는 설정 항목은 슬라이더 대신 수치 조절기라고 표현한다.
