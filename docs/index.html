@@ -834,13 +834,31 @@
         <div class="feature-icon">🧠</div>
         <h3>문맥 인식 자동완성</h3>
         <p>이전 단어를 기억해 다음 단어 제안의 정확도를 높이는 빅그램 학습.
-          "안녕" 다음에 "하세요"가 먼저 올라오듯, 내입력 패턴을 스스로 학습합니다.</p>
+          "안녕" 다음에 "하세요"가 먼저 올라오듯, 내 입력 패턴을 스스로 학습합니다.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🎙️</div>
+        <h3>음성 안내 (TTS)</h3>
+        <p>키 라벨을 음성으로 읽어주어 시각적 확인이 어려운 사용자를 돕습니다.
+          마우스 오버 시 읽기 기능과 속도 조절을 지원합니다.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">⌨️</div>
+        <h3>스위치 스캔 입력</h3>
+        <p>단일 스위치나 2스위치 조작으로 키보드 전체를 탐색.
+          운동 장애가 있는 사용자를 위한 핵심 접근성 기능입니다.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📉</div>
+        <h3>애니메이션 최소화</h3>
+        <p>시각적 자극에 민감한 사용자를 위해 창 이동이나 키 눌림 시의
+          불필요한 애니메이션을 제거할 수 있습니다.</p>
       </div>
       <div class="feature-card">
         <div class="feature-icon">🔔</div>
-        <h3>자동 업데이트 알림</h3>
-        <p>GitHub Releases와 연동해 새 버전이 있을 때 앱 상단 배너로 알려줍니다.
-          설정 없이 항상 최신 버전을 유지하세요.</p>
+        <h3>자동 업데이트</h3>
+        <p>GitHub Releases와 연동해 새 버전이 있을 때 배너로 알려주고
+          클릭 한 번으로 자동 설치 및 재시작을 지원합니다.</p>
       </div>
     </div>
   </section>
@@ -934,34 +952,28 @@
     <pre><code><span class="json-cmt">// layouts/my-layout.json</span>
 {
   <span class="json-key">"name"</span>: <span class="json-str">"나만의 레이아웃"</span>,
-  <span class="json-key">"language"</span>: <span class="json-str">"ko"</span>,
-  <span class="json-key">"rows"</span>: [
+  <span class="json-key">"columns"</span>: [
     {
-      <span class="json-key">"keys"</span>: [
+      <span class="json-key">"rows"</span>: [
         {
-          <span class="json-key">"label"</span>: <span class="json-str">"📋 상용구"</span>,
-          <span class="json-key">"action"</span>: {
-            <span class="json-key">"type"</span>: <span class="json-str">"Boilerplate"</span>,
-            <span class="json-key">"text"</span>: <span class="json-str">"안녕하세요, 반갑습니다."</span>
-          },
-          <span class="json-key">"width"</span>: <span class="json-num">3.0</span>
-        },
-        {
-          <span class="json-key">"label"</span>: <span class="json-str">"🚀 메모장"</span>,
-          <span class="json-key">"action"</span>: {
-            <span class="json-key">"type"</span>: <span class="json-str">"RunApp"</span>,
-            <span class="json-key">"path"</span>: <span class="json-str">"notepad.exe"</span>
-          },
-          <span class="json-key">"width"</span>: <span class="json-num">2.0</span>
-        },
-        {
-          <span class="json-key">"label"</span>: <span class="json-str">"🔊"</span>,
-          <span class="json-key">"action"</span>: {
-            <span class="json-key">"type"</span>: <span class="json-str">"VolumeControl"</span>,
-            <span class="json-key">"direction"</span>: <span class="json-str">"up"</span>,
-            <span class="json-key">"step"</span>: <span class="json-num">10</span>
-          },
-          <span class="json-key">"width"</span>: <span class="json-num">1.0</span>
+          <span class="json-key">"keys"</span>: [
+            {
+              <span class="json-key">"label"</span>: <span class="json-str">"📋 상용구"</span>,
+              <span class="json-key">"action"</span>: {
+                <span class="json-key">"type"</span>: <span class="json-str">"Boilerplate"</span>,
+                <span class="json-key">"text"</span>: <span class="json-str">"안녕하세요, 반갑습니다."</span>
+              },
+              <span class="json-key">"width"</span>: <span class="json-num">3.0</span>
+            },
+            {
+              <span class="json-key">"label"</span>: <span class="json-str">"🔊"</span>,
+              <span class="json-key">"action"</span>: {
+                <span class="json-key">"type"</span>: <span class="json-str">"VolumeControl"</span>,
+                <span class="json-key">"direction"</span>: <span class="json-str">"up"</span>
+              },
+              <span class="json-key">"width"</span>: <span class="json-num">1.0</span>
+            }
+          ]
         }
       ]
     }
