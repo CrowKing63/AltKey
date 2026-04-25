@@ -21,6 +21,9 @@
 
             <!-- 열(Column) Gap → 우측 Margin Thickness 컨버터 -->
             <themes:GapToRightMarginConverter x:Key="GapToRightMargin"/>
+
+            <!-- bool → 별표(★/☆) 컨버터 (즐겨찾기 표시용) -->
+            <themes:BoolToStarConverter x:Key="BoolToStar"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

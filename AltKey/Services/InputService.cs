@@ -4,7 +4,6 @@ using System.Security.Principal;
 using AltKey.Models;
 using AltKey.Platform;
 using WpfApp = System.Windows.Application;
-using WpfClipboard = System.Windows.Clipboard;
 
 namespace AltKey.Services;
 
@@ -247,7 +246,8 @@ public class InputService
                 break;
 
             case ClipboardPasteAction { Text: var pasteText }:
-                WpfApp.Current.Dispatcher.Invoke(() => WpfClipboard.SetText(pasteText));
+                // 재시도 로직이 포함된 헬퍼 사용 (다른 프로그램이 클립보드를 점유하고 있어도 안전)
+                WpfApp.Current.Dispatcher.Invoke(() => ClipboardHelper.SetTextWithRetry(pasteText));
                 SendCombo([VirtualKeyCode.VK_CONTROL, VirtualKeyCode.VK_V]);
                 break;
         }

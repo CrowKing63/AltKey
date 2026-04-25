@@ -77,3 +77,14 @@ public class NullToCollapsedConverter : IValueConverter
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         => throw new NotSupportedException();
 }
+
+/// bool → 별표(★/☆) 문자 변환 (즐겨찾기 표시용)
+[ValueConversion(typeof(bool), typeof(string))]
+public class BoolToStarConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        => value is true ? "★" : "☆";
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => value is string s && s == "★";
+}
