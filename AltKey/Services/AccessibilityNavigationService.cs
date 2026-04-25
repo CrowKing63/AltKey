@@ -58,10 +58,41 @@ public sealed class AccessibilityNavigationService : IDisposable
         else
             _pressedKeys.Remove(vk);
 
-        if (!_configService.Current.KeyboardA11yNavigationEnabled)
+        if (!IsMainWindowVisible())
             return Win32.CallNextHookEx(_hookHandle, nCode, wParam, lParam);
 
-        if (!IsMainWindowVisible())
+        // L3: 스위치 스캔 입력 모드가 우선합니다.
+        if (_configService.Current.SwitchScanEnabled)
+        {
+            if (vk is (uint)VirtualKeyCode.VK_TAB
+                or (uint)VirtualKeyCode.VK_RETURN
+                or (uint)VirtualKeyCode.VK_SPACE)
+            {
+                if (isKeyDown && !wasDown)
+                {
+                    WpfApp.Current.Dispatcher.Invoke(() =>
+                    {
+                        bool twoSwitch = _configService.Current.SwitchScanTwoSwitch;
+                        if (vk == (uint)VirtualKeyCode.VK_TAB)
+                        {
+                            // 2스위치 모드에서 Tab은 "다음" 역할
+                            if (twoSwitch)
+                                _mainViewModel.Keyboard.AdvanceScan();
+                        }
+                        else
+                        {
+                            // Enter/Space는 "선택" 역할
+                            _mainViewModel.Keyboard.SelectScanTarget();
+                        }
+                    });
+                }
+
+                // 스캔 모드에서도 해당 키는 외부 앱으로 넘기지 않습니다.
+                return (IntPtr)1;
+            }
+        }
+
+        if (!_configService.Current.KeyboardA11yNavigationEnabled)
             return Win32.CallNextHookEx(_hookHandle, nCode, wParam, lParam);
 
         if (vk is (uint)VirtualKeyCode.VK_TAB

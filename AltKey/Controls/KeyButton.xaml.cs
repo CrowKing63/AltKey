@@ -3,7 +3,9 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
 using AltKey.Models;
+using AltKey.Services;
 using AltKey.ViewModels;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace AltKey.Controls;
 
@@ -118,6 +120,18 @@ public class KeyButton : System.Windows.Controls.Button
             nameof(IsA11yFocused), typeof(bool), typeof(KeyButton),
             new PropertyMetadata(false));
 
+    // [접근성][L2] 애니메이션 최소화 모드 활성화 여부입니다. true이면 Hover/Pressed 확대 효과가 즉시 적용됩니다.
+    public static readonly DependencyProperty ReducedMotionEnabledProperty =
+        DependencyProperty.Register(
+            nameof(ReducedMotionEnabled), typeof(bool), typeof(KeyButton),
+            new PropertyMetadata(false));
+
+    // [접근성][L2] 마우스를 올렸을 때 TTS로 라벨을 읽어줄지 여부입니다.
+    public static readonly DependencyProperty TtsOnHoverProperty =
+        DependencyProperty.Register(
+            nameof(TtsOnHover), typeof(bool), typeof(KeyButton),
+            new PropertyMetadata(false));
+
     // ── Properties ──────────────────────────────────────────────────────────
 
     public KeySlotVm? Slot
@@ -216,6 +230,18 @@ public class KeyButton : System.Windows.Controls.Button
         set => SetValue(IsA11yFocusedProperty, value);
     }
 
+    public bool ReducedMotionEnabled
+    {
+        get => (bool)GetValue(ReducedMotionEnabledProperty);
+        set => SetValue(ReducedMotionEnabledProperty, value);
+    }
+
+    public bool TtsOnHover
+    {
+        get => (bool)GetValue(TtsOnHoverProperty);
+        set => SetValue(TtsOnHoverProperty, value);
+    }
+
     // ── 체류 클릭 타이머 ─────────────────────────────────────────────────────
 
     private DispatcherTimer? _dwellTimer;
@@ -229,6 +255,20 @@ public class KeyButton : System.Windows.Controls.Button
     protected override void OnMouseEnter(System.Windows.Input.MouseEventArgs e)
     {
         base.OnMouseEnter(e);
+
+        // L2: 마우스 올렸을 때 TTS 읽기 (설정 ON인 경우에만)
+        if (TtsOnHover && !string.IsNullOrWhiteSpace(DisplayLabel))
+        {
+            try
+            {
+                App.Services?.GetService<AccessibilityService>()?.SpeakLabel(DisplayLabel);
+            }
+            catch
+            {
+                // TTS 실패는 무시
+            }
+        }
+
         System.Diagnostics.Debug.WriteLine($"[KeyButton] OnMouseEnter - DwellEnabled={DwellEnabled}, Slot={Slot?.Slot.Label}");
         if (!DwellEnabled) return;
 

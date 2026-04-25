@@ -174,6 +174,28 @@ public partial class MainViewModel : ObservableObject
         }
     }
 
+    /// L2: 애니메이션 최소화 모드 (KeyButton 바인딩용)
+    public bool ReducedMotionEnabled
+    {
+        get => _configService.Current.ReducedMotionEnabled;
+        set
+        {
+            _configService.Current.ReducedMotionEnabled = value;
+            OnPropertyChanged();
+        }
+    }
+
+    /// L2: TTS 마우스 오버 읽기 (KeyButton 바인딩용)
+    public bool TtsOnHover
+    {
+        get => _configService.Current.TtsOnHover;
+        set
+        {
+            _configService.Current.TtsOnHover = value;
+            OnPropertyChanged();
+        }
+    }
+
     public MainViewModel(
         ConfigService          configService,
         LayoutService          layoutService,
@@ -232,6 +254,8 @@ public partial class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(KeyRepeatDelayMs));
         OnPropertyChanged(nameof(KeyRepeatIntervalMs));
         OnPropertyChanged(nameof(KeyboardA11yNavigationEnabled));
+        OnPropertyChanged(nameof(ReducedMotionEnabled));
+        OnPropertyChanged(nameof(TtsOnHover));
     }
 
     private void OnLayoutsChanged()
@@ -278,6 +302,11 @@ public partial class MainViewModel : ObservableObject
             _configService.Update(c => c.DefaultLayout = fallback, "DefaultLayout");
         }
         SwitchLayout(defaultName);
+
+        // L3: 앱 시작 시 스위치 스캔 모드가 켜져 있으면 자동 시작
+        if (_configService.Current.SwitchScanEnabled)
+            Keyboard.StartScan();
+
         return Task.CompletedTask;
     }
 

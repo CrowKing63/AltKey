@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Windows.Threading;
 using AltKey.Models;
 using AltKey.Services;
@@ -246,10 +247,14 @@ public partial class KeyboardViewModel : ObservableObject
     private readonly AutoCompleteService _autoComplete;
     private readonly ConfigService _configService;
     private readonly LiveRegionService _liveRegion;
+    private readonly AccessibilityService _accessibilityService;
     private readonly List<KeySlotVm> _a11yNavigableSlots = [];
     private int _a11yFocusIndex = -1;
 
     private readonly DispatcherTimer _capsLockTimer;
+
+    // L3: 스위치 스캔 입력 모드 타이머
+    private DispatcherTimer? _scanTimer;
 
     [ObservableProperty]
     private ObservableCollection<KeyColumnVm> columns = [];
@@ -330,13 +335,15 @@ public partial class KeyboardViewModel : ObservableObject
     private string modeAnnouncement = "";
 
     public KeyboardViewModel(InputService inputService, SoundService soundService,
-        AutoCompleteService autoComplete, ConfigService configService, LiveRegionService liveRegion)
+        AutoCompleteService autoComplete, ConfigService configService, LiveRegionService liveRegion,
+        AccessibilityService accessibilityService)
     {
         _inputService = inputService;
         _soundService = soundService;
         _autoComplete = autoComplete;
         _configService = configService;
         _liveRegion = liveRegion;
+        _accessibilityService = accessibilityService;
         _inputService.StickyStateChanged += UpdateModifierState;
         _inputService.ElevatedAppDetected += OnElevatedAppDetected;
         _configService.ConfigChanged += OnConfigChanged;
@@ -385,6 +392,10 @@ public partial class KeyboardViewModel : ObservableObject
         _autoComplete.ResetState();
         RefreshKeyLabels(_autoComplete.ActiveSubmode);
         ResetA11yNavigationState();
+
+        // L3: 레이아웃 변경 후 스캔 모드가 켜져 있으면 타이머를 재시작합니다.
+        if (_configService.Current.SwitchScanEnabled)
+            StartScan();
     }
 
     public event Action? KeyTapped;
@@ -451,6 +462,10 @@ public partial class KeyboardViewModel : ObservableObject
 
         UpdateModifierState();
         KeyTapped?.Invoke();
+
+        // L2: 키 라벨 TTS 읽기 (입력 처리 후 라벨 발화)
+        var slotVm = EnumerateSlotVms().FirstOrDefault(vm => vm.Slot == slot);
+        _accessibilityService.SpeakLabel(slotVm?.DisplayLabel ?? slot.Label);
     }
 
     public void MoveA11yFocus(bool reverse)
@@ -540,6 +555,92 @@ public partial class KeyboardViewModel : ObservableObject
             if (!_configService.Current.KeyboardA11yNavigationEnabled)
                 ResetA11yNavigationState();
         }
+
+        // L3: 스위치 스캔 설정 변경 시 타이머 시작/중지
+        if (propertyName is null
+            or nameof(AppConfig.SwitchScanEnabled)
+            or nameof(AppConfig.SwitchScanIntervalMs))
+        {
+            if (_configService.Current.SwitchScanEnabled)
+                StartScan();
+            else
+                StopScan();
+        }
+    }
+
+    // ── L3: 스위치 스캔 입력 모드 ───────────────────────────────────────────
+
+    /// <summary>
+    /// 스위치 스캔 타이머를 시작하여 키보드 버튼을 순차적으로 하이라이트합니다.
+    /// </summary>
+    public void StartScan()
+    {
+        StopScan();
+        RebuildA11yNavigableSlots();
+        if (_a11yNavigableSlots.Count == 0)
+            return;
+
+        int interval = Math.Clamp(_configService.Current.SwitchScanIntervalMs, 200, 3000);
+        _scanTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(interval) };
+        _scanTimer.Tick += ScanTick;
+        _scanTimer.Start();
+
+        // 첫 번째 키부터 시작
+        SetA11yFocus(0);
+        _liveRegion.Announce(_a11yNavigableSlots[0].AccessibleName);
+    }
+
+    /// <summary>
+    /// 스위치 스캔 타이머를 중지하고 하이라이트를 해제합니다.
+    /// </summary>
+    public void StopScan()
+    {
+        _scanTimer?.Stop();
+        _scanTimer = null;
+
+        foreach (var vm in EnumerateSlotVms())
+            vm.IsA11yFocused = false;
+        _a11yFocusIndex = -1;
+    }
+
+    private void ScanTick(object? sender, EventArgs e)
+    {
+        if (_a11yNavigableSlots.Count == 0)
+            return;
+
+        int next = (_a11yFocusIndex + 1) % _a11yNavigableSlots.Count;
+        SetA11yFocus(next);
+
+        // 현재 스캔 대상을 LiveRegion으로 공지 (스팸 방지를 위해 짧은 라벨만)
+        var current = _a11yNavigableSlots[next];
+        _liveRegion.Announce(current.AccessibleName);
+    }
+
+    /// <summary>
+    /// 현재 스캔 중인 키를 "선택"하여 입력합니다.
+    /// </summary>
+    public void SelectScanTarget()
+    {
+        if (_a11yFocusIndex >= 0 && _a11yFocusIndex < _a11yNavigableSlots.Count)
+        {
+            var target = _a11yNavigableSlots[_a11yFocusIndex];
+            KeyPressed(target.Slot);
+        }
+    }
+
+    /// <summary>
+    /// 2스위치 모드에서 "다음" 키로 즉시 이동합니다.
+    /// </summary>
+    public void AdvanceScan()
+    {
+        if (_a11yNavigableSlots.Count == 0)
+            return;
+
+        int next = (_a11yFocusIndex + 1) % _a11yNavigableSlots.Count;
+        SetA11yFocus(next);
+
+        var current = _a11yNavigableSlots[next];
+        _liveRegion.Announce(current.AccessibleName);
     }
 
     private static bool IsSeparatorKey(KeySlot slot) => slot.Action switch

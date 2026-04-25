@@ -92,4 +92,27 @@ public class AppConfig
 
     // [접근성] 방향키나 탭 키를 이용해 키보드 버튼 사이를 이동하며 조작할 수 있는 기능입니다.
     public bool KeyboardA11yNavigationEnabled { get; set; } = false;
+
+    // ── L2/L3 접근성 설정 ────────────────────────────────────────────────
+
+    // [접근성][L2] 키를 누를 때 키 라벨을 음성으로 읽어주는 TTS 기능 활성화 여부입니다.
+    public bool TtsEnabled { get; set; } = false;
+
+    // [접근성][L2] 키 위에 마우스만 올려도 TTS로 라벨을 읽어줄지 여부입니다. (TtsEnabled가 켜져 있을 때 동작)
+    public bool TtsOnHover { get; set; } = false;
+
+    // [접근성][L2] TTS 음성 속도 조절 값입니다. -5(느림) ~ 5(빠름), 0이 기본 속도입니다.
+    public int TtsRate { get; set; } = 0;
+
+    // [접근성][L2] 키 누름/창 이동 등의 애니메이션을 최소화하는 모드 활성화 여부입니다.
+    public bool ReducedMotionEnabled { get; set; } = false;
+
+    // [접근성][L3] 스위치 접근용 자동 스캔 입력 모드 활성화 여부입니다.
+    public bool SwitchScanEnabled { get; set; } = false;
+
+    // [접근성][L3] 스위치 스캔 시 다음 키로 이동하는 간격(밀리초)입니다. 작을수록 빠르게 스캔됩니다.
+    public int SwitchScanIntervalMs { get; set; } = 800;
+
+    // [접근성][L3] true면 2스위치 모드(다음/선택 분리), false면 1스위치 모드(Enter/Space로 선택)입니다.
+    public bool SwitchScanTwoSwitch { get; set; } = false;
 }

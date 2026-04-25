@@ -82,6 +82,8 @@ public partial class App : System.Windows.Application
             // T-9.5: 자동 업데이트 서비스
             services.AddSingleton<DownloadService>();
             services.AddSingleton<InstallerService>();
+            // L2: 접근성 TTS 서비스
+            services.AddSingleton<AccessibilityService>();
             // T-9.3: 자동 완성 서비스
             services.AddSingleton<Func<string, WordFrequencyStore>>(_ => lang => new WordFrequencyStore(lang));
             services.AddSingleton<Func<string, BigramFrequencyStore>>(_ => lang => new BigramFrequencyStore(lang));

@@ -77,6 +77,26 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private bool keyboardA11yNavigationEnabled;
 
+    // L2: 키 라벨 TTS 읽기
+    [ObservableProperty]
+    private bool ttsEnabled;
+    [ObservableProperty]
+    private bool ttsOnHover;
+    [ObservableProperty]
+    private int ttsRate;
+
+    // L2: 애니메이션 최소화 모드
+    [ObservableProperty]
+    private bool reducedMotionEnabled;
+
+    // L3: 스위치 스캔 입력 모드
+    [ObservableProperty]
+    private bool switchScanEnabled;
+    [ObservableProperty]
+    private int switchScanIntervalMs;
+    [ObservableProperty]
+    private bool switchScanTwoSwitch;
+
     // T-9.5: 현재 버전 표시
     [ObservableProperty] private string currentVersion = "";
 
@@ -186,6 +206,15 @@ public partial class SettingsViewModel : ObservableObject
 
              // L1: 포커스 가시화 + 탭 탐색 모드
              KeyboardA11yNavigationEnabled = c.KeyboardA11yNavigationEnabled;
+
+             // L2/L3 접근성 설정 로드
+             TtsEnabled = c.TtsEnabled;
+             TtsOnHover = c.TtsOnHover;
+             TtsRate = c.TtsRate;
+             ReducedMotionEnabled = c.ReducedMotionEnabled;
+             SwitchScanEnabled = c.SwitchScanEnabled;
+             SwitchScanIntervalMs = c.SwitchScanIntervalMs;
+             SwitchScanTwoSwitch = c.SwitchScanTwoSwitch;
 
             // T-8.5: 프로필
             Profiles = new ObservableCollection<ProfileEntry>(
@@ -356,6 +385,55 @@ public partial class SettingsViewModel : ObservableObject
      {
          if (_isLoading) return;
          _configService.Update(c => c.KeyboardA11yNavigationEnabled = value, "KeyboardA11yNavigationEnabled");
+     }
+
+     // L2: 키 라벨 TTS 읽기
+     partial void OnTtsEnabledChanged(bool value)
+     {
+         if (_isLoading) return;
+         _configService.Update(c => c.TtsEnabled = value);
+     }
+
+     partial void OnTtsOnHoverChanged(bool value)
+     {
+         if (_isLoading) return;
+         _configService.Update(c => c.TtsOnHover = value);
+     }
+
+     partial void OnTtsRateChanged(int value)
+     {
+         if (_isLoading) return;
+         var clamped = Math.Clamp(value, -5, 5);
+         if (clamped != value) { TtsRate = clamped; return; }
+         _configService.Update(c => c.TtsRate = clamped);
+     }
+
+     // L2: 애니메이션 최소화 모드
+     partial void OnReducedMotionEnabledChanged(bool value)
+     {
+         if (_isLoading) return;
+         _configService.Update(c => c.ReducedMotionEnabled = value);
+     }
+
+     // L3: 스위치 스캔 입력 모드
+     partial void OnSwitchScanEnabledChanged(bool value)
+     {
+         if (_isLoading) return;
+         _configService.Update(c => c.SwitchScanEnabled = value);
+     }
+
+     partial void OnSwitchScanIntervalMsChanged(int value)
+     {
+         if (_isLoading) return;
+         var clamped = Math.Clamp(value, 200, 3000);
+         if (clamped != value) { SwitchScanIntervalMs = clamped; return; }
+         _configService.Update(c => c.SwitchScanIntervalMs = clamped);
+     }
+
+     partial void OnSwitchScanTwoSwitchChanged(bool value)
+     {
+         if (_isLoading) return;
+         _configService.Update(c => c.SwitchScanTwoSwitch = value);
      }
 
     // ── T-8.5: 앱별 레이아웃 프로필 ────────────────────────────────────────

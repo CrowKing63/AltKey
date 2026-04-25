@@ -262,9 +262,21 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
 
     /// <summary>
     /// 창의 높이를 부드럽게 변화시키는 애니메이션 효과를 줍니다.
+    /// L2: 애니메이션 최소화 모드 ON이거나 OS 설정(ClientAreaAnimation)이 꺼져 있으면 즉시 변경합니다.
     /// </summary>
-    private static void AnimateWindowHeight(Window window, double targetHeight)
+    private void AnimateWindowHeight(Window window, double targetHeight)
     {
+        // OS 설정 + 앱 설정 중 하나라도 애니메이션 최소화를 요구하면 즉시 적용
+        bool reduceMotion = !SystemParameters.ClientAreaAnimation
+            || (_configService?.Current.ReducedMotionEnabled == true);
+
+        if (reduceMotion)
+        {
+            CaptureAndClearHeightAnimation(window);
+            window.Height = targetHeight;
+            return;
+        }
+
         CaptureAndClearHeightAnimation(window);
 
         var from = window.Height;
@@ -309,18 +321,35 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
     }
 
     // 상단 드래그 핸들에 마우스를 올렸을 때 강조 효과를 줍니다.
+    // L2: 애니메이션 최소화 모드 ON이면 즉시 Opacity를 변경합니다.
     private void DragHandle_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
     {
-        if (DragPill is WpfRect pill)
-            pill.BeginAnimation(UIElement.OpacityProperty,
-                new DoubleAnimation(0.55, TimeSpan.FromMilliseconds(120)));
+        if (DragPill is not WpfRect pill) return;
+        bool reduceMotion = !SystemParameters.ClientAreaAnimation
+            || (_configService?.Current.ReducedMotionEnabled == true);
+        if (reduceMotion)
+        {
+            pill.BeginAnimation(UIElement.OpacityProperty, null);
+            pill.Opacity = 0.55;
+            return;
+        }
+        pill.BeginAnimation(UIElement.OpacityProperty,
+            new DoubleAnimation(0.55, TimeSpan.FromMilliseconds(120)));
     }
 
     private void DragHandle_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
     {
-        if (DragPill is WpfRect pill)
-            pill.BeginAnimation(UIElement.OpacityProperty,
-                new DoubleAnimation(0.25, TimeSpan.FromMilliseconds(150)));
+        if (DragPill is not WpfRect pill) return;
+        bool reduceMotion = !SystemParameters.ClientAreaAnimation
+            || (_configService?.Current.ReducedMotionEnabled == true);
+        if (reduceMotion)
+        {
+            pill.BeginAnimation(UIElement.OpacityProperty, null);
+            pill.Opacity = 0.25;
+            return;
+        }
+        pill.BeginAnimation(UIElement.OpacityProperty,
+            new DoubleAnimation(0.25, TimeSpan.FromMilliseconds(150)));
     }
 
     /// <summary>

@@ -59,18 +59,42 @@
                                            TextAlignment="Center"
                                            IsHitTestVisible="False"
                                            AutomationProperties.Name=""/>
-                                <!-- T-4.7: Locked 상태 자물쇠 오버레이 -->
+                                <!-- L2: Locked 상태 자물쇠 오버레이 (크기·위치 개선) -->
                                 <TextBlock x:Name="LockIcon"
                                            Text="🔒"
-                                           FontSize="7"
+                                           FontSize="9"
                                            HorizontalAlignment="Right"
-                                           VerticalAlignment="Top"
-                                           Margin="0,2,3,0"
+                                           VerticalAlignment="Bottom"
+                                           Margin="0,0,4,2"
+                                           Visibility="Collapsed"
+                                           IsHitTestVisible="False"
+                                           AutomationProperties.Name=""/>
+                                <!-- L2: Sticky 상태 "S" 뱃지 -->
+                                <TextBlock x:Name="StickyBadge"
+                                           Text="S"
+                                           FontSize="9"
+                                           FontWeight="Bold"
+                                           HorizontalAlignment="Right"
+                                           VerticalAlignment="Bottom"
+                                           Margin="0,0,4,2"
+                                           Foreground="{DynamicResource KeyFgSticky}"
                                            Visibility="Collapsed"
                                            IsHitTestVisible="False"
                                            AutomationProperties.Name=""/>
                             </Grid>
                         </Border>
+
+                        <!-- L2: Sticky 상태 점선 테두리 (색상 외 상태 표시) -->
+                        <Rectangle x:Name="StickyDashBorder"
+                                   Stroke="{DynamicResource KeyFgSticky}"
+                                   StrokeDashArray="2,2"
+                                   StrokeThickness="1.5"
+                                   Fill="Transparent"
+                                   RadiusX="8"
+                                   RadiusY="8"
+                                   Visibility="Collapsed"
+                                   IsHitTestVisible="False"
+                                   SnapsToDevicePixels="True"/>
 
                         <!-- T-5.2: 체류 클릭 프로그레스 링 -->
                         <Ellipse x:Name="DwellRing"
@@ -89,65 +113,77 @@
                                  IsHitTestVisible="False"/>
                     </Grid>
                     <ControlTemplate.Triggers>
-                        <!-- Hover: 살짝 확대 -->
+                        <!-- L2: Hover — 배경색은 항상 변경, 확대 애니메이션은 ReducedMotion OFF일 때만 -->
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="Root" Property="Background"
                                     Value="{DynamicResource KeyBgHover}"/>
-                            <Trigger.EnterActions>
-                                <BeginStoryboard>
-                                    <Storyboard>
-                                        <DoubleAnimation Storyboard.TargetName="Scale"
-                                                         Storyboard.TargetProperty="ScaleX"
-                                                         To="1.04" Duration="0:0:0.1"/>
-                                        <DoubleAnimation Storyboard.TargetName="Scale"
-                                                         Storyboard.TargetProperty="ScaleY"
-                                                         To="1.04" Duration="0:0:0.1"/>
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </Trigger.EnterActions>
-                            <Trigger.ExitActions>
-                                <BeginStoryboard>
-                                    <Storyboard>
-                                        <DoubleAnimation Storyboard.TargetName="Scale"
-                                                         Storyboard.TargetProperty="ScaleX"
-                                                         To="1.0" Duration="0:0:0.1"/>
-                                        <DoubleAnimation Storyboard.TargetName="Scale"
-                                                         Storyboard.TargetProperty="ScaleY"
-                                                         To="1.0" Duration="0:0:0.1"/>
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </Trigger.ExitActions>
                         </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsMouseOver" Value="True"/>
+                                <Condition Property="controls:KeyButton.ReducedMotionEnabled" Value="False"/>
+                            </MultiTrigger.Conditions>
+                            <MultiTrigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Scale"
+                                                         Storyboard.TargetProperty="ScaleX"
+                                                         To="1.04" Duration="0:0:0.1"/>
+                                        <DoubleAnimation Storyboard.TargetName="Scale"
+                                                         Storyboard.TargetProperty="ScaleY"
+                                                         To="1.04" Duration="0:0:0.1"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </MultiTrigger.EnterActions>
+                            <MultiTrigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Scale"
+                                                         Storyboard.TargetProperty="ScaleX"
+                                                         To="1.0" Duration="0:0:0.1"/>
+                                        <DoubleAnimation Storyboard.TargetName="Scale"
+                                                         Storyboard.TargetProperty="ScaleY"
+                                                         To="1.0" Duration="0:0:0.1"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </MultiTrigger.ExitActions>
+                        </MultiTrigger>
 
-                        <!-- Pressed: 눌리는 효과 -->
+                        <!-- L2: Pressed — 배경색은 항상 변경, 축소 애니메이션은 ReducedMotion OFF일 때만 -->
                         <Trigger Property="IsPressed" Value="True">
                             <Setter TargetName="Root" Property="Background"
                                     Value="{DynamicResource KeyBgPressed}"/>
-                            <Trigger.EnterActions>
-                                <BeginStoryboard>
-                                    <Storyboard>
-                                        <DoubleAnimation Storyboard.TargetName="Scale"
-                                                         Storyboard.TargetProperty="ScaleX"
-                                                         To="0.93" Duration="0:0:0.05"/>
-                                        <DoubleAnimation Storyboard.TargetName="Scale"
-                                                         Storyboard.TargetProperty="ScaleY"
-                                                         To="0.93" Duration="0:0:0.05"/>
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </Trigger.EnterActions>
-                            <Trigger.ExitActions>
-                                <BeginStoryboard>
-                                    <Storyboard>
-                                        <DoubleAnimation Storyboard.TargetName="Scale"
-                                                         Storyboard.TargetProperty="ScaleX"
-                                                         To="1.0" Duration="0:0:0.08"/>
-                                        <DoubleAnimation Storyboard.TargetName="Scale"
-                                                         Storyboard.TargetProperty="ScaleY"
-                                                         To="1.0" Duration="0:0:0.08"/>
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </Trigger.ExitActions>
                         </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsPressed" Value="True"/>
+                                <Condition Property="controls:KeyButton.ReducedMotionEnabled" Value="False"/>
+                            </MultiTrigger.Conditions>
+                            <MultiTrigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Scale"
+                                                         Storyboard.TargetProperty="ScaleX"
+                                                         To="0.93" Duration="0:0:0.05"/>
+                                        <DoubleAnimation Storyboard.TargetName="Scale"
+                                                         Storyboard.TargetProperty="ScaleY"
+                                                         To="0.93" Duration="0:0:0.05"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </MultiTrigger.EnterActions>
+                            <MultiTrigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Scale"
+                                                         Storyboard.TargetProperty="ScaleX"
+                                                         To="1.0" Duration="0:0:0.08"/>
+                                        <DoubleAnimation Storyboard.TargetName="Scale"
+                                                         Storyboard.TargetProperty="ScaleY"
+                                                         To="1.0" Duration="0:0:0.08"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </MultiTrigger.ExitActions>
+                        </MultiTrigger>
 
                         <!-- Disabled -->
                         <Trigger Property="IsEnabled" Value="False">
@@ -169,15 +205,19 @@
                                     Value="3"/>
                         </Trigger>
 
-                        <!-- T-4.7: Sticky 상태 (고정) -->
+                        <!-- L2/T-4.7: Sticky 상태 (고정) — 색상 외 점선 테두리 + S 뱃지 추가 -->
                         <Trigger Property="controls:KeyButton.IsSticky" Value="True">
                             <Setter TargetName="Root" Property="Background"
                                     Value="{DynamicResource KeyBgSticky}"/>
                             <Setter Property="Foreground"
                                     Value="{DynamicResource KeyFgSticky}"/>
+                            <Setter TargetName="StickyDashBorder" Property="Visibility"
+                                    Value="Visible"/>
+                            <Setter TargetName="StickyBadge" Property="Visibility"
+                                    Value="Visible"/>
                         </Trigger>
 
-                        <!-- T-4.7: Locked 상태 (잠금) -->
+                        <!-- L2/T-4.7: Locked 상태 (잠금) — 자물쇠 아이콘 + 점선 테두리, S 뱃지는 숨김 -->
                         <Trigger Property="controls:KeyButton.IsLocked" Value="True">
                             <Setter TargetName="Root" Property="Background"
                                     Value="{DynamicResource KeyBgSticky}"/>
@@ -185,6 +225,10 @@
                                     Value="{DynamicResource KeyFgSticky}"/>
                             <Setter TargetName="LockIcon" Property="Visibility"
                                     Value="Visible"/>
+                            <Setter TargetName="StickyDashBorder" Property="Visibility"
+                                    Value="Visible"/>
+                            <Setter TargetName="StickyBadge" Property="Visibility"
+                                    Value="Collapsed"/>
                         </Trigger>
 
                         <!-- 07: 가/A 서브모드 토글 키 강조 -->

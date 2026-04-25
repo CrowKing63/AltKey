@@ -8,17 +8,18 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
-    <AssemblyVersion>0.6.3.0</AssemblyVersion>
-    <FileVersion>0.6.3.0</FileVersion>
-    <Version>0.6.3</Version>
+    <AssemblyVersion>0.6.4.0</AssemblyVersion>
+    <FileVersion>0.6.4.0</FileVersion>
+    <Version>0.6.4</Version>
     <ApplicationIcon>Assets\icon.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.*" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.*" />
     <PackageReference Include="WPF-UI" Version="3.*" />
+    <PackageReference Include="System.Speech" Version="8.*" />
   </ItemGroup>
-  <!-- ??????뺢<tool_call>嶺???饔낅떽????ш낄?뉔뇡?????轅붽틓??嚥△뫕愿??븐럡???嫄????袁ㅻ쇀???config.json + ???嚥<tool_call>갭큔?댁옃紐?????諛몃마?????????????????????????類쏅젎??????쇰뮛?筌믡꺂?????-->
+  
   <ItemGroup>
     <Content Include="config.json" Condition="Exists('config.json')">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -27,7 +28,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
-  <!-- T-6.3: ?????諛몃마??維◈???????-->
+  
   <ItemGroup>
     <Content Include="Assets\icon.ico" Condition="Exists('Assets\icon.ico')">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -38,7 +39,7 @@
     <Content Include="Assets\emoji.json" Condition="Exists('Assets\emoji.json')">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <!-- T-8.2: ????????????????????????????類쏅젎??????쇰뮛?筌믡꺂?????(Assets\Sounds\ ??bin\...\Assets\Sounds\) -->
+    
     <Content Include="Assets\Sounds\click.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

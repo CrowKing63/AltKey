@@ -282,6 +282,10 @@
                                                           RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                       KeyboardA11yNavigationEnabled="{Binding DataContext.KeyboardA11yNavigationEnabled,
                                                           RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                      ReducedMotionEnabled="{Binding DataContext.ReducedMotionEnabled,
+                                                          RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                      TtsOnHover="{Binding DataContext.TtsOnHover,
+                                                          RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                       Command="{Binding DataContext.Keyboard.KeyPressedCommand,
                                                           RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                       CommandParameter="{Binding Slot}"/>
