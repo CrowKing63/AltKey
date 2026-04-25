@@ -9,9 +9,10 @@
 
     <Border Background="{DynamicResource PanelBg}"
             BorderBrush="{DynamicResource PanelBorder}"
-            BorderThickness="0,0,1,1"
-            CornerRadius="0,0,8,0"
-            Padding="4">
+            BorderThickness="0,0,0,1"
+            CornerRadius="0,0,8,8"
+            Padding="4"
+            VerticalAlignment="Top">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
@@ -53,9 +54,13 @@
 
             <!-- 항목 목록 -->
             <ScrollViewer Grid.Row="1"
-                          MaxHeight="140"
                           VerticalScrollBarVisibility="Auto">
                 <ItemsControl ItemsSource="{Binding Items}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="4" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate DataType="{x:Type vm:ClipboardItem}">
                             <Button Command="{Binding DataContext.PasteItemCommand,
