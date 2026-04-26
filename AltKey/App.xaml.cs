@@ -39,11 +39,22 @@ public partial class App : System.Windows.Application
             return;
         }
         // T-6.7: 전역 미처리 예외 핸들러 (동일 타입 에러는 한 번만 팝업)
+        // [참고] 클립보드 점유 충돌(CLIPBRD_E_CANT_OPEN)은 0.5초마다 평시 체크되므로 로그/메시지를 남기지 않음
+        const int CLIPBRD_E_CANT_OPEN = unchecked((int)0x800401D0);
         var _shownErrors = new System.Collections.Generic.HashSet<string>();
+
         DispatcherUnhandledException += (s, args) =>
         {
-            LogError(args.Exception);
             args.Handled = true;
+
+            // 클립보드 점유 에러는 조용히 무시 (다음 평링 주기에 재시도됨)
+            if (args.Exception is System.Runtime.InteropServices.COMException comEx
+                && comEx.ErrorCode == CLIPBRD_E_CANT_OPEN)
+            {
+                return;
+            }
+
+            LogError(args.Exception);
             var key = args.Exception.GetType().FullName + args.Exception.Message;
             if (_shownErrors.Add(key))
             {
@@ -58,7 +69,15 @@ public partial class App : System.Windows.Application
         AppDomain.CurrentDomain.UnhandledException += (s, args) =>
         {
             if (args.ExceptionObject is Exception ex)
+            {
+                // 클립보드 점유 에러는 무시
+                if (ex is System.Runtime.InteropServices.COMException comEx
+                    && comEx.ErrorCode == CLIPBRD_E_CANT_OPEN)
+                {
+                    return;
+                }
                 LogError(ex);
+            }
         };
 
         try
@@ -243,12 +262,13 @@ public partial class App : System.Windows.Application
     }
 
     // T-6.7: 파일 로깅
+    // [참고] 경로는 PathResolver.DataDir로 지정되어 설치형(%AppData%\AltKey) 및 포터블 모드 모두 쓰기 가능합니다.
     internal static void LogError(Exception ex)
     {
         try
         {
             var logPath = Path.Combine(
-                AppDomain.CurrentDomain.BaseDirectory, "altkey-error.log");
+                PathResolver.DataDir, "altkey-error.log");
             File.AppendAllText(logPath,
                 $"[{DateTime.Now:u}] {ex}\n\n");
         }
