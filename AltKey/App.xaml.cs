@@ -39,17 +39,19 @@ public partial class App : System.Windows.Application
             return;
         }
         // T-6.7: 전역 미처리 예외 핸들러 (동일 타입 에러는 한 번만 팝업)
-        // [참고] 클립보드 점유 충돌(CLIPBRD_E_CANT_OPEN)은 0.5초마다 평시 체크되므로 로그/메시지를 남기지 않음
-        const int CLIPBRD_E_CANT_OPEN = unchecked((int)0x800401D0);
+        // [참고] 클립보드 관련 COMException(0x800401D0~0x800401D3)은 0.5초마다 평시 체크되므로 로그/메시지를 남기지 않음
+        static bool IsClipboardComError(System.Runtime.InteropServices.COMException ex)
+            => ex.ErrorCode >= unchecked((int)0x800401D0) && ex.ErrorCode <= unchecked((int)0x800401D3);
+
         var _shownErrors = new System.Collections.Generic.HashSet<string>();
 
         DispatcherUnhandledException += (s, args) =>
         {
             args.Handled = true;
 
-            // 클립보드 점유 에러는 조용히 무시 (다음 평링 주기에 재시도됨)
+            // 클립보드 관련 에러는 조용히 무시 (다음 평링 주기에 재시도됨)
             if (args.Exception is System.Runtime.InteropServices.COMException comEx
-                && comEx.ErrorCode == CLIPBRD_E_CANT_OPEN)
+                && IsClipboardComError(comEx))
             {
                 return;
             }
@@ -70,9 +72,9 @@ public partial class App : System.Windows.Application
         {
             if (args.ExceptionObject is Exception ex)
             {
-                // 클립보드 점유 에러는 무시
+                // 클립보드 관련 에러는 무시
                 if (ex is System.Runtime.InteropServices.COMException comEx
-                    && comEx.ErrorCode == CLIPBRD_E_CANT_OPEN)
+                    && IsClipboardComError(comEx))
                 {
                     return;
                 }
