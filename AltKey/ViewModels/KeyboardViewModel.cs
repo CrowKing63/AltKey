@@ -646,8 +646,6 @@ public partial class KeyboardViewModel : ObservableObject
     private static bool IsSeparatorKey(KeySlot slot) => slot.Action switch
     {
         SendKeyAction { Vk: "VK_SPACE" }  => true,
-        SendKeyAction { Vk: "VK_RETURN" } => true,
-        SendKeyAction { Vk: "VK_TAB" }    => true,
         _ => false,
     };
 

@@ -72,12 +72,10 @@ public sealed class KoreanInputModule : IInputLanguageModule
                 return HandleBackspace(ctx);
             }
 
-            // 단어를 구분하는 키(공백, 엔터 등)가 눌리면 현재 조합을 끝냅니다.
+            // 단어를 구분하는 키(공백)가 눌리면 현재 조합을 끝냅니다.
             if (IsSeparator(vk, ctx.ShowUpperCase))
             {
-                bool isWordSeparator = vk is VirtualKeyCode.VK_SPACE
-                    or VirtualKeyCode.VK_RETURN
-                    or VirtualKeyCode.VK_TAB;
+                bool isWordSeparator = vk is VirtualKeyCode.VK_SPACE;
                 FinalizeComposition(keepContextForBigram: isWordSeparator);
                 return false;
             }
@@ -127,9 +125,7 @@ public sealed class KoreanInputModule : IInputLanguageModule
 
         if (IsSeparator(vk, ctx.ShowUpperCase))
         {
-            bool isWordSeparator = vk is VirtualKeyCode.VK_SPACE
-                or VirtualKeyCode.VK_RETURN
-                or VirtualKeyCode.VK_TAB;
+            bool isWordSeparator = vk is VirtualKeyCode.VK_SPACE;
             FinalizeComposition(keepContextForBigram: isWordSeparator);
             return false;
         }
@@ -268,7 +264,7 @@ public sealed class KoreanInputModule : IInputLanguageModule
     }
 
     /// <summary>
-    /// 단어 구분자(공백·엔터·탭)가 눌렸을 때 호출됩니다. bigram 문맥을 유지합니다.
+    /// 단어 구분자(공백)가 눌렸을 때 호출됩니다. bigram 문맥을 유지합니다.
     /// </summary>
     public void OnSeparator() => FinalizeComposition(keepContextForBigram: true);
 
@@ -344,7 +340,7 @@ public sealed class KoreanInputModule : IInputLanguageModule
 
     /// <summary>
     /// 단어 입력이 끝났을 때 호출되어 현재까지의 내용을 사전 학습에 반영합니다.
-    /// <paramref name="keepContextForBigram"/>가 true이면 공백·엔터·탭 같은 단어 구분자로,
+    /// <paramref name="keepContextForBigram"/>가 true이면 공백 같은 단어 구분자로,
     /// 바로 다음 단어의 bigram 제안을 띄웁니다.
     /// false이면 구두점 등으로 문맥을 리셋합니다.
     /// </summary>
@@ -399,6 +395,7 @@ public sealed class KoreanInputModule : IInputLanguageModule
         else
         {
             _suggestionContext = null;
+            _lastCommittedWord = null; // 문맥이 끊기는 구분자(마침표, 엔터 등)인 경우 이전 단어 정보를 리셋함
             SuggestionsChanged?.Invoke(Array.Empty<string>());
         }
 
