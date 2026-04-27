@@ -81,7 +81,8 @@ public class EnglishDictionary
         for (int i = 0; i < baseList.Count; i++)
             baseIndex[baseList[i]] = i;
 
-        int maxNewInserts = count / 2;
+        // 빈 prefix + 이전 단어 문맥이 있으면 bigram 후보를 최대 count개까지 보여줍니다.
+        int maxNewInserts = string.IsNullOrEmpty(prefix) ? count : count / 2;
         int newInserts = 0;
 
         var scored = new List<(string Word, double Score)>();

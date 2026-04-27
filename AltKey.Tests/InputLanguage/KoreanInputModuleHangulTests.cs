@@ -715,4 +715,58 @@ public class KoreanInputModuleHangulTests : KoreanInputModuleTestBase
             Assert.Equal("", module.CurrentWord);
         }
     }
+
+    /// <summary>
+    /// 단어 구분자(공백) 직후에도 bigram 제안이 떠야 합니다.
+    /// 예: "가나" AcceptSuggestion → 공백 → "다라" bigram 제안 표시
+    /// </summary>
+    [Fact]
+    public void Separator_after_AcceptSuggestion_shows_bigram_suggestions()
+    {
+        var (module, _, koDict, _) = TestSlotFactory.CreateModuleWithBothDicts();
+
+        for (int i = 0; i < 3; i++) koDict.RecordBigram("가나", "다라");
+        koDict.RecordWord("다라");
+
+        module.HandleKey(ㄱ_slot, ctxNoModifiers);
+        module.HandleKey(ㅏ_slot, ctxNoModifiers);
+        module.HandleKey(ㄴ_slot, ctxNoModifiers);
+        module.HandleKey(ㅏ_slot, ctxNoModifiers);
+        module.AcceptSuggestion("가나");
+
+        IReadOnlyList<string>? captured = null;
+        module.SuggestionsChanged += list => captured = list;
+
+        module.OnSeparator();
+
+        Assert.NotNull(captured);
+        Assert.Contains("다라", captured!);
+    }
+
+    /// <summary>
+    /// 구두점(마침표 등) 직후에는 bigram 문맥이 리셋되어 제안이 뜨지 않아야 합니다.
+    /// 바이그램은 띄어쓰기(단어 구분자)에서만 적용됩니다.
+    /// </summary>
+    [Fact]
+    public void Punctuation_after_AcceptSuggestion_clears_bigram_context()
+    {
+        var (module, _, koDict, _) = TestSlotFactory.CreateModuleWithBothDicts();
+
+        for (int i = 0; i < 3; i++) koDict.RecordBigram("가나", "다라");
+        koDict.RecordWord("다라");
+
+        module.HandleKey(ㄱ_slot, ctxNoModifiers);
+        module.HandleKey(ㅏ_slot, ctxNoModifiers);
+        module.HandleKey(ㄴ_slot, ctxNoModifiers);
+        module.HandleKey(ㅏ_slot, ctxNoModifiers);
+        module.AcceptSuggestion("가나");
+
+        IReadOnlyList<string>? captured = null;
+        module.SuggestionsChanged += list => captured = list;
+
+        var periodSlot = TestSlotFactory.Symbol(".", null, VirtualKeyCode.VK_OEM_PERIOD);
+        module.HandleKey(periodSlot, ctxNoModifiers);
+
+        Assert.True(captured == null || !captured.Contains("다라"));
+    }
 }

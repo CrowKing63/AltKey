@@ -75,7 +75,10 @@ public sealed class KoreanInputModule : IInputLanguageModule
             // 단어를 구분하는 키(공백, 엔터 등)가 눌리면 현재 조합을 끝냅니다.
             if (IsSeparator(vk, ctx.ShowUpperCase))
             {
-                FinalizeComposition();
+                bool isWordSeparator = vk is VirtualKeyCode.VK_SPACE
+                    or VirtualKeyCode.VK_RETURN
+                    or VirtualKeyCode.VK_TAB;
+                FinalizeComposition(keepContextForBigram: isWordSeparator);
                 return false;
             }
         }
@@ -124,7 +127,10 @@ public sealed class KoreanInputModule : IInputLanguageModule
 
         if (IsSeparator(vk, ctx.ShowUpperCase))
         {
-            FinalizeComposition();
+            bool isWordSeparator = vk is VirtualKeyCode.VK_SPACE
+                or VirtualKeyCode.VK_RETURN
+                or VirtualKeyCode.VK_TAB;
+            FinalizeComposition(keepContextForBigram: isWordSeparator);
             return false;
         }
 
@@ -261,7 +267,10 @@ public sealed class KoreanInputModule : IInputLanguageModule
         SubmodeChanged?.Invoke(_submode);
     }
 
-    public void OnSeparator() => FinalizeComposition();
+    /// <summary>
+    /// 단어 구분자(공백·엔터·탭)가 눌렸을 때 호출됩니다. bigram 문맥을 유지합니다.
+    /// </summary>
+    public void OnSeparator() => FinalizeComposition(keepContextForBigram: true);
 
     /// <summary>
     /// 모든 입력 상태를 초기값으로 되돌립니다.
@@ -334,11 +343,14 @@ public sealed class KoreanInputModule : IInputLanguageModule
     }
 
     /// <summary>
-    /// 단어 입력이 끝났을 때(공백 등) 호출되어 현재까지의 내용을 사전 학습에 반영합니다.
+    /// 단어 입력이 끝났을 때 호출되어 현재까지의 내용을 사전 학습에 반영합니다.
+    /// <paramref name="keepContextForBigram"/>가 true이면 공백·엔터·탭 같은 단어 구분자로,
+    /// 바로 다음 단어의 bigram 제안을 띄웁니다.
+    /// false이면 구두점 등으로 문맥을 리셋합니다.
     /// </summary>
-    private void FinalizeComposition()
+    private void FinalizeComposition(bool keepContextForBigram = false)
     {
-        if (!_composer.HasComposition && _englishPrefix.Length == 0) return;
+        if (!_composer.HasComposition && _englishPrefix.Length == 0 && _lastCommittedWord is null) return;
 
         bool learningEnabled = _config.Current.AutoCompleteEnabled
                                && !_compositionCancelled
@@ -375,8 +387,21 @@ public sealed class KoreanInputModule : IInputLanguageModule
         _wordAlreadyCommitted = false;
         _composer.Reset();
         _englishPrefix = "";
-        _suggestionContext = _lastCommittedWord;
-        SuggestionsChanged?.Invoke(Array.Empty<string>());
+
+        if (keepContextForBigram && _lastCommittedWord is { Length: > 0 })
+        {
+            _suggestionContext = _lastCommittedWord;
+            var suggestions = _submode == InputSubmode.HangulJamo
+                ? _koDict.GetSuggestions("", _lastCommittedWord)
+                : _enDict.GetSuggestions("", _lastCommittedWord);
+            SuggestionsChanged?.Invoke(suggestions);
+        }
+        else
+        {
+            _suggestionContext = null;
+            SuggestionsChanged?.Invoke(Array.Empty<string>());
+        }
+
         _input.ResetTrackedLength();
     }
 
