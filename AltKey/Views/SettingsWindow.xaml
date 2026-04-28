@@ -8,8 +8,8 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         mc:Ignorable="d"
         Title="설정"
-        Width="920" Height="620"
-        MinWidth="700" MinHeight="450"
+        Width="1200" Height="900"
+        MinWidth="1000" MinHeight="720"
         WindowStartupLocation="CenterOwner"
         Background="#FF1E1E2E"
         d:DataContext="{d:DesignInstance vm:SettingsViewModel}">
@@ -40,12 +40,14 @@
                 </StackPanel>
             </Grid>
 
-            <!-- 설정 항목 (2단 레이아웃) -->
+            <!-- 설정 항목 (3단 레이아웃) -->
             <ScrollViewer Grid.Row="1"
                           VerticalScrollBarVisibility="Auto"
                           HorizontalScrollBarVisibility="Disabled">
                 <Grid>
                     <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="16"/>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="16"/>
                         <ColumnDefinition Width="*"/>
@@ -145,6 +147,10 @@
                                 Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}"
                                 BorderThickness="0" Cursor="Hand"
                                 ToolTip="키보드 레이아웃, 사용자 단어, 앱별 레이아웃 등의 설정 데이터가 저장된 폴더를 엽니다"/>
+                    </StackPanel>
+
+                    <!-- ── 가운데 컬럼: 고급 설정 ─────────────────────────────── -->
+                    <StackPanel Grid.Column="2">
 
                         <!-- 전역 단축키 -->
                         <TextBlock Text="전역 단축키" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
@@ -408,8 +414,8 @@
 
                     </StackPanel>
 
-                    <!-- 오른쪽 컬럼: 접근성 추가 기능 -->
-                    <StackPanel Grid.Column="2">
+                    <!-- 오른쪽 컬럼: 접근성 기능 -->
+                    <StackPanel Grid.Column="4">
 
                         <!-- 체류 클릭 -->
                         <CheckBox Content="체류 클릭 (Dwell Click)"
@@ -458,26 +464,6 @@
                                               TextBoxBorderBrush="{DynamicResource SettingsBorder}"
                                               Margin="16,0,0,16"/>
 
-                        <!-- L1: 포커스 가시화 + 탭 탐색 -->
-                        <TextBlock Text="포커스 가시화 (베타)"
-                                   Foreground="{DynamicResource SettingsFgSub}"
-                                   FontSize="12"
-                                   FontWeight="SemiBold"
-                                   Margin="0,0,0,8"/>
-                        <CheckBox Content="탭 탐색 모드 활성화"
-                                  Foreground="{DynamicResource SettingsFg}"
-                                  IsChecked="{Binding KeyboardA11yNavigationEnabled}"
-                                  Margin="0,0,0,8"/>
-                        <TextBlock TextWrapping="Wrap" FontSize="11" Foreground="{DynamicResource SettingsFgSub}"
-                                   Margin="16,0,0,16"
-                                   Text="탭 키로 키보드 키를 탐색할 수 있습니다. Narrator나 외부 보조기기 사용 시 유용합니다."/>
-                        <TextBlock TextWrapping="Wrap" FontSize="11" Foreground="{DynamicResource SettingsFgSub}"
-                                   Margin="16,0,0,4"
-                                   Text="안내: 이 기능은 물리 키보드/외부 스위치의 Tab, Shift+Tab, Enter, Space 입력으로 작동합니다."/>
-                        <TextBlock TextWrapping="Wrap" FontSize="11" Foreground="{DynamicResource SettingsFgSub}"
-                                   Margin="16,0,0,16"
-                                   Text="가상 키보드의 Tab 키 버튼은 대상 앱으로 실제 Tab 입력을 별낼 며, 낸부 포커스 탐색을 트리거하지 않습니다."/>
-
                         <Separator Background="{DynamicResource SettingsHighlight}" Margin="0,0,0,16"/>
 
                         <!-- L2: 키 라벨 TTS 읽기 -->
@@ -520,6 +506,23 @@
                                   Margin="0,0,0,16"/>
 
                         <Separator Background="{DynamicResource SettingsHighlight}" Margin="0,0,0,16"/>
+
+                        <!-- L1: 포커스 가시화 + 탭 탐색 -->
+                        <TextBlock Text="포커스 가시화 (베타)"
+                                   Foreground="{DynamicResource SettingsFgSub}"
+                                   FontSize="12"
+                                   FontWeight="SemiBold"
+                                   Margin="0,0,0,8"/>
+                        <CheckBox Content="탭 탐색 모드 활성화"
+                                  Foreground="{DynamicResource SettingsFg}"
+                                  IsChecked="{Binding KeyboardA11yNavigationEnabled}"
+                                  Margin="0,0,0,8"/>
+                        <TextBlock TextWrapping="Wrap" FontSize="11" Foreground="{DynamicResource SettingsFgSub}"
+                                   Margin="16,0,0,16"
+                                   Text="탭 키로 키보드 키를 탐색할 수 있습니다. Narrator나 외부 보조기기 사용 시 유용합니다."/>
+                        <TextBlock TextWrapping="Wrap" FontSize="11" Foreground="{DynamicResource SettingsFgSub}"
+                                   Margin="16,0,0,4"
+                                   Text="안내: 이 기능은 물리 키보드/외부 스위치의 Tab, Shift+Tab, Enter, Space 입력으로 작동합니다."/>
 
                         <!-- L3: 스위치 스캔 입력 모드 -->
                         <TextBlock Text="스위치 스캔 입력 (베타)"
