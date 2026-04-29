@@ -28,17 +28,29 @@
             </Grid.RowDefinitions>
 
             <!-- 헤더 -->
-            <Grid Grid.Row="0" Margin="0,0,0,12">
+            <DockPanel Grid.Row="0" Margin="0,0,0,12">
                 <StackPanel Orientation="Vertical">
                     <TextBlock Text="설정"
                                FontSize="16" FontWeight="SemiBold"
                                Foreground="{DynamicResource SettingsFg}"/>
-                    <TextBlock Text="{Binding CurrentVersion, StringFormat='버전 {0}'}"
-                               FontSize="11"
-                               Foreground="{DynamicResource SettingsFgSub}"
-                               Margin="0,2,0,0"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                        <TextBlock Text="{Binding CurrentVersion, StringFormat='버전 {0}'}"
+                                   FontSize="11"
+                                   Foreground="{DynamicResource SettingsFgSub}"/>
+                        <TextBlock Text=" | "
+                                   FontSize="11"
+                                   Foreground="{DynamicResource SettingsFgSub}"
+                                   Margin="0,4"/>
+                        <TextBlock>
+                            <Hyperlink NavigateUri="https://github.com/CrowKing63/AltKey/wiki" RequestNavigate="Hyperlink_RequestNavigate">
+                                <TextBlock Text="매뉴얼"
+                                           Foreground="{DynamicResource SettingsFg}"
+                                           TextDecorations="Underline"/>
+                            </Hyperlink>
+                        </TextBlock>
+                    </StackPanel>
                 </StackPanel>
-            </Grid>
+            </DockPanel>
 
             <!-- 설정 항목 (3단 레이아웃) -->
             <ScrollViewer Grid.Row="1"
