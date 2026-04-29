@@ -425,7 +425,12 @@ public partial class MainViewModel : ObservableObject
             // 설치 실행
             IsInstalling = true;
             var installerService = App.Services.GetRequiredService<InstallerService>();
-            await installerService.RunInstallerAsync(installerPath, autoRestart: true);
+            // 접근성: 업데이트 후 자동 재시작 앱이 관리자 권한으로 실행되지 않도록
+            // 자동 업데이트 경로에서는 runas 강제 요청을 사용하지 않는다.
+            await installerService.RunInstallerAsync(
+                installerPath,
+                autoRestart: true,
+                requestElevation: false);
         }
         catch (Exception ex)
         {

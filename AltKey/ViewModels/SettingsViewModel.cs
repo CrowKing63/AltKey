@@ -724,7 +724,12 @@ public partial class SettingsViewModel : ObservableObject
             IsInstalling = true;
 
             // 1. 인스톨러 실행 (부모 프로세스가 죽기 전에 실행)
-            _installerService.StartInstaller(installerPath, autoRestart: true);
+            // 접근성: 업데이트 후 자동 재시작 앱이 관리자 권한으로 실행되지 않도록
+            // 자동 업데이트 경로에서는 runas 강제 요청을 사용하지 않는다.
+            _installerService.StartInstaller(
+                installerPath,
+                autoRestart: true,
+                requestElevation: false);
 
             // 2. 앱 즉시 종료 (인스톨러가 재시작 Manager를 통해 앱을 닫을 수도 있지만, 명시적으로 종료)
             if (WpfApp.Current.MainWindow is MainWindow mw)
