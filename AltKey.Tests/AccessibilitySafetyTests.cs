@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Threading;
 using AltKey.Controls;
 using AltKey.Models;
@@ -34,6 +34,58 @@ public class AccessibilitySafetyTests
 
         Assert.NotNull(restored);
         Assert.True(restored!.KeyboardA11yNavigationEnabled);
+    }
+
+    [Fact]
+    public void AppConfig_SwitchScan_defaults_match_accessibility_spec()
+    {
+        var config = new AppConfig();
+
+        Assert.Equal("VK_TAB", config.SwitchScanNextKey);
+        Assert.Equal("VK_RETURN", config.SwitchScanSelectKey);
+        Assert.Equal("VK_SPACE", config.SwitchScanSecondarySelectKey);
+        Assert.Equal("", config.SwitchScanPreviousKey);
+        Assert.Equal("", config.SwitchScanPauseKey);
+        Assert.Equal(SwitchScanMode.Linear, config.SwitchScanMode);
+        Assert.True(config.SwitchScanWrapEnabled);
+        Assert.True(config.SwitchScanIncludeSuggestions);
+    }
+
+    [Fact]
+    public void AppConfig_SwitchScan_settings_survive_json_round_trip()
+    {
+        var original = new AppConfig
+        {
+            SwitchScanMode = SwitchScanMode.Manual,
+            SwitchScanInitialDelayMs = 1200,
+            SwitchScanSelectPauseMs = 700,
+            SwitchScanCyclesBeforePause = 3,
+            SwitchScanWrapEnabled = false,
+            SwitchScanNextKey = "VK_F8",
+            SwitchScanSelectKey = "VK_F9",
+            SwitchScanSecondarySelectKey = "VK_F10",
+            SwitchScanPreviousKey = "VK_F7",
+            SwitchScanPauseKey = "VK_F6",
+            SwitchScanIncludeSuggestions = false,
+            SwitchScanSuggestionPriority = SwitchScanSuggestionPriority.AfterKeyboard
+        };
+
+        var json = JsonSerializer.Serialize(original, JsonOptions.Default);
+        var restored = JsonSerializer.Deserialize<AppConfig>(json, JsonOptions.Default);
+
+        Assert.NotNull(restored);
+        Assert.Equal(SwitchScanMode.Manual, restored!.SwitchScanMode);
+        Assert.Equal(1200, restored.SwitchScanInitialDelayMs);
+        Assert.Equal(700, restored.SwitchScanSelectPauseMs);
+        Assert.Equal(3, restored.SwitchScanCyclesBeforePause);
+        Assert.False(restored.SwitchScanWrapEnabled);
+        Assert.Equal("VK_F8", restored.SwitchScanNextKey);
+        Assert.Equal("VK_F9", restored.SwitchScanSelectKey);
+        Assert.Equal("VK_F10", restored.SwitchScanSecondarySelectKey);
+        Assert.Equal("VK_F7", restored.SwitchScanPreviousKey);
+        Assert.Equal("VK_F6", restored.SwitchScanPauseKey);
+        Assert.False(restored.SwitchScanIncludeSuggestions);
+        Assert.Equal(SwitchScanSuggestionPriority.AfterKeyboard, restored.SwitchScanSuggestionPriority);
     }
 
     [Fact]

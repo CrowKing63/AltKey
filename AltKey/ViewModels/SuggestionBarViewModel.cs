@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Linq;
 using AltKey.Models;
 using AltKey.Services;
 using AltKey.Services.InputLanguage;
@@ -31,6 +32,15 @@ public partial class SuggestionBarViewModel : ObservableObject
     [ObservableProperty]
     private bool hasCurrentWord;
 
+    // [접근성][L3] 스위치 스캔에서 훑을 제안 바 대상 목록입니다.
+    [ObservableProperty]
+    private ObservableCollection<ScanTargetVm> scanTargets = [];
+    [ObservableProperty]
+    private ObservableCollection<ScanTargetVm> suggestionScanTargets = [];
+
+    // [접근성][L3] 키보드 스캔 엔진이 제안 목록 갱신을 감지할 수 있도록 알립니다.
+    public event Action? ScanTargetsChanged;
+
     public SuggestionBarViewModel(
         AutoCompleteService autoComplete,
         InputService inputService,
@@ -52,6 +62,7 @@ public partial class SuggestionBarViewModel : ObservableObject
     private void SetVisibleFromConfig()
     {
         IsVisible = _configService.Current.AutoCompleteEnabled;
+        RebuildScanTargets();
     }
 
     private void OnConfigChanged(string? propertyName)
@@ -63,14 +74,68 @@ public partial class SuggestionBarViewModel : ObservableObject
     private void OnSuggestionsChanged(IReadOnlyList<string> newSuggestions)
     {
         string captured = _autoComplete.CurrentWord;
-        WpfApp.Current.Dispatcher.Invoke(() =>
+        void Apply()
         {
             CurrentWord = captured;
             HasCurrentWord = captured.Length > 0;
             Suggestions = new ObservableCollection<string>(newSuggestions);
             HasSuggestions = Suggestions.Count > 0;
-        });
+            RebuildScanTargets();
+        }
+
+        var app = WpfApp.Current;
+        if (app?.Dispatcher is null)
+            Apply();
+        else
+            app.Dispatcher.Invoke(Apply);
     }
+
+    private void RebuildScanTargets()
+    {
+        var nextTargets = new List<ScanTargetVm>();
+        if (IsVisible)
+        {
+            if (HasCurrentWord && !string.IsNullOrWhiteSpace(CurrentWord))
+            {
+                nextTargets.Add(new ScanTargetVm
+                {
+                    DisplayText = CurrentWord,
+                    Kind = "CurrentWord",
+                    AccessibleName = $"현재 단어 저장 {CurrentWord}",
+                    Activate = () => CommitCurrentWordCommand.Execute(null),
+                    SetScanFocused = isFocused => CurrentWordScanFocused = isFocused
+                });
+            }
+
+            foreach (var suggestion in Suggestions)
+            {
+                string item = suggestion;
+                nextTargets.Add(new ScanTargetVm
+                {
+                    DisplayText = item,
+                    Kind = "Suggestion",
+                    AccessibleName = $"제안 단어 {item}",
+                    Activate = () => AcceptSuggestionCommand.Execute(item),
+                    SetScanFocused = isFocused =>
+                    {
+                        if (isFocused) FocusedSuggestion = item;
+                        else if (FocusedSuggestion == item) FocusedSuggestion = "";
+                    }
+                });
+            }
+        }
+
+        ScanTargets = new ObservableCollection<ScanTargetVm>(nextTargets);
+        SuggestionScanTargets = new ObservableCollection<ScanTargetVm>(
+            nextTargets.Where(t => t.Kind == "Suggestion"));
+        ScanTargetsChanged?.Invoke();
+    }
+
+    [ObservableProperty]
+    private bool currentWordScanFocused;
+
+    [ObservableProperty]
+    private string focusedSuggestion = "";
 
     [RelayCommand]
     private void AcceptSuggestion(string suggestion)
@@ -96,6 +161,7 @@ public partial class SuggestionBarViewModel : ObservableObject
         _autoComplete.CommitCurrentWord();
         CurrentWord = "";
         HasCurrentWord = false;
+        RebuildScanTargets();
     }
 
     [RelayCommand]
@@ -104,6 +170,7 @@ public partial class SuggestionBarViewModel : ObservableObject
         _autoComplete.CancelComposition();
         CurrentWord = "";
         HasCurrentWord = false;
+        RebuildScanTargets();
     }
 
     [RelayCommand]
@@ -117,11 +184,18 @@ public partial class SuggestionBarViewModel : ObservableObject
 
         if (removed)
         {
-            WpfApp.Current.Dispatcher.Invoke(() =>
+            void Apply()
             {
                 Suggestions.Remove(suggestion);
                 HasSuggestions = Suggestions.Count > 0;
-            });
+                RebuildScanTargets();
+            }
+
+            var app = WpfApp.Current;
+            if (app?.Dispatcher is null)
+                Apply();
+            else
+                app.Dispatcher.Invoke(Apply);
         }
     }
 }

@@ -1,0 +1,110 @@
+<Window x:Class="AltKey.Views.SwitchScanSettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:AltKey.ViewModels"
+        xmlns:ctrl="clr-namespace:AltKey.Controls"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        mc:Ignorable="d"
+        Title="스위치 스캔 상세 설정"
+        Width="680" Height="820"
+        MinWidth="600" MinHeight="700"
+        WindowStartupLocation="CenterOwner"
+        Background="#FF1E1E2E"
+        d:DataContext="{d:DesignInstance vm:SettingsViewModel}">
+    <Border Background="{DynamicResource SettingsBg}"
+            CornerRadius="12"
+            Padding="20">
+        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+            <StackPanel>
+                <TextBlock Text="스위치 스캔 상세 설정"
+                           FontSize="16"
+                           FontWeight="SemiBold"
+                           Foreground="{DynamicResource SettingsFg}"
+                           Margin="0,0,0,6"/>
+                <TextBlock Text="스위치 입력 장치와 스캔 방식을 여기서 세부 조정합니다."
+                           FontSize="11"
+                           Foreground="{DynamicResource SettingsFgSub}"
+                           Margin="0,0,0,16"/>
+
+                <TextBlock Text="스캔 간격 (밀리초)" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
+                <ctrl:NumericAdjuster Value="{Binding SwitchScanIntervalMs}"
+                                      Minimum="200" Maximum="3000" Step="100" DecimalPlaces="0"
+                                      IsEnabled="{Binding SwitchScanEnabled}"
+                                      ButtonBackground="{DynamicResource SettingsHighlight}"
+                                      ButtonForeground="{DynamicResource SettingsFg}"
+                                      TextBoxBackground="{DynamicResource SettingsHighlight}"
+                                      TextBoxForeground="{DynamicResource SettingsFg}"
+                                      TextBoxBorderBrush="{DynamicResource SettingsBorder}"
+                                      Margin="0,0,0,8"/>
+                <CheckBox Content="2스위치 모드 사용 (다음/선택 분리)"
+                          Foreground="{DynamicResource SettingsFg}"
+                          IsChecked="{Binding SwitchScanTwoSwitch}"
+                          IsEnabled="{Binding SwitchScanEnabled}"
+                          Margin="0,0,0,8"/>
+
+                <TextBlock Text="스캔 방식" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
+                <ComboBox ItemsSource="{Binding SwitchScanModes}"
+                          SelectedItem="{Binding SwitchScanMode}"
+                          IsEnabled="{Binding SwitchScanEnabled}"
+                          Margin="0,0,0,8"/>
+                <TextBlock Text="초기 대기 시간 (밀리초)" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
+                <ctrl:NumericAdjuster Value="{Binding SwitchScanInitialDelayMs}" Minimum="0" Maximum="5000" Step="100" DecimalPlaces="0"
+                                      IsEnabled="{Binding SwitchScanEnabled}"
+                                      ButtonBackground="{DynamicResource SettingsHighlight}" ButtonForeground="{DynamicResource SettingsFg}"
+                                      TextBoxBackground="{DynamicResource SettingsHighlight}" TextBoxForeground="{DynamicResource SettingsFg}"
+                                      TextBoxBorderBrush="{DynamicResource SettingsBorder}" Margin="0,0,0,8"/>
+                <TextBlock Text="선택 후 멈춤 시간 (밀리초)" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
+                <ctrl:NumericAdjuster Value="{Binding SwitchScanSelectPauseMs}" Minimum="0" Maximum="5000" Step="100" DecimalPlaces="0"
+                                      IsEnabled="{Binding SwitchScanEnabled}"
+                                      ButtonBackground="{DynamicResource SettingsHighlight}" ButtonForeground="{DynamicResource SettingsFg}"
+                                      TextBoxBackground="{DynamicResource SettingsHighlight}" TextBoxForeground="{DynamicResource SettingsFg}"
+                                      TextBoxBorderBrush="{DynamicResource SettingsBorder}" Margin="0,0,0,8"/>
+                <TextBlock Text="멈춤 전 최대 회전 수 (0=무제한)" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
+                <ctrl:NumericAdjuster Value="{Binding SwitchScanCyclesBeforePause}" Minimum="0" Maximum="20" Step="1" DecimalPlaces="0"
+                                      IsEnabled="{Binding SwitchScanEnabled}"
+                                      ButtonBackground="{DynamicResource SettingsHighlight}" ButtonForeground="{DynamicResource SettingsFg}"
+                                      TextBoxBackground="{DynamicResource SettingsHighlight}" TextBoxForeground="{DynamicResource SettingsFg}"
+                                      TextBoxBorderBrush="{DynamicResource SettingsBorder}" Margin="0,0,0,8"/>
+                <CheckBox Content="끝에서 처음으로 이어서 스캔"
+                          Foreground="{DynamicResource SettingsFg}"
+                          IsChecked="{Binding SwitchScanWrapEnabled}"
+                          IsEnabled="{Binding SwitchScanEnabled}"
+                          Margin="0,0,0,8"/>
+                <CheckBox Content="자동완성 제안/현재 단어를 스캔 대상에 포함"
+                          Foreground="{DynamicResource SettingsFg}"
+                          IsChecked="{Binding SwitchScanIncludeSuggestions}"
+                          IsEnabled="{Binding SwitchScanEnabled}"
+                          Margin="0,0,0,8"/>
+                <TextBlock Text="제안 스캔 우선순위" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
+                <ComboBox ItemsSource="{Binding SwitchScanSuggestionPriorities}"
+                          SelectedItem="{Binding SwitchScanSuggestionPriority}"
+                          IsEnabled="{Binding SwitchScanEnabled}"
+                          Margin="0,0,0,12"/>
+
+                <TextBlock Text="스위치 키 매핑 (VK_이름)" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
+                <TextBox Text="{Binding SwitchScanNextKey, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding SwitchScanEnabled}" Height="26" Margin="0,0,0,4"/>
+                <TextBox Text="{Binding SwitchScanSelectKey, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding SwitchScanEnabled}" Height="26" Margin="0,0,0,4"/>
+                <TextBox Text="{Binding SwitchScanSecondarySelectKey, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding SwitchScanEnabled}" Height="26" Margin="0,0,0,4"/>
+                <TextBox Text="{Binding SwitchScanPreviousKey, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding SwitchScanEnabled}" Height="26" Margin="0,0,0,4"/>
+                <TextBox Text="{Binding SwitchScanPauseKey, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding SwitchScanEnabled}" Height="26" Margin="0,0,0,6"/>
+                <TextBlock TextWrapping="Wrap"
+                           FontSize="11"
+                           Foreground="{DynamicResource SettingsFgSub}"
+                           Text="입력 순서: 다음, 선택, 보조 선택, 이전, 일시정지. 예: VK_TAB / VK_RETURN / VK_SPACE"
+                           Margin="0,0,0,16"/>
+
+                <Button Content="닫기"
+                        Height="30"
+                        HorizontalAlignment="Right"
+                        Width="96"
+                        Click="CloseButton_Click"
+                        Background="{DynamicResource SettingsHighlight}"
+                        Foreground="{DynamicResource SettingsFg}"
+                        BorderThickness="0"
+                        Cursor="Hand"/>
+            </StackPanel>
+        </ScrollViewer>
+    </Border>
+</Window>

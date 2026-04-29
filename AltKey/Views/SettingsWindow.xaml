@@ -529,12 +529,12 @@
                                   Foreground="{DynamicResource SettingsFg}"
                                   IsChecked="{Binding KeyboardA11yNavigationEnabled}"
                                   Margin="0,0,0,8"/>
-                        <TextBlock TextWrapping="Wrap" FontSize="11" Foreground="{DynamicResource SettingsFgSub}"
-                                   Margin="16,0,0,16"
-                                   Text="탭 키로 키보드 키를 탐색할 수 있습니다. Narrator나 외부 보조기기 사용 시 유용합니다."/>
-                        <TextBlock TextWrapping="Wrap" FontSize="11" Foreground="{DynamicResource SettingsFgSub}"
-                                   Margin="16,0,0,4"
-                                   Text="안내: 이 기능은 물리 키보드/외부 스위치의 Tab, Shift+Tab, Enter, Space 입력으로 작동합니다."/>
+                        <Button Content="포커스 가시화 상세 설정 열기"
+                                Command="{Binding OpenFocusA11ySettingsCommand}"
+                                Height="30" Margin="16,0,0,8"
+                                IsEnabled="{Binding KeyboardA11yNavigationEnabled}"
+                                Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}"
+                                BorderThickness="0" Cursor="Hand"/>
 
                         <!-- L3: 스위치 스캔 입력 모드 -->
                         <TextBlock Text="스위치 스캔 입력 (베타)"
@@ -546,21 +546,16 @@
                                   Foreground="{DynamicResource SettingsFg}"
                                   IsChecked="{Binding SwitchScanEnabled}"
                                   Margin="0,0,0,8"/>
-                        <TextBlock Text="스캔 간격 (밀리초)" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="16,0,0,4"/>
-                        <ctrl:NumericAdjuster Value="{Binding SwitchScanIntervalMs}"
-                                              Minimum="200" Maximum="3000" Step="100" DecimalPlaces="0"
-                                              IsEnabled="{Binding SwitchScanEnabled}"
-                                              ButtonBackground="{DynamicResource SettingsHighlight}"
-                                              ButtonForeground="{DynamicResource SettingsFg}"
-                                              TextBoxBackground="{DynamicResource SettingsHighlight}"
-                                              TextBoxForeground="{DynamicResource SettingsFg}"
-                                              TextBoxBorderBrush="{DynamicResource SettingsBorder}"
-                                              Margin="16,0,0,8"/>
-                        <CheckBox Content="2스위치 모드 사용 (다음/선택 분리)"
-                                  Foreground="{DynamicResource SettingsFg}"
-                                  IsChecked="{Binding SwitchScanTwoSwitch}"
-                                  IsEnabled="{Binding SwitchScanEnabled}"
-                                  Margin="16,0,0,16"/>
+                        <Button Content="스위치 스캔 상세 설정 열기"
+                                Command="{Binding OpenSwitchScanSettingsCommand}"
+                                Height="30" Margin="16,0,0,8"
+                                IsEnabled="{Binding SwitchScanEnabled}"
+                                Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}"
+                                BorderThickness="0" Cursor="Hand"/>
+                        <TextBlock Text="LiveRegion 공지 모드" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="16,0,0,4"/>
+                        <ComboBox ItemsSource="{Binding SwitchScanAnnounceModes}"
+                                  SelectedItem="{Binding SwitchScanAnnounceMode}"
+                                  Margin="16,0,0,8"/>
 
                     </StackPanel>
                 </Grid>

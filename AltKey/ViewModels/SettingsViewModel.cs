@@ -38,6 +38,8 @@ public partial class SettingsViewModel : ObservableObject
     private CancellationTokenSource?      _downloadCts;
 
     private AltKey.Views.SettingsWindow? _settingsWindow;
+    private AltKey.Views.SwitchScanSettingsWindow? _switchScanSettingsWindow;
+    private AltKey.Views.FocusA11ySettingsWindow? _focusA11ySettingsWindow;
 
     // ── 화면에 표시되는 설정 값들 (UI와 직접 연결됨) ───────────────────────
     // 이 값들을 수정하면 화면에 즉시 반영되며, 설정 파일(config.json)에도 저장됩니다.
@@ -76,6 +78,12 @@ public partial class SettingsViewModel : ObservableObject
     // L1: 포커스 가시화 + 탭 탐색 모드
     [ObservableProperty]
     private bool keyboardA11yNavigationEnabled;
+    [ObservableProperty]
+    private KeyboardA11yNavigationScope keyboardA11yNavigationScope = KeyboardA11yNavigationScope.KeysOnly;
+    [ObservableProperty]
+    private bool keyboardA11yAnnounceFocus;
+    [ObservableProperty]
+    private string keyboardA11yExitKey = "VK_ESCAPE";
 
     // L2: 키 라벨 TTS 읽기
     [ObservableProperty]
@@ -96,6 +104,36 @@ public partial class SettingsViewModel : ObservableObject
     private int switchScanIntervalMs;
     [ObservableProperty]
     private bool switchScanTwoSwitch;
+    [ObservableProperty]
+    private SwitchScanMode switchScanMode = SwitchScanMode.Linear;
+    [ObservableProperty]
+    private int switchScanInitialDelayMs;
+    [ObservableProperty]
+    private int switchScanSelectPauseMs;
+    [ObservableProperty]
+    private int switchScanCyclesBeforePause;
+    [ObservableProperty]
+    private bool switchScanWrapEnabled;
+    [ObservableProperty]
+    private string switchScanNextKey = "VK_TAB";
+    [ObservableProperty]
+    private string switchScanSelectKey = "VK_RETURN";
+    [ObservableProperty]
+    private string switchScanSecondarySelectKey = "VK_SPACE";
+    [ObservableProperty]
+    private string switchScanPreviousKey = "";
+    [ObservableProperty]
+    private string switchScanPauseKey = "";
+    [ObservableProperty]
+    private bool switchScanIncludeSuggestions;
+    [ObservableProperty]
+    private SwitchScanSuggestionPriority switchScanSuggestionPriority = SwitchScanSuggestionPriority.BeforeKeyboard;
+    public Array SwitchScanModes => Enum.GetValues(typeof(SwitchScanMode));
+    public Array SwitchScanSuggestionPriorities => Enum.GetValues(typeof(SwitchScanSuggestionPriority));
+    public Array KeyboardA11yNavigationScopes => Enum.GetValues(typeof(KeyboardA11yNavigationScope));
+    public Array SwitchScanAnnounceModes => Enum.GetValues(typeof(SwitchScanAnnounceMode));
+    [ObservableProperty]
+    private SwitchScanAnnounceMode switchScanAnnounceMode = SwitchScanAnnounceMode.SelectionOnly;
 
     // T-9.5: 현재 버전 표시
     [ObservableProperty] private string currentVersion = "";
@@ -206,6 +244,9 @@ public partial class SettingsViewModel : ObservableObject
 
              // L1: 포커스 가시화 + 탭 탐색 모드
              KeyboardA11yNavigationEnabled = c.KeyboardA11yNavigationEnabled;
+             KeyboardA11yNavigationScope = c.KeyboardA11yNavigationScope;
+             KeyboardA11yAnnounceFocus = c.KeyboardA11yAnnounceFocus;
+             KeyboardA11yExitKey = c.KeyboardA11yExitKey;
 
              // L2/L3 접근성 설정 로드
              TtsEnabled = c.TtsEnabled;
@@ -215,6 +256,19 @@ public partial class SettingsViewModel : ObservableObject
              SwitchScanEnabled = c.SwitchScanEnabled;
              SwitchScanIntervalMs = c.SwitchScanIntervalMs;
              SwitchScanTwoSwitch = c.SwitchScanTwoSwitch;
+             SwitchScanMode = c.SwitchScanMode;
+             SwitchScanInitialDelayMs = c.SwitchScanInitialDelayMs;
+             SwitchScanSelectPauseMs = c.SwitchScanSelectPauseMs;
+             SwitchScanCyclesBeforePause = c.SwitchScanCyclesBeforePause;
+             SwitchScanWrapEnabled = c.SwitchScanWrapEnabled;
+             SwitchScanNextKey = c.SwitchScanNextKey;
+             SwitchScanSelectKey = c.SwitchScanSelectKey;
+             SwitchScanSecondarySelectKey = c.SwitchScanSecondarySelectKey;
+             SwitchScanPreviousKey = c.SwitchScanPreviousKey;
+             SwitchScanPauseKey = c.SwitchScanPauseKey;
+             SwitchScanIncludeSuggestions = c.SwitchScanIncludeSuggestions;
+             SwitchScanSuggestionPriority = c.SwitchScanSuggestionPriority;
+             SwitchScanAnnounceMode = c.SwitchScanAnnounceMode;
 
             // T-8.5: 프로필
             Profiles = new ObservableCollection<ProfileEntry>(
@@ -387,6 +441,26 @@ public partial class SettingsViewModel : ObservableObject
          _configService.Update(c => c.KeyboardA11yNavigationEnabled = value, "KeyboardA11yNavigationEnabled");
      }
 
+     partial void OnKeyboardA11yNavigationScopeChanged(KeyboardA11yNavigationScope value)
+     {
+         if (_isLoading) return;
+         _configService.Update(c => c.KeyboardA11yNavigationScope = value, "KeyboardA11yNavigationScope");
+     }
+
+     partial void OnKeyboardA11yAnnounceFocusChanged(bool value)
+     {
+         if (_isLoading) return;
+         _configService.Update(c => c.KeyboardA11yAnnounceFocus = value, "KeyboardA11yAnnounceFocus");
+     }
+
+     partial void OnKeyboardA11yExitKeyChanged(string value)
+     {
+         if (_isLoading) return;
+         string normalized = string.IsNullOrWhiteSpace(value) ? "VK_ESCAPE" : value.Trim().ToUpperInvariant();
+         if (normalized != value) { KeyboardA11yExitKey = normalized; return; }
+         _configService.Update(c => c.KeyboardA11yExitKey = normalized, "KeyboardA11yExitKey");
+     }
+
      // L2: 키 라벨 TTS 읽기
      partial void OnTtsEnabledChanged(bool value)
      {
@@ -436,6 +510,90 @@ public partial class SettingsViewModel : ObservableObject
          _configService.Update(c => c.SwitchScanTwoSwitch = value);
      }
 
+     partial void OnSwitchScanModeChanged(SwitchScanMode value)
+     {
+         if (_isLoading) return;
+         _configService.Update(c => c.SwitchScanMode = value);
+     }
+
+     partial void OnSwitchScanInitialDelayMsChanged(int value)
+     {
+         if (_isLoading) return;
+         var clamped = Math.Clamp(value, 0, 5000);
+         if (clamped != value) { SwitchScanInitialDelayMs = clamped; return; }
+         _configService.Update(c => c.SwitchScanInitialDelayMs = clamped);
+     }
+
+     partial void OnSwitchScanSelectPauseMsChanged(int value)
+     {
+         if (_isLoading) return;
+         var clamped = Math.Clamp(value, 0, 5000);
+         if (clamped != value) { SwitchScanSelectPauseMs = clamped; return; }
+         _configService.Update(c => c.SwitchScanSelectPauseMs = clamped);
+     }
+
+     partial void OnSwitchScanCyclesBeforePauseChanged(int value)
+     {
+         if (_isLoading) return;
+         var clamped = Math.Clamp(value, 0, 20);
+         if (clamped != value) { SwitchScanCyclesBeforePause = clamped; return; }
+         _configService.Update(c => c.SwitchScanCyclesBeforePause = clamped);
+     }
+
+     partial void OnSwitchScanWrapEnabledChanged(bool value)
+     {
+         if (_isLoading) return;
+         _configService.Update(c => c.SwitchScanWrapEnabled = value);
+     }
+
+     partial void OnSwitchScanNextKeyChanged(string value)
+     {
+         if (_isLoading) return;
+         _configService.Update(c => c.SwitchScanNextKey = value?.Trim() ?? "");
+     }
+
+     partial void OnSwitchScanSelectKeyChanged(string value)
+     {
+         if (_isLoading) return;
+         _configService.Update(c => c.SwitchScanSelectKey = value?.Trim() ?? "");
+     }
+
+     partial void OnSwitchScanSecondarySelectKeyChanged(string value)
+     {
+         if (_isLoading) return;
+         _configService.Update(c => c.SwitchScanSecondarySelectKey = value?.Trim() ?? "");
+     }
+
+     partial void OnSwitchScanPreviousKeyChanged(string value)
+     {
+         if (_isLoading) return;
+         _configService.Update(c => c.SwitchScanPreviousKey = value?.Trim() ?? "");
+     }
+
+     partial void OnSwitchScanPauseKeyChanged(string value)
+     {
+         if (_isLoading) return;
+         _configService.Update(c => c.SwitchScanPauseKey = value?.Trim() ?? "");
+     }
+
+     partial void OnSwitchScanIncludeSuggestionsChanged(bool value)
+     {
+         if (_isLoading) return;
+         _configService.Update(c => c.SwitchScanIncludeSuggestions = value);
+     }
+
+     partial void OnSwitchScanSuggestionPriorityChanged(SwitchScanSuggestionPriority value)
+     {
+         if (_isLoading) return;
+         _configService.Update(c => c.SwitchScanSuggestionPriority = value);
+     }
+
+     partial void OnSwitchScanAnnounceModeChanged(SwitchScanAnnounceMode value)
+     {
+         if (_isLoading) return;
+         _configService.Update(c => c.SwitchScanAnnounceMode = value);
+     }
+
     // ── T-8.5: 앱별 레이아웃 프로필 ────────────────────────────────────────
 
     [RelayCommand]
@@ -479,6 +637,48 @@ public partial class SettingsViewModel : ObservableObject
     }
 
     internal void OnSettingsWindowClosed() => _settingsWindow = null;
+
+    /// <summary>
+    /// [접근성] 스위치 스캔 상세 설정 창을 엽니다.
+    /// 사용자가 본 설정 창을 복잡하게 보지 않도록, 스위치 관련 세부 옵션은 별도 창에서 관리합니다.
+    /// </summary>
+    [RelayCommand]
+    private void OpenSwitchScanSettings()
+    {
+        if (_switchScanSettingsWindow is { } existing)
+        {
+            existing.Activate();
+            return;
+        }
+
+        _switchScanSettingsWindow = new AltKey.Views.SwitchScanSettingsWindow(this)
+        {
+            Owner = _settingsWindow ?? WpfApp.Current.MainWindow
+        };
+        _switchScanSettingsWindow.Closed += (_, _) => _switchScanSettingsWindow = null;
+        _switchScanSettingsWindow.Show();
+    }
+
+    /// <summary>
+    /// [접근성] 포커스 가시화(탭 탐색) 상세 설정 창을 엽니다.
+    /// 본 설정 창에서는 ON/OFF만 두고, 세부 항목은 별도 창에서 관리합니다.
+    /// </summary>
+    [RelayCommand]
+    private void OpenFocusA11ySettings()
+    {
+        if (_focusA11ySettingsWindow is { } existing)
+        {
+            existing.Activate();
+            return;
+        }
+
+        _focusA11ySettingsWindow = new AltKey.Views.FocusA11ySettingsWindow(this)
+        {
+            Owner = _settingsWindow ?? WpfApp.Current.MainWindow
+        };
+        _focusA11ySettingsWindow.Closed += (_, _) => _focusA11ySettingsWindow = null;
+        _focusA11ySettingsWindow.Show();
+    }
 
     // ── T-9.4: 레이아웃 편집기 열기 ──────────────────────────────────────────
 

@@ -92,6 +92,15 @@ public class AppConfig
 
     // [접근성] 방향키나 탭 키를 이용해 키보드 버튼 사이를 이동하며 조작할 수 있는 기능입니다.
     public bool KeyboardA11yNavigationEnabled { get; set; } = false;
+    
+    // [접근성] 탭 탐색 시 순회할 컨트롤 범위입니다. 기본값은 키보드 본체 키만 탐색합니다.
+    public KeyboardA11yNavigationScope KeyboardA11yNavigationScope { get; set; } = KeyboardA11yNavigationScope.KeysOnly;
+    
+    // [접근성] 탭 탐색 모드에서 빠져나올 때 사용할 키입니다. 기본값은 Esc(VK_ESCAPE)입니다.
+    public string KeyboardA11yExitKey { get; set; } = "VK_ESCAPE";
+    
+    // [접근성] 탭 탐색으로 포커스가 이동할 때 현재 위치를 LiveRegion으로 공지할지 여부입니다.
+    public bool KeyboardA11yAnnounceFocus { get; set; } = false;
 
     // ── L2/L3 접근성 설정 ────────────────────────────────────────────────
 
@@ -115,4 +124,43 @@ public class AppConfig
 
     // [접근성][L3] true면 2스위치 모드(다음/선택 분리), false면 1스위치 모드(Enter/Space로 선택)입니다.
     public bool SwitchScanTwoSwitch { get; set; } = false;
+
+    // [접근성][L3] 스위치 스캔 방식입니다. Linear(순차), RowColumn(행→키), Manual(수동) 중 하나를 사용합니다.
+    public SwitchScanMode SwitchScanMode { get; set; } = SwitchScanMode.Linear;
+
+    // [접근성][L3] 스캔 시작 후 첫 이동 전 대기 시간(밀리초)입니다.
+    public int SwitchScanInitialDelayMs { get; set; } = 800;
+
+    // [접근성][L3] 선택 직후 다음 스캔 재개 전 잠시 멈추는 시간(밀리초)입니다.
+    public int SwitchScanSelectPauseMs { get; set; } = 500;
+
+    // [접근성][L3] 스캔이 전체 대상을 몇 바퀴 돈 뒤 멈출지 설정합니다. 0이면 무제한입니다.
+    public int SwitchScanCyclesBeforePause { get; set; } = 0;
+
+    // [접근성][L3] 마지막 대상 다음에 다시 처음으로 돌아갈지 여부입니다.
+    public bool SwitchScanWrapEnabled { get; set; } = true;
+
+    // [접근성][L3] 외부 스위치 장치가 "다음" 동작에서 실제로 보내는 키 이름입니다. (예: VK_TAB)
+    public string SwitchScanNextKey { get; set; } = "VK_TAB";
+
+    // [접근성][L3] 외부 스위치 장치가 "선택" 동작에서 실제로 보내는 키 이름입니다. (예: VK_RETURN)
+    public string SwitchScanSelectKey { get; set; } = "VK_RETURN";
+
+    // [접근성][L3] 외부 스위치 장치가 "보조 선택" 동작에서 실제로 보내는 키 이름입니다. (예: VK_SPACE)
+    public string SwitchScanSecondarySelectKey { get; set; } = "VK_SPACE";
+
+    // [접근성][L3] 외부 스위치 장치가 "이전" 동작에서 실제로 보내는 키 이름입니다. 비우면 사용하지 않습니다.
+    public string SwitchScanPreviousKey { get; set; } = "";
+
+    // [접근성][L3] 외부 스위치 장치가 "일시정지/재개" 동작에서 실제로 보내는 키 이름입니다. 비우면 사용하지 않습니다.
+    public string SwitchScanPauseKey { get; set; } = "";
+
+    // [접근성][L3] 스캔 대상에 자동완성 제안/현재 단어 슬롯을 포함할지 여부입니다.
+    public bool SwitchScanIncludeSuggestions { get; set; } = true;
+
+    // [접근성][L3] 제안 바 스캔 순서 우선순위입니다. BeforeKeyboard면 제안을 먼저 훑습니다.
+    public SwitchScanSuggestionPriority SwitchScanSuggestionPriority { get; set; } = SwitchScanSuggestionPriority.BeforeKeyboard;
+
+    // [접근성][L3] 스위치 스캔 공지 정책입니다. 기본값은 선택 시점만 공지입니다.
+    public SwitchScanAnnounceMode SwitchScanAnnounceMode { get; set; } = SwitchScanAnnounceMode.SelectionOnly;
 }

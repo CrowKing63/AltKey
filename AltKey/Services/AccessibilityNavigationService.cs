@@ -64,25 +64,26 @@ public sealed class AccessibilityNavigationService : IDisposable
         // L3: 스위치 스캔 입력 모드가 우선합니다.
         if (_configService.Current.SwitchScanEnabled)
         {
-            if (vk is (uint)VirtualKeyCode.VK_TAB
-                or (uint)VirtualKeyCode.VK_RETURN
-                or (uint)VirtualKeyCode.VK_SPACE)
+            if (TryMapSwitchScanAction(vk, out var action))
             {
                 if (isKeyDown && !wasDown)
                 {
                     WpfApp.Current.Dispatcher.Invoke(() =>
                     {
-                        bool twoSwitch = _configService.Current.SwitchScanTwoSwitch;
-                        if (vk == (uint)VirtualKeyCode.VK_TAB)
+                        switch (action)
                         {
-                            // 2스위치 모드에서 Tab은 "다음" 역할
-                            if (twoSwitch)
+                            case SwitchScanAction.Next:
                                 _mainViewModel.Keyboard.AdvanceScan();
-                        }
-                        else
-                        {
-                            // Enter/Space는 "선택" 역할
-                            _mainViewModel.Keyboard.SelectScanTarget();
+                                break;
+                            case SwitchScanAction.Previous:
+                                _mainViewModel.Keyboard.ReverseScan();
+                                break;
+                            case SwitchScanAction.Select:
+                                _mainViewModel.Keyboard.SelectScanTarget();
+                                break;
+                            case SwitchScanAction.Pause:
+                                _mainViewModel.Keyboard.ToggleScanPaused();
+                                break;
                         }
                     });
                 }
@@ -94,6 +95,12 @@ public sealed class AccessibilityNavigationService : IDisposable
 
         if (!_configService.Current.KeyboardA11yNavigationEnabled)
             return Win32.CallNextHookEx(_hookHandle, nCode, wParam, lParam);
+
+        if (IsExitKey(vk) && isKeyDown && !wasDown)
+        {
+            WpfApp.Current.Dispatcher.Invoke(() => _mainViewModel.Keyboard.ClearA11yFocus());
+            return (IntPtr)1;
+        }
 
         if (vk is (uint)VirtualKeyCode.VK_TAB
             or (uint)VirtualKeyCode.VK_RETURN
@@ -135,6 +142,60 @@ public sealed class AccessibilityNavigationService : IDisposable
         return _pressedKeys.Contains((uint)VirtualKeyCode.VK_SHIFT)
             || _pressedKeys.Contains((uint)VirtualKeyCode.VK_LSHIFT)
             || _pressedKeys.Contains((uint)VirtualKeyCode.VK_RSHIFT);
+    }
+
+    private enum SwitchScanAction
+    {
+        Next,
+        Previous,
+        Select,
+        Pause,
+    }
+
+    private bool TryMapSwitchScanAction(uint vk, out SwitchScanAction action)
+    {
+        action = default;
+        var c = _configService.Current;
+
+        if (MatchesConfiguredKey(c.SwitchScanNextKey, vk))
+        {
+            action = SwitchScanAction.Next;
+            return true;
+        }
+        if (MatchesConfiguredKey(c.SwitchScanSelectKey, vk) || MatchesConfiguredKey(c.SwitchScanSecondarySelectKey, vk))
+        {
+            action = SwitchScanAction.Select;
+            return true;
+        }
+        if (MatchesConfiguredKey(c.SwitchScanPreviousKey, vk))
+        {
+            action = SwitchScanAction.Previous;
+            return true;
+        }
+        if (MatchesConfiguredKey(c.SwitchScanPauseKey, vk))
+        {
+            action = SwitchScanAction.Pause;
+            return true;
+        }
+        return false;
+    }
+
+    // [접근성] 설정에 입력된 VK 문자열을 안전하게 해석합니다. 빈 값/잘못된 값은 false로 처리해 앱 안정성을 유지합니다.
+    private static bool MatchesConfiguredKey(string keyName, uint vk)
+    {
+        if (string.IsNullOrWhiteSpace(keyName))
+            return false;
+        if (!Enum.TryParse<VirtualKeyCode>(keyName.Trim(), ignoreCase: true, out var parsed))
+            return false;
+        return (uint)parsed == vk;
+    }
+
+    private bool IsExitKey(uint vk)
+    {
+        string configured = _configService.Current.KeyboardA11yExitKey;
+        if (!Enum.TryParse<VirtualKeyCode>(configured, ignoreCase: true, out var exitVk))
+            exitVk = VirtualKeyCode.VK_ESCAPE;
+        return vk == (uint)exitVk;
     }
 
     public void Dispose()

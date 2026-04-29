@@ -248,13 +248,26 @@ public partial class KeyboardViewModel : ObservableObject
     private readonly ConfigService _configService;
     private readonly LiveRegionService _liveRegion;
     private readonly AccessibilityService _accessibilityService;
+    private readonly SuggestionBarViewModel _suggestionBar;
     private readonly List<KeySlotVm> _a11yNavigableSlots = [];
     private int _a11yFocusIndex = -1;
+    private A11yFocusOwner _a11yFocusOwner = A11yFocusOwner.None;
+
+    // [접근성] 현재 포커스 하이라이트를 어떤 입력 모드가 소유하는지 외부에서 확인할 수 있게 노출합니다.
+    public A11yFocusOwner A11yFocusOwner
+    {
+        get => _a11yFocusOwner;
+        private set => SetProperty(ref _a11yFocusOwner, value);
+    }
 
     private readonly DispatcherTimer _capsLockTimer;
 
     // L3: 스위치 스캔 입력 모드 타이머
     private DispatcherTimer? _scanTimer;
+    private readonly List<ScanTargetVm> _scanTargets = [];
+    private int _scanFocusIndex = -1;
+    private bool _isRowSelectionPhase = true;
+    private int _selectedRowIndex = -1;
 
     [ObservableProperty]
     private ObservableCollection<KeyColumnVm> columns = [];
@@ -336,7 +349,7 @@ public partial class KeyboardViewModel : ObservableObject
 
     public KeyboardViewModel(InputService inputService, SoundService soundService,
         AutoCompleteService autoComplete, ConfigService configService, LiveRegionService liveRegion,
-        AccessibilityService accessibilityService)
+        AccessibilityService accessibilityService, SuggestionBarViewModel suggestionBar)
     {
         _inputService = inputService;
         _soundService = soundService;
@@ -344,9 +357,11 @@ public partial class KeyboardViewModel : ObservableObject
         _configService = configService;
         _liveRegion = liveRegion;
         _accessibilityService = accessibilityService;
+        _suggestionBar = suggestionBar;
         _inputService.StickyStateChanged += UpdateModifierState;
         _inputService.ElevatedAppDetected += OnElevatedAppDetected;
         _configService.ConfigChanged += OnConfigChanged;
+        _suggestionBar.ScanTargetsChanged += OnSuggestionScanTargetsChanged;
 
         _autoComplete.SubmodeChanged += OnSubmodeChanged;
 
@@ -473,6 +488,11 @@ public partial class KeyboardViewModel : ObservableObject
         if (!_configService.Current.KeyboardA11yNavigationEnabled)
             return;
 
+        // 스캔 하이라이트와 탭 탐색 하이라이트가 동시에 남지 않도록 소유자를 전환합니다.
+        if (A11yFocusOwner == A11yFocusOwner.SwitchScan)
+            StopScan();
+        A11yFocusOwner = A11yFocusOwner.KeyboardNavigation;
+
         RebuildA11yNavigableSlots();
         if (_a11yNavigableSlots.Count == 0)
             return;
@@ -492,6 +512,10 @@ public partial class KeyboardViewModel : ObservableObject
         }
 
         SetA11yFocus(nextIndex);
+
+        // 사용자가 탭으로 직접 이동시키는 경우에만 선택적으로 현재 위치를 공지합니다.
+        if (_configService.Current.KeyboardA11yAnnounceFocus)
+            AnnounceFocusedTarget();
     }
 
     public void ActivateA11yFocused()
@@ -511,6 +535,14 @@ public partial class KeyboardViewModel : ObservableObject
 
         var focused = _a11yNavigableSlots[_a11yFocusIndex];
         KeyPressed(focused.Slot);
+    }
+
+    /// <summary>
+    /// 접근성 탐색 포커스를 즉시 해제합니다. (Esc 탈출키 처리용)
+    /// </summary>
+    public void ClearA11yFocus()
+    {
+        ResetA11yNavigationState();
     }
 
     private void RebuildA11yNavigableSlots()
@@ -546,6 +578,7 @@ public partial class KeyboardViewModel : ObservableObject
 
         _a11yNavigableSlots.Clear();
         _a11yFocusIndex = -1;
+        A11yFocusOwner = A11yFocusOwner.None;
     }
 
     private void OnConfigChanged(string? propertyName)
@@ -559,7 +592,14 @@ public partial class KeyboardViewModel : ObservableObject
         // L3: 스위치 스캔 설정 변경 시 타이머 시작/중지
         if (propertyName is null
             or nameof(AppConfig.SwitchScanEnabled)
-            or nameof(AppConfig.SwitchScanIntervalMs))
+            or nameof(AppConfig.SwitchScanIntervalMs)
+            or nameof(AppConfig.SwitchScanMode)
+            or nameof(AppConfig.SwitchScanInitialDelayMs)
+            or nameof(AppConfig.SwitchScanSelectPauseMs)
+            or nameof(AppConfig.SwitchScanCyclesBeforePause)
+            or nameof(AppConfig.SwitchScanWrapEnabled)
+            or nameof(AppConfig.SwitchScanIncludeSuggestions)
+            or nameof(AppConfig.SwitchScanSuggestionPriority))
         {
             if (_configService.Current.SwitchScanEnabled)
                 StartScan();
@@ -576,18 +616,22 @@ public partial class KeyboardViewModel : ObservableObject
     public void StartScan()
     {
         StopScan();
-        RebuildA11yNavigableSlots();
-        if (_a11yNavigableSlots.Count == 0)
+        A11yFocusOwner = A11yFocusOwner.SwitchScan;
+        RebuildScanTargets();
+        if (_scanTargets.Count == 0)
             return;
 
         int interval = Math.Clamp(_configService.Current.SwitchScanIntervalMs, 200, 3000);
         _scanTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(interval) };
         _scanTimer.Tick += ScanTick;
-        _scanTimer.Start();
+        if (_configService.Current.SwitchScanMode != SwitchScanMode.Manual)
+            _scanTimer.Start();
+        _isRowSelectionPhase = true;
+        _selectedRowIndex = -1;
 
         // 첫 번째 키부터 시작
-        SetA11yFocus(0);
-        _liveRegion.Announce(_a11yNavigableSlots[0].AccessibleName);
+        SetScanFocus(0);
+        AnnounceScanMove(_scanTargets[0].AccessibleName);
     }
 
     /// <summary>
@@ -600,20 +644,20 @@ public partial class KeyboardViewModel : ObservableObject
 
         foreach (var vm in EnumerateSlotVms())
             vm.IsA11yFocused = false;
+        foreach (var vm in _suggestionBar.ScanTargets)
+            vm.SetScanFocused(false);
+        _scanTargets.Clear();
+        _scanFocusIndex = -1;
         _a11yFocusIndex = -1;
+        if (A11yFocusOwner == A11yFocusOwner.SwitchScan)
+            A11yFocusOwner = A11yFocusOwner.None;
     }
 
     private void ScanTick(object? sender, EventArgs e)
     {
-        if (_a11yNavigableSlots.Count == 0)
+        if (_scanTargets.Count == 0)
             return;
-
-        int next = (_a11yFocusIndex + 1) % _a11yNavigableSlots.Count;
-        SetA11yFocus(next);
-
-        // 현재 스캔 대상을 LiveRegion으로 공지 (스팸 방지를 위해 짧은 라벨만)
-        var current = _a11yNavigableSlots[next];
-        _liveRegion.Announce(current.AccessibleName);
+        AdvanceScan();
     }
 
     /// <summary>
@@ -621,10 +665,33 @@ public partial class KeyboardViewModel : ObservableObject
     /// </summary>
     public void SelectScanTarget()
     {
-        if (_a11yFocusIndex >= 0 && _a11yFocusIndex < _a11yNavigableSlots.Count)
+        if (_scanFocusIndex >= 0 && _scanFocusIndex < _scanTargets.Count)
         {
-            var target = _a11yNavigableSlots[_a11yFocusIndex];
-            KeyPressed(target.Slot);
+            var target = _scanTargets[_scanFocusIndex];
+
+            if (_configService.Current.SwitchScanMode == SwitchScanMode.RowColumn && _isRowSelectionPhase)
+            {
+                _selectedRowIndex = _scanFocusIndex;
+                _isRowSelectionPhase = false;
+                RebuildScanTargets();
+                if (_scanTargets.Count > 0)
+                {
+                    SetScanFocus(0);
+                    AnnounceScanMove(_scanTargets[0].AccessibleName);
+                }
+                return;
+            }
+
+            AnnounceScanSelection(target.AccessibleName);
+            target.Activate();
+            if (_configService.Current.SwitchScanMode == SwitchScanMode.RowColumn)
+            {
+                _isRowSelectionPhase = true;
+                _selectedRowIndex = -1;
+                RebuildScanTargets();
+                if (_scanTargets.Count > 0)
+                    SetScanFocus(0);
+            }
         }
     }
 
@@ -633,14 +700,182 @@ public partial class KeyboardViewModel : ObservableObject
     /// </summary>
     public void AdvanceScan()
     {
-        if (_a11yNavigableSlots.Count == 0)
+        if (_scanTargets.Count == 0)
+            return;
+        int next = GetNextScanIndex(reverse: false);
+        SetScanFocus(next);
+        var current = _scanTargets[next];
+        AnnounceScanMove(current.AccessibleName);
+    }
+
+    /// <summary>
+    /// 스캔 대상을 반대 방향으로 이동합니다.
+    /// </summary>
+    public void ReverseScan()
+    {
+        if (_scanTargets.Count == 0)
+            return;
+        int next = GetNextScanIndex(reverse: true);
+        SetScanFocus(next);
+        var current = _scanTargets[next];
+        AnnounceScanMove(current.AccessibleName);
+    }
+
+    /// <summary>
+    /// 스캔 일시정지/재개를 전환합니다.
+    /// </summary>
+    public void ToggleScanPaused()
+    {
+        if (_scanTimer is null) return;
+        if (_scanTimer.IsEnabled) _scanTimer.Stop();
+        else if (_configService.Current.SwitchScanMode != SwitchScanMode.Manual) _scanTimer.Start();
+    }
+
+    private int GetNextScanIndex(bool reverse)
+    {
+        int count = _scanTargets.Count;
+        if (count == 0) return -1;
+
+        int current = _scanFocusIndex;
+        if (current < 0 || current >= count)
+            current = reverse ? count - 1 : 0;
+        else
+            current = reverse ? current - 1 : current + 1;
+
+        bool wrap = _configService.Current.SwitchScanWrapEnabled;
+        if (wrap)
+            return (current + count) % count;
+
+        return Math.Clamp(current, 0, count - 1);
+    }
+
+    private void SetScanFocus(int index)
+    {
+        if (_scanFocusIndex >= 0 && _scanFocusIndex < _scanTargets.Count)
+            _scanTargets[_scanFocusIndex].SetScanFocused(false);
+
+        _scanFocusIndex = index;
+        _a11yFocusIndex = -1;
+
+        if (_scanFocusIndex >= 0 && _scanFocusIndex < _scanTargets.Count)
+            _scanTargets[_scanFocusIndex].SetScanFocused(true);
+    }
+
+    private void RebuildScanTargets()
+    {
+        _scanTargets.Clear();
+        var config = _configService.Current;
+        var keyboardTargets = BuildKeyboardScanTargets(config.SwitchScanMode);
+
+        var suggestionTargets = config.SwitchScanIncludeSuggestions
+            ? _suggestionBar.ScanTargets.ToList()
+            : [];
+
+        if (config.SwitchScanSuggestionPriority == SwitchScanSuggestionPriority.BeforeKeyboard)
+        {
+            _scanTargets.AddRange(suggestionTargets);
+            _scanTargets.AddRange(keyboardTargets);
+        }
+        else
+        {
+            _scanTargets.AddRange(keyboardTargets);
+            _scanTargets.AddRange(suggestionTargets);
+        }
+    }
+
+    private List<ScanTargetVm> BuildKeyboardScanTargets(SwitchScanMode mode)
+    {
+        if (mode == SwitchScanMode.RowColumn)
+            return _isRowSelectionPhase ? BuildRowTargets() : BuildKeyTargetsInSelectedRow();
+
+        return EnumerateSlotVms()
+            .Select(vm => new ScanTargetVm
+            {
+                DisplayText = vm.DisplayLabel,
+                Kind = "KeyboardKey",
+                AccessibleName = vm.AccessibleName,
+                Activate = () => KeyPressed(vm.Slot),
+                SetScanFocused = isFocused => vm.IsA11yFocused = isFocused
+            }).ToList();
+    }
+
+    private List<ScanTargetVm> BuildRowTargets()
+    {
+        var targets = new List<ScanTargetVm>();
+        int rowIndex = 0;
+        foreach (var row in Columns.SelectMany(c => c.Rows))
+        {
+            int capturedRow = rowIndex;
+            string label = $"행 {capturedRow + 1}";
+            targets.Add(new ScanTargetVm
+            {
+                DisplayText = label,
+                Kind = "KeyboardRow",
+                AccessibleName = label,
+                Activate = () => { },
+                SetScanFocused = isFocused =>
+                {
+                    foreach (var key in row.Keys)
+                        key.IsA11yFocused = isFocused;
+                }
+            });
+            rowIndex++;
+        }
+        return targets;
+    }
+
+    private List<ScanTargetVm> BuildKeyTargetsInSelectedRow()
+    {
+        var rows = Columns.SelectMany(c => c.Rows).ToList();
+        if (_selectedRowIndex < 0 || _selectedRowIndex >= rows.Count)
+            return [];
+
+        var row = rows[_selectedRowIndex];
+        return row.Keys.Select(vm => new ScanTargetVm
+        {
+            DisplayText = vm.DisplayLabel,
+            Kind = "KeyboardKey",
+            AccessibleName = vm.AccessibleName,
+            Activate = () => KeyPressed(vm.Slot),
+            SetScanFocused = isFocused => vm.IsA11yFocused = isFocused
+        }).ToList();
+    }
+
+    private void OnSuggestionScanTargetsChanged()
+    {
+        if (A11yFocusOwner != A11yFocusOwner.SwitchScan)
             return;
 
-        int next = (_a11yFocusIndex + 1) % _a11yNavigableSlots.Count;
-        SetA11yFocus(next);
+        RebuildScanTargets();
+        if (_scanTargets.Count == 0)
+        {
+            _scanFocusIndex = -1;
+            return;
+        }
 
-        var current = _a11yNavigableSlots[next];
-        _liveRegion.Announce(current.AccessibleName);
+        if (_scanFocusIndex >= _scanTargets.Count || _scanFocusIndex < 0)
+            SetScanFocus(0);
+    }
+
+    private void AnnounceFocusedTarget()
+    {
+        if (_a11yFocusIndex < 0 || _a11yFocusIndex >= _a11yNavigableSlots.Count)
+            return;
+        _liveRegion.Announce(_a11yNavigableSlots[_a11yFocusIndex].AccessibleName);
+    }
+
+    private void AnnounceScanMove(string name)
+    {
+        if (_configService.Current.SwitchScanAnnounceMode != SwitchScanAnnounceMode.EveryMove)
+            return;
+        _liveRegion.Announce(name);
+    }
+
+    private void AnnounceScanSelection(string name)
+    {
+        if (_configService.Current.SwitchScanAnnounceMode == SwitchScanAnnounceMode.Off)
+            return;
+        _liveRegion.Announce($"선택: {name}");
     }
 
     private static bool IsSeparatorKey(KeySlot slot) => slot.Action switch

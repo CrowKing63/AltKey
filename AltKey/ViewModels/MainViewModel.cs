@@ -174,6 +174,11 @@ public partial class MainViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// [접근성] 현재 포커스 하이라이트를 탭 탐색/스위치 스캔 중 누가 소유하는지 표시용 상태입니다.
+    /// </summary>
+    public A11yFocusOwner A11yFocusOwner => Keyboard.A11yFocusOwner;
+
     /// L2: 애니메이션 최소화 모드 (KeyButton 바인딩용)
     public bool ReducedMotionEnabled
     {
@@ -227,6 +232,11 @@ public partial class MainViewModel : ObservableObject
 
         // 체류 클릭 설정 변경 시 UI에 알림
         _configService.ConfigChanged += OnConfigChanged;
+        Keyboard.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(KeyboardViewModel.A11yFocusOwner))
+                OnPropertyChanged(nameof(A11yFocusOwner));
+        };
 
         // 레이아웃 변경 시 AvailableLayouts 새로고침
         _layoutService.LayoutsChanged += OnLayoutsChanged;

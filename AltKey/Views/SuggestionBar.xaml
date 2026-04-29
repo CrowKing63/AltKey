@@ -27,6 +27,12 @@
                     </DataTemplate>
                 </Setter.Value>
             </Setter>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsScanFocused}" Value="True">
+                    <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                    <Setter Property="BorderThickness" Value="2"/>
+                </DataTrigger>
+            </Style.Triggers>
         </Style>
     </UserControl.Resources>
     <Border Background="{DynamicResource PanelBg}" Padding="4,2" ClipToBounds="True">
@@ -34,7 +40,6 @@
 
             <!-- 첫 번째 슬롯: 현재 조합 중인 단어 -->
             <Button Content="{Binding CurrentWord}"
-                    Style="{StaticResource SuggestionTextButtonStyle}"
                     Visibility="{Binding HasCurrentWord, Converter={StaticResource BoolToVis}}"
                     Command="{Binding CommitCurrentWordCommand}"
                     Background="{DynamicResource AccentBrush}"
@@ -43,6 +48,16 @@
                     ToolTip="좌클릭: 저장 · 우클릭: 취소"
                     ContextMenu="{x:Null}"
                     PreviewMouseRightButtonUp="CurrentWordSlot_RightClick">
+                <Button.Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource SuggestionTextButtonStyle}">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding CurrentWordScanFocused}" Value="True">
+                                <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                                <Setter Property="BorderThickness" Value="2"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
                 <Button.InputBindings>
                     <MouseBinding MouseAction="RightClick" Command="{Binding CancelCurrentWordCommand}"/>
                 </Button.InputBindings>
@@ -53,7 +68,7 @@
                        Margin="2,2"/>
 
             <!-- 기존 제안 목록 -->
-            <ItemsControl ItemsSource="{Binding Suggestions}">
+            <ItemsControl ItemsSource="{Binding SuggestionScanTargets}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
                         <StackPanel Orientation="Horizontal"/>
@@ -61,20 +76,29 @@
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Button Content="{Binding}"
-                                Style="{StaticResource SuggestionTextButtonStyle}"
+                        <Button Content="{Binding DisplayText}"
                                 Command="{Binding DataContext.AcceptSuggestionCommand,
                                     RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                CommandParameter="{Binding}"
+                                CommandParameter="{Binding DisplayText}"
                                 Background="Transparent"
                                 Foreground="{DynamicResource PanelFg}"
                                 ToolTip="좌클릭: 입력 · 우클릭: 관리">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource SuggestionTextButtonStyle}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Path=IsScanFocused}" Value="True">
+                                            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                                            <Setter Property="BorderThickness" Value="2"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
                             <Button.ContextMenu>
                                 <ContextMenu>
                                     <MenuItem Header="사용자 사전에서 제거"
                                               Command="{Binding DataContext.RemoveSuggestionCommand,
                                                   Source={x:Reference SuggestionRoot}}"
-                                              CommandParameter="{Binding}"/>
+                                              CommandParameter="{Binding DisplayText}"/>
                                 </ContextMenu>
                             </Button.ContextMenu>
                         </Button>
