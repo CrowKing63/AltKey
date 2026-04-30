@@ -1,4 +1,4 @@
-<Window x:Class="AltKey.Views.SettingsWindow"
+﻿<Window x:Class="AltKey.Views.SettingsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:AltKey.ViewModels"
@@ -8,558 +8,352 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         mc:Ignorable="d"
         Title="설정"
-        Width="1200" Height="900"
-        MinWidth="1000" MinHeight="720"
+        Width="694" Height="780"
+        MinWidth="600" MinHeight="640"
         WindowStartupLocation="CenterOwner"
         Background="#FF1E1E2E"
         d:DataContext="{d:DesignInstance vm:SettingsViewModel}">
     <Window.Resources>
         <conv:BoolToVisibilityConverter x:Key="BoolToVis"/>
         <conv:InverseBoolToVisibilityConverter x:Key="InvBoolToVis"/>
+        <Style x:Key="SectionTitleStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource SettingsFgSub}"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Margin" Value="0,0,0,8"/>
+        </Style>
     </Window.Resources>
 
-    <Border Background="{DynamicResource SettingsBg}"
-            CornerRadius="12"
-            Padding="24,20">
+    <Border Background="{DynamicResource SettingsBg}" CornerRadius="12" Padding="24,20">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <!-- 헤더 -->
             <DockPanel Grid.Row="0" Margin="0,0,0,12">
                 <StackPanel Orientation="Vertical">
-                    <TextBlock Text="설정"
-                               FontSize="16" FontWeight="SemiBold"
-                               Foreground="{DynamicResource SettingsFg}"/>
+                    <TextBlock Text="설정" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource SettingsFg}"/>
                     <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                        <TextBlock Text="{Binding CurrentVersion, StringFormat='버전 {0}'}"
-                                   FontSize="11"
-                                   Foreground="{DynamicResource SettingsFgSub}"/>
-                        <TextBlock Text=" | "
-                                   FontSize="11"
-                                   Foreground="{DynamicResource SettingsFgSub}"
-                                   Margin="0,4"/>
+                        <TextBlock Text="{Binding CurrentVersion, StringFormat=버전 {0}}" FontSize="11" Foreground="{DynamicResource SettingsFgSub}"/>
+                        <TextBlock Text=" | " FontSize="11" Foreground="{DynamicResource SettingsFgSub}" Margin="0,4"/>
                         <TextBlock>
                             <Hyperlink NavigateUri="https://github.com/CrowKing63/AltKey/wiki" RequestNavigate="Hyperlink_RequestNavigate">
-                                <TextBlock Text="매뉴얼"
-                                           Foreground="{DynamicResource SettingsFg}"
-                                           TextDecorations="Underline"/>
+                                <TextBlock Text="사용자 가이드" Foreground="{DynamicResource SettingsFg}" TextDecorations="Underline"/>
                             </Hyperlink>
                         </TextBlock>
                     </StackPanel>
                 </StackPanel>
             </DockPanel>
 
-            <!-- 설정 항목 (3단 레이아웃) -->
-            <ScrollViewer Grid.Row="1"
-                          VerticalScrollBarVisibility="Auto"
-                          HorizontalScrollBarVisibility="Disabled">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="16"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="16"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
+            <!-- 접근성 우선: 탭 기반 정보 구조로 목적별 탐색 비용을 줄인다. -->
+            <TabControl x:Name="SettingsTabControl"
+                        Grid.Row="1"
+                        SelectionChanged="SettingsTabControl_SelectionChanged"
+                        KeyboardNavigation.TabNavigation="Continue"
+                        AutomationProperties.Name="설정 카테고리 탭"
+                        AutomationProperties.HelpText="외형, 동작, 보조기능, 고급 설정 탭을 선택할 수 있습니다.">
 
-                    <!-- ── 왼쪽 컬럼: 기본 설정 ─────────────────────────────── -->
-                    <StackPanel Grid.Column="0">
-
-                         <!-- 테마 -->
-                         <TextBlock Text="테마" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,6"/>
-                         <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
-                             <RadioButton Content="시스템 따라" Foreground="{DynamicResource SettingsFg}"
-                                          IsChecked="{Binding ThemeIsSystem}" Margin="0,0,12,0"/>
-                             <RadioButton Content="라이트"     Foreground="{DynamicResource SettingsFg}"
-                                          IsChecked="{Binding ThemeIsLight}"  Margin="0,0,12,0"/>
-                             <RadioButton Content="다크"       Foreground="{DynamicResource SettingsFg}"
-                                          IsChecked="{Binding ThemeIsDark}" Margin="0,0,12,0"/>
-                             <RadioButton Content="고대비"    Foreground="{DynamicResource SettingsFg}"
-                                          IsChecked="{Binding ThemeIsHighContrast}"/>
-                         </StackPanel>
-
-                        <!-- 항상 위 -->
-                        <CheckBox Content="항상 위에 표시"
-                                  Foreground="{DynamicResource SettingsFg}"
-                                  IsChecked="{Binding AlwaysOnTop}"
-                                  Margin="0,0,0,16"/>
-
-                         <!-- 창 크기 (Scale %) -->
-                         <TextBlock Text="창 크기 (%)" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
-                         <ctrl:NumericAdjuster Value="{Binding WindowScale}"
-                                               Minimum="60" Maximum="200" Step="5" DecimalPlaces="0"
-                                               ButtonBackground="{DynamicResource SettingsHighlight}"
-                                               ButtonForeground="{DynamicResource SettingsFg}"
-                                               TextBoxBackground="{DynamicResource SettingsHighlight}"
-                                               TextBoxForeground="{DynamicResource SettingsFg}"
-                                               TextBoxBorderBrush="{DynamicResource SettingsBorder}"
-                                               Margin="0,0,0,16"/>
-
-                         <!-- 키 라벨 크기 (%) -->
-                         <TextBlock Text="키 라벨 크기 (%)" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
-                         <ctrl:NumericAdjuster Value="{Binding KeyFontScalePercent}"
-                                               Minimum="80" Maximum="220" Step="5" DecimalPlaces="0"
-                                               ButtonBackground="{DynamicResource SettingsHighlight}"
-                                               ButtonForeground="{DynamicResource SettingsFg}"
-                                               TextBoxBackground="{DynamicResource SettingsHighlight}"
-                                               TextBoxForeground="{DynamicResource SettingsFg}"
-                                               TextBoxBorderBrush="{DynamicResource SettingsBorder}"
-                                               Margin="0,0,0,16"/>
-
-                         <!-- 유휴 투명도 -->
-                        <TextBlock Text="유휴 투명도" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
-                        <ctrl:NumericAdjuster Value="{Binding OpacityIdle}"
-                                              Minimum="0.1" Maximum="1.0" Step="0.05" DecimalPlaces="2"
-                                              ButtonBackground="{DynamicResource SettingsHighlight}"
-                                              ButtonForeground="{DynamicResource SettingsFg}"
-                                              TextBoxBackground="{DynamicResource SettingsHighlight}"
-                                              TextBoxForeground="{DynamicResource SettingsFg}"
-                                              TextBoxBorderBrush="{DynamicResource SettingsBorder}"
-                                              Margin="0,0,0,16"/>
-
-                        <!-- 페이딩 딜레이 -->
-                        <TextBlock Text="페이딩 딜레이" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
-                        <ctrl:NumericAdjuster Value="{Binding FadeDelaySec}"
-                                              Minimum="1" Maximum="30" Step="1" DecimalPlaces="0"
-                                              ButtonBackground="{DynamicResource SettingsHighlight}"
-                                              ButtonForeground="{DynamicResource SettingsFg}"
-                                              TextBoxBackground="{DynamicResource SettingsHighlight}"
-                                              TextBoxForeground="{DynamicResource SettingsFg}"
-                                              TextBoxBorderBrush="{DynamicResource SettingsBorder}"
-                                              Margin="0,0,0,16"/>
-
-                        <!-- 레이아웃 -->
-                        <TextBlock Text="기본 레이아웃" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
-                        <ComboBox ItemsSource="{Binding AvailableLayouts}"
-                                  SelectedItem="{Binding SelectedLayout}"
-                                  Height="28" Margin="0,0,0,8"/>
-
-                        <!-- T-9.4: 레이아웃 편집기 -->
-                        <Button Content="레이아웃 편집기 열기"
-                                Command="{Binding OpenLayoutEditorCommand}"
-                                Height="30" Margin="0,0,0,8"
-                                Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}"
-                                BorderThickness="0" Cursor="Hand"/>
-
-                        <!-- ac-editor 03: 사용자 단어 편집기 -->
-                        <Button Content="사용자 단어 편집기 열기"
-                                Command="{Binding OpenUserDictionaryEditorCommand}"
-                                Height="30" Margin="0,0,0,16"
-                                Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}"
-                                BorderThickness="0" Cursor="Hand"
-                                ToolTip="자동완성에서 학습된 단어 목록을 확인·편집합니다"/>
-
-                        <!-- 사용자 설정 데이터 저장된 폴더 열기 -->
-                        <Button Content="사용자 설정 데이터 폴더 열기"
-                                Command="{Binding OpenUserSettingsFolderCommand}"
-                                Height="30" Margin="0,0,0,16"
-                                Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}"
-                                BorderThickness="0" Cursor="Hand"
-                                ToolTip="키보드 레이아웃, 사용자 단어, 앱별 레이아웃 등의 설정 데이터가 저장된 폴더를 엽니다"/>
-                    </StackPanel>
-
-                    <!-- ── 가운데 컬럼: 고급 설정 ─────────────────────────────── -->
-                    <StackPanel Grid.Column="2">
-
-                        <!-- 전역 단축키 -->
-                        <TextBlock Text="전역 단축키" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
-                        <TextBox Text="{Binding GlobalHotkey, UpdateSourceTrigger=LostFocus}"
-                                 Height="28" Margin="0,0,0,16"
-                                 Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}"
-                                 BorderBrush="{DynamicResource SettingsBorder}" Padding="6,4"/>
-
-                        <!-- 자동 실행 -->
-                        <CheckBox Content="Windows 시작 시 자동 실행"
-                                  Foreground="{DynamicResource SettingsFg}"
-                                  IsChecked="{Binding RunOnStartup}"
-                                  Margin="0,0,0,16"/>
-
-                        <!-- 키 클릭 사운드 -->
-                        <CheckBox Content="키 클릭 사운드"
-                                  Foreground="{DynamicResource SettingsFg}"
-                                  IsChecked="{Binding SoundEnabled}"
-                                  Margin="0,0,0,8"/>
-                        <StackPanel Orientation="Horizontal"
-                                    Margin="16,0,0,16"
-                                    Visibility="{Binding SoundEnabled, Converter={StaticResource BoolToVis}}">
-                            <TextBlock Text="사운드 파일:"
-                                       VerticalAlignment="Center"
-                                       Margin="0,0,6,0"
-                                       Foreground="{DynamicResource SettingsFgSub}"/>
-                            <TextBlock VerticalAlignment="Center" Opacity="0.7"
-                                       MaxWidth="140" Foreground="{DynamicResource SettingsFg}"
-                                       TextTrimming="CharacterEllipsis">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="Text" Value="{Binding SoundFilePath}"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding SoundFilePath}" Value="">
-                                                <Setter Property="Text" Value="기본 사운드 파일"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
-                            <Button Content="찾아보기"
-                                    Command="{Binding BrowseSoundFileCommand}"
-                                    Margin="6,0,0,0"
-                                    Padding="6,2"
-                                    Background="{DynamicResource SettingsHighlight}"
-                                    Foreground="{DynamicResource SettingsFg}"
-                                    BorderThickness="0"
-                                    Cursor="Hand"/>
-                            <Button Content="초기화"
-                                    Command="{Binding ResetSoundFileCommand}"
-                                    Margin="4,0,0,0"
-                                    Padding="6,2"
-                                    Background="{DynamicResource SettingsHighlight}"
-                                    Foreground="{DynamicResource SettingsFg}"
-                                    BorderThickness="0"
-                                    Cursor="Hand"/>
-                        </StackPanel>
-
-                        <Separator Background="{DynamicResource SettingsHighlight}" Margin="0,0,0,16"/>
-
-                        <!-- 업데이트 -->
-                        <TextBlock Text="업데이트"
-                                   Foreground="{DynamicResource SettingsFgSub}"
-                                   FontSize="12"
-                                   FontWeight="SemiBold"
-                                   Margin="0,0,0,8"/>
-
-                        <!-- 업데이트 상태 메시지 (확인 중이 아닐 때 표시) -->
-                        <Border Background="{DynamicResource SettingsHighlight}" CornerRadius="6" Padding="12,8" Margin="0,0,0,8"
-                                Visibility="{Binding IsCheckingUpdate, Converter={StaticResource InvBoolToVis}}">
-                            <StackPanel Orientation="Vertical">
-                                <TextBlock Text="{Binding UpdateStatusMessage}"
-                                           TextWrapping="Wrap" FontSize="12"
-                                           Foreground="{DynamicResource SettingsFg}"/>
-                                <TextBlock Text="{Binding LatestVersion, StringFormat='최신 버전: {0}'}"
-                                           FontSize="11"
-                                           Foreground="{DynamicResource SettingsFgSub}"
-                                           Margin="0,4,0,0"
-                                           Visibility="{Binding HasUpdateAvailable, Converter={StaticResource BoolToVis}}"/>
+                <TabItem Header="외형" AutomationProperties.Name="외형 설정 탭">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel Margin="8,10,8,10">
+                            <TextBlock Text="테마" Style="{StaticResource SectionTitleStyle}"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                                <RadioButton x:Name="AppearanceFirstFocusable"
+                                             Content="시스템"
+                                             Foreground="{DynamicResource SettingsFg}"
+                                             IsChecked="{Binding ThemeIsSystem}"
+                                             Margin="0,0,12,0"
+                                             KeyboardNavigation.TabIndex="10"
+                                             AutomationProperties.Name="테마 시스템"/>
+                                <RadioButton Content="라이트" Foreground="{DynamicResource SettingsFg}" IsChecked="{Binding ThemeIsLight}" Margin="0,0,12,0" KeyboardNavigation.TabIndex="11" AutomationProperties.Name="테마 라이트"/>
+                                <RadioButton Content="다크" Foreground="{DynamicResource SettingsFg}" IsChecked="{Binding ThemeIsDark}" Margin="0,0,12,0" KeyboardNavigation.TabIndex="12" AutomationProperties.Name="테마 다크"/>
+                                <RadioButton Content="고대비" Foreground="{DynamicResource SettingsFg}" IsChecked="{Binding ThemeIsHighContrast}" KeyboardNavigation.TabIndex="13" AutomationProperties.Name="테마 고대비"/>
                             </StackPanel>
-                        </Border>
 
-                        <!-- 다운로드 진행률 -->
-                        <StackPanel Orientation="Vertical"
-                                    Visibility="{Binding IsDownloading, Converter={StaticResource BoolToVis}}">
-                            <TextBlock Text="{Binding UpdateStatusMessage}"
-                                       FontSize="12" Foreground="{DynamicResource SettingsFg}"
-                                       Margin="0,0,0,4"/>
-                            <ProgressBar Height="20" Value="{Binding DownloadProgress}"
-                                         Minimum="0" Maximum="1" Margin="0,0,0,4"/>
-                            <TextBlock Text="{Binding DownloadProgress, StringFormat={}{0:P0}}"
-                                       FontSize="11" Foreground="{DynamicResource SettingsFgSub}"/>
+                            <CheckBox Content="항상 위에 표시"
+                                      Foreground="{DynamicResource SettingsFg}"
+                                      IsChecked="{Binding AlwaysOnTop}"
+                                      Margin="0,0,0,16"
+                                      KeyboardNavigation.TabIndex="14"
+                                      AutomationProperties.Name="항상 위에 표시"/>
+
+                            <TextBlock Text="창 크기 (%)" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
+                            <ctrl:NumericAdjuster Value="{Binding WindowScale}" Minimum="60" Maximum="200" Step="5" DecimalPlaces="0"
+                                                  ButtonBackground="{DynamicResource SettingsHighlight}" ButtonForeground="{DynamicResource SettingsFg}"
+                                                  TextBoxBackground="{DynamicResource SettingsHighlight}" TextBoxForeground="{DynamicResource SettingsFg}" TextBoxBorderBrush="{DynamicResource SettingsBorder}"
+                                                  Margin="0,0,0,16" KeyboardNavigation.TabIndex="15" AutomationProperties.Name="창 크기 백분율"/>
+
+                            <TextBlock Text="키 글자 크기 (%)" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
+                            <ctrl:NumericAdjuster Value="{Binding KeyFontScalePercent}" Minimum="80" Maximum="220" Step="5" DecimalPlaces="0"
+                                                  ButtonBackground="{DynamicResource SettingsHighlight}" ButtonForeground="{DynamicResource SettingsFg}"
+                                                  TextBoxBackground="{DynamicResource SettingsHighlight}" TextBoxForeground="{DynamicResource SettingsFg}" TextBoxBorderBrush="{DynamicResource SettingsBorder}"
+                                                  Margin="0,0,0,16" KeyboardNavigation.TabIndex="16" AutomationProperties.Name="키 글자 크기 백분율"/>
+
+                            <TextBlock Text="유휴 투명도" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
+                            <ctrl:NumericAdjuster Value="{Binding OpacityIdle}" Minimum="0.1" Maximum="1.0" Step="0.05" DecimalPlaces="2"
+                                                  ButtonBackground="{DynamicResource SettingsHighlight}" ButtonForeground="{DynamicResource SettingsFg}"
+                                                  TextBoxBackground="{DynamicResource SettingsHighlight}" TextBoxForeground="{DynamicResource SettingsFg}" TextBoxBorderBrush="{DynamicResource SettingsBorder}"
+                                                  Margin="0,0,0,16" KeyboardNavigation.TabIndex="17" AutomationProperties.Name="유휴 투명도"/>
+
+                            <TextBlock Text="페이드 지연 (초)" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
+                            <ctrl:NumericAdjuster Value="{Binding FadeDelaySec}" Minimum="1" Maximum="30" Step="1" DecimalPlaces="0"
+                                                  ButtonBackground="{DynamicResource SettingsHighlight}" ButtonForeground="{DynamicResource SettingsFg}"
+                                                  TextBoxBackground="{DynamicResource SettingsHighlight}" TextBoxForeground="{DynamicResource SettingsFg}" TextBoxBorderBrush="{DynamicResource SettingsBorder}"
+                                                  Margin="0,0,0,16" KeyboardNavigation.TabIndex="18" AutomationProperties.Name="페이드 지연"/>
+
+                            <TextBlock Text="기본 레이아웃" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
+                            <ComboBox ItemsSource="{Binding AvailableLayouts}" SelectedItem="{Binding SelectedLayout}" Height="30" Margin="0,0,0,8" KeyboardNavigation.TabIndex="19" AutomationProperties.Name="기본 레이아웃 선택"/>
+
+                            <Button Content="레이아웃 편집기 열기"
+                                    Command="{Binding OpenLayoutEditorCommand}"
+                                    Height="34" Margin="0,0,0,8"
+                                    Padding="12,6"
+                                    Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}"
+                                    BorderThickness="0" Cursor="Hand" KeyboardNavigation.TabIndex="20" AutomationProperties.Name="레이아웃 편집기 열기"/>
+
+                            <Button Content="사용자 단어 편집기 열기"
+                                    Command="{Binding OpenUserDictionaryEditorCommand}"
+                                    Height="34" Margin="0,0,0,8"
+                                    Padding="12,6"
+                                    Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}"
+                                    BorderThickness="0" Cursor="Hand" KeyboardNavigation.TabIndex="21" AutomationProperties.Name="사용자 단어 편집기 열기"
+                                    ToolTip="자동완성에서 학습한 단어 목록을 확인하고 수정합니다."/>
                         </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
 
-                        <!-- 설치 중 -->
-                        <TextBlock Text="설치 중... 앱이 자동으로 종료되고 재시작됩니다."
-                                   FontSize="12" Foreground="{DynamicResource SettingsFg}"
-                                   FontWeight="SemiBold"
-                                   Visibility="{Binding IsInstalling, Converter={StaticResource BoolToVis}}"
-                                   Margin="0,0,0,8"/>
+                <TabItem Header="동작" AutomationProperties.Name="동작 설정 탭">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel Margin="8,10,8,10">
+                            <TextBlock Text="입력/실행" Style="{StaticResource SectionTitleStyle}"/>
 
-                        <!-- 업데이트 버튼들 (다운로드 중이 아닐 때 표시) -->
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,16"
-                                    Visibility="{Binding IsDownloading, Converter={StaticResource InvBoolToVis}}">
-                            <Button Content="업데이트 확인"
-                                    Command="{Binding CheckForUpdateCommand}"
-                                    Height="32" Padding="12,4" Cursor="Hand"
-                                    Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}"
-                                    BorderThickness="0"
-                                    Margin="0,0,8,0"/>
+                            <TextBlock Text="전역 단축키" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
+                            <TextBox x:Name="BehaviorFirstFocusable"
+                                     Text="{Binding GlobalHotkey, UpdateSourceTrigger=LostFocus}"
+                                     Height="30" Margin="0,0,0,16"
+                                     Padding="8,4"
+                                     Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}"
+                                     BorderBrush="{DynamicResource SettingsBorder}"
+                                     KeyboardNavigation.TabIndex="30"
+                                     AutomationProperties.Name="전역 단축키 입력"/>
 
-                            <Button Content="자동 설치"
-                                    Command="{Binding DownloadAndInstallFromSettingsCommand}"
-                                    Height="32" Padding="12,4" Cursor="Hand"
-                                    Background="#3B82F6"
-                                    Foreground="#EEFFFFFF"
-                                    BorderThickness="0"
-                                    Visibility="{Binding HasUpdateAvailable, Converter={StaticResource BoolToVis}}"
-                                    Margin="0,0,8,0"/>
+                            <CheckBox Content="Windows 시작 시 자동 실행"
+                                      Foreground="{DynamicResource SettingsFg}"
+                                      IsChecked="{Binding RunOnStartup}"
+                                      Margin="0,0,0,16"
+                                      KeyboardNavigation.TabIndex="31"
+                                      AutomationProperties.Name="자동 실행"/>
 
-                            <Button Content="GitHub"
-                                    Command="{Binding OpenReleasePageCommand}"
-                                    Height="32" Padding="8,4" Cursor="Hand"
-                                    Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}"
-                                    BorderThickness="0"
-                                    Visibility="{Binding HasUpdateAvailable, Converter={StaticResource BoolToVis}}"
-                                    Margin="0,0,8,0"/>
+                            <TextBlock Text="키 반복 입력" Style="{StaticResource SectionTitleStyle}"/>
+                            <CheckBox Content="키 반복 입력 사용"
+                                      Foreground="{DynamicResource SettingsFg}"
+                                      IsChecked="{Binding KeyRepeatEnabled}"
+                                      Margin="0,0,0,8" KeyboardNavigation.TabIndex="32"/>
 
-                            <Button Content="취소"
-                                    Command="{Binding CancelDownloadCommand}"
-                                    Height="32" Padding="8,4" Cursor="Hand"
-                                    Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}"
-                                    BorderThickness="0"
-                                    Visibility="{Binding IsDownloading, Converter={StaticResource BoolToVis}}"/>
+                            <TextBlock Text="초기 지연" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="16,0,0,4"/>
+                            <ctrl:NumericAdjuster Value="{Binding KeyRepeatDelayMs}" Minimum="100" Maximum="1000" Step="50" DecimalPlaces="0"
+                                                  IsEnabled="{Binding KeyRepeatEnabled}"
+                                                  ButtonBackground="{DynamicResource SettingsHighlight}" ButtonForeground="{DynamicResource SettingsFg}"
+                                                  TextBoxBackground="{DynamicResource SettingsHighlight}" TextBoxForeground="{DynamicResource SettingsFg}" TextBoxBorderBrush="{DynamicResource SettingsBorder}"
+                                                  Margin="16,0,0,8" KeyboardNavigation.TabIndex="33"/>
+
+                            <TextBlock Text="반복 간격" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="16,0,0,4"/>
+                            <ctrl:NumericAdjuster Value="{Binding KeyRepeatIntervalMs}" Minimum="20" Maximum="200" Step="10" DecimalPlaces="0"
+                                                  IsEnabled="{Binding KeyRepeatEnabled}"
+                                                  ButtonBackground="{DynamicResource SettingsHighlight}" ButtonForeground="{DynamicResource SettingsFg}"
+                                                  TextBoxBackground="{DynamicResource SettingsHighlight}" TextBoxForeground="{DynamicResource SettingsFg}" TextBoxBorderBrush="{DynamicResource SettingsBorder}"
+                                                  Margin="16,0,0,16" KeyboardNavigation.TabIndex="34"/>
+
+                            <Separator Background="{DynamicResource SettingsHighlight}" Margin="0,0,0,16"/>
+
+                            <TextBlock Text="체류 클릭" Style="{StaticResource SectionTitleStyle}"/>
+                            <CheckBox Content="체류 클릭(Dwell Click)"
+                                      Foreground="{DynamicResource SettingsFg}"
+                                      IsChecked="{Binding DwellEnabled}"
+                                      Margin="0,0,0,8" KeyboardNavigation.TabIndex="35"/>
+                            <TextBlock Text="체류 시간" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="16,0,0,4"/>
+                            <ctrl:NumericAdjuster Value="{Binding DwellTimeMs}" Minimum="200" Maximum="3000" Step="100" DecimalPlaces="0"
+                                                  IsEnabled="{Binding DwellEnabled}"
+                                                  ButtonBackground="{DynamicResource SettingsHighlight}" ButtonForeground="{DynamicResource SettingsFg}"
+                                                  TextBoxBackground="{DynamicResource SettingsHighlight}" TextBoxForeground="{DynamicResource SettingsFg}" TextBoxBorderBrush="{DynamicResource SettingsBorder}"
+                                                  Margin="16,0,0,16" KeyboardNavigation.TabIndex="36"/>
+
+                            <Separator Background="{DynamicResource SettingsHighlight}" Margin="0,0,0,16"/>
+
+                            <TextBlock Text="키 사운드" Style="{StaticResource SectionTitleStyle}"/>
+                            <CheckBox Content="키 클릭 사운드"
+                                      Foreground="{DynamicResource SettingsFg}"
+                                      IsChecked="{Binding SoundEnabled}"
+                                      Margin="0,0,0,8" KeyboardNavigation.TabIndex="37"/>
+                            <StackPanel Orientation="Horizontal" Margin="16,0,0,16" Visibility="{Binding SoundEnabled, Converter={StaticResource BoolToVis}}">
+                                <TextBlock Text="사운드 파일:" VerticalAlignment="Center" Margin="0,0,6,0" Foreground="{DynamicResource SettingsFgSub}"/>
+                                <TextBlock VerticalAlignment="Center" Opacity="0.7" MaxWidth="220" Foreground="{DynamicResource SettingsFg}" TextTrimming="CharacterEllipsis" Text="{Binding SoundFilePath}"/>
+                                <Button Content="찾아보기" Command="{Binding BrowseSoundFileCommand}" Margin="8,0,0,0" Padding="8,4" Height="32" KeyboardNavigation.TabIndex="38"
+                                        Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}" BorderThickness="0" Cursor="Hand"/>
+                                <Button Content="초기화" Command="{Binding ResetSoundFileCommand}" Margin="4,0,0,0" Padding="8,4" Height="32" KeyboardNavigation.TabIndex="39"
+                                        Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}" BorderThickness="0" Cursor="Hand"/>
+                            </StackPanel>
                         </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
 
-                                                <!-- 앱별 레이아웃 -->
-                        <TextBlock Text="앱별 레이아웃"
-                                   Foreground="{DynamicResource SettingsFgSub}"
-                                   FontSize="12"
-                                   FontWeight="SemiBold"
-                                   Margin="0,0,0,8"/>
-                        <ItemsControl ItemsSource="{Binding Profiles}" Margin="0,0,0,8">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Grid Margin="0,2">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBox Text="{Binding ProcessName, UpdateSourceTrigger=PropertyChanged}"
-                                                 Background="{DynamicResource SettingsHighlight}"
-                                                 Foreground="{DynamicResource SettingsFg}"
-                                                 BorderBrush="{DynamicResource SettingsBorder}"
-                                                 Padding="4,2"
-                                                 Grid.Column="0"
-                                                 Margin="0,0,4,0">
-                                            <TextBox.Resources>
-                                                <VisualBrush x:Key="Hint" Stretch="None" AlignmentX="Left" AlignmentY="Center">
-                                                    <VisualBrush.Visual>
-                                                        <TextBlock Text="예: code.exe" Foreground="{DynamicResource SettingsFgHint}" Margin="6,0,0,0"/>
-                                                    </VisualBrush.Visual>
-                                                </VisualBrush>
-                                            </TextBox.Resources>
-                                            <TextBox.Style>
-                                                <Style TargetType="TextBox">
-                                                    <Style.Triggers>
-                                                        <Trigger Property="Text" Value="">
-                                                            <Setter Property="Background" Value="{StaticResource Hint}"/>
-                                                        </Trigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </TextBox.Style>
-                                        </TextBox>
-                                        <TextBlock Text="→"
-                                                   Grid.Column="1"
-                                                   VerticalAlignment="Center"
-                                                   Margin="0,0,4,0"
-                                                   Foreground="{DynamicResource SettingsFgSub}"/>
-                                        <TextBox Text="{Binding LayoutName, UpdateSourceTrigger=PropertyChanged}"
-                                                 Background="{DynamicResource SettingsHighlight}"
-                                                 Foreground="{DynamicResource SettingsFg}"
-                                                 BorderBrush="{DynamicResource SettingsBorder}"
-                                                 Padding="4,2"
-                                                 Grid.Column="2"
-                                                 Margin="0,0,4,0"/>
-                                        <Button Content="✕"
-                                                Grid.Column="3"
-                                                Command="{Binding DataContext.RemoveProfileCommand,
-                                                    RelativeSource={RelativeSource AncestorType=Window}}"
-                                                CommandParameter="{Binding}"
-                                                Background="Transparent"
-                                                Foreground="#FF6B6B"
-                                                BorderThickness="0"
-                                                Cursor="Hand"/>
-                                    </Grid>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                        <Button Content="+ 추가"
-                                Command="{Binding AddProfileCommand}"
-                                Margin="0,0,0,4"
-                                Padding="8,4"
-                                Background="{DynamicResource SettingsHighlight}"
-                                Foreground="{DynamicResource SettingsFg}"
-                                BorderThickness="0"
-                                Cursor="Hand"/>
-                        <Button Content="저장"
-                                Command="{Binding SaveProfilesCommand}"
-                                Margin="4,4,0,16"
-                                Padding="8,4"
-                                Background="#3B82F6"
-                                Foreground="#EEFFFFFF"
-                                BorderThickness="0"
-                                Cursor="Hand"/>
+                <TabItem Header="보조기능" AutomationProperties.Name="보조기능 설정 탭">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel Margin="8,10,8,10">
+                            <TextBlock Text="음성 안내(TTS)" Style="{StaticResource SectionTitleStyle}"/>
+                            <CheckBox x:Name="A11yFirstFocusable"
+                                      Content="키 선택 시 음성 안내 켜기"
+                                      Foreground="{DynamicResource SettingsFg}"
+                                      IsChecked="{Binding TtsEnabled}"
+                                      Margin="0,0,0,8" KeyboardNavigation.TabIndex="50"/>
+                            <CheckBox Content="마우스를 올려도 읽기"
+                                      Foreground="{DynamicResource SettingsFg}"
+                                      IsChecked="{Binding TtsOnHover}"
+                                      IsEnabled="{Binding TtsEnabled}"
+                                      Margin="16,0,0,8" KeyboardNavigation.TabIndex="51"/>
+                            <TextBlock Text="음성 속도" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="16,0,0,4"/>
+                            <ctrl:NumericAdjuster Value="{Binding TtsRate}" Minimum="-5" Maximum="5" Step="1" DecimalPlaces="0"
+                                                  IsEnabled="{Binding TtsEnabled}"
+                                                  ButtonBackground="{DynamicResource SettingsHighlight}" ButtonForeground="{DynamicResource SettingsFg}"
+                                                  TextBoxBackground="{DynamicResource SettingsHighlight}" TextBoxForeground="{DynamicResource SettingsFg}" TextBoxBorderBrush="{DynamicResource SettingsBorder}"
+                                                  Margin="16,0,0,16" KeyboardNavigation.TabIndex="52"/>
 
-                        <Separator Background="{DynamicResource SettingsHighlight}" Margin="0,0,0,16"/>
+                            <Separator Background="{DynamicResource SettingsHighlight}" Margin="0,0,0,16"/>
 
-                        <!-- 창 레이아웃 초기화 -->
-                        <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource SettingsFg}"
-                                   Opacity="0.7" Margin="0,0,0,4"
-                                   Text="키보드 창의 크기나 위치가 비정상적으로 표시될 때 초기화할 수 있습니다. 자동 완성도 함께 꺼지고 프로그램이 재시작됩니다."/>
-                        <Button Content="창 레이아웃 초기화"
-                                Command="{Binding ResetWindowLayoutCommand}"
-                                Height="32" Cursor="Hand"
-                                Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}"
-                                BorderThickness="0"
-                                Margin="0,0,0,8"/>
+                            <TextBlock Text="모션 최소화" Style="{StaticResource SectionTitleStyle}"/>
+                            <CheckBox Content="모션 최소화 모드 켜기"
+                                      Foreground="{DynamicResource SettingsFg}"
+                                      IsChecked="{Binding ReducedMotionEnabled}"
+                                      Margin="0,0,0,16" KeyboardNavigation.TabIndex="53"/>
 
-                        <Separator Background="{DynamicResource SettingsHighlight}" Margin="0,0,0,16"/>
+                            <Separator Background="{DynamicResource SettingsHighlight}" Margin="0,0,0,16"/>
 
-                        <!-- 관리자 권한 (비관리자): 경고 + 재시작 버튼 -->
-                        <Border Background="{DynamicResource AdminWarningBg}" CornerRadius="6" Padding="12,8" Margin="0,0,0,8"
-                                Visibility="{Binding IsRunningAsAdmin, Converter={StaticResource InvBoolToVis}}">
-                            <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource AdminWarningFg}"
-                                       Text="키보드 보안 프로그램이나 관리자 권한 앱(예: 작업 관리자)에서 입력이 되지 않으면 관리자 권한으로 재시작해 보세요."/>
-                        </Border>
-                        <Button Content="관리자 권한으로 재시작"
-                                Command="{Binding RestartAsAdminCommand}"
-                                Height="32" Cursor="Hand"
-                                Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}"
-                                BorderThickness="0"
-                                Visibility="{Binding IsRunningAsAdmin, Converter={StaticResource InvBoolToVis}}"
-                                Margin="0,0,0,8"/>
+                            <TextBlock Text="포커스 탐색(키보드)" Style="{StaticResource SectionTitleStyle}"/>
+                            <CheckBox Content="포커스 탐색 모드 활성화"
+                                      Foreground="{DynamicResource SettingsFg}"
+                                      IsChecked="{Binding KeyboardA11yNavigationEnabled}"
+                                      Margin="0,0,0,8" KeyboardNavigation.TabIndex="54"/>
+                            <Button Content="포커스 탐색 상세 설정 열기"
+                                    Command="{Binding OpenFocusA11ySettingsCommand}"
+                                    Height="34" Margin="16,0,0,8"
+                                    Padding="12,6"
+                                    IsEnabled="{Binding KeyboardA11yNavigationEnabled}"
+                                    Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}"
+                                    BorderThickness="0" Cursor="Hand" KeyboardNavigation.TabIndex="55"/>
 
-                        <!-- 관리자 권한 (관리자): 안내 + 일반 권한 재시작 -->
-                        <Border Background="{DynamicResource AdminOkBg}" CornerRadius="6" Padding="12,8" Margin="0,0,0,8"
-                                Visibility="{Binding IsRunningAsAdmin, Converter={StaticResource BoolToVis}}">
-                            <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource AdminOkFg}"
-                                       Text="현재 관리자 권한으로 실행 중입니다. 자동 완성과 유니코드 입력을 위해 일반 권한 재시작을 권장합니다."/>
-                        </Border>
-                        <Button Content="일반 권한으로 재시작"
-                                Command="{Binding RestartAsUserCommand}"
-                                Height="32" Cursor="Hand"
-                                Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}"
-                                BorderThickness="0"
-                                Visibility="{Binding IsRunningAsAdmin, Converter={StaticResource BoolToVis}}"
-                                Margin="0,0,0,8"/>
+                            <TextBlock Text="스위치 스캔 입력" Style="{StaticResource SectionTitleStyle}"/>
+                            <CheckBox Content="스위치 스캔 입력 모드 켜기"
+                                      Foreground="{DynamicResource SettingsFg}"
+                                      IsChecked="{Binding SwitchScanEnabled}"
+                                      Margin="0,0,0,8" KeyboardNavigation.TabIndex="56"/>
+                            <Button Content="스위치 스캔 상세 설정 열기"
+                                    Command="{Binding OpenSwitchScanSettingsCommand}"
+                                    Height="34" Margin="16,0,0,8"
+                                    Padding="12,6"
+                                    IsEnabled="{Binding SwitchScanEnabled}"
+                                    Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}"
+                                    BorderThickness="0" Cursor="Hand" KeyboardNavigation.TabIndex="57"/>
+                            <TextBlock Text="LiveRegion 공지 모드" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="16,0,0,4"/>
+                            <ComboBox ItemsSource="{Binding SwitchScanAnnounceModes}" SelectedItem="{Binding SwitchScanAnnounceMode}" Margin="16,0,0,8" Height="30" KeyboardNavigation.TabIndex="58"/>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
 
-                    </StackPanel>
+                <TabItem Header="고급" AutomationProperties.Name="고급 설정 탭">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel Margin="8,10,8,10">
+                            <TextBlock Text="업데이트" Style="{StaticResource SectionTitleStyle}"/>
 
-                    <!-- 오른쪽 컬럼: 접근성 기능 -->
-                    <StackPanel Grid.Column="4">
+                            <Border Background="{DynamicResource SettingsHighlight}" CornerRadius="6" Padding="12,8" Margin="0,0,0,8" Visibility="{Binding IsCheckingUpdate, Converter={StaticResource InvBoolToVis}}">
+                                <StackPanel Orientation="Vertical">
+                                    <TextBlock x:Name="AdvancedFirstFocusable" Text="{Binding UpdateStatusMessage}" TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource SettingsFg}" Focusable="True" KeyboardNavigation.TabIndex="70"/>
+                                    <TextBlock Text="{Binding LatestVersion, StringFormat=최신 버전: {0}}" FontSize="11" Foreground="{DynamicResource SettingsFgSub}" Margin="0,4,0,0"
+                                               Visibility="{Binding HasUpdateAvailable, Converter={StaticResource BoolToVis}}"/>
+                                </StackPanel>
+                            </Border>
 
-                        <!-- 체류 클릭 -->
-                        <CheckBox Content="체류 클릭 (Dwell Click)"
-                                  Foreground="{DynamicResource SettingsFg}"
-                                  IsChecked="{Binding DwellEnabled}"
-                                  Margin="0,0,0,8"/>
-                        <TextBlock Text="체류 시간" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="16,0,0,4"/>
-                        <ctrl:NumericAdjuster Value="{Binding DwellTimeMs}"
-                                              Minimum="200" Maximum="3000" Step="100" DecimalPlaces="0"
-                                              IsEnabled="{Binding DwellEnabled}"
-                                              ButtonBackground="{DynamicResource SettingsHighlight}"
-                                              ButtonForeground="{DynamicResource SettingsFg}"
-                                              TextBoxBackground="{DynamicResource SettingsHighlight}"
-                                              TextBoxForeground="{DynamicResource SettingsFg}"
-                                              TextBoxBorderBrush="{DynamicResource SettingsBorder}"
-                                              Margin="16,0,0,16"/>
+                            <StackPanel Orientation="Vertical" Visibility="{Binding IsDownloading, Converter={StaticResource BoolToVis}}">
+                                <TextBlock Text="{Binding UpdateStatusMessage}" FontSize="12" Foreground="{DynamicResource SettingsFg}" Margin="0,0,0,4"/>
+                                <ProgressBar Height="20" Value="{Binding DownloadProgress}" Minimum="0" Maximum="1" Margin="0,0,0,4"/>
+                                <TextBlock Text="{Binding DownloadProgress, StringFormat={}{0:P0}}" FontSize="11" Foreground="{DynamicResource SettingsFgSub}"/>
+                            </StackPanel>
 
-                        <!-- 키 반복 입력 -->
-                        <TextBlock Text="키 반복 입력"
-                                   Foreground="{DynamicResource SettingsFgSub}"
-                                   FontSize="12"
-                                   FontWeight="SemiBold"
-                                   Margin="0,0,0,8"/>
-                        <CheckBox Content="키 반복 입력 사용"
-                                  Foreground="{DynamicResource SettingsFg}"
-                                  IsChecked="{Binding KeyRepeatEnabled}"
-                                  Margin="0,0,0,8"/>
-                        <TextBlock Text="초기 지연" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="16,0,0,4"/>
-                        <ctrl:NumericAdjuster Value="{Binding KeyRepeatDelayMs}"
-                                              Minimum="100" Maximum="1000" Step="50" DecimalPlaces="0"
-                                              IsEnabled="{Binding KeyRepeatEnabled}"
-                                              ButtonBackground="{DynamicResource SettingsHighlight}"
-                                              ButtonForeground="{DynamicResource SettingsFg}"
-                                              TextBoxBackground="{DynamicResource SettingsHighlight}"
-                                              TextBoxForeground="{DynamicResource SettingsFg}"
-                                              TextBoxBorderBrush="{DynamicResource SettingsBorder}"
-                                              Margin="16,0,0,8"/>
-                        <TextBlock Text="반복 간격" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="16,0,0,4"/>
-                        <ctrl:NumericAdjuster Value="{Binding KeyRepeatIntervalMs}"
-                                              Minimum="20" Maximum="200" Step="10" DecimalPlaces="0"
-                                              IsEnabled="{Binding KeyRepeatEnabled}"
-                                              ButtonBackground="{DynamicResource SettingsHighlight}"
-                                              ButtonForeground="{DynamicResource SettingsFg}"
-                                              TextBoxBackground="{DynamicResource SettingsHighlight}"
-                                              TextBoxForeground="{DynamicResource SettingsFg}"
-                                              TextBoxBorderBrush="{DynamicResource SettingsBorder}"
-                                              Margin="16,0,0,16"/>
+                            <TextBlock Text="설치 중에는 앱이 자동으로 종료 후 재시작될 수 있습니다." FontSize="12" Foreground="{DynamicResource SettingsFg}" FontWeight="SemiBold"
+                                       Visibility="{Binding IsInstalling, Converter={StaticResource BoolToVis}}" Margin="0,0,0,8"/>
 
-                        <Separator Background="{DynamicResource SettingsHighlight}" Margin="0,0,0,16"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,16" Visibility="{Binding IsDownloading, Converter={StaticResource InvBoolToVis}}">
+                                <Button Content="업데이트 확인" Command="{Binding CheckForUpdateCommand}" Height="34" Padding="12,6" Cursor="Hand" KeyboardNavigation.TabIndex="71"
+                                        Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}" BorderThickness="0" Margin="0,0,8,0"/>
+                                <Button Content="자동 설치" Command="{Binding DownloadAndInstallFromSettingsCommand}" Height="34" Padding="12,6" Cursor="Hand" KeyboardNavigation.TabIndex="72"
+                                        Background="#3B82F6" Foreground="#EEFFFFFF" BorderThickness="0" Margin="0,0,8,0"
+                                        Visibility="{Binding HasUpdateAvailable, Converter={StaticResource BoolToVis}}"/>
+                                <Button Content="GitHub" Command="{Binding OpenReleasePageCommand}" Height="34" Padding="10,6" Cursor="Hand" KeyboardNavigation.TabIndex="73"
+                                        Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}" BorderThickness="0" Margin="0,0,8,0"
+                                        Visibility="{Binding HasUpdateAvailable, Converter={StaticResource BoolToVis}}"/>
+                                <Button Content="취소" Command="{Binding CancelDownloadCommand}" Height="34" Padding="10,6" Cursor="Hand" KeyboardNavigation.TabIndex="74"
+                                        Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}" BorderThickness="0"
+                                        Visibility="{Binding IsDownloading, Converter={StaticResource BoolToVis}}"/>
+                            </StackPanel>
 
-                        <!-- L2: 키 라벨 TTS 읽기 -->
-                        <TextBlock Text="음성 안내 (TTS)"
-                                   Foreground="{DynamicResource SettingsFgSub}"
-                                   FontSize="12"
-                                   FontWeight="SemiBold"
-                                   Margin="0,0,0,8"/>
-                        <CheckBox Content="키 라벨 음성 안내 켜기"
-                                  Foreground="{DynamicResource SettingsFg}"
-                                  IsChecked="{Binding TtsEnabled}"
-                                  Margin="0,0,0,8"/>
-                        <CheckBox Content="마우스를 올렸을 때도 읽기"
-                                  Foreground="{DynamicResource SettingsFg}"
-                                  IsChecked="{Binding TtsOnHover}"
-                                  IsEnabled="{Binding TtsEnabled}"
-                                  Margin="16,0,0,8"/>
-                        <TextBlock Text="음성 속도" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="16,0,0,4"/>
-                        <ctrl:NumericAdjuster Value="{Binding TtsRate}"
-                                              Minimum="-5" Maximum="5" Step="1" DecimalPlaces="0"
-                                              IsEnabled="{Binding TtsEnabled}"
-                                              ButtonBackground="{DynamicResource SettingsHighlight}"
-                                              ButtonForeground="{DynamicResource SettingsFg}"
-                                              TextBoxBackground="{DynamicResource SettingsHighlight}"
-                                              TextBoxForeground="{DynamicResource SettingsFg}"
-                                              TextBoxBorderBrush="{DynamicResource SettingsBorder}"
-                                              Margin="16,0,0,16"/>
+                            <TextBlock Text="프로필 레이아웃" Style="{StaticResource SectionTitleStyle}"/>
+                            <ItemsControl ItemsSource="{Binding Profiles}" Margin="0,0,0,8">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0,2">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBox Text="{Binding ProcessName, UpdateSourceTrigger=PropertyChanged}" Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}" BorderBrush="{DynamicResource SettingsBorder}" Padding="6,4" Grid.Column="0" Margin="0,0,4,0"/>
+                                            <TextBlock Text="=>" Grid.Column="1" VerticalAlignment="Center" Margin="0,0,4,0" Foreground="{DynamicResource SettingsFgSub}"/>
+                                            <TextBox Text="{Binding LayoutName, UpdateSourceTrigger=PropertyChanged}" Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}" BorderBrush="{DynamicResource SettingsBorder}" Padding="6,4" Grid.Column="2" Margin="0,0,4,0"/>
+                                            <Button Content="삭제" Grid.Column="3" Command="{Binding DataContext.RemoveProfileCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" Background="Transparent" Foreground="#FF6B6B" BorderThickness="0" Cursor="Hand"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
 
-                        <Separator Background="{DynamicResource SettingsHighlight}" Margin="0,0,0,16"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                                <Button Content="+ 추가" Command="{Binding AddProfileCommand}" Margin="0,0,8,0" Padding="10,6" Height="34"
+                                        Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}" BorderThickness="0" Cursor="Hand" KeyboardNavigation.TabIndex="75"/>
+                                <Button Content="저장" Command="{Binding SaveProfilesCommand}" Padding="10,6" Height="34"
+                                        Background="#3B82F6" Foreground="#EEFFFFFF" BorderThickness="0" Cursor="Hand" KeyboardNavigation.TabIndex="76"/>
+                            </StackPanel>
 
-                        <!-- L2: 애니메이션 최소화 -->
-                        <TextBlock Text="애니메이션 최소화"
-                                   Foreground="{DynamicResource SettingsFgSub}"
-                                   FontSize="12"
-                                   FontWeight="SemiBold"
-                                   Margin="0,0,0,8"/>
-                        <CheckBox Content="애니메이션 최소화 모드 켜기"
-                                  Foreground="{DynamicResource SettingsFg}"
-                                  IsChecked="{Binding ReducedMotionEnabled}"
-                                  Margin="0,0,0,16"/>
+                            <Separator Background="{DynamicResource SettingsHighlight}" Margin="0,0,0,16"/>
+                            <Button Content="사용자 설정 데이터 폴더 열기"
+                                    Command="{Binding OpenUserSettingsFolderCommand}"
+                                    Height="34" Margin="0,0,0,8" Padding="12,6"
+                                    Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}" BorderThickness="0" Cursor="Hand" KeyboardNavigation.TabIndex="77"
+                                    ToolTip="레이아웃, 사용자 단어, 통계 등 사용자 설정 파일이 있는 폴더를 엽니다."/>
 
-                        <Separator Background="{DynamicResource SettingsHighlight}" Margin="0,0,0,16"/>
+                            <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource SettingsFg}" Opacity="0.75" Margin="0,0,0,4"
+                                       Text="창 위치 또는 크기가 비정상적으로 보이면 창 레이아웃을 초기화할 수 있습니다. 자동완성은 꺼지고 앱이 재시작됩니다."/>
+                            <Button Content="창 레이아웃 초기화" Command="{Binding ResetWindowLayoutCommand}" Height="34" Cursor="Hand" KeyboardNavigation.TabIndex="78"
+                                    Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}" BorderThickness="0" Margin="0,0,0,16"/>
 
-                        <!-- L1: 포커스 가시화 + 탭 탐색 -->
-                        <TextBlock Text="포커스 가시화 (베타)"
-                                   Foreground="{DynamicResource SettingsFgSub}"
-                                   FontSize="12"
-                                   FontWeight="SemiBold"
-                                   Margin="0,0,0,8"/>
-                        <CheckBox Content="탭 탐색 모드 활성화"
-                                  Foreground="{DynamicResource SettingsFg}"
-                                  IsChecked="{Binding KeyboardA11yNavigationEnabled}"
-                                  Margin="0,0,0,8"/>
-                        <Button Content="포커스 가시화 상세 설정 열기"
-                                Command="{Binding OpenFocusA11ySettingsCommand}"
-                                Height="30" Margin="16,0,0,8"
-                                IsEnabled="{Binding KeyboardA11yNavigationEnabled}"
-                                Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}"
-                                BorderThickness="0" Cursor="Hand"/>
+                            <Border Background="{DynamicResource AdminWarningBg}" CornerRadius="6" Padding="12,8" Margin="0,0,0,8" Visibility="{Binding IsRunningAsAdmin, Converter={StaticResource InvBoolToVis}}">
+                                <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource AdminWarningFg}"
+                                           Text="보안 프로그램이나 관리자 권한 창에서 입력이 되지 않으면 관리자 권한으로 재시작해 보세요."/>
+                            </Border>
+                            <Button Content="관리자 권한으로 재시작" Command="{Binding RestartAsAdminCommand}" Height="34" Cursor="Hand" KeyboardNavigation.TabIndex="79"
+                                    Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}" BorderThickness="0"
+                                    Visibility="{Binding IsRunningAsAdmin, Converter={StaticResource InvBoolToVis}}" Margin="0,0,0,8"/>
 
-                        <!-- L3: 스위치 스캔 입력 모드 -->
-                        <TextBlock Text="스위치 스캔 입력 (베타)"
-                                   Foreground="{DynamicResource SettingsFgSub}"
-                                   FontSize="12"
-                                   FontWeight="SemiBold"
-                                   Margin="0,0,0,8"/>
-                        <CheckBox Content="스위치 스캔 입력 모드 켜기"
-                                  Foreground="{DynamicResource SettingsFg}"
-                                  IsChecked="{Binding SwitchScanEnabled}"
-                                  Margin="0,0,0,8"/>
-                        <Button Content="스위치 스캔 상세 설정 열기"
-                                Command="{Binding OpenSwitchScanSettingsCommand}"
-                                Height="30" Margin="16,0,0,8"
-                                IsEnabled="{Binding SwitchScanEnabled}"
-                                Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}"
-                                BorderThickness="0" Cursor="Hand"/>
-                        <TextBlock Text="LiveRegion 공지 모드" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="16,0,0,4"/>
-                        <ComboBox ItemsSource="{Binding SwitchScanAnnounceModes}"
-                                  SelectedItem="{Binding SwitchScanAnnounceMode}"
-                                  Margin="16,0,0,8"/>
-
-                    </StackPanel>
-                </Grid>
-            </ScrollViewer>
+                            <Border Background="{DynamicResource AdminOkBg}" CornerRadius="6" Padding="12,8" Margin="0,0,0,8" Visibility="{Binding IsRunningAsAdmin, Converter={StaticResource BoolToVis}}">
+                                <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource AdminOkFg}"
+                                           Text="현재 관리자 권한으로 실행 중입니다. 일반 앱 입력 호환성을 위해 일반 권한 실행을 권장합니다."/>
+                            </Border>
+                            <Button Content="일반 권한으로 재시작" Command="{Binding RestartAsUserCommand}" Height="34" Cursor="Hand" KeyboardNavigation.TabIndex="80"
+                                    Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}" BorderThickness="0"
+                                    Visibility="{Binding IsRunningAsAdmin, Converter={StaticResource BoolToVis}}" Margin="0,0,0,8"/>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+            </TabControl>
         </Grid>
     </Border>
 </Window>

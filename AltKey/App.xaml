@@ -1,4 +1,4 @@
-<Application x:Class="AltKey.App"
+﻿<Application x:Class="AltKey.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:AltKey"
@@ -7,22 +7,24 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <!-- 구조 리소스 (크기/폰트/애니메이션/컨트롤 스타일) -->
+                <!-- 공통 컨트롤/크기/애니메이션 리소스 -->
                 <ResourceDictionary Source="/AltKey;component/Themes/Generic.xaml"/>
-                <!-- 활성 테마 — ThemeService가 런타임에 교체 -->
+                <!-- 활성 테마는 ThemeService가 런타임에 교체 -->
                 <ResourceDictionary Source="/AltKey;component/Themes/DarkTheme.xaml"/>
             </ResourceDictionary.MergedDictionaries>
 
-            <!-- T-5.2: 체류 클릭 프로그레스 링 컨버터 -->
+            <!-- 접근성: 나눔고딕 우선 + 시스템 폴백 체인 -->
+            <FontFamily x:Key="AppFontFamily">NanumGothic, Malgun Gothic, Segoe UI</FontFamily>
+            <Style TargetType="Control">
+                <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}"/>
+            </Style>
+            <Style TargetType="TextBlock">
+                <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}"/>
+            </Style>
+
             <themes:ProgressToOffsetConverter x:Key="ProgressToOffsetConverter"/>
-            
-            <!-- T-9.5: Bool ↔ Visibility 컨버터 (Inverse 지원) -->
             <converters:BoolToVisibilityConverter x:Key="BoolToVis"/>
-
-            <!-- 열(Column) Gap → 우측 Margin Thickness 컨버터 -->
             <themes:GapToRightMarginConverter x:Key="GapToRightMargin"/>
-
-            <!-- bool → 별표(★/☆) 컨버터 (즐겨찾기 표시용) -->
             <themes:BoolToStarConverter x:Key="BoolToStar"/>
         </ResourceDictionary>
     </Application.Resources>

@@ -1,4 +1,6 @@
-using System.Windows;
+﻿using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
 using AltKey.Services;
 using AltKey.ViewModels;
 
@@ -7,8 +9,7 @@ using WpfKeyEventArgs = System.Windows.Input.KeyEventArgs;
 namespace AltKey.Views;
 
 /// <summary>
-/// [역할] AltKey의 환경 설정 창을 제어하는 클래스입니다.
-/// [기능] 설정 값(투명도, 사운드, 테마 등)을 변경할 수 있는 UI를 제공하고 뷰모델(ViewModel)과 연결합니다.
+/// 설정 창의 UI 수명주기와 접근성 보조 동작(탭 전환 시 포커스)을 관리한다.
 /// </summary>
 public partial class SettingsWindow : Window
 {
@@ -19,28 +20,22 @@ public partial class SettingsWindow : Window
         InitializeComponent();
         _vm = vm;
         DataContext = vm;
-        
-        // 포커스 추적기에 현재 창을 등록합니다. (키 입력이 키보드 창으로 잘 가도록 돕는 기능)
+
+        // 접근성: 설정 창이 열릴 때 현재 탭의 첫 컨트롤로 포커스를 이동한다.
+        Loaded += (_, _) => FocusFirstControlInSelectedTab();
+
+        // 포커스 추적기에 현재 창을 등록해 보조 기능 모듈이 활성 창을 알 수 있게 한다.
         FocusTracker.Register(this);
     }
 
-    /// <summary>
-    /// 창 닫기 버튼을 눌렀을 때의 동작입니다.
-    /// </summary>
     private void CloseButton_Click(object sender, RoutedEventArgs e) => Close();
 
-    /// <summary>
-    /// 키보드의 ESC 키를 눌렀을 때 창을 닫도록 처리합니다.
-    /// </summary>
     protected override void OnKeyDown(WpfKeyEventArgs e)
     {
-        if (e.Key == System.Windows.Input.Key.Escape) { Close(); return; }
+        if (e.Key == Key.Escape) { Close(); return; }
         base.OnKeyDown(e);
     }
 
-    /// <summary>
-    /// 설정 창이 닫힐 때 뷰모델에 알림을 주어 필요한 뒷정리 작업을 수행합니다.
-    /// </summary>
     protected override void OnClosed(System.EventArgs e)
     {
         _vm.OnSettingsWindowClosed();
@@ -51,5 +46,52 @@ public partial class SettingsWindow : Window
     {
         System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(e.Uri.AbsoluteUri) { UseShellExecute = true });
         e.Handled = true;
+    }
+
+    /// <summary>
+    /// 탭이 바뀌면 해당 탭의 첫 입력 요소로 이동시켜 키보드 사용자 탐색 부담을 줄인다.
+    /// </summary>
+    private void SettingsTabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (!ReferenceEquals(sender, SettingsTabControl))
+        {
+            return;
+        }
+
+        if (e.Source is not System.Windows.Controls.TabControl)
+        {
+            return;
+        }
+
+        FocusFirstControlInSelectedTab();
+    }
+
+    private void FocusFirstControlInSelectedTab()
+    {
+        if (SettingsTabControl?.SelectedItem is not TabItem tab)
+        {
+            return;
+        }
+
+        // 각 탭의 대표 첫 컨트롤 이름에 우선 포커싱하고, 실패하면 탭 본문에서 첫 포커스 가능한 요소를 탐색한다.
+        FrameworkElement? primary = tab.Header?.ToString() switch
+        {
+            "외형" => AppearanceFirstFocusable,
+            "동작" => BehaviorFirstFocusable,
+            "보조기능" => A11yFirstFocusable,
+            "고급" => AdvancedFirstFocusable,
+            _ => null
+        };
+
+        if (primary is { IsVisible: true, Focusable: true } && primary.Focus())
+        {
+            return;
+        }
+
+        if (tab.Content is DependencyObject root && root is UIElement element)
+        {
+            var request = new TraversalRequest(FocusNavigationDirection.First);
+            element.MoveFocus(request);
+        }
     }
 }
