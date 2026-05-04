@@ -53,15 +53,32 @@
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Button Width="{Binding Width}" Height="28"
-                                        Background="Transparent"
-                                        Foreground="{DynamicResource TitleFg}"
-                                        BorderThickness="0" Cursor="Hand" Focusable="False"
-                                        Command="{Binding Command}"
-                                        ToolTip="{Binding Label}"
-                                        AutomationProperties.Name="{Binding Label}">
-                                    <TextBlock Text="{Binding Icon}" FontSize="{Binding FontSize}"/>
-                                </Button>
+                                <!-- IsToggle에 따라 일반 Button / ToggleButton 분기 -->
+                                <Grid>
+                                    <!-- 일반 버튼 (IsToggle=false일 때 표시) -->
+                                    <Button Width="{Binding Width}" Height="28"
+                                            Background="Transparent"
+                                            Foreground="{DynamicResource TitleFg}"
+                                            BorderThickness="0" Cursor="Hand" Focusable="False"
+                                            Command="{Binding Command}"
+                                            ToolTip="{Binding Label}"
+                                            AutomationProperties.Name="{Binding Label}"
+                                            Visibility="{Binding IsToggle, Converter={StaticResource InvBoolToVis}}">
+                                        <TextBlock Text="{Binding Icon}" FontSize="{Binding FontSize}"/>
+                                    </Button>
+                                    <!-- 토글 버튼 (AutoComplete 전용, IsToggle=true일 때 표시) -->
+                                    <ToggleButton Width="{Binding Width}" Height="28"
+                                                  Background="{Binding AutoCompleteEnabled, Converter={StaticResource BoolToVis}, ConverterParameter=Background}"
+                                                  Foreground="{DynamicResource TitleFg}"
+                                                  BorderThickness="0" Cursor="Hand" Focusable="False"
+                                                  IsChecked="{Binding DataContext.AutoCompleteEnabled, Mode=TwoWay, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                  IsEnabled="{Binding DataContext.CanToggleAutoComplete, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                  ToolTip="{Binding Label}"
+                                                  AutomationProperties.Name="{Binding Label}"
+                                                  Visibility="{Binding IsToggle, Converter={StaticResource BoolToVis}}">
+                                        <TextBlock Text="{Binding Icon}" FontWeight="Bold" FontSize="12"/>
+                                    </ToggleButton>
+                                </Grid>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
@@ -143,6 +160,7 @@
                                     </Button>
                                     <!-- 토글 버튼 (AutoComplete 전용, IsToggle=true일 때 표시) -->
                                     <ToggleButton Width="{Binding Width}" Height="28"
+                                                  Background="{Binding AutoCompleteEnabled, Converter={StaticResource BoolToVis}, ConverterParameter=Background}"
                                                   Foreground="{DynamicResource TitleFg}"
                                                   BorderThickness="0" Cursor="Hand" Focusable="False"
                                                   IsChecked="{Binding DataContext.AutoCompleteEnabled, Mode=TwoWay, RelativeSource={RelativeSource AncestorType=UserControl}}"

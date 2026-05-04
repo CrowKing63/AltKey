@@ -119,7 +119,7 @@ public class AppConfig
     public string AiModel { get; set; } = "";
 
     // AI에게 보낼 기본 시스템 프롬프트입니다. 이 안내에 따라 선택한 텍스트를 가공합니다.
-    public string AiDefaultPrompt { get; set; } = "다음 텍스트를 한국어로 간단히 요약해줘";
+    public string AiDefaultPrompt { get; set; } = "다음 텍스트를 영어로 번역해줘.";
 
     // AI API 요청 타임아웃(초)입니다.
     public int AiTimeoutSeconds { get; set; } = 30;
