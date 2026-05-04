@@ -15,6 +15,7 @@ public partial class MainWindow : Window
     private LayoutEditorWindow? _layoutEditorWindow;
     private UserDictionaryEditorWindow? _userDictionaryEditorWindow;
     private ProfileMappingEditorWindow? _profileMappingEditorWindow;
+    private AiPromptEditorWindow? _aiPromptEditorWindow;
 
     public MainWindow()
     {
@@ -29,7 +30,7 @@ public partial class MainWindow : Window
 
     /// <summary>
     /// 시작 인자에서 도구 이름을 읽어, 메인 앱에서 특정 편집기로 바로 열 수 있게 합니다.
-    /// 지원 값: "layout", "dictionary", "profile"
+    /// 지원 값: "layout", "dictionary", "profile", "ai-prompt"
     /// </summary>
     public void ApplyStartupArguments(string[] args)
     {
@@ -64,6 +65,13 @@ public partial class MainWindow : Window
             if (string.Equals(toolName, "profile", StringComparison.OrdinalIgnoreCase))
             {
                 OpenProfileMappingEditorWindow(attachOwner: false);
+                Close();
+                return;
+            }
+
+            if (string.Equals(toolName, "ai-prompt", StringComparison.OrdinalIgnoreCase))
+            {
+                OpenAiPromptEditorWindow(attachOwner: false);
                 Close();
             }
         };
@@ -180,6 +188,36 @@ public partial class MainWindow : Window
         }
         _profileMappingEditorWindow.Closed += (_, _) => _profileMappingEditorWindow = null;
         _profileMappingEditorWindow.Show();
+    }
+
+    /// <summary>
+    /// AI 기본 프롬프트 편집기를 엽니다.
+    /// 긴 한글 프롬프트 입력을 메인 설정 창에서 분리해 조합 입력 안정성과 포커스 예측 가능성을 높입니다.
+    /// </summary>
+    private void OnOpenAiPromptEditor(object sender, RoutedEventArgs e)
+    {
+        OpenAiPromptEditorWindow(attachOwner: true);
+    }
+
+    /// <summary>
+    /// AI 기본 프롬프트 편집기 창을 생성/활성화합니다.
+    /// attachOwner=false면 메인 앱에서 직접 진입할 때 허브 창을 건너뜁니다.
+    /// </summary>
+    private void OpenAiPromptEditorWindow(bool attachOwner)
+    {
+        if (_aiPromptEditorWindow is { IsLoaded: true })
+        {
+            _aiPromptEditorWindow.Activate();
+            return;
+        }
+
+        _aiPromptEditorWindow = new AiPromptEditorWindow();
+        if (attachOwner)
+        {
+            _aiPromptEditorWindow.Owner = this;
+        }
+        _aiPromptEditorWindow.Closed += (_, _) => _aiPromptEditorWindow = null;
+        _aiPromptEditorWindow.Show();
     }
 
     /// <summary>

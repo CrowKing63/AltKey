@@ -54,6 +54,16 @@ public class ConfigService
     }
 
     /// <summary>
+    /// 외부 프로세스가 설정 파일을 저장한 뒤, 메모리 설정을 파일 기준으로 다시 읽고 변경 알림까지 보냅니다.
+    /// propertyName을 null로 주면 "어느 한 항목이 아니라 설정 전반이 바뀌었다"는 의미로 해석할 수 있습니다.
+    /// </summary>
+    public void ReloadFromDiskAndNotify(string? propertyName = null)
+    {
+        Load();
+        ConfigChanged?.Invoke(propertyName);
+    }
+
+    /// <summary>
     /// 예전 버전(Width/Height 기반)의 설정을 최신 버전(배율 Scale 기반)으로 변환해주는 도우미 함수입니다.
     /// </summary>
     private void MigrateWindowConfig(string json)

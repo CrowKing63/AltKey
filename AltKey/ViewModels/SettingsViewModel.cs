@@ -201,12 +201,25 @@ public partial class SettingsViewModel : ObservableObject
         _downloadService = downloadService;
         _installerService = installerService;
         _aiService      = aiService;
+        _configService.ConfigChanged += OnConfigChanged;
 
         // T-9.5: 현재 버전 초기화
         var asmVersion = Assembly.GetExecutingAssembly().GetName().Version;
         CurrentVersion = asmVersion?.ToString(3) ?? "0.1.0";
 
         _layoutService.LayoutsChanged += OnLayoutsChanged;
+        LoadFromConfig();
+    }
+
+    private void OnConfigChanged(string? propertyName)
+    {
+        if (propertyName is not nameof(AppConfig.AiDefaultPrompt) and not nameof(AppConfig.Profiles))
+        {
+            return;
+        }
+
+        // 외부 편집기(AltKey.Tools) 저장 결과가 현재 열려 있는 설정 화면에도 즉시 반영되도록
+        // 해당 설정 그룹이 바뀐 경우에만 파일을 다시 읽어 화면 바인딩 값을 최신 상태로 맞춥니다.
         LoadFromConfig();
     }
 
@@ -834,8 +847,18 @@ public partial class SettingsViewModel : ObservableObject
     }
 
     /// <summary>
+    /// AI 기본 프롬프트 편집기를 AltKey.Tools 프로세스로 엽니다.
+    /// 긴 한글 프롬프트를 메인 설정 창과 분리해 편집하면 조합 입력 충돌과 포커스 흔들림을 줄일 수 있습니다.
+    /// </summary>
+    [RelayCommand]
+    private void OpenAiPromptEditor()
+    {
+        LaunchTools("ai-prompt");
+    }
+
+    /// <summary>
     /// 편집 도구 앱(AltKey.Tools)을 실행합니다.
-    /// toolName은 layout/dictionary/profile 값을 권장하며, 값이 없으면 도구 홈 화면을 엽니다.
+    /// toolName은 layout/dictionary/profile/ai-prompt 값을 권장하며, 값이 없으면 도구 홈 화면을 엽니다.
     /// </summary>
     private static void LaunchTools(string? toolName)
     {
