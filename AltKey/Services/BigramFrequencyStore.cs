@@ -154,6 +154,32 @@ public class BigramFrequencyStore
         return removed;
     }
 
+    /// <summary>
+    /// [역할] 편집기에서 지정한 bigram 빈도를 직접 저장합니다.
+    /// [접근성] 별도 창 전환 없이 인라인 입력으로도 예측 데이터 보정이 가능하도록 지원합니다.
+    /// </summary>
+    public void SetPairCount(string prev, string next, int count)
+    {
+        if (string.IsNullOrWhiteSpace(prev) || string.IsNullOrWhiteSpace(next)) return;
+        prev = prev.Trim();
+        next = next.Trim();
+        count = Math.Max(1, count);
+
+        lock (_saveLock)
+        {
+            if (!_bigrams.TryGetValue(prev, out var map))
+            {
+                map = new Dictionary<string, int>();
+                _bigrams[prev] = map;
+            }
+
+            map[next] = count;
+            if (map.Count > MaxNextPerPrev) PrunePerPrev(map);
+        }
+
+        ScheduleSave();
+    }
+
     public int RemoveAllFor(string prev)
     {
         if (string.IsNullOrWhiteSpace(prev)) return 0;

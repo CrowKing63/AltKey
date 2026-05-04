@@ -20,6 +20,8 @@ public interface IUserDictionaryRepository
 
     IReadOnlyList<(string Prev, string Next, int Count)> GetAllBigrams();
 
+    void SetBigramCount(string prev, string next, int count);
+
     bool RemoveBigramPair(string prev, string next);
 
     int RemoveAllBigramsFor(string prev);
@@ -28,4 +30,3 @@ public interface IUserDictionaryRepository
 
     void Flush();
 }
-

@@ -25,6 +25,10 @@ public partial class UserDictionaryEditorViewModel : ObservableObject
     [ObservableProperty]
     private string newWord = "";
 
+    // 접근성: 단어 추가 시 빈도도 함께 바로 지정할 수 있게 인라인 입력 상태를 분리합니다.
+    [ObservableProperty]
+    private int newWordFrequency = 1;
+
     [ObservableProperty]
     private string statusText = "";
 
@@ -33,6 +37,16 @@ public partial class UserDictionaryEditorViewModel : ObservableObject
 
     [ObservableProperty]
     private BigramPairRow? selectedBigramRow;
+
+    // 접근성: 바이그램도 별도 창 없이 현재 패널에서 즉시 추가할 수 있도록 인라인 입력 상태를 제공합니다.
+    [ObservableProperty]
+    private string newBigramPrev = "";
+
+    [ObservableProperty]
+    private string newBigramNext = "";
+
+    [ObservableProperty]
+    private int newBigramCount = 1;
 
     [ObservableProperty]
     private bool isWordTabSelected = true;
@@ -161,10 +175,11 @@ public partial class UserDictionaryEditorViewModel : ObservableObject
         if (w.Length == 0) return;
 
         var normalized = _dictionaryRepository.NormalizeWord(w);
-
-        _dictionaryRepository.SetWordFrequency(normalized, GetFrequencyOrDefault(normalized, 1));
+        var appliedFrequency = Math.Max(1, NewWordFrequency);
+        _dictionaryRepository.SetWordFrequency(normalized, GetFrequencyOrDefault(normalized, appliedFrequency));
         ToolsReloadSignalService.NotifyReloadUserDictionary();
         NewWord = "";
+        NewWordFrequency = 1;
         ReloadWords();
     }
 
@@ -282,6 +297,27 @@ public partial class UserDictionaryEditorViewModel : ObservableObject
         _dictionaryRepository.ClearBigrams();
         ToolsReloadSignalService.NotifyReloadBigramData();
         BigramRows.Clear();
+    }
+
+    [RelayCommand]
+    private void AddBigramPair()
+    {
+        var prev = _dictionaryRepository.NormalizeWord(NewBigramPrev);
+        var next = _dictionaryRepository.NormalizeWord(NewBigramNext);
+        var count = Math.Max(1, NewBigramCount);
+
+        if (string.IsNullOrWhiteSpace(prev) || string.IsNullOrWhiteSpace(next))
+        {
+            return;
+        }
+
+        _dictionaryRepository.SetBigramCount(prev, next, count);
+        ToolsReloadSignalService.NotifyReloadBigramData();
+
+        NewBigramPrev = "";
+        NewBigramNext = "";
+        NewBigramCount = 1;
+        LoadBigrams();
     }
 }
 

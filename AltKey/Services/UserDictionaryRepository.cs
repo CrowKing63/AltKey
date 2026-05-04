@@ -43,6 +43,8 @@ public sealed class UserDictionaryRepository : IUserDictionaryRepository
 
     public IReadOnlyList<(string Prev, string Next, int Count)> GetAllBigrams() => _activeBigramStore.GetAllPairs();
 
+    public void SetBigramCount(string prev, string next, int count) => _activeBigramStore.SetPairCount(prev, next, count);
+
     public bool RemoveBigramPair(string prev, string next) => _activeBigramStore.RemovePair(prev, next);
 
     public int RemoveAllBigramsFor(string prev) => _activeBigramStore.RemoveAllFor(prev);
@@ -55,4 +57,3 @@ public sealed class UserDictionaryRepository : IUserDictionaryRepository
         _enDict.Flush();
     }
 }
-
