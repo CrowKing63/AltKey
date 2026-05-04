@@ -165,7 +165,6 @@
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
                             <TextBlock Text="※ 접기, 최소화, 닫기 버튼은 항상 우측 끝에 고정됩니다." Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,4,0,0"/>
-                            <Button Content="상단바 설정 저장" Command="{Binding SaveHeaderButtonsCommand}" Margin="0,8,0,0" Padding="8,6" Background="#3B82F6" Foreground="#EEFFFFFF" BorderThickness="0" Cursor="Hand" ToolTip="버튼 표시, 위치, 순서를 변경한 뒤 저장합니다."/>
 
                         </StackPanel>
                     </ScrollViewer>
@@ -394,9 +393,9 @@
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
-                                            <TextBox Text="{Binding ProcessName, UpdateSourceTrigger=PropertyChanged}" Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}" BorderBrush="{DynamicResource SettingsBorder}" Padding="6,4" Grid.Column="0" Margin="0,0,4,0"/>
+                                            <TextBox Text="{Binding ProcessName, UpdateSourceTrigger=LostFocus}" Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}" BorderBrush="{DynamicResource SettingsBorder}" Padding="6,4" Grid.Column="0" Margin="0,0,4,0"/>
                                             <TextBlock Text="=>" Grid.Column="1" VerticalAlignment="Center" Margin="0,0,4,0" Foreground="{DynamicResource SettingsFgSub}"/>
-                                            <TextBox Text="{Binding LayoutName, UpdateSourceTrigger=PropertyChanged}" Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}" BorderBrush="{DynamicResource SettingsBorder}" Padding="6,4" Grid.Column="2" Margin="0,0,4,0"/>
+                                            <TextBox Text="{Binding LayoutName, UpdateSourceTrigger=LostFocus}" Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}" BorderBrush="{DynamicResource SettingsBorder}" Padding="6,4" Grid.Column="2" Margin="0,0,4,0"/>
                                             <Button Content="삭제" Grid.Column="3" Command="{Binding DataContext.RemoveProfileCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" Background="Transparent" Foreground="#FF6B6B" BorderThickness="0" Cursor="Hand"/>
                                         </Grid>
                                     </DataTemplate>
@@ -406,8 +405,6 @@
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
                                 <Button Content="+ 추가" Command="{Binding AddProfileCommand}" Margin="0,0,8,0" Padding="10,6" Height="34"
                                         Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}" BorderThickness="0" Cursor="Hand" KeyboardNavigation.TabIndex="75"/>
-                                <Button Content="저장" Command="{Binding SaveProfilesCommand}" Padding="10,6" Height="34"
-                                        Background="#3B82F6" Foreground="#EEFFFFFF" BorderThickness="0" Cursor="Hand" KeyboardNavigation.TabIndex="76"/>
                             </StackPanel>
 
                             <Separator Background="{DynamicResource SettingsHighlight}" Margin="0,0,0,16"/>

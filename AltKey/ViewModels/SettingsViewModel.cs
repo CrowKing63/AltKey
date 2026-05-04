@@ -300,6 +300,7 @@ public partial class SettingsViewModel : ObservableObject
             // T-8.5: 프로필
             Profiles = new ObservableCollection<ProfileEntry>(
                 c.Profiles.Select(p => new ProfileEntry(p.Key, p.Value)));
+            foreach (var p in Profiles) SubscribeToProfileChanges(p);
 
             AvailableLayouts = new ObservableCollection<string>(
                 _layoutService.GetAvailableLayouts());
@@ -626,13 +627,34 @@ public partial class SettingsViewModel : ObservableObject
     [RelayCommand]
     private void AddProfile()
     {
-        Profiles.Add(new ProfileEntry("", ""));
+        var entry = new ProfileEntry("", "");
+        SubscribeToProfileChanges(entry);
+        Profiles.Add(entry);
+        // 빈 항목이라도 추가된 상태를 반영 (필요시)
+        SaveProfiles();
     }
 
     [RelayCommand]
     private void RemoveProfile(ProfileEntry entry)
     {
+        UnsubscribeFromProfileChanges(entry);
         Profiles.Remove(entry);
+        SaveProfiles();
+    }
+
+    private void SubscribeToProfileChanges(ProfileEntry entry)
+    {
+        entry.PropertyChanged += OnProfileEntryPropertyChanged;
+    }
+
+    private void UnsubscribeFromProfileChanges(ProfileEntry entry)
+    {
+        entry.PropertyChanged -= OnProfileEntryPropertyChanged;
+    }
+
+    private void OnProfileEntryPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (_isLoading) return;
         SaveProfiles();
     }
 
