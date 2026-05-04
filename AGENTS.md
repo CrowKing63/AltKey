@@ -34,3 +34,5 @@
   - 배포/릴리스 수정 시에는 메인 앱만 publish하면 끝나지 않는다. **`.github/workflows/release.yml`의 `AltKey.Tools` publish 단계와 `installer/AltKey.iss`의 `Tools` 폴더 포함 규칙**이 유지되는지 반드시 확인할 것.
   - 프로필 매핑 편집은 아직 **구현 완료 기능이 아니라 2단계 후보 검토 상태**다. 현재는 `docs/altkey-tools/profile-mapping-review.md`와 `AltKey.Tools`의 검토 창만 반영되어 있으므로, 별도 편집기로 승격하라는 명시 요청이 없으면 기존 런타임 적용 책임(`MainViewModel`/`ProfileService`)을 도구 앱으로 옮기지 말 것.
   - `AltKey.Tools` 관련 변경 후에는 가능하면 다음 네 가지를 함께 확인할 것: **메인 앱 빌드, `AltKey.Tools` 빌드, 설정 창에서 도구 실행 여부, 저장 후 메인 앱 반영 여부**.
+
+- 수정 시 문자열 리터럴의 인코딩과 공백을 엄격히 준수하고, 치환 오류 방지를 위해 가급적 라인 전체를 교체

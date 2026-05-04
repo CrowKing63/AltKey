@@ -1,17 +1,23 @@
-using System.Windows;
+﻿using System.Windows;
 
 namespace AltKey.Services;
 
 /// <summary>
-/// 설정·편집기 등 보조 창을 띄울 때 위치만 잡아 줍니다.
-/// <see cref="Window.Owner"/>를 메인(항상 위) 창에 두면 소유 창이 항상 소유자 위에 붙어
-/// 다른 프로그램이나 가상 키보드와 겹쳐 입력하기 어려워지므로, Owner 없이 수동 배치합니다.
+/// 설정/편집기 같은 보조 창의 시작 위치를 접근성 관점에서 일관되게 배치하기 위한 유틸리티입니다.
 /// </summary>
 public static class AuxiliaryWindowPlacement
 {
     /// <summary>
-    /// <paramref name="reference"/>가 보이는 일반 상태면 그 창을 기준으로 가운데에 맞추고,
-    /// 숨김·최소화 등이면 화면 중앙에 둡니다.
+    /// 설정 창처럼 입력 창과 겹치면 불편한 보조 창을 화면 정중앙에 띄웁니다.
+    /// </summary>
+    public static void CenterOnScreen(Window window)
+    {
+        // 작업 영역 기준 중앙 배치를 사용해 창 시작 위치를 예측 가능하게 고정합니다.
+        window.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+    }
+
+    /// <summary>
+    /// 기준 창이 보이면 그 창 중심 근처에 배치하고, 기준 창이 없거나 최소화 상태면 화면 중앙에 띄웁니다.
     /// </summary>
     public static void CenterNear(Window window, Window? reference)
     {

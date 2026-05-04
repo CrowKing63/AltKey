@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
@@ -751,7 +751,7 @@ public partial class SettingsViewModel : ObservableObject
         }
 
         _settingsWindow = new AltKey.Views.SettingsWindow(this);
-        AuxiliaryWindowPlacement.CenterNear(_settingsWindow, WpfApp.Current.MainWindow);
+        AuxiliaryWindowPlacement.CenterOnScreen(_settingsWindow);
         _settingsWindow.Show();
     }
 
