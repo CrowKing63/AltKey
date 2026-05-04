@@ -48,19 +48,23 @@ public partial class MainWindow : Window
         {
             if (string.Equals(toolName, "layout", StringComparison.OrdinalIgnoreCase))
             {
-                OnOpenLayoutEditor(this, new RoutedEventArgs());
+                OpenLayoutEditorWindow(attachOwner: false);
+                // 접근성: 특정 편집기 바로가기로 진입한 경우 중간 허브 창을 닫아 불필요한 포커스 이동을 없앱니다.
+                Close();
                 return;
             }
 
             if (string.Equals(toolName, "dictionary", StringComparison.OrdinalIgnoreCase))
             {
-                OnOpenUserDictionaryEditor(this, new RoutedEventArgs());
+                OpenUserDictionaryEditorWindow(attachOwner: false);
+                Close();
                 return;
             }
 
             if (string.Equals(toolName, "profile", StringComparison.OrdinalIgnoreCase))
             {
-                OnOpenProfileMappingEditor(this, new RoutedEventArgs());
+                OpenProfileMappingEditorWindow(attachOwner: false);
+                Close();
             }
         };
     }
@@ -92,6 +96,15 @@ public partial class MainWindow : Window
     /// </summary>
     private void OnOpenLayoutEditor(object sender, RoutedEventArgs e)
     {
+        OpenLayoutEditorWindow(attachOwner: true);
+    }
+
+    /// <summary>
+    /// 레이아웃 편집기 창을 생성/활성화합니다.
+    /// attachOwner=false면 허브 창 없이 단독 편집기 모드로 띄웁니다.
+    /// </summary>
+    private void OpenLayoutEditorWindow(bool attachOwner)
+    {
         if (_layoutEditorWindow is { IsLoaded: true })
         {
             _layoutEditorWindow.Activate();
@@ -100,7 +113,10 @@ public partial class MainWindow : Window
 
         var vm = App.Services.GetRequiredService<LayoutEditorViewModel>();
         _layoutEditorWindow = new LayoutEditorWindow(vm);
-        _layoutEditorWindow.Owner = this;
+        if (attachOwner)
+        {
+            _layoutEditorWindow.Owner = this;
+        }
         _layoutEditorWindow.Closed += (_, _) => _layoutEditorWindow = null;
         _layoutEditorWindow.Show();
     }
@@ -111,6 +127,15 @@ public partial class MainWindow : Window
     /// </summary>
     private void OnOpenUserDictionaryEditor(object sender, RoutedEventArgs e)
     {
+        OpenUserDictionaryEditorWindow(attachOwner: true);
+    }
+
+    /// <summary>
+    /// 사용자 단어 편집기 창을 생성/활성화합니다.
+    /// attachOwner=false면 허브 창과 독립된 단일 창 흐름으로 엽니다.
+    /// </summary>
+    private void OpenUserDictionaryEditorWindow(bool attachOwner)
+    {
         if (_userDictionaryEditorWindow is { IsLoaded: true })
         {
             _userDictionaryEditorWindow.Activate();
@@ -119,7 +144,10 @@ public partial class MainWindow : Window
 
         var vm = App.Services.GetRequiredService<UserDictionaryEditorViewModel>();
         _userDictionaryEditorWindow = new UserDictionaryEditorWindow(vm);
-        _userDictionaryEditorWindow.Owner = this;
+        if (attachOwner)
+        {
+            _userDictionaryEditorWindow.Owner = this;
+        }
         _userDictionaryEditorWindow.Closed += (_, _) => _userDictionaryEditorWindow = null;
         _userDictionaryEditorWindow.Show();
     }
@@ -130,6 +158,15 @@ public partial class MainWindow : Window
     /// </summary>
     private void OnOpenProfileMappingEditor(object sender, RoutedEventArgs e)
     {
+        OpenProfileMappingEditorWindow(attachOwner: true);
+    }
+
+    /// <summary>
+    /// 프로필 매핑 편집기 창을 생성/활성화합니다.
+    /// attachOwner=false면 설정 버튼에서 진입 시 허브 창을 생략할 수 있습니다.
+    /// </summary>
+    private void OpenProfileMappingEditorWindow(bool attachOwner)
+    {
         if (_profileMappingEditorWindow is { IsLoaded: true })
         {
             _profileMappingEditorWindow.Activate();
@@ -137,7 +174,10 @@ public partial class MainWindow : Window
         }
 
         _profileMappingEditorWindow = new ProfileMappingEditorWindow();
-        _profileMappingEditorWindow.Owner = this;
+        if (attachOwner)
+        {
+            _profileMappingEditorWindow.Owner = this;
+        }
         _profileMappingEditorWindow.Closed += (_, _) => _profileMappingEditorWindow = null;
         _profileMappingEditorWindow.Show();
     }
