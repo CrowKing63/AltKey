@@ -90,6 +90,7 @@ AGENTS.md
 .claude/
 .gemini/
 .qwen/
+.kiro/
 
 # Testing notes
 TESTING.md
