@@ -101,4 +101,15 @@ public class LayoutService
 
     /// <summary>config 변경 시 캐시 무효화</summary>
     public void InvalidateCache() => _cache.Clear();
+
+    /// <summary>
+    /// [역할] 외부 프로세스(AltKey.Tools)에서 레이아웃 파일을 바꾼 뒤,
+    /// 메인 앱이 목록과 현재 레이아웃을 다시 계산하도록 변경 알림을 발생시킵니다.
+    /// [접근성] 저장 직후 최신 레이아웃이 즉시 보이도록 해 탐색 혼란을 줄입니다.
+    /// </summary>
+    public void NotifyExternalLayoutsChanged()
+    {
+        InvalidateCache();
+        LayoutsChanged?.Invoke();
+    }
 }

@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Data;
@@ -14,11 +14,7 @@ namespace AltKey.ViewModels;
 
 public partial class UserDictionaryEditorViewModel : ObservableObject
 {
-    private readonly KoreanDictionary _koDict;
-    private readonly EnglishDictionary _enDict;
-
-    private WordFrequencyStore _activeStore;
-    private BigramFrequencyStore _activeBigramStore;
+    private readonly IUserDictionaryRepository _dictionaryRepository;
 
     [ObservableProperty]
     private ObservableCollection<WordEntryVm> words = [];
@@ -90,12 +86,10 @@ public partial class UserDictionaryEditorViewModel : ObservableObject
 
     public ICollectionView FilteredWords { get; }
 
-    public UserDictionaryEditorViewModel(KoreanDictionary koDict, EnglishDictionary enDict)
+    public UserDictionaryEditorViewModel(IUserDictionaryRepository dictionaryRepository)
     {
-        _koDict = koDict;
-        _enDict = enDict;
-        _activeStore = _koDict.UserStore;
-        _activeBigramStore = _koDict.BigramStore;
+        _dictionaryRepository = dictionaryRepository;
+        _dictionaryRepository.SelectLanguage(korean: true);
 
         FilteredWords = CollectionViewSource.GetDefaultView(Words);
         FilteredWords.Filter = obj =>
@@ -112,16 +106,14 @@ public partial class UserDictionaryEditorViewModel : ObservableObject
         _isKoreanTabActive = true;
         OnPropertyChanged(nameof(IsKoreanTabActive));
         OnPropertyChanged(nameof(IsEnglishTabActive));
-        _activeStore = _koDict.UserStore;
-        _activeBigramStore = _koDict.BigramStore;
+        _dictionaryRepository.SelectLanguage(korean: true);
         ReloadWords();
         LoadBigrams();
     }
 
     public void OnClosing()
     {
-        _koDict.Flush();
-        _enDict.Flush();
+        _dictionaryRepository.Flush();
     }
 
     partial void OnSearchQueryChanged(string value)
@@ -132,8 +124,7 @@ public partial class UserDictionaryEditorViewModel : ObservableObject
 
     private void SwitchTab(bool korean)
     {
-        _activeStore = korean ? _koDict.UserStore : _enDict.UserStore;
-        _activeBigramStore = korean ? _koDict.BigramStore : _enDict.BigramStore;
+        _dictionaryRepository.SelectLanguage(korean);
         ReloadWords();
         LoadBigrams();
     }
@@ -141,7 +132,7 @@ public partial class UserDictionaryEditorViewModel : ObservableObject
     private void ReloadWords()
     {
         Words.Clear();
-        foreach (var (w, f) in _activeStore.GetAllWords())
+        foreach (var (w, f) in _dictionaryRepository.GetAllWords())
         {
             var entry = new WordEntryVm(w, f);
             entry.FrequencyChanged += OnEntryFrequencyChanged;
@@ -153,7 +144,8 @@ public partial class UserDictionaryEditorViewModel : ObservableObject
 
     private void OnEntryFrequencyChanged(WordEntryVm entry)
     {
-        _activeStore.SetFrequency(entry.Word, entry.Frequency);
+        _dictionaryRepository.SetWordFrequency(entry.Word, entry.Frequency);
+        ToolsReloadSignalService.NotifyReloadUserDictionary();
         if (entry.Frequency <= 0)
         {
             Words.Remove(entry);
@@ -168,16 +160,17 @@ public partial class UserDictionaryEditorViewModel : ObservableObject
         var w = NewWord.Trim();
         if (w.Length == 0) return;
 
-        var normalized = _isKoreanTabActive ? w : w.ToLowerInvariant();
+        var normalized = _dictionaryRepository.NormalizeWord(w);
 
-        _activeStore.SetFrequency(normalized, GetFrequencyOrDefault(normalized, 1));
+        _dictionaryRepository.SetWordFrequency(normalized, GetFrequencyOrDefault(normalized, 1));
+        ToolsReloadSignalService.NotifyReloadUserDictionary();
         NewWord = "";
         ReloadWords();
     }
 
     private int GetFrequencyOrDefault(string word, int fallback)
     {
-        var existing = _activeStore.GetAllWords()
+        var existing = _dictionaryRepository.GetAllWords()
             .FirstOrDefault(p => p.Word == word);
         return existing.Word == null ? fallback : existing.Frequency + 1;
     }
@@ -186,7 +179,8 @@ public partial class UserDictionaryEditorViewModel : ObservableObject
     private void RemoveOne(WordEntryVm entry)
     {
         if (entry is null) return;
-        _activeStore.RemoveWord(entry.Word);
+        _dictionaryRepository.RemoveWord(entry.Word);
+        ToolsReloadSignalService.NotifyReloadUserDictionary();
         Words.Remove(entry);
         FilteredWords.Refresh();
         UpdateStatus();
@@ -207,9 +201,10 @@ public partial class UserDictionaryEditorViewModel : ObservableObject
 
         foreach (var entry in toRemove)
         {
-            _activeStore.RemoveWord(entry.Word);
+            _dictionaryRepository.RemoveWord(entry.Word);
             Words.Remove(entry);
         }
+        ToolsReloadSignalService.NotifyReloadUserDictionary();
         FilteredWords.Refresh();
         UpdateStatus();
     }
@@ -225,7 +220,8 @@ public partial class UserDictionaryEditorViewModel : ObservableObject
             WpfMsgBoxImage.Warning);
         if (result != WpfMsgBoxResult.Yes) return;
 
-        _activeStore.Clear();
+        _dictionaryRepository.ClearWords();
+        ToolsReloadSignalService.NotifyReloadUserDictionary();
         Words.Clear();
         FilteredWords.Refresh();
         UpdateStatus();
@@ -242,7 +238,7 @@ public partial class UserDictionaryEditorViewModel : ObservableObject
 
     public void LoadBigrams()
     {
-        var pairs = _activeBigramStore.GetAllPairs();
+        var pairs = _dictionaryRepository.GetAllBigrams();
         BigramRows.Clear();
         foreach (var (prev, next, count) in pairs)
             BigramRows.Add(new BigramPairRow(prev, next, count));
@@ -252,17 +248,21 @@ public partial class UserDictionaryEditorViewModel : ObservableObject
     private void RemoveBigramPair(BigramPairRow row)
     {
         if (row is null) return;
-        if (_activeBigramStore.RemovePair(row.Prev, row.Next))
+        if (_dictionaryRepository.RemoveBigramPair(row.Prev, row.Next))
+        {
+            ToolsReloadSignalService.NotifyReloadBigramData();
             BigramRows.Remove(row);
+        }
     }
 
     [RelayCommand]
     private void RemoveBigramsByPrev(BigramPairRow row)
     {
         if (row is null) return;
-        int removed = _activeBigramStore.RemoveAllFor(row.Prev);
+        int removed = _dictionaryRepository.RemoveAllBigramsFor(row.Prev);
         if (removed > 0)
         {
+            ToolsReloadSignalService.NotifyReloadBigramData();
             for (int i = BigramRows.Count - 1; i >= 0; i--)
                 if (BigramRows[i].Prev == row.Prev) BigramRows.RemoveAt(i);
         }
@@ -279,7 +279,8 @@ public partial class UserDictionaryEditorViewModel : ObservableObject
             WpfMsgBoxImage.Warning);
         if (result != WpfMsgBoxResult.Yes) return;
 
-        _activeBigramStore.Clear();
+        _dictionaryRepository.ClearBigrams();
+        ToolsReloadSignalService.NotifyReloadBigramData();
         BigramRows.Clear();
     }
 }

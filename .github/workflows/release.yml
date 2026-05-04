@@ -1,4 +1,4 @@
-name: Release
+﻿name: Release
 
 on:
   push:
@@ -22,7 +22,9 @@ jobs:
           dotnet-version: '8.0.x'
 
       - name: Restore dependencies
-        run: dotnet restore AltKey/AltKey.csproj
+        run: |
+          dotnet restore AltKey/AltKey.csproj
+          dotnet restore AltKey.Tools/AltKey.Tools.csproj
 
       - name: Publish portable single-file
         run: >
@@ -36,6 +38,18 @@ jobs:
           -p:EnableCompressionInSingleFile=true
           -o dist/publish
 
+      - name: Publish tools app
+        run: >
+          dotnet publish AltKey.Tools/AltKey.Tools.csproj
+          -c Release
+          -r win-x64
+          --self-contained true
+          -p:PublishSingleFile=true
+          -p:PublishReadyToRun=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
+          -p:EnableCompressionInSingleFile=true
+          -o dist/publish/Tools
+
       - name: Package portable ZIP
         run: >
           powershell -ExecutionPolicy Bypass
@@ -43,7 +57,7 @@ jobs:
           -Version ${{ github.ref_name }}
           -BuildDir dist/publish
 
-      # T-9.5: Inno Setup 인스톨러 빌드 (태그에서 버전 직접 치환: v0.1.5 → 0.1.5)
+      # T-9.5: Inno Setup 인스톨러 빌드 (태그에서 버전 직접 치환: v0.1.5 -> 0.1.5)
       - name: Build Installer (Inno Setup)
         run: |
           choco install innosetup --no-progress -y

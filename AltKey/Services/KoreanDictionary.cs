@@ -204,6 +204,16 @@ public class KoreanDictionary
         _bigramStore.Flush();
     }
 
+    /// <summary>
+    /// 사용자 단어 저장소를 파일 기준으로 다시 읽어옵니다.
+    /// </summary>
+    public void ReloadUserWords() => _userStore.ReloadFromDisk();
+
+    /// <summary>
+    /// bigram 저장소를 파일 기준으로 다시 읽어옵니다.
+    /// </summary>
+    public void ReloadBigrams() => _bigramStore.ReloadFromDisk();
+
     private static IReadOnlyList<string> LoadBuiltIn()
     {
         var asm = Assembly.GetExecutingAssembly();

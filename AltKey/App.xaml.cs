@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using Microsoft.Extensions.DependencyInjection;
@@ -89,6 +89,7 @@ public partial class App : System.Windows.Application
             // 서비스
             services.AddSingleton<ConfigService>();
             services.AddSingleton<LayoutService>();
+            services.AddSingleton<ILayoutRepository, LayoutRepository>();
             services.AddSingleton<InputService>();
             services.AddSingleton<WindowService>();
             services.AddSingleton<ProfileService>();
@@ -110,6 +111,7 @@ public partial class App : System.Windows.Application
             services.AddSingleton<Func<string, BigramFrequencyStore>>(_ => lang => new BigramFrequencyStore(lang));
             services.AddSingleton<KoreanDictionary>();
             services.AddSingleton<EnglishDictionary>();
+            services.AddSingleton<IUserDictionaryRepository, UserDictionaryRepository>();
             services.AddSingleton<KoreanInputModule>();
             services.AddSingleton<IInputLanguageModule>(sp => sp.GetRequiredService<KoreanInputModule>());
             services.AddSingleton<AutoCompleteService>();
@@ -117,6 +119,7 @@ public partial class App : System.Windows.Application
             services.AddSingleton<LiveRegionService>();
             // AI 텍스트 처리 서비스
             services.AddSingleton<AiService>();
+            services.AddSingleton<ToolsReloadSignalService>();
 
             // ViewModel
             services.AddSingleton<KeyboardViewModel>();
@@ -126,11 +129,6 @@ public partial class App : System.Windows.Application
             services.AddSingleton<MainViewModel>();
             // T-9.3: 자동 완성 바 ViewModel
             services.AddSingleton<SuggestionBarViewModel>();
-            // T-9.4: 레이아웃 편집기 ViewModel
-            services.AddSingleton<LayoutEditorViewModel>();
-            // ac-editor 03: 사용자 사전 편집기 ViewModel
-            services.AddSingleton<UserDictionaryEditorViewModel>();
-
             // 창
             services.AddSingleton<MainWindow>();
 
@@ -170,6 +168,9 @@ public partial class App : System.Windows.Application
 
             var window = Services.GetRequiredService<MainWindow>();
             window.Show();
+
+            // AltKey.Tools에서 보내는 최소 재로드 알림 수신을 시작합니다.
+            _ = Services.GetRequiredService<ToolsReloadSignalService>();
 
             // L1: 접근성 탭 탐색(물리 Tab/Enter/Space) 훅 시작
             Services.GetRequiredService<AccessibilityNavigationService>().Start();

@@ -220,6 +220,20 @@ public class WordFrequencyStore
         catch { _freq = []; }
     }
 
+    /// <summary>
+    /// [역할] 외부 프로세스(AltKey.Tools)에서 파일이 바뀐 뒤, 메모리 캐시를 파일 기준으로 다시 읽어옵니다.
+    /// [주의] 저장 중인 변경사항이 있다면 먼저 Flush해서 데이터 유실 가능성을 줄입니다.
+    /// </summary>
+    public void ReloadFromDisk()
+    {
+        Flush();
+        lock (_saveLock)
+        {
+            _freq = [];
+        }
+        Load();
+    }
+
     private void PruneLowest()
     {
         int targetRemoveCount = _freq.Count / 5;

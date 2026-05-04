@@ -56,6 +56,8 @@ Name: "startupentry";   Description: "Windows 시작 시 자동 실행";   Group
 [Files]
 ; 실행 파일
 Source: "{#BuildDir}\{#AppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+; 편집 도구 앱: 메인 앱과 분리된 접근성 편집 도구를 Tools 하위 폴더에 함께 설치
+Source: "{#BuildDir}\Tools\*"; DestDir: "{app}\Tools"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; 레이아웃: PathResolver 설치 모드 경로(%AppData%\AltKey\layouts\)에 설치
 ; onlyifdoesntexist 로 사용자가 커스텀한 레이아웃은 덮어쓰지 않음
 Source: "..\AltKey\layouts\*"; DestDir: "{userappdata}\AltKey\layouts"; Flags: ignoreversion recursesubdirs createallsubdirs onlyifdoesntexist

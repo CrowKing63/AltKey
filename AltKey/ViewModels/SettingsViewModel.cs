@@ -29,8 +29,6 @@ public partial class SettingsViewModel : ObservableObject
     private readonly HotkeyService        _hotkeyService;
     private readonly StartupService       _startupService;
     private readonly SoundService         _soundService;
-    private readonly LayoutEditorViewModel _layoutEditorVm;
-    private readonly UserDictionaryEditorViewModel _userDictEditorVm;
     private readonly UpdateService        _updateService;
     private readonly DownloadService      _downloadService;
     private readonly InstallerService     _installerService;
@@ -188,11 +186,9 @@ public partial class SettingsViewModel : ObservableObject
         HotkeyService        hotkeyService,
         StartupService       startupService,
         SoundService         soundService,
-        LayoutEditorViewModel layoutEditorViewModel,
         UpdateService        updateService,
         DownloadService      downloadService,
         InstallerService     installerService,
-        UserDictionaryEditorViewModel userDictionaryEditorViewModel,
         AiService            aiService)
     {
         _configService  = configService;
@@ -201,11 +197,9 @@ public partial class SettingsViewModel : ObservableObject
         _hotkeyService  = hotkeyService;
         _startupService = startupService;
         _soundService   = soundService;
-        _layoutEditorVm = layoutEditorViewModel;
         _updateService  = updateService;
         _downloadService = downloadService;
         _installerService = installerService;
-        _userDictEditorVm = userDictionaryEditorViewModel;
         _aiService      = aiService;
 
         // T-9.5: 현재 버전 초기화
@@ -808,24 +802,63 @@ public partial class SettingsViewModel : ObservableObject
     // ── T-9.4: 레이아웃 편집기 열기 ──────────────────────────────────────────
 
     /// <summary>
-    /// 키보드 레이아웃(키의 배치, 글자 등)을 직접 수정할 수 있는 편집기 창을 엽니다.
+    /// 키보드 레이아웃 편집기를 AltKey.Tools 프로세스로 엽니다.
+    /// 접근성 측면에서 메인 입력 창과 편집 입력 창을 분리해 포커스 충돌을 줄입니다.
     /// </summary>
     [RelayCommand]
     private void OpenLayoutEditor()
     {
-        var win = new AltKey.Views.LayoutEditorWindow(_layoutEditorVm);
-        AuxiliaryWindowPlacement.CenterNear(win, WpfApp.Current.MainWindow);
-        win.Show();
+        LaunchTools("layout");
     }
 
     // ── ac-editor 03: 사용자 단어 편집기 열기 ─────────────────────────────
 
+    /// <summary>
+    /// 사용자 단어 편집기를 AltKey.Tools 프로세스로 엽니다.
+    /// 메인 앱과 분리 실행해 한글 조합 입력 안정성과 스크린리더 포커스 안정성을 함께 확보합니다.
+    /// </summary>
     [RelayCommand]
     private void OpenUserDictionaryEditor()
     {
-        var win = new AltKey.Views.UserDictionaryEditorWindow(_userDictEditorVm);
-        AuxiliaryWindowPlacement.CenterNear(win, WpfApp.Current.MainWindow);
-        win.Show();
+        LaunchTools("dictionary");
+    }
+
+    /// <summary>
+    /// 편집 도구 앱(AltKey.Tools)을 실행합니다.
+    /// toolName은 layout/dictionary 값을 권장하며, 값이 없으면 도구 홈 화면을 엽니다.
+    /// </summary>
+    private static void LaunchTools(string? toolName)
+    {
+        var toolsExePath = PathResolver.ToolsExePath;
+        if (!File.Exists(toolsExePath))
+        {
+            WpfMsgBox.Show(
+                "편집 도구 앱(AltKey.Tools.exe)을 찾을 수 없습니다.\n" +
+                "앱을 최신 버전으로 업데이트하거나 AltKey.Tools 파일이 같은 폴더에 있는지 확인해 주세요.",
+                "편집 도구를 열 수 없음",
+                WpfMsgBoxButton.OK,
+                WpfMsgBoxImage.Warning);
+            return;
+        }
+
+        try
+        {
+            var arguments = string.IsNullOrWhiteSpace(toolName) ? "" : $"--tool {toolName}";
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = toolsExePath,
+                Arguments = arguments,
+                UseShellExecute = true
+            });
+        }
+        catch (Exception ex)
+        {
+            WpfMsgBox.Show(
+                $"편집 도구 앱을 실행하지 못했습니다: {ex.Message}",
+                "실행 오류",
+                WpfMsgBoxButton.OK,
+                WpfMsgBoxImage.Error);
+        }
     }
 
     // ── 사용자 설정 데이터 폴더 열기 ──────────────────────────────────────

@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using AltKey.Models;
 using AltKey.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -52,8 +52,7 @@ public partial class EditableKeyColumnVm : ObservableObject
 
 public partial class LayoutEditorViewModel : ObservableObject
 {
-    private readonly LayoutService _layoutService;
-    private readonly ConfigService _configService;
+    private readonly ILayoutRepository _layoutRepository;
 
     // ── VK → 한글 라벨 매핑 (QWERTY 한국어 표준 배열) ─────────────────────
     private static readonly Dictionary<string, (string Label, string? ShiftLabel, string? EnglishLabel)> VkLabelMap
@@ -83,11 +82,11 @@ public partial class LayoutEditorViewModel : ObservableObject
 
     /// 기존 파일에서 불러온 상태인지 (저장/다른 이름 저장 분기용)
     public bool IsExistingLayout => !string.IsNullOrEmpty(CurrentFileName)
-        && _layoutService.GetAvailableLayouts().Contains(CurrentFileName);
+        && _layoutRepository.GetAvailableLayouts().Contains(CurrentFileName);
 
     /// 기본 레이아웃이 아닐 때만 삭제 가능
     public bool CanDeleteLayout => IsExistingLayout
-        && !string.Equals(CurrentFileName, _configService.Current.DefaultLayout,
+        && !string.Equals(CurrentFileName, _layoutRepository.DefaultLayoutName,
             StringComparison.OrdinalIgnoreCase);
 
     // ── 레이아웃 데이터 ────────────────────────────────────────────────────
@@ -162,17 +161,16 @@ public partial class LayoutEditorViewModel : ObservableObject
     [ObservableProperty]
     private string selectedLayoutToLoad = "";
 
-    public LayoutEditorViewModel(LayoutService layoutService, ConfigService configService)
+    public LayoutEditorViewModel(ILayoutRepository layoutRepository)
     {
-        _layoutService = layoutService;
-        _configService = configService;
+        _layoutRepository = layoutRepository;
         RefreshAvailableLayouts();
     }
 
     private void RefreshAvailableLayouts()
     {
         AvailableLayouts = new ObservableCollection<string>(
-            _layoutService.GetAvailableLayouts());
+            _layoutRepository.GetAvailableLayouts());
         if (AvailableLayouts.Count > 0 && string.IsNullOrEmpty(SelectedLayoutToLoad))
             SelectedLayoutToLoad = AvailableLayouts[0];
         OnPropertyChanged(nameof(IsExistingLayout));
@@ -184,7 +182,7 @@ public partial class LayoutEditorViewModel : ObservableObject
     [RelayCommand]
     public void LoadLayout(string fileName)
     {
-        var config = _layoutService.TryLoad(fileName);
+        var config = _layoutRepository.TryLoad(fileName);
         if (config is null) return;
 
         CurrentFileName = fileName;
@@ -526,7 +524,7 @@ public partial class LayoutEditorViewModel : ObservableObject
     /// 삭제할 레이아웃이 기본 레이아웃이 아닌지 확인
     public bool CanDeletePendingLayout =>
         _pendingDeleteLayoutName is not null && !string.Equals(_pendingDeleteLayoutName,
-            _configService.Current.DefaultLayout, StringComparison.OrdinalIgnoreCase);
+            _layoutRepository.DefaultLayoutName, StringComparison.OrdinalIgnoreCase);
 
     // ── 레이아웃 삭제 요청 ───────────────────────────────────────────────────
     [RelayCommand]
@@ -545,8 +543,10 @@ public partial class LayoutEditorViewModel : ObservableObject
 
         try
         {
-            if (_layoutService.Delete(_pendingDeleteLayoutName))
+            if (_layoutRepository.Delete(_pendingDeleteLayoutName))
             {
+                // 삭제 후 메인 앱이 목록/캐시를 다시 읽도록 최소 재로드 알림을 보냅니다.
+                ToolsReloadSignalService.NotifyReloadLayouts();
                 StatusMessage = $"'{_pendingDeleteLayoutName}' 삭제됨";
                 CurrentFileName = "";
                 LayoutName = "";
@@ -591,7 +591,9 @@ public partial class LayoutEditorViewModel : ObservableObject
 
         try
         {
-            _layoutService.Save(CurrentFileName, BuildLayoutConfig());
+            _layoutRepository.Save(CurrentFileName, BuildLayoutConfig());
+            // 데이터 본문을 IPC로 보내지 않고, "다시 읽기" 신호만 전달합니다.
+            ToolsReloadSignalService.NotifyReloadLayouts();
             RefreshAvailableLayouts();
             StatusMessage = $"'{CurrentFileName}' 저장 완료";
         }

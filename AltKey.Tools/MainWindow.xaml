@@ -1,0 +1,78 @@
+﻿<Window x:Class="AltKey.Tools.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="AltKey 도구"
+        Width="640"
+        Height="420"
+        MinWidth="520"
+        MinHeight="360"
+        WindowStartupLocation="CenterScreen">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0"
+                   Margin="0,0,0,8"
+                   FontSize="24"
+                   FontWeight="SemiBold"
+                   Text="AltKey 편집 도구"
+                   AutomationProperties.Name="도구 창 제목" />
+
+        <TextBlock Grid.Row="1"
+                   Margin="0,0,0,16"
+                   Text="설정의 편집 작업을 선택하세요. 이 창은 메인 입력 창과 분리된 편집 전용 화면입니다."
+                   TextWrapping="Wrap"
+                   AutomationProperties.Name="도구 안내 문장" />
+
+        <StackPanel Grid.Row="2"
+                    Orientation="Vertical"
+                    KeyboardNavigation.TabNavigation="Continue">
+            <Button x:Name="LayoutEditorButton"
+                    Margin="0,0,0,8"
+                    Padding="14,10"
+                    HorizontalAlignment="Stretch"
+                    TabIndex="0"
+                    Content="레이아웃 편집기 열기"
+                    Click="OnOpenLayoutEditor"
+                    AutomationProperties.Name="레이아웃 편집기 열기 버튼"
+                    AutomationProperties.HelpText="이름과 키 라벨을 편집하는 창으로 이동합니다." />
+
+            <Button x:Name="UserDictionaryEditorButton"
+                    Margin="0,0,0,8"
+                    Padding="14,10"
+                    HorizontalAlignment="Stretch"
+                    TabIndex="1"
+                    Content="사용자 단어 편집기 열기"
+                    Click="OnOpenUserDictionaryEditor"
+                    AutomationProperties.Name="사용자 단어 편집기 열기 버튼"
+                    AutomationProperties.HelpText="한국어, 영어, bigram 사용자 데이터를 편집하는 창으로 이동합니다." />
+
+            <Button x:Name="ProfileMappingReviewButton"
+                    Margin="0,0,0,8"
+                    Padding="14,10"
+                    HorizontalAlignment="Stretch"
+                    TabIndex="2"
+                    Content="프로필 매핑 편집 검토 열기"
+                    Click="OnOpenProfileMappingReview"
+                    AutomationProperties.Name="프로필 매핑 편집 검토 열기 버튼"
+                    AutomationProperties.HelpText="현재 프로필 매핑 구조와 2단계 분리 후보 여부를 검토하는 창으로 이동합니다." />
+        </StackPanel>
+
+        <Button Grid.Row="3"
+                Margin="0,16,0,0"
+                Padding="14,10"
+                HorizontalAlignment="Right"
+                TabIndex="3"
+                Content="닫기 (Esc)"
+                Click="OnClose"
+                AutomationProperties.Name="도구 창 닫기 버튼"
+                AutomationProperties.HelpText="AltKey 도구 창을 닫습니다." />
+    </Grid>
+</Window>
