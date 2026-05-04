@@ -54,15 +54,15 @@
                     AutomationProperties.Name="사용자 단어 편집기 열기 버튼"
                     AutomationProperties.HelpText="한국어, 영어, bigram 사용자 데이터를 편집하는 창으로 이동합니다." />
 
-            <Button x:Name="ProfileMappingReviewButton"
+            <Button x:Name="ProfileMappingEditorButton"
                     Margin="0,0,0,8"
                     Padding="14,10"
                     HorizontalAlignment="Stretch"
                     TabIndex="2"
-                    Content="프로필 매핑 편집 검토 열기"
-                    Click="OnOpenProfileMappingReview"
-                    AutomationProperties.Name="프로필 매핑 편집 검토 열기 버튼"
-                    AutomationProperties.HelpText="현재 프로필 매핑 구조와 2단계 분리 후보 여부를 검토하는 창으로 이동합니다." />
+                    Content="프로필 매핑 편집기 열기"
+                    Click="OnOpenProfileMappingEditor"
+                    AutomationProperties.Name="프로필 매핑 편집기 열기 버튼"
+                    AutomationProperties.HelpText="앱별 레이아웃 매핑을 편집하고 저장하는 창으로 이동합니다." />
         </StackPanel>
 
         <Button Grid.Row="3"

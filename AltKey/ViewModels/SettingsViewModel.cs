@@ -824,8 +824,18 @@ public partial class SettingsViewModel : ObservableObject
     }
 
     /// <summary>
+    /// 프로필 매핑 편집기를 AltKey.Tools 프로세스로 엽니다.
+    /// 설정창 내부 인라인 편집 대신 독립 편집기로 분리해 접근성 포커스 안정성을 높입니다.
+    /// </summary>
+    [RelayCommand]
+    private void OpenProfileMappingEditor()
+    {
+        LaunchTools("profile");
+    }
+
+    /// <summary>
     /// 편집 도구 앱(AltKey.Tools)을 실행합니다.
-    /// toolName은 layout/dictionary 값을 권장하며, 값이 없으면 도구 홈 화면을 엽니다.
+    /// toolName은 layout/dictionary/profile 값을 권장하며, 값이 없으면 도구 홈 화면을 엽니다.
     /// </summary>
     private static void LaunchTools(string? toolName)
     {

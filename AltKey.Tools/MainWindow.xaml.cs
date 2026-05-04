@@ -14,7 +14,7 @@ public partial class MainWindow : Window
 {
     private LayoutEditorWindow? _layoutEditorWindow;
     private UserDictionaryEditorWindow? _userDictionaryEditorWindow;
-    private ProfileMappingReviewWindow? _profileMappingReviewWindow;
+    private ProfileMappingEditorWindow? _profileMappingEditorWindow;
 
     public MainWindow()
     {
@@ -29,7 +29,7 @@ public partial class MainWindow : Window
 
     /// <summary>
     /// 시작 인자에서 도구 이름을 읽어, 메인 앱에서 특정 편집기로 바로 열 수 있게 합니다.
-    /// 지원 값: "layout", "dictionary"
+    /// 지원 값: "layout", "dictionary", "profile"
     /// </summary>
     public void ApplyStartupArguments(string[] args)
     {
@@ -55,6 +55,12 @@ public partial class MainWindow : Window
             if (string.Equals(toolName, "dictionary", StringComparison.OrdinalIgnoreCase))
             {
                 OnOpenUserDictionaryEditor(this, new RoutedEventArgs());
+                return;
+            }
+
+            if (string.Equals(toolName, "profile", StringComparison.OrdinalIgnoreCase))
+            {
+                OnOpenProfileMappingEditor(this, new RoutedEventArgs());
             }
         };
     }
@@ -119,22 +125,21 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// 프로필 매핑 편집의 "1단계 검토" 창을 엽니다.
-    /// 문서 태스크 5의 목적(구조 분석/적합성 판단/2단계 후보 결정)을
-    /// 접근성 속성을 갖춘 별도 창에서 확인할 수 있게 합니다.
+    /// 프로필 매핑 편집기를 엽니다.
+    /// 메인 앱 런타임 책임(실제 전환)과 분리된 편집 전용 UI를 제공해 입력 안정성을 유지합니다.
     /// </summary>
-    private void OnOpenProfileMappingReview(object sender, RoutedEventArgs e)
+    private void OnOpenProfileMappingEditor(object sender, RoutedEventArgs e)
     {
-        if (_profileMappingReviewWindow is { IsLoaded: true })
+        if (_profileMappingEditorWindow is { IsLoaded: true })
         {
-            _profileMappingReviewWindow.Activate();
+            _profileMappingEditorWindow.Activate();
             return;
         }
 
-        _profileMappingReviewWindow = new ProfileMappingReviewWindow();
-        _profileMappingReviewWindow.Owner = this;
-        _profileMappingReviewWindow.Closed += (_, _) => _profileMappingReviewWindow = null;
-        _profileMappingReviewWindow.Show();
+        _profileMappingEditorWindow = new ProfileMappingEditorWindow();
+        _profileMappingEditorWindow.Owner = this;
+        _profileMappingEditorWindow.Closed += (_, _) => _profileMappingEditorWindow = null;
+        _profileMappingEditorWindow.Show();
     }
 
     /// <summary>

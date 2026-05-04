@@ -26,18 +26,20 @@
 - 실제 전환 실행(`SwitchLayout`)은 메인 런타임 책임이므로 도구 앱으로 옮기면 안 된다.
 - 매핑 값 검증(존재하는 레이아웃인지 확인)과 접근성(첫 포커스/탭 순서/Esc 닫기)을 도구 쪽에서 보강해야 한다.
 
-## 5.3 2단계 후보 여부 결정
+## 5.3 독립 "프로필 매핑 편집기"로 승격 (2026-05-04 반영)
 
-2단계 후보로 결정.
+승격 완료.
 
-- 1단계에서는 "검토 + 리스크 노출"까지 구현한다.
-- 2단계에서 필요 시 독립 "프로필 매핑 편집기"로 승격한다.
+- `AltKey.Tools`에 `ProfileMappingEditorWindow`를 추가해 프로필 매핑을 독립 창에서 편집/저장할 수 있게 했다.
+- 검증 규칙(빈 프로세스, 중복 프로세스, 빈 레이아웃, 미존재 레이아웃)을 행 상태와 요약으로 즉시 노출한다.
+- 저장 시 유효한 행만 `AppConfig.Profiles`에 반영하고, `ToolsReloadSignalService.NotifyReloadProfiles()`로 메인 앱 설정을 재로드한다.
+- 메인 앱 `SettingsWindow`의 인라인 프로필 매핑 편집 UI는 제거하고, `OpenProfileMappingEditorCommand`로 도구 앱을 열도록 변경했다.
+- `AltKey.Tools` 시작 화면과 `--tool` 인자에 `profile`을 추가해 직접 진입을 지원한다.
 
-## 이번 반영 코드 (검토 기능)
+## 이번 반영 코드 (독립 편집기)
 
-- `AltKey.Tools` 시작 화면에 `프로필 매핑 편집 검토 열기` 추가
-- `ProfileMappingReviewWindow` 추가
-  - 현재 매핑 목록/상태 표시
-  - 미존재 레이아웃, 비어 있는 값 요약
-  - 2단계 후보 판단 텍스트 제공
+- `AltKey.Tools` 시작 화면에 `프로필 매핑 편집기 열기` 추가
+- `ProfileMappingEditorWindow` 추가
+  - 현재 매핑 편집(추가/삭제/저장)
+  - 즉시 상태 검증(중복/공백/미존재 레이아웃)
   - 접근성: 첫 포커스, 선형 탭 순서, `Esc` 닫기, AutomationProperties 이름 제공

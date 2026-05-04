@@ -36,7 +36,7 @@ public partial class App : Application
         Services = services.BuildServiceProvider();
 
         var mainWindow = new MainWindow();
-        // 메인 앱에서 "--tool layout|dictionary"로 진입할 수 있게 시작 인자를 전달합니다.
+        // 메인 앱에서 "--tool layout|dictionary|profile"로 진입할 수 있게 시작 인자를 전달합니다.
         mainWindow.ApplyStartupArguments(e.Args);
         MainWindow = mainWindow;
         mainWindow.Show();
