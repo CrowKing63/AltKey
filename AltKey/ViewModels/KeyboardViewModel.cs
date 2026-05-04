@@ -436,7 +436,9 @@ public partial class KeyboardViewModel : ObservableObject
         {
             _autoComplete.CancelComposition();
 
-            if (FocusTracker.LastFocused is { IsVisible: true } tb)
+            // 이미 해당 텍스트 상자에 키보드 포커스가 있으면 Focus()를 다시 호출하지 않습니다.
+            // 불필요한 포커스 재설정은 WPF/IME 한글 조합을 끊는 원인이 됩니다.
+            if (FocusTracker.LastFocused is { IsVisible: true } tb && !tb.IsKeyboardFocused)
                 System.Windows.Input.Keyboard.Focus(tb);
 
             if (IsSeparatorKey(slot))

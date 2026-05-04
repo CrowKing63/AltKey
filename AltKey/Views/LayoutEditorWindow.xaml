@@ -11,7 +11,7 @@
         Title="레이아웃 편집기"
         Width="1200" Height="750"
         MinWidth="700" MinHeight="450"
-        WindowStartupLocation="CenterOwner"
+        WindowStartupLocation="Manual"
         Background="#FF1E1E2E"
         d:DataContext="{d:DesignInstance vm:LayoutEditorViewModel}">
     <Window.Resources>

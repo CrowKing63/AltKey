@@ -1,4 +1,4 @@
-﻿<Window x:Class="AltKey.Views.SettingsWindow"
+<Window x:Class="AltKey.Views.SettingsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:AltKey.ViewModels"
@@ -10,7 +10,7 @@
         Title="설정"
         Width="694" Height="780"
         MinWidth="600" MinHeight="640"
-        WindowStartupLocation="CenterOwner"
+        WindowStartupLocation="Manual"
         Background="#FF1E1E2E"
         d:DataContext="{d:DesignInstance vm:SettingsViewModel}">
     <Window.Resources>
@@ -119,6 +119,54 @@
                                     Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}"
                                     BorderThickness="0" Cursor="Hand" KeyboardNavigation.TabIndex="21" AutomationProperties.Name="사용자 단어 편집기 열기"
                                     ToolTip="자동완성에서 학습한 단어 목록을 확인하고 수정합니다."/>
+
+                            <Separator Background="{DynamicResource SettingsHighlight}" Margin="0,16,0,16"/>
+                            <TextBlock Text="상단바 버튼 설정" Style="{StaticResource SectionTitleStyle}"/>
+                            <TextBlock Text="표시할 버튼과 위치를 선택하세요." Foreground="{DynamicResource SettingsFgSub}" FontSize="11"/>
+                            <TextBlock Text="위에서 아래 순서대로 상단바에 배치됩니다." Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,8"/>
+                            <ItemsControl ItemsSource="{Binding HeaderButtons}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0,4">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <CheckBox IsChecked="{Binding Visible}" VerticalAlignment="Center" Margin="0,0,8,0" Command="{Binding DataContext.SaveHeaderButtonsCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                            <TextBlock Text="{Binding Id}" Foreground="{DynamicResource SettingsFg}" VerticalAlignment="Center" Grid.Column="1"/>
+                                            <Button Grid.Column="2"
+                                                    Margin="0,0,8,0"
+                                                    Padding="8,2"
+                                                    MinWidth="76"
+                                                    Command="{Binding DataContext.ToggleHeaderButtonPositionCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    CommandParameter="{Binding}"
+                                                    Background="{DynamicResource SettingsHighlight}"
+                                                    Foreground="{DynamicResource SettingsFg}"
+                                                    BorderThickness="0"
+                                                    Cursor="Hand">
+                                                <Button.Style>
+                                                    <Style TargetType="Button">
+                                                        <Setter Property="Content" Value="◄ 우측 ►"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Position}" Value="Left">
+                                                                <Setter Property="Content" Value="◄ 좌측 ►"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Button.Style>
+                                            </Button>
+                                            <Button Content="▲" Command="{Binding DataContext.MoveHeaderButtonUpCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" Grid.Column="3" Margin="0,0,4,0" Padding="6,2" Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}" BorderThickness="0" Cursor="Hand"/>
+                                            <Button Content="▼" Command="{Binding DataContext.MoveHeaderButtonDownCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" Grid.Column="4" Padding="6,2" Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}" BorderThickness="0" Cursor="Hand"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <TextBlock Text="※ 접기, 최소화, 닫기 버튼은 항상 우측 끝에 고정됩니다." Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,4,0,0"/>
+                            <Button Content="상단바 설정 저장" Command="{Binding SaveHeaderButtonsCommand}" Margin="0,8,0,0" Padding="8,6" Background="#3B82F6" Foreground="#EEFFFFFF" BorderThickness="0" Cursor="Hand" ToolTip="버튼 표시, 위치, 순서를 변경한 뒤 저장합니다."/>
+
                         </StackPanel>
                     </ScrollViewer>
                 </TabItem>
@@ -256,6 +304,45 @@
                                     BorderThickness="0" Cursor="Hand" KeyboardNavigation.TabIndex="57"/>
                             <TextBlock Text="LiveRegion 공지 모드" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="16,0,0,4"/>
                             <ComboBox ItemsSource="{Binding SwitchScanAnnounceModes}" SelectedItem="{Binding SwitchScanAnnounceMode}" Margin="16,0,0,8" Height="30" KeyboardNavigation.TabIndex="58"/>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+                <TabItem Header="AI 도구" AutomationProperties.Name="AI 도구 설정 탭">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel Margin="8,10,8,10">
+                            <TextBlock Text="AI 텍스트 처리" Style="{StaticResource SectionTitleStyle}"/>
+                            <CheckBox Content="AI 도구 활성화 (상단바 ✨ 표시)"
+                                      Foreground="{DynamicResource SettingsFg}"
+                                      IsChecked="{Binding AiEnabled}"
+                                      Margin="0,0,0,16"/>
+                            
+                            <StackPanel IsEnabled="{Binding AiEnabled}">
+                                <TextBlock Text="API 엔드포인트 URL (OpenAI 호환)" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
+                                <TextBox Text="{Binding AiEndpoint, UpdateSourceTrigger=LostFocus}" Height="30" Margin="0,0,0,16" Padding="8,4" Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}" BorderBrush="{DynamicResource SettingsBorder}"/>
+
+                                <TextBlock Text="API 키 (Windows DPAPI 암호화 저장, 로컬 서버시 비움)" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
+                                <TextBox Text="{Binding AiApiKey, UpdateSourceTrigger=LostFocus}" Height="30" Margin="0,0,0,16" Padding="8,4" Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}" BorderBrush="{DynamicResource SettingsBorder}"/>
+
+                                <TextBlock Text="모델 이름 (예: gpt-4o-mini, llama3 등)" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
+                                <TextBox Text="{Binding AiModel, UpdateSourceTrigger=LostFocus}" Height="30" Margin="0,0,0,16" Padding="8,4" Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}" BorderBrush="{DynamicResource SettingsBorder}"/>
+
+                                <TextBlock Text="기본 프롬프트 (AI 동작 지시)" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
+                                <TextBox Text="{Binding AiDefaultPrompt, UpdateSourceTrigger=LostFocus}" Height="60" TextWrapping="Wrap" AcceptsReturn="True" Margin="0,0,0,16" Padding="8,4" Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}" BorderBrush="{DynamicResource SettingsBorder}"/>
+
+                                <TextBlock Text="타임아웃 (초)" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
+                                <ctrl:NumericAdjuster Value="{Binding AiTimeoutSeconds}" Minimum="5" Maximum="300" Step="5" DecimalPlaces="0"
+                                                      ButtonBackground="{DynamicResource SettingsHighlight}" ButtonForeground="{DynamicResource SettingsFg}"
+                                                      TextBoxBackground="{DynamicResource SettingsHighlight}" TextBoxForeground="{DynamicResource SettingsFg}" TextBoxBorderBrush="{DynamicResource SettingsBorder}"
+                                                      Margin="0,0,0,8"/>
+                                <Button Content="연결 테스트 (짧은 API 요청)"
+                                        Command="{Binding TestAiConnectionCommand}"
+                                        Height="34" Padding="12,6" Margin="0,0,0,16"
+                                        HorizontalAlignment="Left"
+                                        Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}"
+                                        BorderThickness="0" Cursor="Hand"
+                                        ToolTip="엔드포인트·모델·API 키가 올바른지 확인합니다. 먼저 위 항목을 입력한 뒤 눌러 주세요."/>
+                            </StackPanel>
                         </StackPanel>
                     </ScrollViewer>
                 </TabItem>

@@ -65,6 +65,13 @@ internal static class Win32
     [DllImport("user32.dll")]
     public static extern IntPtr GetForegroundWindow();
 
+    /// <summary>포커스를 지정 창으로 옮깁니다. (AI 복사/붙여넣기 전에 대상 앱으로 되돌릴 때 사용)</summary>
+    [DllImport("user32.dll")]
+    public static extern bool SetForegroundWindow(IntPtr hWnd);
+
+    [DllImport("user32.dll")]
+    public static extern bool IsWindow(IntPtr hWnd);
+
     // T-2.10b: 프로세스 핸들 및 무결성 수준 조회
     [DllImport("kernel32.dll")]
     public static extern IntPtr OpenProcess(uint dwDesiredAccess, bool bInheritHandle, uint dwProcessId);

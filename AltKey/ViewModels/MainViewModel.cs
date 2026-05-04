@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using AltKey.Models;
+using AltKey.Platform;
 using Microsoft.Extensions.DependencyInjection;
 using WpfApp = System.Windows.Application;
 using WpfMsgBox = System.Windows.MessageBox;
@@ -25,6 +26,7 @@ public partial class MainViewModel : ObservableObject
     private readonly AutoCompleteService _autoCompleteService;
     private readonly InputService _inputService;
     private readonly LiveRegionService _liveRegion;
+    private readonly AiService _aiService;
 
     // 표시명 → 파일명 매핑 (T-7.1: AvailableLayouts가 표시명을 저장)
     private readonly Dictionary<string, string> _displayToFileName = [];
@@ -212,12 +214,14 @@ public partial class MainViewModel : ObservableObject
         SuggestionBarViewModel suggestionBarViewModel,
         AutoCompleteService    autoCompleteService,
         InputService           inputService,
-        LiveRegionService      liveRegion)
+        LiveRegionService      liveRegion,
+        AiService              aiService)
     {
         _configService  = configService;
         _layoutService  = layoutService;
         _profileService = profileService;
         _liveRegion = liveRegion;
+        _aiService = aiService;
 
         Keyboard     = keyboardViewModel;
         Settings     = settingsViewModel;
@@ -227,26 +231,22 @@ public partial class MainViewModel : ObservableObject
         _autoCompleteService = autoCompleteService;
         _inputService = inputService;
 
-        // T-5.4: 포그라운드 앱 변경 → 자동 레이아웃 전환
         _profileService.ForegroundAppChanged += OnForegroundAppChanged;
-
-        // 체류 클릭 설정 변경 시 UI에 알림
         _configService.ConfigChanged += OnConfigChanged;
         Keyboard.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == nameof(KeyboardViewModel.A11yFocusOwner))
                 OnPropertyChanged(nameof(A11yFocusOwner));
         };
-
-        // 레이아웃 변경 시 AvailableLayouts 새로고침
         _layoutService.LayoutsChanged += OnLayoutsChanged;
-
-        // 키 입력 시 이모지/클립보드 패널 자동 닫기
         Keyboard.KeyTapped += () =>
         {
             Emoji.IsVisible     = false;
             Clipboard.IsVisible = false;
         };
+
+        // 상단바 버튼 초기 구성
+        RebuildHeaderButtons();
     }
 
     private void OnConfigChanged(string? propertyName)
@@ -256,10 +256,13 @@ public partial class MainViewModel : ObservableObject
             SwitchLayout(_configService.Current.DefaultLayout);
             return;
         }
+        if (propertyName is "HeaderButtons" or nameof(AppConfig.AiEnabled))
+            RebuildHeaderButtons();
 
         OnPropertyChanged(nameof(DwellEnabled));
         OnPropertyChanged(nameof(DwellTimeMs));
         OnPropertyChanged(nameof(AutoCompleteEnabled));
+        OnPropertyChanged(nameof(AiEnabled));
         OnPropertyChanged(nameof(KeyRepeatEnabled));
         OnPropertyChanged(nameof(KeyRepeatDelayMs));
         OnPropertyChanged(nameof(KeyRepeatIntervalMs));
@@ -486,6 +489,131 @@ public partial class MainViewModel : ObservableObject
         _liveRegion.Announce("화면 키보드 호출");
     }
 
+    // ── AI 텍스트 처리 ───────────────────────────────────────────
+
+    /// AI 텍스트 처리 기능 활성화 여부
+    public bool AiEnabled => _configService.Current.AiEnabled;
+
+    /// AI 처리 진행 중 여부
+    [ObservableProperty]
+    private bool isAiProcessing;
+
+    private CancellationTokenSource? _aiCts;
+
+    /// <summary>
+    /// AI 텍스트 처리: Ctrl+C → API → Ctrl+V
+    /// </summary>
+    /// <summary>
+    /// 상단바 클릭 후 포그라운드가 AltKey로만 남아 있으면, 직전에 쓰던 앱으로 포커스를 돌려 Ctrl+C가 올바른 창으로 가게 합니다.
+    /// </summary>
+    private void TryFocusLastExternalTarget()
+    {
+        var fg = Win32.GetForegroundWindow();
+        Win32.GetWindowThreadProcessId(fg, out var pid);
+        if (pid != (uint)Environment.ProcessId) return;
+
+        var target = _profileService.LastExternalForegroundHwnd;
+        if (target == IntPtr.Zero || !Win32.IsWindow(target)) return;
+
+        Win32.SetForegroundWindow(target);
+    }
+
+    [RelayCommand]
+    private async Task ExecuteAi()
+    {
+        if (IsAiProcessing || !_configService.Current.AiEnabled) return;
+        IsAiProcessing = true;
+        _aiCts = new CancellationTokenSource();
+        var ct = _aiCts.Token;
+        string? originalClipboard = null;
+        try
+        {
+            // 클릭 처리가 끝난 뒤 포커스 복원 → 클립보드 백업/복사 순서
+            await Task.Yield();
+            TryFocusLastExternalTarget();
+            await Task.Delay(80, ct);
+
+            await WpfApp.Current.Dispatcher.InvokeAsync(() =>
+                originalClipboard = ClipboardHelper.GetTextWithRetry());
+
+            _inputService.SendCombo([VirtualKeyCode.VK_CONTROL, VirtualKeyCode.VK_C]);
+            await Task.Delay(220, ct);
+
+            string? selectedText = null;
+            await WpfApp.Current.Dispatcher.InvokeAsync(() =>
+                selectedText = ClipboardHelper.GetTextWithRetry());
+
+            if (string.IsNullOrWhiteSpace(selectedText))
+            { _liveRegion.Announce("선택된 텍스트가 없습니다"); return; }
+
+            _liveRegion.Announce("AI 처리 중...");
+            var result = await _aiService.ProcessTextAsync(selectedText, "", ct);
+
+            await WpfApp.Current.Dispatcher.InvokeAsync(() =>
+                ClipboardHelper.SetTextWithRetry(result));
+            await Task.Delay(50, ct);
+            _inputService.SendCombo([VirtualKeyCode.VK_CONTROL, VirtualKeyCode.VK_V]);
+            await Task.Delay(100, ct);
+            _liveRegion.Announce("AI 처리 완료");
+        }
+        catch (AiServiceException ex) { _liveRegion.Announce($"AI 실패: {ex.Message}"); }
+        catch (OperationCanceledException) { _liveRegion.Announce("AI 취소됨"); }
+        catch (Exception ex) { _liveRegion.Announce("AI 오류"); Debug.WriteLine($"[AI] {ex}"); }
+        finally
+        {
+            if (originalClipboard is not null)
+            {
+                try { await Task.Delay(200);
+                    await WpfApp.Current.Dispatcher.InvokeAsync(() =>
+                        ClipboardHelper.SetTextWithRetry(originalClipboard));
+                } catch { }
+            }
+            IsAiProcessing = false; _aiCts?.Dispose(); _aiCts = null;
+        }
+    }
+
+    [RelayCommand] private void CancelAi() => _aiCts?.Cancel();
+
+    // ── 상단바 동적 버튼 ─────────────────────────────────────────
+
+    [ObservableProperty] private ObservableCollection<HeaderButtonVm> headerButtonsLeft = [];
+    [ObservableProperty] private ObservableCollection<HeaderButtonVm> headerButtonsRight = [];
+
+    public void RebuildHeaderButtons()
+    {
+        var configs = _configService.Current.HeaderButtons;
+        if (configs.Count == 0)
+        {
+            configs = HeaderButtonConfig.CreateDefaults();
+            _configService.Current.HeaderButtons = configs;
+            _configService.Save();
+        }
+        var left  = new ObservableCollection<HeaderButtonVm>();
+        var right = new ObservableCollection<HeaderButtonVm>();
+        foreach (var cfg in configs)
+        {
+            if (!cfg.Visible) continue;
+            var vm = CreateHeaderButtonVm(cfg.Id);
+            if (vm is null) continue;
+            if (cfg.Position == "Left") left.Add(vm); else right.Add(vm);
+        }
+        HeaderButtonsLeft  = left;
+        HeaderButtonsRight = right;
+    }
+
+    private HeaderButtonVm? CreateHeaderButtonVm(string id) => id switch
+    {
+        HeaderButtonConfig.IdClipboard => new() { Id=id, Icon="\ud83d\udccb", Label="\ud074\ub9bd\ubcf4\ub4dc", Command=ToggleClipboardPanelCommand },
+        HeaderButtonConfig.IdEmoji => new() { Id=id, Icon="\ud83d\ude0a", Label="\uc774\ubaa8\uc9c0", Command=ToggleEmojiPanelCommand },
+        HeaderButtonConfig.IdAutoComplete => new() { Id=id, Icon="AC", Label="\uc790\ub3d9\uc644\uc131", IsToggle=true },
+        HeaderButtonConfig.IdOsIme => new() { Id=id, Icon="\ud55c/\uc601", Label="OS IME", Command=SendOsImeHangulCommand, Width=40, FontSize=10 },
+        HeaderButtonConfig.IdOsk => new() { Id=id, Icon="\u2328", Label="\ud654\uba74 \ud0a4\ubcf4\ub4dc", Command=SendOskCommand },
+        HeaderButtonConfig.IdSettings => new() { Id=id, Icon="\u2699", Label="\uc124\uc815", Command=Settings.OpenSettingsCommand },
+        HeaderButtonConfig.IdAi => _configService.Current.AiEnabled
+            ? new() { Id=id, Icon="\u2728", Label="AI", Command=ExecuteAiCommand } : null,
+        _ => null
+    };
+
     // T-5.4: 앱 프로필 자동 전환
     private void OnForegroundAppChanged(string processName)
     {
@@ -493,12 +621,23 @@ public partial class MainViewModel : ObservableObject
         {
             var config = _configService.Current;
             if (!config.AutoProfileSwitch) return;
-
             if (config.Profiles.TryGetValue(processName, out var layoutName))
             {
                 try { SwitchLayout(layoutName); }
-                catch { /* 프로필 전환 실패 — 무시 */ }
+                catch { }
             }
         });
     }
+}
+
+/// 상단바 동적 버튼 VM
+public class HeaderButtonVm : ObservableObject
+{
+    public string Id { get; init; } = "";
+    public string Icon { get; init; } = "";
+    public string Label { get; init; } = "";
+    public System.Windows.Input.ICommand? Command { get; init; }
+    public bool IsToggle { get; init; }
+    public double Width { get; init; } = 32;
+    public double FontSize { get; init; } = 14;
 }

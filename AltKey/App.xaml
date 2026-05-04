@@ -1,4 +1,4 @@
-﻿<Application x:Class="AltKey.App"
+<Application x:Class="AltKey.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:AltKey"
@@ -24,6 +24,7 @@
 
             <themes:ProgressToOffsetConverter x:Key="ProgressToOffsetConverter"/>
             <converters:BoolToVisibilityConverter x:Key="BoolToVis"/>
+            <themes:InverseBoolToVisibilityConverter x:Key="InvBoolToVis"/>
             <themes:GapToRightMarginConverter x:Key="GapToRightMargin"/>
             <themes:BoolToStarConverter x:Key="BoolToStar"/>
         </ResourceDictionary>

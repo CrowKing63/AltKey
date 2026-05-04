@@ -34,6 +34,7 @@ public partial class SettingsViewModel : ObservableObject
     private readonly UpdateService        _updateService;
     private readonly DownloadService      _downloadService;
     private readonly InstallerService     _installerService;
+    private readonly AiService            _aiService;
 
     private CancellationTokenSource?      _downloadCts;
 
@@ -138,6 +139,18 @@ public partial class SettingsViewModel : ObservableObject
     // T-9.5: 현재 버전 표시
     [ObservableProperty] private string currentVersion = "";
 
+    // ── AI 텍스트 처리 설정 ──────────────────────────────────────────────
+    [ObservableProperty] private bool aiEnabled;
+    [ObservableProperty] private string aiEndpoint = "";
+    [ObservableProperty] private string aiApiKey = "";
+    [ObservableProperty] private string aiModel = "";
+    [ObservableProperty] private string aiDefaultPrompt = "";
+    [ObservableProperty] private int aiTimeoutSeconds;
+
+    // ── 상단바 버튼 설정 ─────────────────────────────────────────────────
+    [ObservableProperty]
+    private ObservableCollection<HeaderButtonConfig> headerButtons = [];
+
     // T-5.12: 관리자 권한 실행 여부
     public bool IsRunningAsAdmin { get; } = System.Security.Principal.WindowsIdentity.GetCurrent() is { } identity
         && new System.Security.Principal.WindowsPrincipal(identity).IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator);
@@ -179,7 +192,8 @@ public partial class SettingsViewModel : ObservableObject
         UpdateService        updateService,
         DownloadService      downloadService,
         InstallerService     installerService,
-        UserDictionaryEditorViewModel userDictionaryEditorViewModel)
+        UserDictionaryEditorViewModel userDictionaryEditorViewModel,
+        AiService            aiService)
     {
         _configService  = configService;
         _themeService   = themeService;
@@ -192,6 +206,7 @@ public partial class SettingsViewModel : ObservableObject
         _downloadService = downloadService;
         _installerService = installerService;
         _userDictEditorVm = userDictionaryEditorViewModel;
+        _aiService      = aiService;
 
         // T-9.5: 현재 버전 초기화
         var asmVersion = Assembly.GetExecutingAssembly().GetName().Version;
@@ -269,6 +284,18 @@ public partial class SettingsViewModel : ObservableObject
              SwitchScanIncludeSuggestions = c.SwitchScanIncludeSuggestions;
              SwitchScanSuggestionPriority = c.SwitchScanSuggestionPriority;
              SwitchScanAnnounceMode = c.SwitchScanAnnounceMode;
+
+             // AI 설정
+             AiEnabled = c.AiEnabled;
+             AiEndpoint = c.AiEndpoint;
+             AiApiKey = SecureStorage.Decrypt(c.AiApiKeyEncrypted);
+             AiModel = c.AiModel;
+             AiDefaultPrompt = c.AiDefaultPrompt;
+             AiTimeoutSeconds = c.AiTimeoutSeconds <= 0 ? 30 : c.AiTimeoutSeconds;
+
+             // 상단바 설정
+             HeaderButtons = new ObservableCollection<HeaderButtonConfig>(
+                 c.HeaderButtons.Select(CloneHeaderButtonConfig));
 
             // T-8.5: 프로필
             Profiles = new ObservableCollection<ProfileEntry>(
@@ -618,6 +645,84 @@ public partial class SettingsViewModel : ObservableObject
                 .ToDictionary(p => p.ProcessName.ToLower(), p => p.LayoutName));
     }
 
+    // ── AI 텍스트 처리 및 상단바 설정 저장 ────────────────────────────────
+    partial void OnAiEnabledChanged(bool value)
+    {
+        if (_isLoading) return;
+        // 속성 이름을 넘겨야 MainViewModel이 상단바 ✨ 버튼 표시를 즉시 갱신합니다.
+        _configService.Update(c => c.AiEnabled = value, nameof(AppConfig.AiEnabled));
+    }
+    partial void OnAiEndpointChanged(string value) { if (_isLoading) return; _configService.Update(c => c.AiEndpoint = value); }
+    partial void OnAiApiKeyChanged(string value) { if (_isLoading) return; _configService.Update(c => c.AiApiKeyEncrypted = SecureStorage.Encrypt(value)); }
+    partial void OnAiModelChanged(string value) { if (_isLoading) return; _configService.Update(c => c.AiModel = value); }
+    partial void OnAiDefaultPromptChanged(string value) { if (_isLoading) return; _configService.Update(c => c.AiDefaultPrompt = value); }
+    partial void OnAiTimeoutSecondsChanged(int value)
+    {
+        if (_isLoading) return;
+        var clamped = Math.Clamp(value, 5, 300);
+        if (clamped != value) { AiTimeoutSeconds = clamped; return; }
+        _configService.Update(c => c.AiTimeoutSeconds = clamped);
+    }
+
+    /// <summary>설정한 엔드포인트·모델로 짧은 테스트 요청을 보냅니다.</summary>
+    [RelayCommand]
+    private async Task TestAiConnection()
+    {
+        try
+        {
+            var msg = await _aiService.TestConnectionAsync();
+            WpfMsgBox.Show(msg, "AI 연결", WpfMsgBoxButton.OK, WpfMsgBoxImage.Information);
+        }
+        catch (AiServiceException ex)
+        {
+            WpfMsgBox.Show(ex.Message, "AI 연결 실패", WpfMsgBoxButton.OK, WpfMsgBoxImage.Warning);
+        }
+        catch (Exception ex)
+        {
+            WpfMsgBox.Show($"연결 테스트 중 오류: {ex.Message}", "AI 연결", WpfMsgBoxButton.OK, WpfMsgBoxImage.Error);
+        }
+    }
+
+    private static HeaderButtonConfig CloneHeaderButtonConfig(HeaderButtonConfig source) => new()
+    {
+        Id = source.Id,
+        Visible = source.Visible,
+        Position = string.Equals(source.Position, "Left", StringComparison.OrdinalIgnoreCase) ? "Left" : "Right"
+    };
+
+    [RelayCommand]
+    private void MoveHeaderButtonUp(HeaderButtonConfig item)
+    {
+        var idx = HeaderButtons.IndexOf(item);
+        if (idx > 0) { HeaderButtons.Move(idx, idx - 1); SaveHeaderButtons(); }
+    }
+
+    [RelayCommand]
+    private void MoveHeaderButtonDown(HeaderButtonConfig item)
+    {
+        var idx = HeaderButtons.IndexOf(item);
+        if (idx >= 0 && idx < HeaderButtons.Count - 1) { HeaderButtons.Move(idx, idx + 1); SaveHeaderButtons(); }
+    }
+    [RelayCommand]
+    private void ToggleHeaderButtonPosition(HeaderButtonConfig item)
+    {
+        if (item is null) return;
+        item.Position = string.Equals(item.Position, "Left", StringComparison.OrdinalIgnoreCase) ? "Right" : "Left";
+
+        // HeaderButtonConfig는 ObservableObject가 아니므로 컬렉션을 재할당해 UI를 갱신합니다.
+        HeaderButtons = new ObservableCollection<HeaderButtonConfig>(
+            HeaderButtons.Select(CloneHeaderButtonConfig));
+
+        SaveHeaderButtons();
+    }
+
+    [RelayCommand]
+    private void SaveHeaderButtons()
+    {
+        if (_isLoading) return;
+        _configService.Update(c => c.HeaderButtons = HeaderButtons.Select(CloneHeaderButtonConfig).ToList(), "HeaderButtons");
+    }
+
     // ── 설정 창 열기 (싱글톤) ──────────────────────────────────────────────
 
     [RelayCommand]
@@ -629,10 +734,8 @@ public partial class SettingsViewModel : ObservableObject
             return;
         }
 
-        _settingsWindow = new AltKey.Views.SettingsWindow(this)
-        {
-            Owner = WpfApp.Current.MainWindow
-        };
+        _settingsWindow = new AltKey.Views.SettingsWindow(this);
+        AuxiliaryWindowPlacement.CenterNear(_settingsWindow, WpfApp.Current.MainWindow);
         _settingsWindow.Show();
     }
 
@@ -651,10 +754,10 @@ public partial class SettingsViewModel : ObservableObject
             return;
         }
 
-        _switchScanSettingsWindow = new AltKey.Views.SwitchScanSettingsWindow(this)
-        {
-            Owner = _settingsWindow ?? WpfApp.Current.MainWindow
-        };
+        _switchScanSettingsWindow = new AltKey.Views.SwitchScanSettingsWindow(this);
+        AuxiliaryWindowPlacement.CenterNear(
+            _switchScanSettingsWindow,
+            _settingsWindow ?? WpfApp.Current.MainWindow);
         _switchScanSettingsWindow.Closed += (_, _) => _switchScanSettingsWindow = null;
         _switchScanSettingsWindow.Show();
     }
@@ -672,10 +775,10 @@ public partial class SettingsViewModel : ObservableObject
             return;
         }
 
-        _focusA11ySettingsWindow = new AltKey.Views.FocusA11ySettingsWindow(this)
-        {
-            Owner = _settingsWindow ?? WpfApp.Current.MainWindow
-        };
+        _focusA11ySettingsWindow = new AltKey.Views.FocusA11ySettingsWindow(this);
+        AuxiliaryWindowPlacement.CenterNear(
+            _focusA11ySettingsWindow,
+            _settingsWindow ?? WpfApp.Current.MainWindow);
         _focusA11ySettingsWindow.Closed += (_, _) => _focusA11ySettingsWindow = null;
         _focusA11ySettingsWindow.Show();
     }
@@ -688,10 +791,8 @@ public partial class SettingsViewModel : ObservableObject
     [RelayCommand]
     private void OpenLayoutEditor()
     {
-        var win = new AltKey.Views.LayoutEditorWindow(_layoutEditorVm)
-        {
-            Owner = WpfApp.Current.MainWindow
-        };
+        var win = new AltKey.Views.LayoutEditorWindow(_layoutEditorVm);
+        AuxiliaryWindowPlacement.CenterNear(win, WpfApp.Current.MainWindow);
         win.Show();
     }
 
@@ -700,10 +801,8 @@ public partial class SettingsViewModel : ObservableObject
     [RelayCommand]
     private void OpenUserDictionaryEditor()
     {
-        var win = new AltKey.Views.UserDictionaryEditorWindow(_userDictEditorVm)
-        {
-            Owner = WpfApp.Current.MainWindow
-        };
+        var win = new AltKey.Views.UserDictionaryEditorWindow(_userDictEditorVm);
+        AuxiliaryWindowPlacement.CenterNear(win, WpfApp.Current.MainWindow);
         win.Show();
     }
 

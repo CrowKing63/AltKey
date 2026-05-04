@@ -9,7 +9,7 @@
         Title="스위치 스캔 상세 설정"
         Width="680" Height="820"
         MinWidth="600" MinHeight="700"
-        WindowStartupLocation="CenterOwner"
+        WindowStartupLocation="Manual"
         Background="#FF1E1E2E"
         d:DataContext="{d:DesignInstance vm:SettingsViewModel}">
     <Border Background="{DynamicResource SettingsBg}"

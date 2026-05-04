@@ -8,7 +8,7 @@
         Title="사용자 단어 편집기"
         Width="800" Height="600"
         MinWidth="600" MinHeight="450"
-        WindowStartupLocation="CenterOwner"
+        WindowStartupLocation="Manual"
         Background="#FF1E1E2E"
         d:DataContext="{d:DesignInstance vm:UserDictionaryEditorViewModel}">
 

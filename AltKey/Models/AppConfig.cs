@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace AltKey.Models;
 
 /// <summary>
@@ -101,6 +103,31 @@ public class AppConfig
     
     // [접근성] 탭 탐색으로 포커스가 이동할 때 현재 위치를 LiveRegion으로 공지할지 여부입니다.
     public bool KeyboardA11yAnnounceFocus { get; set; } = false;
+
+    // ── AI 텍스트 처리 설정 ──────────────────────────────────────────────
+
+    // AI 텍스트 처리 기능 활성화 여부입니다. 켜면 상단바에 ✨ 버튼이 표시됩니다.
+    public bool AiEnabled { get; set; } = false;
+
+    // AI API 엔드포인트 URL입니다. (예: http://localhost:11434/v1/chat/completions)
+    public string AiEndpoint { get; set; } = "";
+
+    // DPAPI로 암호화된 API 키입니다 (Base64 문자열). 로컬 서버는 비워두세요.
+    public string AiApiKeyEncrypted { get; set; } = "";
+
+    // AI 모델 이름입니다. (예: "gpt-4o-mini", "llama3", "gemma")
+    public string AiModel { get; set; } = "";
+
+    // AI에게 보낼 기본 시스템 프롬프트입니다. 이 안내에 따라 선택한 텍스트를 가공합니다.
+    public string AiDefaultPrompt { get; set; } = "다음 텍스트를 한국어로 간단히 요약해줘";
+
+    // AI API 요청 타임아웃(초)입니다.
+    public int AiTimeoutSeconds { get; set; } = 30;
+
+    // ── 상단바 버튼 설정 ─────────────────────────────────────────────────
+
+    // 상단바에 표시할 버튼 목록과 순서입니다. 비어 있으면 기본값이 적용됩니다.
+    public List<HeaderButtonConfig> HeaderButtons { get; set; } = [];
 
     // ── L2/L3 접근성 설정 ────────────────────────────────────────────────
 

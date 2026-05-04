@@ -115,6 +115,8 @@ public partial class App : System.Windows.Application
             services.AddSingleton<AutoCompleteService>();
             // 08: 접근성 LiveRegion 서비스
             services.AddSingleton<LiveRegionService>();
+            // AI 텍스트 처리 서비스
+            services.AddSingleton<AiService>();
 
             // ViewModel
             services.AddSingleton<KeyboardViewModel>();

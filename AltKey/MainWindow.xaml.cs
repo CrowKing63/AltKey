@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
+using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
 using AltKey.Services;
@@ -39,6 +40,12 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         DataContext = viewModel;
+
+        // 설정·편집기 TextBox 등에서 가상 키를 누를 때, 클릭으로 키 포커스가 메인 키보드 쪽으로
+        // 옮겨지면 IME 한글 조합이 끊깁니다. 넘어가려는 순간 되돌려 조합을 유지합니다.
+        AddHandler(Keyboard.PreviewGotKeyboardFocusEvent,
+            (KeyboardFocusChangedEventHandler)OnPreviewGotKeyboardFocus,
+            handledEventsToo: true);
 
         _windowService = windowService;
         _configService = configService;
@@ -207,5 +214,36 @@ public partial class MainWindow : Window
         Opacity = 0;
         BeginAnimation(OpacityProperty,
             new DoubleAnimation(0, 1, new Duration(TimeSpan.FromMilliseconds(280))));
+    }
+
+    private void OnPreviewGotKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
+    {
+        IInputElement? restoreTarget = e.OldFocus switch
+        {
+            System.Windows.Controls.Primitives.TextBoxBase tb => tb,
+            System.Windows.Controls.PasswordBox pb => pb,
+            _ => null
+        };
+        if (restoreTarget is not UIElement oldEl || !oldEl.IsVisible) return;
+
+        var prevWin = Window.GetWindow(oldEl);
+        if (prevWin is null || ReferenceEquals(prevWin, this)) return;
+
+        if (e.NewFocus is not DependencyObject newFocus) return;
+        if (!IsWithinKeyboardViewSurface(newFocus)) return;
+
+        e.Handled = true;
+        Keyboard.Focus(restoreTarget);
+    }
+
+    /// <summary>포커스 대상이 메인 창 안의 KeyboardView(키·제안바·이모지 등) 아래인지 판별합니다.</summary>
+    private bool IsWithinKeyboardViewSurface(DependencyObject? d)
+    {
+        if (KeyboardViewControl is null || d is null) return false;
+        for (; d is not null; d = VisualTreeHelper.GetParent(d))
+        {
+            if (ReferenceEquals(d, KeyboardViewControl)) return true;
+        }
+        return false;
     }
 }

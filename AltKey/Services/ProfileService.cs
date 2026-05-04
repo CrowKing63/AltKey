@@ -10,10 +10,18 @@ namespace AltKey.Services;
 /// </summary>
 public class ProfileService : IDisposable
 {
+    private static readonly uint OwnProcessId = (uint)Environment.ProcessId;
+
     private IntPtr _hook;
     private Win32.WinEventDelegate? _delegateRef; // GC 방지용 참조 보관
 
     public event Action<string>? ForegroundAppChanged;
+
+    /// <summary>
+    /// AltKey가 아닌 마지막 포그라운드 창 핸들입니다.
+    /// [용도] 상단바 버튼 클릭 후 포커스가 AltKey로 옮겨진 경우, Ctrl+C 대상 앱으로 되돌릴 때 사용합니다.
+    /// </summary>
+    public IntPtr LastExternalForegroundHwnd { get; private set; }
     
     /// T-2.10b: 포그라운드 앱이 관리자 권한(고 무결성 수준)일 때 발생
     public event Action? ElevatedAppDetected;
@@ -37,6 +45,9 @@ public class ProfileService : IDisposable
         Win32.GetWindowThreadProcessId(hwnd, out var pid);
         try
         {
+            if (pid != OwnProcessId)
+                LastExternalForegroundHwnd = hwnd;
+
             using var proc = Process.GetProcessById((int)pid);
             ForegroundAppChanged?.Invoke(proc.ProcessName.ToLower() + ".exe");
             

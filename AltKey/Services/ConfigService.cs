@@ -37,6 +37,15 @@ public class ConfigService
             var json = File.ReadAllText(PathResolver.ConfigPath);
             Current = JsonSerializer.Deserialize<AppConfig>(json, JsonOptions.Default) ?? new();
             MigrateWindowConfig(json); // 예전 버전의 설정 형식을 최신 형식으로 변환합니다.
+
+            // 상단바 버튼 목록이 비어 있으면 기본 구성을 넣고 저장합니다.
+            // (이전에는 MainViewModel 생성 후에만 기본값이 생겨, 첫 실행에서 설정 창 목록이 비어 보이는 문제가 있었습니다.)
+            Current.HeaderButtons ??= [];
+            if (Current.HeaderButtons.Count == 0)
+            {
+                Current.HeaderButtons = HeaderButtonConfig.CreateDefaults();
+                Save();
+            }
         }
         catch
         {
