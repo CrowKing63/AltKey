@@ -264,7 +264,7 @@ Application.Current.DispatcherUnhandledException += (s, e) =>
 **파일**: `TESTING.md` (문서화)
 
 **체크리스트**:
-- [ ] 포터블 exe 실행 → Acrylic 배경 키보드 표시
+- [ ] 포터블 exe 실행 → 키보드 창과 투명도 동작 정상 표시
 - [ ] 메모장 열고 키 클릭 → 입력 전달 (포커스 유지 확인)
 - [ ] Shift 고정 → 대문자 입력 → 자동 해제
 - [ ] Shift 더블클릭 → 영구 잠금 → 재클릭으로 해제

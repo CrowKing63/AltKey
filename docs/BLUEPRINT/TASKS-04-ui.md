@@ -1,6 +1,6 @@
 # Phase 4: UI/UX 디자인
 
-> 목표: WPF ResourceDictionary 기반 테마 시스템, Acrylic 배경, 키 애니메이션, 고정 키 인디케이터를 구현한다.
+> 목표: WPF ResourceDictionary 기반 테마 시스템, 배경 투명도, 키 애니메이션, 고정 키 인디케이터를 구현한다.
 
 **의존성**: Phase 3 (키보드 렌더링 동작)
 

@@ -25,13 +25,11 @@ dotnet run
 
 **명령어**:
 ```
-dotnet add package WPF-UI --version 3.*
 dotnet add package CommunityToolkit.Mvvm --version 8.*
 dotnet add package Microsoft.Extensions.DependencyInjection --version 8.*
 ```
 
 **각 패키지 역할**:
-- `WPF-UI` — Acrylic/Mica 블러, 모던 컨트롤(FluentWindow, NavigationView 등)
 - `CommunityToolkit.Mvvm` — `[ObservableProperty]`, `[RelayCommand]` source generator
 - `Microsoft.Extensions.DependencyInjection` — DI 컨테이너 (Service locator 없이 생성자 주입)
 
@@ -217,7 +215,7 @@ layouts/*.json  # 기본 레이아웃은 포함하되 사용자 커스텀은 제
 **파일**: `README.md`
 
 **포함 내용**:
-- 사전 요구사항: .NET 8 SDK, Windows 10 22H2+ (Acrylic 권장)
+- 사전 요구사항: .NET 8 SDK, Windows 10+
 - 개발 실행: `dotnet run`
 - 릴리즈 빌드: `dotnet build -c Release`
 - 포터블 배포: `dotnet publish -c Release -r win-x64 --self-contained -p:PublishSingleFile=true`

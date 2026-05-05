@@ -110,7 +110,7 @@ AltKey.Tests/
 ## 5. 현재 상태 (리팩토링 전 기준선)
 
 - `.NET 8.0-windows` / WPF + WindowsForms 혼용.
-- `CommunityToolkit.Mvvm`, `Microsoft.Extensions.DependencyInjection`, `WPF-UI` 사용.
+- `CommunityToolkit.Mvvm`, `Microsoft.Extensions.DependencyInjection` 사용.
 - `AltKey/Services/AutoCompleteService.cs` 131줄.
 - `AltKey/Services/InputService.cs` 313줄.
 - `AltKey/Services/HangulComposer.cs` 333줄.
