@@ -17,6 +17,9 @@ public class AiService : IDisposable
 {
     private readonly ConfigService _configService;
     private readonly HttpClient _httpClient;
+    // 공통 출력 가드레일: 작업 종류와 무관하게 결과물 본문만 반환하도록 강제한다.
+    private const string OutputOnlyGuardrail =
+        "Final answer must contain only the transformed result text. No explanation, no preface, no quotes, no markdown, no labels.";
 
     public AiService(ConfigService configService)
     {
@@ -45,12 +48,15 @@ public class AiService : IDisposable
             throw new AiServiceException("모델 이름이 비어 있습니다. 설정 → AI 도구 탭에서 모델 이름(예: llama3, gpt-4o-mini)을 입력하세요.");
 
         // 사용할 프롬프트 결정 (파라미터 > 기본 설정)
-        var systemPrompt = string.IsNullOrWhiteSpace(prompt)
+        var basePrompt = string.IsNullOrWhiteSpace(prompt)
             ? config.AiDefaultPrompt
             : prompt;
 
-        if (string.IsNullOrWhiteSpace(systemPrompt))
+        if (string.IsNullOrWhiteSpace(basePrompt))
             throw new AiServiceException("프롬프트가 설정되지 않았습니다. 설정 → AI 탭에서 기본 프롬프트를 입력하세요.");
+
+        // 사용자가 짧게 요청해도 출력이 장문 설명으로 새지 않도록 공통 규칙을 후단에 결합한다.
+        var systemPrompt = BuildSystemPromptWithGuardrail(basePrompt);
 
         // 요청 JSON 구성 (OpenAI-compatible Chat Completions)
         var requestBody = new ChatCompletionRequest
@@ -143,6 +149,14 @@ public class AiService : IDisposable
         if (t.EndsWith("/v1", StringComparison.OrdinalIgnoreCase))
             return t + "/chat/completions";
         return t + "/v1/chat/completions";
+    }
+
+    /// <summary>
+    /// 사용자 프롬프트에 공통 출력 가드레일을 결합해 결과물-only 출력을 강제한다.
+    /// </summary>
+    private static string BuildSystemPromptWithGuardrail(string basePrompt)
+    {
+        return $"{basePrompt.Trim()}\n\n{OutputOnlyGuardrail}";
     }
 
     /// 에러 메시지를 사용자에게 보여줄 수 있도록 200자로 자릅니다.

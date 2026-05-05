@@ -10,7 +10,13 @@
         MinWidth="520"
         MinHeight="360"
         WindowStartupLocation="CenterScreen">
-    <Grid Margin="20">
+    <Border Margin="14"
+            Padding="20"
+            Background="{DynamicResource SettingsBg}"
+            BorderBrush="{DynamicResource SettingsBorder}"
+            BorderThickness="1"
+            CornerRadius="12">
+    <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -85,5 +91,6 @@
                 AutomationProperties.Name="도구 창 닫기 버튼"
                 AutomationProperties.HelpText="AltKey 도구 창을 닫습니다." />
     </Grid>
+    </Border>
 </Window>
 

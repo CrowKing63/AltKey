@@ -1,8 +1,63 @@
 ﻿<Application x:Class="AltKey.Tools.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             >
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Application.Resources>
-         
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- 메인 앱과 동일한 기본 리소스/테마 팔레트를 공유해 도구 창의 시각적 일관성을 유지합니다. -->
+                <ResourceDictionary Source="/AltKey;component/Themes/Generic.xaml"/>
+                <!-- 초기 테마는 코드(App.xaml.cs)에서 사용자 설정 기준으로 다시 교체합니다. -->
+                <ResourceDictionary Source="/AltKey;component/Themes/DarkTheme.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- 메인 앱과 동일한 한글 우선 폰트 체인으로 가독성을 맞춥니다. -->
+            <FontFamily x:Key="AppFontFamily">NanumGothic, Malgun Gothic, Segoe UI</FontFamily>
+            <Style TargetType="Control">
+                <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}"/>
+                <Setter Property="Foreground" Value="{DynamicResource SettingsFg}"/>
+            </Style>
+            <Style TargetType="TextBlock">
+                <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}"/>
+                <Setter Property="Foreground" Value="{DynamicResource SettingsFg}"/>
+            </Style>
+            <Style TargetType="Window">
+                <Setter Property="Background" Value="{DynamicResource SettingsBg}"/>
+                <Setter Property="Foreground" Value="{DynamicResource SettingsFg}"/>
+            </Style>
+            <Style TargetType="Button">
+                <Setter Property="Background" Value="{DynamicResource SettingsHighlight}"/>
+                <Setter Property="Foreground" Value="{DynamicResource SettingsFg}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource SettingsBorder}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+            </Style>
+            <Style TargetType="TextBox">
+                <Setter Property="Background" Value="{DynamicResource SettingsHighlight}"/>
+                <Setter Property="Foreground" Value="{DynamicResource SettingsFg}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource SettingsBorder}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+            </Style>
+            <Style TargetType="ComboBox">
+                <Setter Property="Background" Value="{DynamicResource SettingsHighlight}"/>
+                <Setter Property="Foreground" Value="{DynamicResource SettingsFg}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource SettingsBorder}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+            </Style>
+            <Style TargetType="DataGrid">
+                <Setter Property="Background" Value="{DynamicResource SettingsBg}"/>
+                <Setter Property="Foreground" Value="{DynamicResource SettingsFg}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource SettingsBorder}"/>
+                <Setter Property="GridLinesVisibility" Value="All"/>
+                <Setter Property="RowBackground" Value="{DynamicResource SettingsBg}"/>
+                <Setter Property="AlternatingRowBackground" Value="{DynamicResource SettingsHighlight}"/>
+                <Setter Property="HorizontalGridLinesBrush" Value="{DynamicResource SettingsBorder}"/>
+                <Setter Property="VerticalGridLinesBrush" Value="{DynamicResource SettingsBorder}"/>
+            </Style>
+            <Style TargetType="DataGridColumnHeader">
+                <Setter Property="Background" Value="{DynamicResource SettingsHighlight}"/>
+                <Setter Property="Foreground" Value="{DynamicResource SettingsFg}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource SettingsBorder}"/>
+                <Setter Property="BorderThickness" Value="0,0,1,1"/>
+            </Style>
+        </ResourceDictionary>
     </Application.Resources>
 </Application>
