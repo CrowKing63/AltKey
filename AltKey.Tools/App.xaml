@@ -9,6 +9,8 @@
                 <!-- 초기 테마는 코드(App.xaml.cs)에서 사용자 설정 기준으로 다시 교체합니다. -->
                 <ResourceDictionary Source="/AltKey;component/Themes/DarkTheme.xaml"/>
                 <ResourceDictionary Source="/AltKey;component/Themes/SettingsControls.xaml"/>
+                <!-- Phase 1: 도구 창에서 선택 적용할 Fluent 스타일 리소스 -->
+                <ResourceDictionary Source="/AltKey;component/Themes/FluentControls.xaml"/>
             </ResourceDictionary.MergedDictionaries>
 
             <!-- 메인 앱과 동일한 한글 우선 폰트 체인으로 가독성을 맞춥니다. -->
