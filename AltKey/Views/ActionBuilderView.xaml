@@ -9,34 +9,46 @@
              d:DataContext="{d:DesignInstance vm:ActionBuilderViewModel}">
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
-        <!-- 공통 입력 스타일 -->
-        <Style x:Key="InputBox" TargetType="TextBox">
-            <Setter Property="Background"   Value="#33FFFFFF"/>
-            <Setter Property="Foreground"   Value="#EEFFFFFF"/>
-            <Setter Property="BorderBrush"  Value="#55FFFFFF"/>
-            <Setter Property="Padding"      Value="6,4"/>
-            <Setter Property="Margin"       Value="0,0,0,6"/>
+        <!-- 접근성: 액션 빌더도 편집기와 같은 입력 대비를 공유해 테마별 판독성을 유지한다. -->
+        <Style x:Key="InputBox" TargetType="TextBox" BasedOn="{StaticResource FluentEditorInputBoxStyle}">
+            <Setter Property="Margin" Value="0,0,0,6"/>
         </Style>
-        <Style x:Key="InputCombo" TargetType="ComboBox">
-            <Setter Property="Margin"       Value="0,0,0,6"/>
-            <Setter Property="Height"       Value="26"/>
+        <!-- 접근성: 액션 빌더의 콤보박스는 닫힌 상태 선택값과 편집형 입력값을 모두 검은 글자로 고정한다. -->
+        <Style x:Key="InputCombo" TargetType="ComboBox" BasedOn="{StaticResource FluentComboBoxStyle}">
+            <Setter Property="Margin" Value="0,0,0,6"/>
+            <Setter Property="Height" Value="26"/>
+            <Style.Resources>
+                <Style TargetType="TextBox" BasedOn="{StaticResource FluentTextBoxStyle}">
+                    <Setter Property="Foreground" Value="Black"/>
+                    <Setter Property="TextElement.Foreground" Value="Black"/>
+                    <Setter Property="CaretBrush" Value="Black"/>
+                    <Setter Property="Background" Value="{DynamicResource SettingsBg}"/>
+                </Style>
+            </Style.Resources>
         </Style>
         <Style x:Key="HintText" TargetType="TextBlock">
-            <Setter Property="Foreground"   Value="#88FFFFFF"/>
-            <Setter Property="FontSize"     Value="10"/>
-            <Setter Property="Margin"       Value="0,0,0,2"/>
+            <Setter Property="Foreground" Value="{DynamicResource SettingsFgSub}"/>
+            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="Margin" Value="0,0,0,2"/>
+        </Style>
+        <Style x:Key="ActionMiniButtonStyle" TargetType="Button" BasedOn="{StaticResource FluentSecondaryButtonStyle}">
+            <Setter Property="Padding" Value="6,2"/>
+        </Style>
+        <Style TargetType="{x:Type ctrl:NumericAdjuster}">
+            <Setter Property="ButtonBackground" Value="{DynamicResource SettingsHighlight}"/>
+            <Setter Property="ButtonForeground" Value="{DynamicResource SettingsFg}"/>
+            <Setter Property="TextBoxBackground" Value="{DynamicResource SettingsBg}"/>
+            <Setter Property="TextBoxForeground" Value="{DynamicResource SettingsFg}"/>
+            <Setter Property="TextBoxBorderBrush" Value="{DynamicResource SettingsBorder}"/>
         </Style>
     </UserControl.Resources>
 
     <StackPanel>
-
-        <!-- 액션 타입 선택 -->
         <TextBlock Text="액션 타입" Style="{StaticResource HintText}"/>
         <ComboBox ItemsSource="{Binding ActionTypes}"
                   SelectedItem="{Binding SelectedActionType}"
                   Style="{StaticResource InputCombo}"/>
 
-        <!-- ── SendKey ── -->
         <StackPanel Visibility="{Binding IsSendKey, Converter={StaticResource BoolToVis}}">
             <TextBlock Text="가상 키 코드 (예: VK_A, Ctrl+A, A)" Style="{StaticResource HintText}"/>
             <Grid Margin="0,0,0,6">
@@ -50,14 +62,14 @@
                           SelectedValuePath="VkCode"
                           SelectedValue="{Binding SendKeyVk}"
                           Width="120" Margin="0,0,6,0"
-                          IsEditable="True"/>
+                          IsEditable="True"
+                          Style="{StaticResource InputCombo}"/>
                 <TextBox Grid.Column="1"
                          Text="{Binding SendKeyVk, UpdateSourceTrigger=PropertyChanged}"
                          Style="{StaticResource InputBox}"/>
             </Grid>
         </StackPanel>
 
-        <!-- ── SendCombo ── -->
         <StackPanel Visibility="{Binding IsSendCombo, Converter={StaticResource BoolToVis}}">
             <TextBlock Text="키 조합 (예: Ctrl+A, Shift+B)" Style="{StaticResource HintText}"/>
             <ItemsControl ItemsSource="{Binding SendComboKeysCollection}" Margin="0,0,0,6">
@@ -74,12 +86,11 @@
                                       SelectedValuePath="VkCode"
                                       SelectedValue="{Binding Path=Value, Mode=TwoWay}"
                                       IsEditable="True"
-                                      Margin="0,0,4,0"/>
+                                      Margin="0,0,4,0"
+                                      Style="{StaticResource InputCombo}"/>
                             <Button Grid.Column="1"
-                                    Content="✕"
-                                    Padding="6,2"
-                                    Background="#33FFFFFF" Foreground="#EEFFFFFF"
-                                    BorderThickness="0" Cursor="Hand"
+                                    Content="&#x00D7;"
+                                    Style="{StaticResource ActionMiniButtonStyle}"
                                     Command="{Binding DataContext.RemoveComboKeyCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                     CommandParameter="{Binding}"/>
                         </Grid>
@@ -87,14 +98,12 @@
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
             <Button Content="+ 키 추가"
+                    Style="{StaticResource ActionMiniButtonStyle}"
                     Padding="6,4"
-                    Background="#33FFFFFF" Foreground="#EEFFFFFF"
-                    BorderThickness="0" Cursor="Hand"
                     Command="{Binding AddComboKeyCommand}"
                     HorizontalAlignment="Left"/>
         </StackPanel>
 
-        <!-- ── ToggleSticky ── -->
         <StackPanel Visibility="{Binding IsToggleSticky, Converter={StaticResource BoolToVis}}">
             <TextBlock Text="수식자 키 (예: VK_SHIFT, Shift, Ctrl)" Style="{StaticResource HintText}"/>
             <ComboBox ItemsSource="{Binding CommonVkCodesDisplay}"
@@ -105,14 +114,12 @@
                       Style="{StaticResource InputCombo}"/>
         </StackPanel>
 
-        <!-- ── SwitchLayout ── -->
         <StackPanel Visibility="{Binding IsSwitchLayout, Converter={StaticResource BoolToVis}}">
             <TextBlock Text="레이아웃 파일명 (확장자 없이)" Style="{StaticResource HintText}"/>
             <TextBox Text="{Binding SwitchLayoutName, UpdateSourceTrigger=PropertyChanged}"
                      Style="{StaticResource InputBox}"/>
         </StackPanel>
 
-        <!-- ── RunApp ── -->
         <StackPanel Visibility="{Binding IsRunApp, Converter={StaticResource BoolToVis}}">
             <TextBlock Text="실행 파일 경로" Style="{StaticResource HintText}"/>
             <Grid Margin="0,0,0,6">
@@ -122,13 +129,11 @@
                 </Grid.ColumnDefinitions>
                 <TextBox Text="{Binding AppPath, UpdateSourceTrigger=PropertyChanged}"
                          Grid.Column="0" Margin="0"
-                         Background="#33FFFFFF" Foreground="#EEFFFFFF"
-                         BorderBrush="#55FFFFFF" Padding="6,4"/>
+                         Style="{StaticResource InputBox}"/>
                 <Button Content="찾아보기"
                         Grid.Column="1" Margin="4,0,0,0"
+                        Style="{StaticResource ActionMiniButtonStyle}"
                         Padding="6,4"
-                        Background="#33FFFFFF" Foreground="#EEFFFFFF"
-                        BorderThickness="0" Cursor="Hand"
                         Command="{Binding BrowseAppCommand}"/>
             </Grid>
             <TextBlock Text="실행 인수 (선택)" Style="{StaticResource HintText}"/>
@@ -136,17 +141,13 @@
                      Style="{StaticResource InputBox}"/>
         </StackPanel>
 
-        <!-- ── Boilerplate ── -->
         <StackPanel Visibility="{Binding IsBoilerplate, Converter={StaticResource BoolToVis}}">
             <TextBlock Text="입력할 텍스트" Style="{StaticResource HintText}"/>
             <TextBox Text="{Binding BoilerplateText, UpdateSourceTrigger=PropertyChanged}"
                      AcceptsReturn="True" Height="60" TextWrapping="Wrap"
-                     Background="#33FFFFFF" Foreground="#EEFFFFFF"
-                     BorderBrush="#55FFFFFF" Padding="6,4"
-                     Margin="0,0,0,6"/>
+                     Style="{StaticResource InputBox}"/>
         </StackPanel>
 
-        <!-- ── ShellCommand ── -->
         <StackPanel Visibility="{Binding IsShellCommand, Converter={StaticResource BoolToVis}}">
             <TextBlock Text="명령어 (예: shutdown /s /t 300)" Style="{StaticResource HintText}"/>
             <TextBox Text="{Binding ShellCmd, UpdateSourceTrigger=PropertyChanged}"
@@ -157,7 +158,6 @@
                       Style="{StaticResource InputCombo}"/>
         </StackPanel>
 
-        <!-- ── VolumeControl ── -->
         <StackPanel Visibility="{Binding IsVolumeControl, Converter={StaticResource BoolToVis}}">
             <TextBlock Text="방향 (up / down / mute)" Style="{StaticResource HintText}"/>
             <ComboBox ItemsSource="{Binding VolumeDirections}"
@@ -166,28 +166,18 @@
             <TextBlock Text="단계" Style="{StaticResource HintText}"/>
             <ctrl:NumericAdjuster Value="{Binding VolumeStep}"
                                   Minimum="2" Maximum="20" Step="1" DecimalPlaces="0"
-                                  ButtonBackground="#33FFFFFF"
-                                  ButtonForeground="#EEFFFFFF"
-                                  TextBoxBackground="#33FFFFFF"
-                                  TextBoxForeground="#EEFFFFFF"
-                                  TextBoxBorderBrush="#55FFFFFF"
                                   Margin="0,0,0,6"/>
         </StackPanel>
 
-        <!-- ── ClipboardPaste ── -->
         <StackPanel Visibility="{Binding IsClipboardPaste, Converter={StaticResource BoolToVis}}">
             <TextBlock Text="붙여넣을 텍스트" Style="{StaticResource HintText}"/>
             <TextBox Text="{Binding ClipboardText, UpdateSourceTrigger=PropertyChanged}"
                      AcceptsReturn="True" Height="60" TextWrapping="Wrap"
-                     Background="#33FFFFFF" Foreground="#EEFFFFFF"
-                     BorderBrush="#55FFFFFF" Padding="6,4"
-                     Margin="0,0,0,6"/>
+                     Style="{StaticResource InputBox}"/>
         </StackPanel>
 
-        <!-- ── ToggleKoreanSubmode ── -->
         <StackPanel Visibility="{Binding IsToggleKoreanSubmode, Converter={StaticResource BoolToVis}}">
             <TextBlock Text="한/영 입력 모드 전환 키 (파라미터 없음)" Style="{StaticResource HintText}"/>
         </StackPanel>
-
     </StackPanel>
 </UserControl>

@@ -17,11 +17,9 @@
             <FontFamily x:Key="AppFontFamily">NanumGothic, Malgun Gothic, Segoe UI</FontFamily>
             <Style TargetType="Control">
                 <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}"/>
-                <Setter Property="Foreground" Value="{DynamicResource SettingsFg}"/>
             </Style>
             <Style TargetType="TextBlock">
                 <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}"/>
-                <Setter Property="Foreground" Value="{DynamicResource SettingsFg}"/>
             </Style>
             <Style TargetType="Window">
                 <Setter Property="Background" Value="{DynamicResource SettingsBg}"/>

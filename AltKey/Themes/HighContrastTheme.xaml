@@ -39,4 +39,5 @@
     <SolidColorBrush x:Key="AdminOkFg"          Color="#FF000000"/>
     <!-- 07: 가/A 서브모드 토글 키 강조 -->
     <SolidColorBrush x:Key="AccentBrush"        Color="#FF0000FF"/>
+    <SolidColorBrush x:Key="AccentForegroundBrush" Color="#FFFFFFFF"/>
 </ResourceDictionary>

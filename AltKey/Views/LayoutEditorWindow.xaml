@@ -33,6 +33,35 @@
         <Style x:Key="InputBox" TargetType="TextBox" BasedOn="{StaticResource FluentEditorInputBoxStyle}">
             <Setter Property="Margin" Value="0,0,0,8"/>
         </Style>
+        <!-- 접근성: 키 삭제 버튼은 호버 전에도 존재를 알아볼 수 있어야 하므로 전경색과 호버 상태를 명시한다. -->
+        <Style x:Key="KeyDeleteButtonStyle" TargetType="Button" BasedOn="{StaticResource FluentButtonStyle}">
+            <Setter Property="Width" Value="14"/>
+            <Setter Property="Height" Value="14"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="HorizontalAlignment" Value="Right"/>
+            <Setter Property="VerticalAlignment" Value="Top"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{DynamicResource SettingsFg}"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource ElevatedWarningBg}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource ElevatedWarningFg}"/>
+                    <Setter Property="BorderBrush" Value="{DynamicResource ElevatedWarningBg}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style TargetType="{x:Type ctrl:NumericAdjuster}">
+            <Setter Property="ButtonBackground" Value="{DynamicResource SettingsHighlight}"/>
+            <Setter Property="ButtonForeground" Value="{DynamicResource SettingsFg}"/>
+            <Setter Property="TextBoxBackground" Value="{DynamicResource SettingsBg}"/>
+            <Setter Property="TextBoxForeground" Value="{DynamicResource SettingsFg}"/>
+            <Setter Property="TextBoxBorderBrush" Value="{DynamicResource SettingsBorder}"/>
+        </Style>
     </Window.Resources>
 
     <Grid>
@@ -82,8 +111,7 @@
                                    VerticalAlignment="Center" Margin="0,0,6,0"/>
                         <TextBox Text="{Binding CurrentFileName, UpdateSourceTrigger=PropertyChanged}"
                                  Width="160" Height="26"
-                                 Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}"
-                                 BorderBrush="{DynamicResource SettingsBorder}" Padding="6,2"/>
+                                 Style="{StaticResource InputBox}" Padding="6,2"/>
                     </StackPanel>
 
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
@@ -91,8 +119,7 @@
                                    VerticalAlignment="Center" Margin="0,0,6,0"/>
                         <TextBox Text="{Binding LayoutName, UpdateSourceTrigger=PropertyChanged}"
                                  Width="200" Height="26"
-                                 Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}"
-                                 BorderBrush="{DynamicResource SettingsBorder}" Padding="6,2"/>
+                                 Style="{StaticResource InputBox}" Padding="6,2"/>
                     </StackPanel>
 
                     <!-- 저장 버튼들 -->
@@ -163,11 +190,6 @@
                                             <ctrl:NumericAdjuster
                                                 Value="{Binding Gap}"
                                                 Minimum="0.0" Maximum="3.0" Step="0.1" DecimalPlaces="1"
-                                                ButtonBackground="{DynamicResource SettingsHighlight}"
-                                                ButtonForeground="{DynamicResource SettingsFg}"
-                                                TextBoxBackground="{DynamicResource SettingsHighlight}"
-                                                TextBoxForeground="{DynamicResource SettingsFg}"
-                                                TextBoxBorderBrush="{DynamicResource SettingsBorder}"
                                                 Width="110" Height="22"/>
                                             <Button Content="행 추가"
                                                     Command="{Binding DataContext.AddRowCommand,
@@ -179,8 +201,7 @@
                                                     Command="{Binding DataContext.RequestRemoveColumnCommand,
                                                         RelativeSource={RelativeSource AncestorType=Window}}"
                                                     CommandParameter="{Binding}"
-                                                    Background="{DynamicResource ElevatedWarningBg}" Foreground="{DynamicResource ElevatedWarningFg}"
-                                                    BorderThickness="0" Padding="6,3"
+                                                    Style="{StaticResource DangerBtn}" Padding="6,3"
                                                     Margin="4,0" FontSize="10" Cursor="Hand"/>
                                         </StackPanel>
 
@@ -202,8 +223,7 @@
                                                                         Command="{Binding DataContext.RemoveRowCommand,
                                                                             RelativeSource={RelativeSource AncestorType=Window}}"
                                                                         CommandParameter="{Binding}"
-                                                                        Background="{DynamicResource ElevatedWarningBg}" Foreground="{DynamicResource ElevatedWarningFg}"
-                                                                        BorderThickness="0" Padding="4,2"
+                                                                        Style="{StaticResource DangerBtn}" Padding="4,2"
                                                                         Margin="2,0" FontSize="9" Cursor="Hand"/>
                                                             </StackPanel>
 
@@ -223,10 +243,12 @@
                                                                                 <Style TargetType="Border">
                                                                                     <Setter Property="Background"   Value="{DynamicResource SettingsHighlight}"/>
                                                                                     <Setter Property="BorderBrush"  Value="{DynamicResource SettingsBorder}"/>
+                                                                                    <Setter Property="BorderThickness" Value="1"/>
                                                                                     <Style.Triggers>
                                                                                         <DataTrigger Binding="{Binding IsSelected}" Value="True">
                                                                                             <Setter Property="Background"  Value="{DynamicResource AccentBrush}"/>
-                                                                                            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                                                                                            <Setter Property="BorderBrush" Value="{DynamicResource SettingsFg}"/>
+                                                                                            <Setter Property="BorderThickness" Value="2"/>
                                                                                         </DataTrigger>
                                                                                     </Style.Triggers>
                                                                                 </Style>
@@ -257,13 +279,8 @@
                                                                                                    FallbackValue=Collapsed}"/>
                                                                                 </StackPanel>
                                                                                 <Button Content="×"
-                                                                                        Width="12" Height="12"
-                                                                                        HorizontalAlignment="Right"
-                                                                                        VerticalAlignment="Top"
-                                                                                        Margin="0,0,0,0" FontSize="8"
-                                                                                        Background="Transparent"
-                                                                                        Foreground="{DynamicResource SettingsFgHint}"
-                                                                                        BorderThickness="0" Cursor="Hand"
+                                                                                        Margin="0,0,0,0"
+                                                                                        Style="{StaticResource KeyDeleteButtonStyle}"
                                                                                         Command="{Binding DataContext.RemoveKeyCommand,
                                                                                             RelativeSource={RelativeSource AncestorType=Window}}"
                                                                                         CommandParameter="{Binding}"/>
@@ -338,21 +355,11 @@
                             <TextBlock Text="너비" Style="{StaticResource LabelText}"/>
                             <ctrl:NumericAdjuster Value="{Binding SelectedKey.EditWidth}"
                                                   Minimum="0.5" Maximum="6.0" Step="0.1" DecimalPlaces="1"
-                                                  ButtonBackground="{DynamicResource SettingsHighlight}"
-                                                  ButtonForeground="{DynamicResource SettingsFg}"
-                                                  TextBoxBackground="{DynamicResource SettingsHighlight}"
-                                                  TextBoxForeground="{DynamicResource SettingsFg}"
-                                                  TextBoxBorderBrush="{DynamicResource SettingsBorder}"
                                                   Margin="0,0,0,8"/>
 
                             <TextBlock Text="앞 여백" Style="{StaticResource LabelText}"/>
                             <ctrl:NumericAdjuster Value="{Binding SelectedKey.EditGapBefore}"
                                                   Minimum="0.0" Maximum="4.0" Step="0.1" DecimalPlaces="1"
-                                                  ButtonBackground="{DynamicResource SettingsHighlight}"
-                                                  ButtonForeground="{DynamicResource SettingsFg}"
-                                                  TextBoxBackground="{DynamicResource SettingsHighlight}"
-                                                  TextBoxForeground="{DynamicResource SettingsFg}"
-                                                  TextBoxBorderBrush="{DynamicResource SettingsBorder}"
                                                   Margin="0,0,0,12"/>
 
                             <Separator Background="{DynamicResource SettingsHighlight}" Margin="0,0,0,10"/>
@@ -391,7 +398,7 @@
                 Visibility="{Binding ShowColumnDeleteDialog,
                     Converter={StaticResource BoolToVis}}"
                 Panel.ZIndex="10">
-            <Border Background="{DynamicResource SettingsHighlight}" CornerRadius="8"
+            <Border Background="{DynamicResource SettingsBg}" CornerRadius="8"
                     Padding="24,20" MaxWidth="400" MaxHeight="200"
                     HorizontalAlignment="Center" VerticalAlignment="Center"
                     BorderBrush="{DynamicResource SettingsBorder}" BorderThickness="1">
@@ -424,7 +431,7 @@
                 Visibility="{Binding ShowDeleteLayoutDialog,
                     Converter={StaticResource BoolToVis}}"
                 Panel.ZIndex="11">
-            <Border Background="{DynamicResource SettingsHighlight}" CornerRadius="8"
+            <Border Background="{DynamicResource SettingsBg}" CornerRadius="8"
                     Padding="24,20" MaxWidth="350" MaxHeight="150"
                     HorizontalAlignment="Center" VerticalAlignment="Center"
                     BorderBrush="{DynamicResource SettingsBorder}" BorderThickness="1">

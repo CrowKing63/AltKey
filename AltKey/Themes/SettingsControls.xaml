@@ -11,6 +11,13 @@
         <Setter Property="Background" Value="{DynamicResource SettingsHighlight}"/>
         <Setter Property="Foreground" Value="{DynamicResource SettingsFg}"/>
         <Setter Property="BorderBrush" Value="{DynamicResource SettingsBorder}"/>
+        <Style.Triggers>
+            <Trigger Property="IsSelected" Value="True">
+                <Setter Property="Background" Value="{DynamicResource SettingsBg}"/>
+                <!-- 접근성: 선택 탭 표면이 밝아지는 테마에서도 제목이 사라지지 않도록 전경색을 고정한다. -->
+                <Setter Property="Foreground" Value="Black"/>
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
     <Style TargetType="ScrollViewer">
@@ -35,22 +42,26 @@
 
     <Style TargetType="ComboBox">
         <Setter Property="Background" Value="{DynamicResource SettingsHighlight}"/>
-        <Setter Property="Foreground" Value="{DynamicResource SettingsFg}"/>
+        <!-- 접근성: 닫힌 ComboBox 선택값은 세 테마 모두 밝은 표면에 그려져 검은 글자가 가장 안정적으로 읽힌다. -->
+        <Setter Property="Foreground" Value="Black"/>
+        <Setter Property="TextElement.Foreground" Value="Black"/>
         <Setter Property="BorderBrush" Value="{DynamicResource SettingsBorder}"/>
         <Setter Property="BorderThickness" Value="1"/>
     </Style>
 
     <Style TargetType="ComboBoxItem">
-        <Setter Property="Background" Value="{DynamicResource SettingsBg}"/>
+        <Setter Property="Background" Value="{DynamicResource SettingsHighlight}"/>
         <Setter Property="Foreground" Value="{DynamicResource SettingsFg}"/>
         <Setter Property="BorderBrush" Value="{DynamicResource SettingsBorder}"/>
         <Style.Triggers>
             <Trigger Property="IsHighlighted" Value="True">
-                <Setter Property="Background" Value="{DynamicResource SettingsHighlight}"/>
+                <Setter Property="Background" Value="{DynamicResource SettingsBg}"/>
+                <Setter Property="Foreground" Value="{DynamicResource SettingsFg}"/>
             </Trigger>
             <Trigger Property="IsSelected" Value="True">
                 <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
-                <Setter Property="Foreground" Value="{DynamicResource SettingsFg}"/>
+                <!-- 접근성: 닫힌 상태 ComboBox 본문도 이 선택 항목 전경색을 재사용하므로 검은 글자를 유지한다. -->
+                <Setter Property="Foreground" Value="Black"/>
             </Trigger>
         </Style.Triggers>
     </Style>

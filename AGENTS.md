@@ -6,7 +6,7 @@
 - 이 프로젝트는 **한국어 사용자 전용** 가상 키보드이다. `qwerty-en.json`은 삭제되었으며, `Language` 필드와 `PrimaryLanguage` 개념은 제거되었다. 영어 입력은 한국어 레이아웃 내 "가/A" 토글(QuietEnglish 서브모드)로 처리된다.
 - 기존 `HandleKoreanLayoutKey`, `HandleEnglishLayoutKey`, `HandleEnglishSubMode`, `_isKoreanInput`, `_layoutSupportsKorean`, `_lastImeKorean`은 모두 제거되었다. 한국어 입력 로직은 `KoreanInputModule`으로 이전되었다.
 - **프로젝트 빌드 및 테스트 시 다음 경로를 기준으로 작업을 수행할 것.** (경로를 찾지 못하는 문제를 방지하기 위함)
-  - 메인 프로젝트(빌드): `C:\Users\UITAEK\AltKey\AltKey\AltKey.csproj`
+  - 메인 프로젝트(빌드): `C:\Users\UITAEK\AltKey\AltKey.Tools\AltKey.Tools.csproj` (이걸 하면 자동으로 솔루션 전체가 빌드된다.)
   - 테스트 프로젝트: `C:\Users\UITAEK\AltKey\AltKey.Tests\AltKey.Tests.csproj`
 - **PowerShell 환경에서는 `&&` 연산자가 작동하지 않으므로, 여러 명령어를 실행할 때는 `;`를 사용하거나 각 명령어를 별도로 실행할 것.**
 - 사용자 변수 조정 기능에는 슬라이더 대신 NumericAdjuster 기반으로 구현할 것.
