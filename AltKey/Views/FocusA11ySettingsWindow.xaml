@@ -6,59 +6,74 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         mc:Ignorable="d"
         Title="포커스 가시화 상세 설정"
-        Width="560" Height="440"
-        MinWidth="500" MinHeight="380"
+        Width="560" Height="460"
+        MinWidth="500" MinHeight="400"
         WindowStartupLocation="Manual"
         Background="{DynamicResource SettingsBg}"
         d:DataContext="{d:DesignInstance vm:SettingsViewModel}">
+    <Window.Resources>
+        <!-- 접근성: 이 창에서만 Fluent 스타일을 적용해 포커스와 탐색 흐름을 시각적으로 일관되게 유지한다. -->
+        <Style TargetType="Button" BasedOn="{StaticResource FluentButtonStyle}"/>
+        <Style TargetType="TextBox" BasedOn="{StaticResource FluentTextBoxStyle}"/>
+        <Style TargetType="ComboBox" BasedOn="{StaticResource FluentComboBoxStyle}"/>
+    </Window.Resources>
+
     <Border Background="{DynamicResource SettingsBg}"
             CornerRadius="12"
             Padding="20">
         <StackPanel>
-            <TextBlock Text="포커스 가시화 상세 설정"
-                       FontSize="16"
-                       FontWeight="SemiBold"
-                       Foreground="{DynamicResource SettingsFg}"
-                       Margin="0,0,0,6"/>
-            <TextBlock Text="키보드 탐색 동작과 포커스 공지를 조정합니다."
-                       FontSize="11"
-                       Foreground="{DynamicResource SettingsFgSub}"
-                       Margin="0,0,0,6"/>
-            <TextBlock TextWrapping="Wrap"
-                       FontSize="11"
-                       Foreground="{DynamicResource SettingsFgSub}"
-                       Margin="0,0,0,4"
-                       Text="키보드로 화면 요소를 탐색할 때 도움이 되며 Narrator 같은 보조기기 사용 시 유용합니다."/>
-            <TextBlock TextWrapping="Wrap"
-                       FontSize="11"
-                       Foreground="{DynamicResource SettingsFgSub}"
-                       Margin="0,0,0,16"
-                       Text="물리 키보드 또는 스위치의 Tab, Shift+Tab, Enter, Space 입력으로 동작합니다."/>
+            <Border Style="{StaticResource FluentCardBorderStyle}" Margin="0,0,0,12">
+                <StackPanel>
+                    <TextBlock Text="포커스 가시화 상세 설정"
+                               FontSize="16"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource SettingsFg}"
+                               Margin="0,0,0,6"/>
+                    <TextBlock Text="키보드 탐색 동작과 포커스 공지를 조정합니다."
+                               FontSize="11"
+                               Foreground="{DynamicResource SettingsFgSub}"/>
+                </StackPanel>
+            </Border>
 
-            <TextBlock Text="탐색 범위" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
-            <ComboBox ItemsSource="{Binding KeyboardA11yNavigationScopes}"
-                      SelectedItem="{Binding KeyboardA11yNavigationScope}"
-                      Margin="0,0,0,8"/>
+            <Border Style="{StaticResource FluentCardBorderStyle}" Margin="0,0,0,12">
+                <StackPanel>
+                    <TextBlock TextWrapping="Wrap"
+                               FontSize="11"
+                               Foreground="{DynamicResource SettingsFgSub}"
+                               Margin="0,0,0,4"
+                               Text="키보드로 화면 요소를 탐색하고 현재 위치를 안내하는 보조기능 설정입니다."/>
+                    <TextBlock TextWrapping="Wrap"
+                               FontSize="11"
+                               Foreground="{DynamicResource SettingsFgSub}"
+                               Margin="0,0,0,12"
+                               Text="Tab, Shift+Tab, Enter, Space 입력으로 동작합니다."/>
 
-            <TextBlock Text="탐색 종료 키 (VK_이름)" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
-            <TextBox Text="{Binding KeyboardA11yExitKey, UpdateSourceTrigger=PropertyChanged}"
-                     Height="26" Margin="0,0,0,12"/>
+                    <TextBlock Text="탐색 범위" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
+                    <ComboBox ItemsSource="{Binding KeyboardA11yNavigationScopes}"
+                              SelectedItem="{Binding KeyboardA11yNavigationScope}"
+                              Margin="0,0,0,8"/>
 
-            <TextBlock Text="LiveRegion 공지" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
-            <CheckBox Content="포커스 이동 시 현재 포커스 공지"
-                      Foreground="{DynamicResource SettingsFg}"
-                      IsChecked="{Binding KeyboardA11yAnnounceFocus}"
-                      Margin="0,0,0,16"/>
+                    <TextBlock Text="탐색 종료 키 (VK_이름)" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
+                    <TextBox Text="{Binding KeyboardA11yExitKey, UpdateSourceTrigger=PropertyChanged}"
+                             Margin="0,0,0,12"/>
+
+                    <TextBlock Text="LiveRegion 공지" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
+                    <CheckBox Content="포커스 이동 시 현재 포커스 공지"
+                              Foreground="{DynamicResource SettingsFg}"
+                              IsChecked="{Binding KeyboardA11yAnnounceFocus}"/>
+                </StackPanel>
+            </Border>
 
             <Button Content="닫기"
-                    Height="30"
+                    Height="34"
                     HorizontalAlignment="Right"
-                    Width="96"
+                    Width="110"
                     Click="CloseButton_Click"
                     Background="{DynamicResource SettingsHighlight}"
                     Foreground="{DynamicResource SettingsFg}"
                     BorderThickness="0"
-                    Cursor="Hand"/>
+                    Cursor="Hand"
+                    AutomationProperties.Name="포커스 가시화 상세 설정 닫기"/>
         </StackPanel>
     </Border>
 </Window>

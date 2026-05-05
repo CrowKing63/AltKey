@@ -17,6 +17,11 @@
         <ResourceDictionary>
         <conv:BoolToVisibilityConverter x:Key="BoolToVis"/>
         <conv:InverseBoolToVisibilityConverter x:Key="InvBoolToVis"/>
+        <!-- 접근성: 설정 창 범위에서만 Fluent 컨트롤 스타일을 opt-in으로 적용해 포커스/간격 일관성을 확보한다. -->
+        <Style TargetType="Button" BasedOn="{StaticResource FluentButtonStyle}"/>
+        <Style TargetType="TextBox" BasedOn="{StaticResource FluentTextBoxStyle}"/>
+        <Style TargetType="ComboBox" BasedOn="{StaticResource FluentComboBoxStyle}"/>
+        <Style TargetType="TabControl" BasedOn="{StaticResource FluentTabControlStyle}"/>
         <Style x:Key="SectionTitleStyle" TargetType="TextBlock">
             <Setter Property="Foreground" Value="{DynamicResource SettingsFgSub}"/>
             <Setter Property="FontSize" Value="12"/>
@@ -34,18 +39,20 @@
             </Grid.RowDefinitions>
 
             <DockPanel Grid.Row="0" Margin="0,0,0,12">
-                <StackPanel Orientation="Vertical">
-                    <TextBlock Text="설정" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource SettingsFg}"/>
-                    <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                        <TextBlock Text="{Binding CurrentVersion, StringFormat=버전 {0}}" FontSize="11" Foreground="{DynamicResource SettingsFgSub}"/>
-                        <TextBlock Text=" | " FontSize="11" Foreground="{DynamicResource SettingsFgSub}" Margin="0,4"/>
-                        <TextBlock>
-                            <Hyperlink NavigateUri="https://github.com/CrowKing63/AltKey/wiki" RequestNavigate="Hyperlink_RequestNavigate">
-                                <TextBlock Text="사용자 가이드" Foreground="{DynamicResource SettingsFg}" TextDecorations="Underline"/>
-                            </Hyperlink>
-                        </TextBlock>
+                <Border Style="{StaticResource FluentCardBorderStyle}" Padding="12,10">
+                    <StackPanel Orientation="Vertical">
+                        <TextBlock Text="설정" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource SettingsFg}"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                            <TextBlock Text="{Binding CurrentVersion, StringFormat=버전 {0}}" FontSize="11" Foreground="{DynamicResource SettingsFgSub}"/>
+                            <TextBlock Text=" | " FontSize="11" Foreground="{DynamicResource SettingsFgSub}" Margin="0,4"/>
+                            <TextBlock>
+                                <Hyperlink NavigateUri="https://github.com/CrowKing63/AltKey/wiki" RequestNavigate="Hyperlink_RequestNavigate">
+                                    <TextBlock Text="사용자 가이드" Foreground="{DynamicResource SettingsFg}" TextDecorations="Underline"/>
+                                </Hyperlink>
+                            </TextBlock>
+                        </StackPanel>
                     </StackPanel>
-                </StackPanel>
+                </Border>
             </DockPanel>
 
             <!-- 접근성 우선: 탭 기반 정보 구조로 목적별 탐색 비용을 줄인다. -->
