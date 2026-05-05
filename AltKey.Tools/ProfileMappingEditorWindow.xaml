@@ -10,101 +10,114 @@
         Background="{DynamicResource SettingsBg}"
         KeyboardNavigation.TabNavigation="Cycle"
         AutomationProperties.Name="프로필 매핑 편집기 창">
+    <Window.Resources>
+        <!-- 접근성: 도구 편집기에서도 메인 앱과 같은 포커스/간격 체계를 유지합니다. -->
+        <Style TargetType="Button" BasedOn="{StaticResource FluentButtonStyle}"/>
+        <Style TargetType="TextBox" BasedOn="{StaticResource FluentTextBoxStyle}"/>
+        <Style TargetType="ComboBox" BasedOn="{StaticResource FluentComboBoxStyle}"/>
+        <Style TargetType="DataGrid" BasedOn="{StaticResource FluentDataGridStyle}"/>
+    </Window.Resources>
+
     <Border Margin="14"
             Padding="16"
             Background="{DynamicResource SettingsBg}"
             BorderBrush="{DynamicResource SettingsBorder}"
             BorderThickness="1"
             CornerRadius="12">
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0"
-                   FontSize="22"
-                   FontWeight="SemiBold"
-                   Margin="0,0,0,8"
-                   Text="프로필 매핑 편집기"
-                   AutomationProperties.Name="프로필 매핑 편집기 제목"/>
+            <Border Grid.Row="0" Style="{StaticResource FluentCardBorderStyle}" Margin="0,0,0,10">
+                <TextBlock FontSize="22"
+                           FontWeight="SemiBold"
+                           Text="프로필 매핑 편집기"
+                           AutomationProperties.Name="프로필 매핑 편집기 제목"/>
+            </Border>
 
-        <StackPanel Grid.Row="1" Margin="0,0,0,10">
-            <TextBlock Text="프로세스 이름(예: notepad.exe)과 레이아웃 이름을 매핑합니다."
-                       AutomationProperties.Name="프로필 매핑 편집 안내"/>
-            <TextBlock Text="{Binding ValidationSummaryText}"
-                       Margin="0,4,0,0"
-                       AutomationProperties.Name="프로필 매핑 검증 요약"/>
-        </StackPanel>
+            <Border Grid.Row="1" Style="{StaticResource FluentCardBorderStyle}" Margin="0,0,0,10">
+                <StackPanel>
+                    <TextBlock Text="프로세스 이름(예: notepad.exe)과 레이아웃 이름을 매핑합니다."
+                               TextWrapping="Wrap"
+                               AutomationProperties.Name="프로필 매핑 편집 안내"/>
+                    <TextBlock Text="{Binding ValidationSummaryText}"
+                               Margin="0,4,0,0"
+                               Foreground="{DynamicResource SettingsFgSub}"
+                               AutomationProperties.Name="프로필 매핑 검증 요약"/>
+                </StackPanel>
+            </Border>
 
-        <DataGrid x:Name="ProfileGrid"
-                  Grid.Row="2"
-                  ItemsSource="{Binding Rows}"
-                  AutoGenerateColumns="False"
-                  CanUserAddRows="False"
-                  CanUserDeleteRows="False"
-                  HeadersVisibility="Column"
-                  RowBackground="{DynamicResource SettingsBg}"
-                  AlternatingRowBackground="{DynamicResource SettingsHighlight}"
-                  HorizontalGridLinesBrush="{DynamicResource SettingsBorder}"
-                  VerticalGridLinesBrush="{DynamicResource SettingsBorder}"
-                  BorderBrush="{DynamicResource SettingsBorder}"
-                  KeyboardNavigation.TabIndex="0"
-                  AutomationProperties.Name="프로필 매핑 편집 목록">
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="프로세스 이름"
-                                    Binding="{Binding ProcessName, UpdateSourceTrigger=LostFocus}"
-                                    Width="2*" />
-                <DataGridComboBoxColumn Header="레이아웃 이름"
-                                        SelectedItemBinding="{Binding LayoutName, UpdateSourceTrigger=LostFocus}"
-                                        ItemsSource="{Binding DataContext.AvailableLayouts, RelativeSource={RelativeSource AncestorType=Window}}"
-                                        Width="2*" />
-                <DataGridTextColumn Header="상태"
-                                    Binding="{Binding Status}"
-                                    IsReadOnly="True"
-                                    Width="*" />
-                <DataGridTemplateColumn Header="작업" Width="Auto">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <Button Content="행 삭제"
-                                    Padding="8,4"
-                                    Margin="4,0,0,0"
-                                    Click="OnRemoveRow"
-                                    Tag="{Binding}"
-                                    AutomationProperties.Name="프로필 매핑 행 삭제 버튼"/>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
-            </DataGrid.Columns>
-        </DataGrid>
+            <Border Grid.Row="2" Style="{StaticResource FluentCardBorderStyle}">
+                <DataGrid x:Name="ProfileGrid"
+                          ItemsSource="{Binding Rows}"
+                          AutoGenerateColumns="False"
+                          CanUserAddRows="False"
+                          CanUserDeleteRows="False"
+                          HeadersVisibility="Column"
+                          RowBackground="{DynamicResource SettingsBg}"
+                          AlternatingRowBackground="{DynamicResource SettingsHighlight}"
+                          HorizontalGridLinesBrush="{DynamicResource SettingsBorder}"
+                          VerticalGridLinesBrush="{DynamicResource SettingsBorder}"
+                          BorderBrush="{DynamicResource SettingsBorder}"
+                          KeyboardNavigation.TabIndex="0"
+                          AutomationProperties.Name="프로필 매핑 편집 목록">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="프로세스 이름"
+                                            Binding="{Binding ProcessName, UpdateSourceTrigger=LostFocus}"
+                                            Width="2*" />
+                        <DataGridComboBoxColumn Header="레이아웃 이름"
+                                                SelectedItemBinding="{Binding LayoutName, UpdateSourceTrigger=LostFocus}"
+                                                ItemsSource="{Binding DataContext.AvailableLayouts, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                Width="2*" />
+                        <DataGridTextColumn Header="상태"
+                                            Binding="{Binding Status}"
+                                            IsReadOnly="True"
+                                            Width="*" />
+                        <DataGridTemplateColumn Header="작업" Width="Auto">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Button Content="행 제거"
+                                            Padding="8,4"
+                                            Margin="4,0,0,0"
+                                            Click="OnRemoveRow"
+                                            Tag="{Binding}"
+                                            AutomationProperties.Name="프로필 매핑 행 제거 버튼"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Border>
 
-        <StackPanel Grid.Row="3"
-                    Orientation="Horizontal"
-                    HorizontalAlignment="Right"
-                    Margin="0,12,0,0">
-            <Button Content="+ 행 추가"
-                    Width="96"
-                    Height="34"
-                    Margin="0,0,8,0"
-                    KeyboardNavigation.TabIndex="1"
-                    Click="OnAddRow"
-                    AutomationProperties.Name="프로필 매핑 행 추가 버튼"/>
-            <Button Content="저장"
-                    Width="96"
-                    Height="34"
-                    Margin="0,0,8,0"
-                    KeyboardNavigation.TabIndex="2"
-                    Click="OnSave"
-                    AutomationProperties.Name="프로필 매핑 저장 버튼"/>
-            <Button Content="닫기 (Esc)"
-                    Width="120"
-                    Height="34"
-                    KeyboardNavigation.TabIndex="3"
-                    Click="OnClose"
-                    AutomationProperties.Name="프로필 매핑 닫기 버튼"/>
-        </StackPanel>
-    </Grid>
+            <StackPanel Grid.Row="3"
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Right"
+                        Margin="0,12,0,0">
+                <Button Content="+ 행 추가"
+                        Width="96"
+                        Height="34"
+                        Margin="0,0,8,0"
+                        KeyboardNavigation.TabIndex="1"
+                        Click="OnAddRow"
+                        AutomationProperties.Name="프로필 매핑 행 추가 버튼"/>
+                <Button Content="저장"
+                        Width="96"
+                        Height="34"
+                        Margin="0,0,8,0"
+                        KeyboardNavigation.TabIndex="2"
+                        Click="OnSave"
+                        AutomationProperties.Name="프로필 매핑 저장 버튼"/>
+                <Button Content="닫기 (Esc)"
+                        Width="120"
+                        Height="34"
+                        KeyboardNavigation.TabIndex="3"
+                        Click="OnClose"
+                        AutomationProperties.Name="프로필 매핑 닫기 버튼"/>
+            </StackPanel>
+        </Grid>
     </Border>
 </Window>

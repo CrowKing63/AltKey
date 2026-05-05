@@ -13,6 +13,12 @@
         d:DataContext="{d:DesignInstance vm:UserDictionaryEditorViewModel}">
 
     <Window.Resources>
+        <!-- 접근성: 편집 밀도가 높은 창에서 포커스/선택 상태를 빠르게 식별할 수 있게 공용 스타일을 적용합니다. -->
+        <Style TargetType="Button" BasedOn="{StaticResource FluentButtonStyle}"/>
+        <Style TargetType="TextBox" BasedOn="{StaticResource FluentTextBoxStyle}"/>
+        <Style TargetType="ComboBox" BasedOn="{StaticResource FluentComboBoxStyle}"/>
+        <Style TargetType="DataGrid" BasedOn="{StaticResource FluentDataGridStyle}"/>
+
         <Style x:Key="DarkBtn" TargetType="Button">
             <Setter Property="Background"      Value="{DynamicResource SettingsHighlight}"/>
             <Setter Property="Foreground"      Value="{DynamicResource SettingsFg}"/>
@@ -55,7 +61,7 @@
         </Grid.RowDefinitions>
 
         <!-- ── 헤더 ── -->
-        <Border Grid.Row="0" Background="{DynamicResource PanelBg}" Padding="16,10">
+        <Border Grid.Row="0" Style="{StaticResource FluentCardBorderStyle}" Margin="0,0,0,8" Padding="16,10">
             <Grid>
                 <TextBlock Text="사용자 단어 편집기"
                            Foreground="{DynamicResource SettingsFg}"
@@ -72,7 +78,7 @@
         </Border>
 
         <!-- ── 탭 ── -->
-        <Border Grid.Row="1" Background="{DynamicResource SettingsBg}" Padding="12,4">
+        <Border Grid.Row="1" Style="{StaticResource FluentCardBorderStyle}" Margin="0,0,0,8" Padding="12,6">
             <StackPanel Orientation="Horizontal">
                 <RadioButton Content="단어"
                              Foreground="{DynamicResource SettingsFg}"
@@ -96,7 +102,7 @@
             </Grid.RowDefinitions>
 
             <!-- 언어 탭 -->
-            <Border Grid.Row="0" Background="{DynamicResource SettingsBg}" Padding="12,4">
+            <Border Grid.Row="0" Style="{StaticResource FluentCardBorderStyle}" Margin="0,0,0,8" Padding="12,6">
                 <StackPanel Orientation="Horizontal">
                     <RadioButton Content="한국어"
                                  Foreground="{DynamicResource SettingsFg}"
@@ -112,7 +118,7 @@
             </Border>
 
             <!-- 툴바 -->
-            <Border Grid.Row="1" Background="{DynamicResource PanelBg}" Padding="12,8">
+            <Border Grid.Row="1" Style="{StaticResource FluentCardBorderStyle}" Margin="0,0,0,8" Padding="12,8">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
@@ -175,7 +181,8 @@
                       BorderBrush="{DynamicResource SettingsHighlight}"
                       SelectionMode="Extended"
                       SelectionUnit="FullRow"
-                      FontSize="12">
+                      FontSize="12"
+                      Margin="0,0,0,8">
                 <DataGrid.Columns>
                     <DataGridCheckBoxColumn Header="✓"
                                             Binding="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}"
@@ -225,7 +232,7 @@
             </Grid.RowDefinitions>
 
             <!-- 언어 필터 -->
-            <Border Grid.Row="0" Background="{DynamicResource SettingsBg}" Padding="12,4">
+            <Border Grid.Row="0" Style="{StaticResource FluentCardBorderStyle}" Margin="0,0,0,8" Padding="12,6">
                 <StackPanel Orientation="Horizontal">
                     <RadioButton Content="한국어"
                                  Foreground="{DynamicResource SettingsFg}"
@@ -239,7 +246,7 @@
                                  GroupName="BigramDictTab"/>
                 </StackPanel>
             </Border>
-            <Border Grid.Row="1" Background="{DynamicResource PanelBg}" Padding="12,8">
+            <Border Grid.Row="1" Style="{StaticResource FluentCardBorderStyle}" Margin="0,0,0,8" Padding="12,8">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock Text="이전" Foreground="{DynamicResource SettingsFgSub}"
                                VerticalAlignment="Center" Margin="0,0,6,0"/>
@@ -286,7 +293,8 @@
                       BorderBrush="{DynamicResource SettingsHighlight}"
                       SelectionMode="Single"
                       SelectionUnit="FullRow"
-                      FontSize="12">
+                      FontSize="12"
+                      Margin="0,0,0,8">
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="이전 단어" Binding="{Binding Prev}" Width="*"/>
                     <DataGridTextColumn Header="다음 단어" Binding="{Binding Next}" Width="*"/>
@@ -320,7 +328,7 @@
         </Grid>
 
         <!-- ── 상태바 ── -->
-        <Border Grid.Row="3" Background="{DynamicResource PanelBg}" Padding="12,8">
+        <Border Grid.Row="3" Style="{StaticResource FluentCardBorderStyle}" Padding="12,8">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>

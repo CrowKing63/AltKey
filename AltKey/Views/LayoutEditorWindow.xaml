@@ -15,6 +15,11 @@
         Background="{DynamicResource SettingsBg}"
         d:DataContext="{d:DesignInstance vm:LayoutEditorViewModel}">
     <Window.Resources>
+        <!-- 접근성: 포커스 이동이 잦은 편집기이므로 공용 Fluent 스타일로 입력/버튼 식별성을 통일합니다. -->
+        <Style TargetType="Button" BasedOn="{StaticResource FluentButtonStyle}"/>
+        <Style TargetType="TextBox" BasedOn="{StaticResource FluentTextBoxStyle}"/>
+        <Style TargetType="ComboBox" BasedOn="{StaticResource FluentComboBoxStyle}"/>
+
         <BooleanToVisibilityConverter     x:Key="BoolToVis"/>
         <conv:InverseBoolToVisibilityConverter x:Key="InvBoolToVis"/>
         <conv:WidthToPixelConverter       x:Key="WidthToPx"/>
@@ -67,7 +72,7 @@
         </Grid.RowDefinitions>
 
         <!-- ── 상단 툴바 ── -->
-        <Border Grid.Row="0" Background="{DynamicResource PanelBg}" Padding="12,8">
+        <Border Grid.Row="0" Style="{StaticResource FluentCardBorderStyle}" Margin="0,0,0,8" Padding="12,8">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -153,7 +158,7 @@
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <Border Grid.Row="0" Background="{DynamicResource SettingsBg}" Padding="8,6">
+                <Border Grid.Row="0" Style="{StaticResource FluentCardBorderStyle}" Margin="8,8,8,0" Padding="8,6">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="키 배치" Foreground="{DynamicResource SettingsFgSub}"
                                    VerticalAlignment="Center" Margin="0,0,12,0"/>
@@ -310,8 +315,9 @@
             </Grid>
 
             <!-- 우측: 속성 패널 -->
-            <Border Grid.Column="1" Background="{DynamicResource SettingsBg}"
-                    BorderBrush="{DynamicResource SettingsBorder}" BorderThickness="1,0,0,0">
+            <Border Grid.Column="1"
+                    Style="{StaticResource FluentCardBorderStyle}"
+                    Margin="8,8,8,8">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="12,10">
                     <StackPanel>
 
@@ -403,7 +409,7 @@
         </Grid>
 
         <!-- ── 하단 상태바 ── -->
-        <Border Grid.Row="2" Background="{DynamicResource PanelBg}" Padding="12,5">
+        <Border Grid.Row="2" Style="{StaticResource FluentCardBorderStyle}" Padding="12,5">
             <TextBlock Text="{Binding StatusMessage}"
                        Foreground="{DynamicResource SettingsFgHint}" FontSize="11"/>
         </Border>
