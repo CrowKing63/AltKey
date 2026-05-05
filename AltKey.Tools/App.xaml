@@ -33,6 +33,7 @@
             <Style TargetType="TextBox">
                 <Setter Property="Background" Value="{DynamicResource SettingsHighlight}"/>
                 <Setter Property="Foreground" Value="{DynamicResource SettingsFg}"/>
+                <Setter Property="CaretBrush" Value="{DynamicResource SettingsFg}"/>
                 <Setter Property="BorderBrush" Value="{DynamicResource SettingsBorder}"/>
                 <Setter Property="BorderThickness" Value="1"/>
             </Style>
@@ -41,6 +42,21 @@
                 <Setter Property="Foreground" Value="{DynamicResource SettingsFg}"/>
                 <Setter Property="BorderBrush" Value="{DynamicResource SettingsBorder}"/>
                 <Setter Property="BorderThickness" Value="1"/>
+            </Style>
+            <Style TargetType="ComboBoxItem">
+                <Setter Property="Background" Value="{DynamicResource SettingsBg}"/>
+                <Setter Property="Foreground" Value="{DynamicResource SettingsFg}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource SettingsBorder}"/>
+                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                <Style.Triggers>
+                    <Trigger Property="IsHighlighted" Value="True">
+                        <Setter Property="Background" Value="{DynamicResource SettingsHighlight}"/>
+                    </Trigger>
+                    <Trigger Property="IsSelected" Value="True">
+                        <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
+                        <Setter Property="Foreground" Value="{DynamicResource SettingsFg}"/>
+                    </Trigger>
+                </Style.Triggers>
             </Style>
             <Style TargetType="DataGrid">
                 <Setter Property="Background" Value="{DynamicResource SettingsBg}"/>
@@ -57,6 +73,27 @@
                 <Setter Property="Foreground" Value="{DynamicResource SettingsFg}"/>
                 <Setter Property="BorderBrush" Value="{DynamicResource SettingsBorder}"/>
                 <Setter Property="BorderThickness" Value="0,0,1,1"/>
+            </Style>
+            <Style TargetType="DataGridCell">
+                <Setter Property="Foreground" Value="{DynamicResource SettingsFg}"/>
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource SettingsBorder}"/>
+                <Style.Triggers>
+                    <Trigger Property="IsSelected" Value="True">
+                        <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
+                        <Setter Property="Foreground" Value="{DynamicResource SettingsFg}"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+            <Style TargetType="DataGridRow">
+                <Setter Property="Foreground" Value="{DynamicResource SettingsFg}"/>
+                <Setter Property="Background" Value="{DynamicResource SettingsBg}"/>
+                <Style.Triggers>
+                    <Trigger Property="IsSelected" Value="True">
+                        <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
+                        <Setter Property="Foreground" Value="{DynamicResource SettingsFg}"/>
+                    </Trigger>
+                </Style.Triggers>
             </Style>
         </ResourceDictionary>
     </Application.Resources>

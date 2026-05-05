@@ -7,9 +7,16 @@
         MinWidth="640"
         MinHeight="420"
         WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource SettingsBg}"
         KeyboardNavigation.TabNavigation="Cycle"
         AutomationProperties.Name="AI 프롬프트 편집기 창">
-    <Grid Margin="16">
+    <Border Margin="14"
+            Padding="16"
+            Background="{DynamicResource SettingsBg}"
+            BorderBrush="{DynamicResource SettingsBorder}"
+            BorderThickness="1"
+            CornerRadius="12">
+    <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -64,4 +71,5 @@
                     AutomationProperties.Name="AI 프롬프트 닫기 버튼"/>
         </StackPanel>
     </Grid>
+    </Border>
 </Window>

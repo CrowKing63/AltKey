@@ -22,6 +22,38 @@
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Margin" Value="0,0,0,8"/>
         </Style>
+        <!-- 접근성: 설정창 본문이 시스템 기본 흰 배경으로 돌아가지 않게 공통 표면 색을 고정합니다. -->
+        <Style TargetType="TabControl">
+            <Setter Property="Background" Value="{DynamicResource SettingsBg}"/>
+            <Setter Property="Foreground" Value="{DynamicResource SettingsFg}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource SettingsBorder}"/>
+        </Style>
+        <Style TargetType="TabItem">
+            <Setter Property="Background" Value="{DynamicResource SettingsHighlight}"/>
+            <Setter Property="Foreground" Value="{DynamicResource SettingsFg}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource SettingsBorder}"/>
+        </Style>
+        <Style TargetType="ScrollViewer">
+            <Setter Property="Background" Value="{DynamicResource SettingsBg}"/>
+            <Setter Property="Foreground" Value="{DynamicResource SettingsFg}"/>
+        </Style>
+        <Style TargetType="RadioButton">
+            <Setter Property="Foreground" Value="{DynamicResource SettingsFg}"/>
+        </Style>
+        <Style TargetType="CheckBox">
+            <Setter Property="Foreground" Value="{DynamicResource SettingsFg}"/>
+        </Style>
+        <Style TargetType="ComboBox">
+            <Setter Property="Background" Value="{DynamicResource SettingsHighlight}"/>
+            <Setter Property="Foreground" Value="{DynamicResource SettingsFg}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource SettingsBorder}"/>
+        </Style>
+        <Style TargetType="TextBox">
+            <Setter Property="Background" Value="{DynamicResource SettingsHighlight}"/>
+            <Setter Property="Foreground" Value="{DynamicResource SettingsFg}"/>
+            <Setter Property="CaretBrush" Value="{DynamicResource SettingsFg}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource SettingsBorder}"/>
+        </Style>
     </Window.Resources>
 
     <Border Background="{DynamicResource SettingsBg}" CornerRadius="12" Padding="24,20">

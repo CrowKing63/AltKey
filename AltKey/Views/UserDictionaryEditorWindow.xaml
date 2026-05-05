@@ -9,40 +9,40 @@
         Width="800" Height="600"
         MinWidth="600" MinHeight="450"
         WindowStartupLocation="Manual"
-        Background="#FF1E1E2E"
+        Background="{DynamicResource SettingsBg}"
         d:DataContext="{d:DesignInstance vm:UserDictionaryEditorViewModel}">
 
     <Window.Resources>
         <Style x:Key="DarkBtn" TargetType="Button">
-            <Setter Property="Background"      Value="#33FFFFFF"/>
-            <Setter Property="Foreground"      Value="#EEFFFFFF"/>
+            <Setter Property="Background"      Value="{DynamicResource SettingsHighlight}"/>
+            <Setter Property="Foreground"      Value="{DynamicResource SettingsFg}"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Padding"         Value="10,5"/>
             <Setter Property="Margin"          Value="2,0"/>
             <Setter Property="Cursor"          Value="Hand"/>
         </Style>
         <Style x:Key="AccentBtn" TargetType="Button">
-            <Setter Property="Background"      Value="#3B82F6"/>
-            <Setter Property="Foreground"      Value="#FFFFFFFF"/>
+            <Setter Property="Background"      Value="{DynamicResource AccentBrush}"/>
+            <Setter Property="Foreground"      Value="{DynamicResource SettingsFg}"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Padding"         Value="10,5"/>
             <Setter Property="Margin"          Value="2,0"/>
             <Setter Property="Cursor"          Value="Hand"/>
         </Style>
         <Style x:Key="DangerBtn" TargetType="Button">
-            <Setter Property="Background"      Value="#55FF4444"/>
-            <Setter Property="Foreground"      Value="#FFEEAAAA"/>
+            <Setter Property="Background"      Value="{DynamicResource ElevatedWarningBg}"/>
+            <Setter Property="Foreground"      Value="{DynamicResource ElevatedWarningFg}"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Padding"         Value="10,5"/>
             <Setter Property="Margin"          Value="2,0"/>
             <Setter Property="Cursor"          Value="Hand"/>
         </Style>
         <Style x:Key="InputBox" TargetType="TextBox">
-            <Setter Property="Background"  Value="#33FFFFFF"/>
-            <Setter Property="Foreground"  Value="#EEFFFFFF"/>
-            <Setter Property="BorderBrush" Value="#55FFFFFF"/>
+            <Setter Property="Background"  Value="{DynamicResource SettingsHighlight}"/>
+            <Setter Property="Foreground"  Value="{DynamicResource SettingsFg}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource SettingsBorder}"/>
             <Setter Property="Padding"     Value="6,4"/>
-            <Setter Property="CaretBrush"  Value="#EEFFFFFF"/>
+            <Setter Property="CaretBrush"  Value="{DynamicResource SettingsFg}"/>
         </Style>
     </Window.Resources>
 
@@ -55,15 +55,15 @@
         </Grid.RowDefinitions>
 
         <!-- ── 헤더 ── -->
-        <Border Grid.Row="0" Background="#FF12121F" Padding="16,10">
+        <Border Grid.Row="0" Background="{DynamicResource PanelBg}" Padding="16,10">
             <Grid>
                 <TextBlock Text="사용자 단어 편집기"
-                           Foreground="#EEFFFFFF"
+                           Foreground="{DynamicResource SettingsFg}"
                            FontSize="14" FontWeight="SemiBold"
                            VerticalAlignment="Center"/>
                 <Button HorizontalAlignment="Right"
                         Content="✕" FontSize="14"
-                        Background="Transparent" Foreground="#AAFFFFFF"
+                        Background="Transparent" Foreground="{DynamicResource SettingsFgSub}"
                         BorderThickness="0" Cursor="Hand" Padding="8,2"
                         Click="CloseButton_Click"
                         ToolTip="닫기 (Esc)"
@@ -72,15 +72,15 @@
         </Border>
 
         <!-- ── 탭 ── -->
-        <Border Grid.Row="1" Background="#FF181826" Padding="12,4">
+        <Border Grid.Row="1" Background="{DynamicResource SettingsBg}" Padding="12,4">
             <StackPanel Orientation="Horizontal">
                 <RadioButton Content="단어"
-                             Foreground="#EEFFFFFF"
+                             Foreground="{DynamicResource SettingsFg}"
                              IsChecked="{Binding IsWordTabSelected, Mode=TwoWay}"
                              Margin="0,0,12,0" Padding="6,3"
                              GroupName="MainTab"/>
                 <RadioButton Content="바이그램"
-                             Foreground="#EEFFFFFF"
+                             Foreground="{DynamicResource SettingsFg}"
                              IsChecked="{Binding IsBigramTabSelected, Mode=TwoWay}"
                              Padding="6,3"
                              GroupName="MainTab"/>
@@ -96,15 +96,15 @@
             </Grid.RowDefinitions>
 
             <!-- 언어 탭 -->
-            <Border Grid.Row="0" Background="#FF181826" Padding="12,4">
+            <Border Grid.Row="0" Background="{DynamicResource SettingsBg}" Padding="12,4">
                 <StackPanel Orientation="Horizontal">
                     <RadioButton Content="한국어"
-                                 Foreground="#EEFFFFFF"
+                                 Foreground="{DynamicResource SettingsFg}"
                                  IsChecked="{Binding IsKoreanTabActive, Mode=TwoWay}"
                                  Margin="0,0,12,0" Padding="6,3"
                                  GroupName="DictTab"/>
                     <RadioButton Content="영어"
-                                 Foreground="#EEFFFFFF"
+                                 Foreground="{DynamicResource SettingsFg}"
                                  IsChecked="{Binding IsEnglishTabActive, Mode=TwoWay}"
                                  Padding="6,3"
                                  GroupName="DictTab"/>
@@ -112,7 +112,7 @@
             </Border>
 
             <!-- 툴바 -->
-            <Border Grid.Row="1" Background="#FF12121F" Padding="12,8">
+            <Border Grid.Row="1" Background="{DynamicResource PanelBg}" Padding="12,8">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
@@ -121,13 +121,13 @@
 
                     <!-- 접근성: 한 줄로 유지하되 폭이 부족하면 자동 줄바꿈되어 입력 요소가 사라지지 않도록 합니다. -->
                     <WrapPanel Grid.Column="0" VerticalAlignment="Center" ItemHeight="28">
-                        <TextBlock Text="검색:" Foreground="#AAFFFFFF"
+                        <TextBlock Text="검색:" Foreground="{DynamicResource SettingsFgSub}"
                                    VerticalAlignment="Center" Margin="0,0,6,0"/>
                         <TextBox Text="{Binding SearchQuery, UpdateSourceTrigger=PropertyChanged, Delay=150}"
                                  Style="{StaticResource InputBox}"
                                  Width="190" Height="26" Margin="0,0,10,0"
                                  AutomationProperties.Name="단어 검색 입력"/>
-                        <TextBlock Text="추가:" Foreground="#AAFFFFFF"
+                        <TextBlock Text="추가:" Foreground="{DynamicResource SettingsFgSub}"
                                    VerticalAlignment="Center" Margin="0,0,6,0"/>
                         <TextBox Text="{Binding NewWord, UpdateSourceTrigger=PropertyChanged}"
                                  Style="{StaticResource InputBox}"
@@ -167,12 +167,12 @@
                       CanUserDeleteRows="False"
                       CanUserReorderColumns="False"
                       GridLinesVisibility="Horizontal"
-                      HorizontalGridLinesBrush="#22FFFFFF"
-                      Background="#FF1A1A2A"
-                      Foreground="#EEFFFFFF"
+                      HorizontalGridLinesBrush="{DynamicResource SettingsHighlight}"
+                      Background="{DynamicResource SettingsBg}"
+                      Foreground="{DynamicResource SettingsFg}"
                       RowBackground="Transparent"
-                      AlternatingRowBackground="#0AFFFFFF"
-                      BorderBrush="#33FFFFFF"
+                      AlternatingRowBackground="{DynamicResource SettingsHighlight}"
+                      BorderBrush="{DynamicResource SettingsHighlight}"
                       SelectionMode="Extended"
                       SelectionUnit="FullRow"
                       FontSize="12">
@@ -189,7 +189,7 @@
                             <DataTemplate>
                                 <TextBox Text="{Binding Frequency, UpdateSourceTrigger=LostFocus}"
                                          Background="Transparent"
-                                         Foreground="#EEFFFFFF"
+                                         Foreground="{DynamicResource SettingsFg}"
                                          BorderThickness="0"
                                          HorizontalAlignment="Center"/>
                             </DataTemplate>
@@ -203,7 +203,7 @@
                                             RelativeSource={RelativeSource AncestorType=Window}}"
                                         CommandParameter="{Binding}"
                                         Background="Transparent"
-                                        Foreground="#88FFFFFF"
+                                        Foreground="{DynamicResource SettingsFgHint}"
                                         BorderThickness="0"
                                         Cursor="Hand"
                                         FontSize="11"
@@ -225,37 +225,37 @@
             </Grid.RowDefinitions>
 
             <!-- 언어 필터 -->
-            <Border Grid.Row="0" Background="#FF181826" Padding="12,4">
+            <Border Grid.Row="0" Background="{DynamicResource SettingsBg}" Padding="12,4">
                 <StackPanel Orientation="Horizontal">
                     <RadioButton Content="한국어"
-                                 Foreground="#EEFFFFFF"
+                                 Foreground="{DynamicResource SettingsFg}"
                                  IsChecked="{Binding IsKoreanTabActive, Mode=TwoWay}"
                                  Margin="0,0,12,0" Padding="6,3"
                                  GroupName="BigramDictTab"/>
                     <RadioButton Content="English"
-                                 Foreground="#EEFFFFFF"
+                                 Foreground="{DynamicResource SettingsFg}"
                                  IsChecked="{Binding IsEnglishTabActive, Mode=TwoWay}"
                                  Padding="6,3"
                                  GroupName="BigramDictTab"/>
                 </StackPanel>
             </Border>
-            <Border Grid.Row="1" Background="#FF12121F" Padding="12,8">
+            <Border Grid.Row="1" Background="{DynamicResource PanelBg}" Padding="12,8">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="이전" Foreground="#AAFFFFFF"
+                    <TextBlock Text="이전" Foreground="{DynamicResource SettingsFgSub}"
                                VerticalAlignment="Center" Margin="0,0,6,0"/>
                     <TextBox Text="{Binding NewBigramPrev, UpdateSourceTrigger=PropertyChanged}"
                              Style="{StaticResource InputBox}"
                              Width="140" Height="26" Margin="0,0,8,0"
                              ToolTip="바이그램 이전 단어"
                              AutomationProperties.Name="바이그램 이전 단어 입력"/>
-                    <TextBlock Text="다음" Foreground="#AAFFFFFF"
+                    <TextBlock Text="다음" Foreground="{DynamicResource SettingsFgSub}"
                                VerticalAlignment="Center" Margin="0,0,6,0"/>
                     <TextBox Text="{Binding NewBigramNext, UpdateSourceTrigger=PropertyChanged}"
                              Style="{StaticResource InputBox}"
                              Width="140" Height="26" Margin="0,0,8,0"
                              ToolTip="바이그램 다음 단어"
                              AutomationProperties.Name="바이그램 다음 단어 입력"/>
-                    <TextBlock Text="빈도" Foreground="#AAFFFFFF"
+                    <TextBlock Text="빈도" Foreground="{DynamicResource SettingsFgSub}"
                                VerticalAlignment="Center" Margin="0,0,6,0"/>
                     <TextBox Text="{Binding NewBigramCount, UpdateSourceTrigger=PropertyChanged}"
                              Style="{StaticResource InputBox}"
@@ -278,12 +278,12 @@
                       CanUserDeleteRows="False"
                       CanUserReorderColumns="False"
                       GridLinesVisibility="Horizontal"
-                      HorizontalGridLinesBrush="#22FFFFFF"
-                      Background="#FF1A1A2A"
-                      Foreground="#EEFFFFFF"
+                      HorizontalGridLinesBrush="{DynamicResource SettingsHighlight}"
+                      Background="{DynamicResource SettingsBg}"
+                      Foreground="{DynamicResource SettingsFg}"
                       RowBackground="Transparent"
-                      AlternatingRowBackground="#0AFFFFFF"
-                      BorderBrush="#33FFFFFF"
+                      AlternatingRowBackground="{DynamicResource SettingsHighlight}"
+                      BorderBrush="{DynamicResource SettingsHighlight}"
                       SelectionMode="Single"
                       SelectionUnit="FullRow"
                       FontSize="12">
@@ -320,7 +320,7 @@
         </Grid>
 
         <!-- ── 상태바 ── -->
-        <Border Grid.Row="3" Background="#FF12121F" Padding="12,8">
+        <Border Grid.Row="3" Background="{DynamicResource PanelBg}" Padding="12,8">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -328,7 +328,7 @@
                 </Grid.ColumnDefinitions>
                 <TextBlock Grid.Column="0"
                            Text="{Binding StatusText}"
-                           Foreground="#AAFFFFFF" FontSize="11"
+                           Foreground="{DynamicResource SettingsFgSub}" FontSize="11"
                            VerticalAlignment="Center"/>
                 <Button Grid.Column="1"
                         Content="닫기"
@@ -339,3 +339,4 @@
         </Border>
     </Grid>
 </Window>
+

@@ -7,9 +7,16 @@
         MinWidth="720"
         MinHeight="460"
         WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource SettingsBg}"
         KeyboardNavigation.TabNavigation="Cycle"
         AutomationProperties.Name="프로필 매핑 편집기 창">
-    <Grid Margin="16">
+    <Border Margin="14"
+            Padding="16"
+            Background="{DynamicResource SettingsBg}"
+            BorderBrush="{DynamicResource SettingsBorder}"
+            BorderThickness="1"
+            CornerRadius="12">
+    <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -39,6 +46,11 @@
                   CanUserAddRows="False"
                   CanUserDeleteRows="False"
                   HeadersVisibility="Column"
+                  RowBackground="{DynamicResource SettingsBg}"
+                  AlternatingRowBackground="{DynamicResource SettingsHighlight}"
+                  HorizontalGridLinesBrush="{DynamicResource SettingsBorder}"
+                  VerticalGridLinesBrush="{DynamicResource SettingsBorder}"
+                  BorderBrush="{DynamicResource SettingsBorder}"
                   KeyboardNavigation.TabIndex="0"
                   AutomationProperties.Name="프로필 매핑 편집 목록">
             <DataGrid.Columns>
@@ -94,4 +106,5 @@
                     AutomationProperties.Name="프로필 매핑 닫기 버튼"/>
         </StackPanel>
     </Grid>
+    </Border>
 </Window>
