@@ -1,96 +1,125 @@
-﻿<Window x:Class="AltKey.Tools.MainWindow"
+<Window x:Class="AltKey.Tools.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="AltKey 도구"
-        Width="640"
-        Height="420"
-        MinWidth="520"
-        MinHeight="360"
+        Width="720"
+        Height="560"
+        MinWidth="620"
+        MinHeight="500"
         WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <!-- 도구 허브 창에서만 버튼 여백을 확장해 카드형 선택 구조의 가독성을 높입니다. -->
+        <Style TargetType="Button" BasedOn="{StaticResource FluentButtonStyle}">
+            <Setter Property="Padding" Value="16,12" />
+        </Style>
+    </Window.Resources>
+
     <Border Margin="14"
             Padding="20"
             Background="{DynamicResource SettingsBg}"
             BorderBrush="{DynamicResource SettingsBorder}"
             BorderThickness="1"
             CornerRadius="12">
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0"
-                   Margin="0,0,0,8"
-                   FontSize="24"
-                   FontWeight="SemiBold"
-                   Text="AltKey 편집 도구"
-                   AutomationProperties.Name="도구 창 제목" />
+            <TextBlock Grid.Row="0"
+                       Margin="0,0,0,8"
+                       FontSize="24"
+                       FontWeight="SemiBold"
+                       Text="AltKey 편집 도구"
+                       AutomationProperties.Name="도구 창 제목" />
 
-        <TextBlock Grid.Row="1"
-                   Margin="0,0,0,16"
-                   Text="설정의 편집 작업을 선택하세요. 이 창은 메인 입력 창과 분리된 편집 전용 화면입니다."
-                   TextWrapping="Wrap"
-                   AutomationProperties.Name="도구 안내 문장" />
+            <TextBlock Grid.Row="1"
+                       Margin="0,0,0,16"
+                       Text="아래 도구 중 하나를 선택해 편집을 시작하세요. 모든 편집은 메인 입력 창과 분리된 안전한 편집 화면에서 진행됩니다."
+                       TextWrapping="Wrap"
+                       AutomationProperties.Name="도구 안내 문장" />
 
-        <StackPanel Grid.Row="2"
-                    Orientation="Vertical"
+            <Border Grid.Row="2"
+                    Style="{StaticResource FluentCardBorderStyle}"
                     KeyboardNavigation.TabNavigation="Continue">
-            <Button x:Name="LayoutEditorButton"
-                    Margin="0,0,0,8"
-                    Padding="14,10"
-                    HorizontalAlignment="Stretch"
-                    TabIndex="0"
-                    Content="레이아웃 편집기 열기"
-                    Click="OnOpenLayoutEditor"
-                    AutomationProperties.Name="레이아웃 편집기 열기 버튼"
-                    AutomationProperties.HelpText="이름과 키 라벨을 편집하는 창으로 이동합니다." />
+                <StackPanel>
+                    <TextBlock Margin="0,0,0,10"
+                               FontSize="16"
+                               FontWeight="SemiBold"
+                               Text="도구 선택"
+                               AutomationProperties.Name="도구 선택 섹션 제목" />
 
-            <Button x:Name="UserDictionaryEditorButton"
-                    Margin="0,0,0,8"
-                    Padding="14,10"
-                    HorizontalAlignment="Stretch"
-                    TabIndex="1"
-                    Content="사용자 단어 편집기 열기"
-                    Click="OnOpenUserDictionaryEditor"
-                    AutomationProperties.Name="사용자 단어 편집기 열기 버튼"
-                    AutomationProperties.HelpText="한국어, 영어, bigram 사용자 데이터를 편집하는 창으로 이동합니다." />
+                    <Button x:Name="LayoutEditorButton"
+                            Margin="0,0,0,8"
+                            HorizontalAlignment="Stretch"
+                            TabIndex="0"
+                            Content="레이아웃 편집기 열기"
+                            Click="OnOpenLayoutEditor"
+                            AutomationProperties.Name="레이아웃 편집기 열기 버튼"
+                            AutomationProperties.HelpText="이름과 키 라벨을 편집하는 창으로 이동합니다." />
+                    <TextBlock Margin="2,0,0,10"
+                               Foreground="{DynamicResource SettingsFgSub}"
+                               Text="키 배치와 라벨을 점검하고 수정합니다."
+                               TextWrapping="Wrap"
+                               AutomationProperties.Name="레이아웃 편집기 설명" />
 
-            <Button x:Name="ProfileMappingEditorButton"
-                    Margin="0,0,0,8"
-                    Padding="14,10"
-                    HorizontalAlignment="Stretch"
-                    TabIndex="2"
-                    Content="프로필 매핑 편집기 열기"
-                    Click="OnOpenProfileMappingEditor"
-                    AutomationProperties.Name="프로필 매핑 편집기 열기 버튼"
-                    AutomationProperties.HelpText="앱별 레이아웃 매핑을 편집하고 저장하는 창으로 이동합니다." />
+                    <Button x:Name="UserDictionaryEditorButton"
+                            Margin="0,0,0,8"
+                            HorizontalAlignment="Stretch"
+                            TabIndex="1"
+                            Content="사용자 단어 편집기 열기"
+                            Click="OnOpenUserDictionaryEditor"
+                            AutomationProperties.Name="사용자 단어 편집기 열기 버튼"
+                            AutomationProperties.HelpText="한국어, 영어, bigram 사용자 데이터를 편집하는 창으로 이동합니다." />
+                    <TextBlock Margin="2,0,0,10"
+                               Foreground="{DynamicResource SettingsFgSub}"
+                               Text="단어와 bigram 데이터를 추가, 수정, 삭제합니다."
+                               TextWrapping="Wrap"
+                               AutomationProperties.Name="사용자 단어 편집기 설명" />
 
-            <Button x:Name="AiPromptEditorButton"
-                    Margin="0,0,0,8"
-                    Padding="14,10"
-                    HorizontalAlignment="Stretch"
-                    TabIndex="3"
-                    Content="AI 프롬프트 편집기 열기"
-                    Click="OnOpenAiPromptEditor"
-                    AutomationProperties.Name="AI 프롬프트 편집기 열기 버튼"
-                    AutomationProperties.HelpText="기본 프롬프트를 긴 한글 문장으로 안정적으로 편집하는 창으로 이동합니다." />
-        </StackPanel>
+                    <Button x:Name="ProfileMappingEditorButton"
+                            Margin="0,0,0,8"
+                            HorizontalAlignment="Stretch"
+                            TabIndex="2"
+                            Content="프로필 매핑 편집기 열기"
+                            Click="OnOpenProfileMappingEditor"
+                            AutomationProperties.Name="프로필 매핑 편집기 열기 버튼"
+                            AutomationProperties.HelpText="앱별 레이아웃 매핑을 편집하고 저장하는 창으로 이동합니다." />
+                    <TextBlock Margin="2,0,0,10"
+                               Foreground="{DynamicResource SettingsFgSub}"
+                               Text="앱별 레이아웃 연결 상태를 검토하고 조정합니다."
+                               TextWrapping="Wrap"
+                               AutomationProperties.Name="프로필 매핑 편집기 설명" />
 
-        <Button Grid.Row="3"
-                Margin="0,16,0,0"
-                Padding="14,10"
-                HorizontalAlignment="Right"
-                TabIndex="4"
-                Content="닫기 (Esc)"
-                Click="OnClose"
-                AutomationProperties.Name="도구 창 닫기 버튼"
-                AutomationProperties.HelpText="AltKey 도구 창을 닫습니다." />
-    </Grid>
+                    <Button x:Name="AiPromptEditorButton"
+                            Margin="0,0,0,8"
+                            HorizontalAlignment="Stretch"
+                            TabIndex="3"
+                            Content="AI 프롬프트 편집기 열기"
+                            Click="OnOpenAiPromptEditor"
+                            AutomationProperties.Name="AI 프롬프트 편집기 열기 버튼"
+                            AutomationProperties.HelpText="기본 프롬프트를 긴 한글 문장으로 안정적으로 편집하는 창으로 이동합니다." />
+                    <TextBlock Margin="2,0,0,0"
+                               Foreground="{DynamicResource SettingsFgSub}"
+                               Text="긴 문장 프롬프트를 읽기 쉬운 형태로 편집합니다."
+                               TextWrapping="Wrap"
+                               AutomationProperties.Name="AI 프롬프트 편집기 설명" />
+                </StackPanel>
+            </Border>
+
+            <Button Grid.Row="3"
+                    Margin="0,16,0,0"
+                    HorizontalAlignment="Right"
+                    TabIndex="4"
+                    Content="닫기 (Esc)"
+                    Click="OnClose"
+                    AutomationProperties.Name="도구 창 닫기 버튼"
+                    AutomationProperties.HelpText="AltKey 도구 창을 닫습니다." />
+        </Grid>
     </Border>
 </Window>
-
