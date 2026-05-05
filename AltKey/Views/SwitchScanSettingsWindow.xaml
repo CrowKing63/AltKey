@@ -23,7 +23,7 @@
                            FontWeight="SemiBold"
                            Foreground="{DynamicResource SettingsFg}"
                            Margin="0,0,0,6"/>
-                <TextBlock Text="스위치 입력 장치와 스캔 방식을 여기서 세부 조정합니다."
+                <TextBlock Text="스위치 입력 위치와 스캔 방식을 세부적으로 조정합니다."
                            FontSize="11"
                            Foreground="{DynamicResource SettingsFgSub}"
                            Margin="0,0,0,16"/>

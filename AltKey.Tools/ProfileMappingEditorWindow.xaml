@@ -68,7 +68,7 @@
                 <DataGridTemplateColumn Header="작업" Width="Auto">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <Button Content="삭제"
+                            <Button Content="행 삭제"
                                     Padding="8,4"
                                     Margin="4,0,0,0"
                                     Click="OnRemoveRow"

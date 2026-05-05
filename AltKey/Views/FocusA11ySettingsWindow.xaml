@@ -20,7 +20,7 @@
                        FontWeight="SemiBold"
                        Foreground="{DynamicResource SettingsFg}"
                        Margin="0,0,0,6"/>
-            <TextBlock Text="탭 탐색 동작과 포커스 공지 정책을 설정합니다."
+            <TextBlock Text="키보드 탐색 동작과 포커스 공지를 조정합니다."
                        FontSize="11"
                        Foreground="{DynamicResource SettingsFgSub}"
                        Margin="0,0,0,6"/>
@@ -28,24 +28,24 @@
                        FontSize="11"
                        Foreground="{DynamicResource SettingsFgSub}"
                        Margin="0,0,0,4"
-                       Text="탭 키로 키보드 키를 탐색할 수 있으며, Narrator나 외부 보조기기 사용 시 유용합니다."/>
+                       Text="키보드로 화면 요소를 탐색할 때 도움이 되며 Narrator 같은 보조기기 사용 시 유용합니다."/>
             <TextBlock TextWrapping="Wrap"
                        FontSize="11"
                        Foreground="{DynamicResource SettingsFgSub}"
                        Margin="0,0,0,16"
-                       Text="물리 키보드/외부 스위치의 Tab, Shift+Tab, Enter, Space 입력으로 동작합니다."/>
+                       Text="물리 키보드 또는 스위치의 Tab, Shift+Tab, Enter, Space 입력으로 동작합니다."/>
 
-            <TextBlock Text="탭 탐색 범위" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
+            <TextBlock Text="탐색 범위" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
             <ComboBox ItemsSource="{Binding KeyboardA11yNavigationScopes}"
                       SelectedItem="{Binding KeyboardA11yNavigationScope}"
                       Margin="0,0,0,8"/>
 
-            <TextBlock Text="탭 탐색 종료 키 (VK_이름)" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
+            <TextBlock Text="탐색 종료 키 (VK_이름)" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
             <TextBox Text="{Binding KeyboardA11yExitKey, UpdateSourceTrigger=PropertyChanged}"
                      Height="26" Margin="0,0,0,12"/>
 
             <TextBlock Text="LiveRegion 공지" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
-            <CheckBox Content="탭 이동 시 현재 포커스 공지"
+            <CheckBox Content="포커스 이동 시 현재 포커스 공지"
                       Foreground="{DynamicResource SettingsFg}"
                       IsChecked="{Binding KeyboardA11yAnnounceFocus}"
                       Margin="0,0,0,16"/>
