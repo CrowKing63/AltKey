@@ -8,6 +8,7 @@
                 <ResourceDictionary Source="/AltKey;component/Themes/Generic.xaml"/>
                 <!-- 초기 테마는 코드(App.xaml.cs)에서 사용자 설정 기준으로 다시 교체합니다. -->
                 <ResourceDictionary Source="/AltKey;component/Themes/DarkTheme.xaml"/>
+                <ResourceDictionary Source="/AltKey;component/Themes/SettingsControls.xaml"/>
             </ResourceDictionary.MergedDictionaries>
 
             <!-- 메인 앱과 동일한 한글 우선 폰트 체인으로 가독성을 맞춥니다. -->
@@ -23,77 +24,6 @@
             <Style TargetType="Window">
                 <Setter Property="Background" Value="{DynamicResource SettingsBg}"/>
                 <Setter Property="Foreground" Value="{DynamicResource SettingsFg}"/>
-            </Style>
-            <Style TargetType="Button">
-                <Setter Property="Background" Value="{DynamicResource SettingsHighlight}"/>
-                <Setter Property="Foreground" Value="{DynamicResource SettingsFg}"/>
-                <Setter Property="BorderBrush" Value="{DynamicResource SettingsBorder}"/>
-                <Setter Property="BorderThickness" Value="1"/>
-            </Style>
-            <Style TargetType="TextBox">
-                <Setter Property="Background" Value="{DynamicResource SettingsHighlight}"/>
-                <Setter Property="Foreground" Value="{DynamicResource SettingsFg}"/>
-                <Setter Property="CaretBrush" Value="{DynamicResource SettingsFg}"/>
-                <Setter Property="BorderBrush" Value="{DynamicResource SettingsBorder}"/>
-                <Setter Property="BorderThickness" Value="1"/>
-            </Style>
-            <Style TargetType="ComboBox">
-                <Setter Property="Background" Value="{DynamicResource SettingsHighlight}"/>
-                <Setter Property="Foreground" Value="{DynamicResource SettingsFg}"/>
-                <Setter Property="BorderBrush" Value="{DynamicResource SettingsBorder}"/>
-                <Setter Property="BorderThickness" Value="1"/>
-            </Style>
-            <Style TargetType="ComboBoxItem">
-                <Setter Property="Background" Value="{DynamicResource SettingsBg}"/>
-                <Setter Property="Foreground" Value="{DynamicResource SettingsFg}"/>
-                <Setter Property="BorderBrush" Value="{DynamicResource SettingsBorder}"/>
-                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-                <Style.Triggers>
-                    <Trigger Property="IsHighlighted" Value="True">
-                        <Setter Property="Background" Value="{DynamicResource SettingsHighlight}"/>
-                    </Trigger>
-                    <Trigger Property="IsSelected" Value="True">
-                        <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
-                        <Setter Property="Foreground" Value="{DynamicResource SettingsFg}"/>
-                    </Trigger>
-                </Style.Triggers>
-            </Style>
-            <Style TargetType="DataGrid">
-                <Setter Property="Background" Value="{DynamicResource SettingsBg}"/>
-                <Setter Property="Foreground" Value="{DynamicResource SettingsFg}"/>
-                <Setter Property="BorderBrush" Value="{DynamicResource SettingsBorder}"/>
-                <Setter Property="GridLinesVisibility" Value="All"/>
-                <Setter Property="RowBackground" Value="{DynamicResource SettingsBg}"/>
-                <Setter Property="AlternatingRowBackground" Value="{DynamicResource SettingsHighlight}"/>
-                <Setter Property="HorizontalGridLinesBrush" Value="{DynamicResource SettingsBorder}"/>
-                <Setter Property="VerticalGridLinesBrush" Value="{DynamicResource SettingsBorder}"/>
-            </Style>
-            <Style TargetType="DataGridColumnHeader">
-                <Setter Property="Background" Value="{DynamicResource SettingsHighlight}"/>
-                <Setter Property="Foreground" Value="{DynamicResource SettingsFg}"/>
-                <Setter Property="BorderBrush" Value="{DynamicResource SettingsBorder}"/>
-                <Setter Property="BorderThickness" Value="0,0,1,1"/>
-            </Style>
-            <Style TargetType="DataGridCell">
-                <Setter Property="Foreground" Value="{DynamicResource SettingsFg}"/>
-                <Setter Property="Background" Value="Transparent"/>
-                <Setter Property="BorderBrush" Value="{DynamicResource SettingsBorder}"/>
-                <Style.Triggers>
-                    <Trigger Property="IsSelected" Value="True">
-                        <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
-                        <Setter Property="Foreground" Value="{DynamicResource SettingsFg}"/>
-                    </Trigger>
-                </Style.Triggers>
-            </Style>
-            <Style TargetType="DataGridRow">
-                <Setter Property="Foreground" Value="{DynamicResource SettingsFg}"/>
-                <Setter Property="Background" Value="{DynamicResource SettingsBg}"/>
-                <Style.Triggers>
-                    <Trigger Property="IsSelected" Value="True">
-                        <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
-                        <Setter Property="Foreground" Value="{DynamicResource SettingsFg}"/>
-                    </Trigger>
-                </Style.Triggers>
             </Style>
         </ResourceDictionary>
     </Application.Resources>

@@ -10,7 +10,7 @@
         Width="680" Height="820"
         MinWidth="600" MinHeight="700"
         WindowStartupLocation="Manual"
-        Background="#FF1E1E2E"
+        Background="{DynamicResource SettingsBg}"
         d:DataContext="{d:DesignInstance vm:SettingsViewModel}">
     <Border Background="{DynamicResource SettingsBg}"
             CornerRadius="12"

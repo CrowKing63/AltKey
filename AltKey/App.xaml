@@ -11,6 +11,7 @@
                 <ResourceDictionary Source="/AltKey;component/Themes/Generic.xaml"/>
                 <!-- 활성 테마는 ThemeService가 런타임에 교체 -->
                 <ResourceDictionary Source="/AltKey;component/Themes/DarkTheme.xaml"/>
+                <ResourceDictionary Source="/AltKey;component/Themes/SettingsControls.xaml"/>
             </ResourceDictionary.MergedDictionaries>
 
             <!-- 접근성: 나눔고딕 우선 + 시스템 폴백 체인 -->
