@@ -25,42 +25,13 @@
         <conv:WidthToPixelConverter       x:Key="WidthToPx"/>
         <conv:NullToCollapsedConverter    x:Key="NullToCollapsed"/>
 
-        <Style x:Key="DarkBtn" TargetType="Button">
-            <Setter Property="Background"      Value="{DynamicResource SettingsHighlight}"/>
-            <Setter Property="Foreground"      Value="{DynamicResource SettingsFg}"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding"         Value="8,4"/>
-            <Setter Property="Margin"          Value="2,0"/>
-            <Setter Property="Cursor"          Value="Hand"/>
-        </Style>
-        <Style x:Key="AccentBtn" TargetType="Button">
-            <Setter Property="Background"      Value="{DynamicResource AccentBrush}"/>
-            <Setter Property="Foreground"      Value="{DynamicResource SettingsFg}"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding"         Value="10,5"/>
-            <Setter Property="Margin"          Value="2,0"/>
-            <Setter Property="Cursor"          Value="Hand"/>
-        </Style>
-        <Style x:Key="DangerBtn" TargetType="Button">
-            <Setter Property="Background"      Value="{DynamicResource ElevatedWarningBg}"/>
-            <Setter Property="Foreground"      Value="{DynamicResource ElevatedWarningFg}"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding"         Value="10,5"/>
-            <Setter Property="Margin"          Value="2,0"/>
-            <Setter Property="Cursor"          Value="Hand"/>
-        </Style>
-        <Style x:Key="LabelText" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="{DynamicResource SettingsFgSub}"/>
-            <Setter Property="FontSize"   Value="11"/>
-            <Setter Property="Margin"     Value="0,0,0,3"/>
-        </Style>
-        <Style x:Key="InputBox" TargetType="TextBox">
-            <Setter Property="Background"  Value="{DynamicResource SettingsHighlight}"/>
-            <Setter Property="Foreground"  Value="{DynamicResource SettingsFg}"/>
-            <Setter Property="CaretBrush"  Value="{DynamicResource SettingsFg}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource SettingsBorder}"/>
-            <Setter Property="Padding"     Value="6,4"/>
-            <Setter Property="Margin"      Value="0,0,0,8"/>
+        <!-- 접근성 유지보수: 공용 Fluent 키를 재사용해 창 간 버튼/입력 상태 표현을 일관화합니다. -->
+        <Style x:Key="DarkBtn" TargetType="Button" BasedOn="{StaticResource FluentSecondaryButtonStyle}"/>
+        <Style x:Key="AccentBtn" TargetType="Button" BasedOn="{StaticResource FluentPrimaryButtonStyle}"/>
+        <Style x:Key="DangerBtn" TargetType="Button" BasedOn="{StaticResource FluentDangerButtonStyle}"/>
+        <Style x:Key="LabelText" TargetType="TextBlock" BasedOn="{StaticResource FluentLabelTextStyle}"/>
+        <Style x:Key="InputBox" TargetType="TextBox" BasedOn="{StaticResource FluentEditorInputBoxStyle}">
+            <Setter Property="Margin" Value="0,0,0,8"/>
         </Style>
     </Window.Resources>
 

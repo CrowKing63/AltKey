@@ -19,37 +19,11 @@
         <Style TargetType="ComboBox" BasedOn="{StaticResource FluentComboBoxStyle}"/>
         <Style TargetType="DataGrid" BasedOn="{StaticResource FluentDataGridStyle}"/>
 
-        <Style x:Key="DarkBtn" TargetType="Button">
-            <Setter Property="Background"      Value="{DynamicResource SettingsHighlight}"/>
-            <Setter Property="Foreground"      Value="{DynamicResource SettingsFg}"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding"         Value="10,5"/>
-            <Setter Property="Margin"          Value="2,0"/>
-            <Setter Property="Cursor"          Value="Hand"/>
-        </Style>
-        <Style x:Key="AccentBtn" TargetType="Button">
-            <Setter Property="Background"      Value="{DynamicResource AccentBrush}"/>
-            <Setter Property="Foreground"      Value="{DynamicResource SettingsFg}"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding"         Value="10,5"/>
-            <Setter Property="Margin"          Value="2,0"/>
-            <Setter Property="Cursor"          Value="Hand"/>
-        </Style>
-        <Style x:Key="DangerBtn" TargetType="Button">
-            <Setter Property="Background"      Value="{DynamicResource ElevatedWarningBg}"/>
-            <Setter Property="Foreground"      Value="{DynamicResource ElevatedWarningFg}"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding"         Value="10,5"/>
-            <Setter Property="Margin"          Value="2,0"/>
-            <Setter Property="Cursor"          Value="Hand"/>
-        </Style>
-        <Style x:Key="InputBox" TargetType="TextBox">
-            <Setter Property="Background"  Value="{DynamicResource SettingsHighlight}"/>
-            <Setter Property="Foreground"  Value="{DynamicResource SettingsFg}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource SettingsBorder}"/>
-            <Setter Property="Padding"     Value="6,4"/>
-            <Setter Property="CaretBrush"  Value="{DynamicResource SettingsFg}"/>
-        </Style>
+        <!-- 접근성 유지보수: 공용 Fluent 키를 재사용해 편집기 간 동일한 포커스/상태 대비를 유지합니다. -->
+        <Style x:Key="DarkBtn" TargetType="Button" BasedOn="{StaticResource FluentSecondaryButtonStyle}"/>
+        <Style x:Key="AccentBtn" TargetType="Button" BasedOn="{StaticResource FluentPrimaryButtonStyle}"/>
+        <Style x:Key="DangerBtn" TargetType="Button" BasedOn="{StaticResource FluentDangerButtonStyle}"/>
+        <Style x:Key="InputBox" TargetType="TextBox" BasedOn="{StaticResource FluentEditorInputBoxStyle}"/>
     </Window.Resources>
 
     <Grid>
