@@ -765,10 +765,28 @@ public partial class SettingsViewModel : ObservableObject
 
         _settingsWindow = new AltKey.Views.SettingsWindow(this);
         AuxiliaryWindowPlacement.CenterOnScreen(_settingsWindow);
-        _settingsWindow.Show();
+        ShowAuxiliaryWindow(_settingsWindow);
     }
 
     internal void OnSettingsWindowClosed() => _settingsWindow = null;
+
+    /// <summary>
+    /// [접근성] 보조 창이 첫 실행 때 다른 창 뒤에 숨지 않도록 표시 직후 전면으로 가져옵니다.
+    /// AltKey 메인 창은 입력 방해를 줄이기 위해 비활성(topmost + no-activate) 특성이 있어,
+    /// 설정 창 계열은 첫 생성 시 Activate를 명시해야 사용자가 창이 열렸는지 바로 알 수 있습니다.
+    /// </summary>
+    private static void ShowAuxiliaryWindow(Window window)
+    {
+        window.Show();
+
+        if (window.WindowState == WindowState.Minimized)
+        {
+            window.WindowState = WindowState.Normal;
+        }
+
+        window.Activate();
+        window.Focus();
+    }
 
     /// <summary>
     /// [접근성] 스위치 스캔 상세 설정 창을 엽니다.
@@ -788,7 +806,7 @@ public partial class SettingsViewModel : ObservableObject
             _switchScanSettingsWindow,
             _settingsWindow ?? WpfApp.Current.MainWindow);
         _switchScanSettingsWindow.Closed += (_, _) => _switchScanSettingsWindow = null;
-        _switchScanSettingsWindow.Show();
+        ShowAuxiliaryWindow(_switchScanSettingsWindow);
     }
 
     /// <summary>
@@ -809,7 +827,7 @@ public partial class SettingsViewModel : ObservableObject
             _focusA11ySettingsWindow,
             _settingsWindow ?? WpfApp.Current.MainWindow);
         _focusA11ySettingsWindow.Closed += (_, _) => _focusA11ySettingsWindow = null;
-        _focusA11ySettingsWindow.Show();
+        ShowAuxiliaryWindow(_focusA11ySettingsWindow);
     }
 
     // ── T-9.4: 레이아웃 편집기 열기 ──────────────────────────────────────────

@@ -25,6 +25,7 @@ public partial class MainViewModel : ObservableObject
     private readonly ProfileService _profileService;
     private readonly AutoCompleteService _autoCompleteService;
     private readonly InputService _inputService;
+    private readonly OskLauncherService _oskLauncher;
     private readonly LiveRegionService _liveRegion;
     private readonly AiService _aiService;
 
@@ -214,6 +215,7 @@ public partial class MainViewModel : ObservableObject
         SuggestionBarViewModel suggestionBarViewModel,
         AutoCompleteService    autoCompleteService,
         InputService           inputService,
+        OskLauncherService     oskLauncher,
         LiveRegionService      liveRegion,
         AiService              aiService)
     {
@@ -230,6 +232,7 @@ public partial class MainViewModel : ObservableObject
         AutoComplete = suggestionBarViewModel;
         _autoCompleteService = autoCompleteService;
         _inputService = inputService;
+        _oskLauncher = oskLauncher;
 
         _profileService.ForegroundAppChanged += OnForegroundAppChanged;
         _configService.ConfigChanged += OnConfigChanged;
@@ -485,7 +488,13 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void SendOsk()
     {
-        _inputService.SendCombo([VirtualKeyCode.VK_LWIN, VirtualKeyCode.VK_LCONTROL, VirtualKeyCode.VK_O]);
+        // 접근성 우선: 포커스를 옮길 수 없는 상황에서도 동작하도록 직접 실행을 먼저 시도합니다.
+        if (!_oskLauncher.TryLaunch())
+        {
+            // 일부 환경에서는 직접 실행이 막힐 수 있어, 기존 단축키 경로를 최후 보조 수단으로 남겨 둡니다.
+            _inputService.SendCombo([VirtualKeyCode.VK_LWIN, VirtualKeyCode.VK_LCONTROL, VirtualKeyCode.VK_O]);
+        }
+
         _liveRegion.Announce("화면 키보드 호출");
     }
 

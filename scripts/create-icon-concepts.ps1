@@ -194,6 +194,94 @@ function Add-PencilBadge {
     $badgeBrush.Dispose()
 }
 
+function DrawGrayscaleImage {
+    param(
+        [System.Drawing.Graphics]$Graphics,
+        [System.Drawing.Image]$Image,
+        [System.Drawing.Rectangle]$Destination
+    )
+
+    $attributes = [System.Drawing.Imaging.ImageAttributes]::new()
+    $matrix = [System.Drawing.Imaging.ColorMatrix]::new(@(
+        @(0.299, 0.299, 0.299, 0, 0),
+        @(0.587, 0.587, 0.587, 0, 0),
+        @(0.114, 0.114, 0.114, 0, 0),
+        @(0, 0, 0, 1, 0),
+        @(0.04, 0.04, 0.04, 0, 1)
+    ))
+    $attributes.SetColorMatrix($matrix)
+    $Graphics.DrawImage(
+        $Image,
+        $Destination,
+        0,
+        0,
+        $Image.Width,
+        $Image.Height,
+        [System.Drawing.GraphicsUnit]::Pixel,
+        $attributes
+    )
+    $attributes.Dispose()
+}
+
+function Add-LargePencilOverlay {
+    param(
+        [System.Drawing.Graphics]$Graphics,
+        [int]$Size
+    )
+
+    $state = $Graphics.Save()
+    $Graphics.TranslateTransform($Size * 0.50, $Size * 0.54)
+    $Graphics.RotateTransform(-36)
+
+    # Keep the shape simple so it still reads as a pencil at 16px and 32px.
+    $bodyRect = [System.Drawing.RectangleF]::new(-$Size * 0.27, -$Size * 0.035, $Size * 0.44, $Size * 0.07)
+    $bodyBrush = [System.Drawing.SolidBrush]::new([System.Drawing.Color]::FromArgb(248, 251, 191, 36))
+    $bodyPen = [System.Drawing.Pen]::new([System.Drawing.Color]::FromArgb(220, 15, 23, 42), [float]($Size * 0.01))
+    $Graphics.FillRectangle($bodyBrush, $bodyRect)
+    $Graphics.DrawRectangle($bodyPen, $bodyRect.X, $bodyRect.Y, $bodyRect.Width, $bodyRect.Height)
+
+    $tipPath = [System.Drawing.Drawing2D.GraphicsPath]::new()
+    $tipPath.AddPolygon(@(
+        [System.Drawing.PointF]::new($bodyRect.Right, $bodyRect.Top),
+        [System.Drawing.PointF]::new($bodyRect.Right + $Size * 0.095, 0),
+        [System.Drawing.PointF]::new($bodyRect.Right, $bodyRect.Bottom)
+    ))
+    $tipBrush = [System.Drawing.SolidBrush]::new([System.Drawing.Color]::FromArgb(248, 245, 245, 244))
+    $tipPen = [System.Drawing.Pen]::new([System.Drawing.Color]::FromArgb(220, 15, 23, 42), [float]($Size * 0.01))
+    $Graphics.FillPath($tipBrush, $tipPath)
+    $Graphics.DrawPath($tipPen, $tipPath)
+
+    $leadPath = [System.Drawing.Drawing2D.GraphicsPath]::new()
+    $leadPath.AddPolygon(@(
+        [System.Drawing.PointF]::new($bodyRect.Right + $Size * 0.095, 0),
+        [System.Drawing.PointF]::new($bodyRect.Right + $Size * 0.052, -$Size * 0.018),
+        [System.Drawing.PointF]::new($bodyRect.Right + $Size * 0.052, $Size * 0.018)
+    ))
+    $leadBrush = [System.Drawing.SolidBrush]::new([System.Drawing.Color]::FromArgb(248, 30, 41, 59))
+    $Graphics.FillPath($leadBrush, $leadPath)
+
+    $eraserRect = [System.Drawing.RectangleF]::new($bodyRect.Left - $Size * 0.07, -$Size * 0.035, $Size * 0.07, $Size * 0.07)
+    $eraserBrush = [System.Drawing.SolidBrush]::new([System.Drawing.Color]::FromArgb(248, 251, 146, 179))
+    $Graphics.FillRectangle($eraserBrush, $eraserRect)
+    $Graphics.DrawRectangle($bodyPen, $eraserRect.X, $eraserRect.Y, $eraserRect.Width, $eraserRect.Height)
+
+    $bandRect = [System.Drawing.RectangleF]::new($bodyRect.Left - $Size * 0.024, -$Size * 0.035, $Size * 0.022, $Size * 0.07)
+    $bandBrush = [System.Drawing.SolidBrush]::new([System.Drawing.Color]::FromArgb(248, 226, 232, 240))
+    $Graphics.FillRectangle($bandBrush, $bandRect)
+
+    $Graphics.Restore($state)
+
+    $bandBrush.Dispose()
+    $eraserBrush.Dispose()
+    $leadBrush.Dispose()
+    $leadPath.Dispose()
+    $tipPen.Dispose()
+    $tipBrush.Dispose()
+    $tipPath.Dispose()
+    $bodyPen.Dispose()
+    $bodyBrush.Dispose()
+}
+
 function Add-KoreanGlyph {
     param(
         [System.Drawing.Graphics]$Graphics,
@@ -418,6 +506,56 @@ function Save-ConceptFluent {
     $bitmap.Dispose()
 }
 
+function Save-ConceptMono {
+    param([string]$OutputPath)
+
+    $size = 256
+    $canvas = Initialize-Canvas -Size $size
+    $bitmap = $canvas.Bitmap
+    $graphics = $canvas.Graphics
+
+    Add-BaseShadow -Graphics $graphics -Size $size
+
+    $source = [System.Drawing.Image]::FromFile($sourceIconPath)
+    DrawGrayscaleImage -Graphics $graphics -Image $source -Destination ([System.Drawing.Rectangle]::new(0, 0, $size, $size))
+
+    # Add a dark translucent wash so the icon reads as a separate tools variant.
+    $washPath = New-RoundedRectPath -Rect ([System.Drawing.RectangleF]::new($size * 0.045, $size * 0.03, $size * 0.89, $size * 0.89)) -Radius ($size * 0.16)
+    $washBrush = [System.Drawing.SolidBrush]::new([System.Drawing.Color]::FromArgb(26, 17, 24, 39))
+    $graphics.FillPath($washBrush, $washPath)
+
+    $washBrush.Dispose()
+    $washPath.Dispose()
+    $source.Dispose()
+    $bitmap.Save($OutputPath, [System.Drawing.Imaging.ImageFormat]::Png)
+    $graphics.Dispose()
+    $bitmap.Dispose()
+}
+
+function Save-ConceptCrossPencil {
+    param([string]$OutputPath)
+
+    $size = 256
+    $canvas = Initialize-Canvas -Size $size
+    $bitmap = $canvas.Bitmap
+    $graphics = $canvas.Graphics
+
+    Add-BaseShadow -Graphics $graphics -Size $size
+
+    $source = [System.Drawing.Image]::FromFile($sourceIconPath)
+    $graphics.DrawImage($source, [System.Drawing.Rectangle]::new(0, 0, $size, $size))
+
+    $strokePen = [System.Drawing.Pen]::new([System.Drawing.Color]::FromArgb(110, 15, 23, 42), [float]($size * 0.02))
+    $graphics.DrawLine($strokePen, $size * 0.22, $size * 0.70, $size * 0.76, $size * 0.31)
+    Add-LargePencilOverlay -Graphics $graphics -Size $size
+
+    $strokePen.Dispose()
+    $source.Dispose()
+    $bitmap.Save($OutputPath, [System.Drawing.Imaging.ImageFormat]::Png)
+    $graphics.Dispose()
+    $bitmap.Dispose()
+}
+
 function Add-PreviewTile {
     param(
         [System.Drawing.Graphics]$Graphics,
@@ -518,18 +656,77 @@ function Save-ConceptBoard {
     $bitmap.Dispose()
 }
 
+function Save-ToolsVariantBoard {
+    param(
+        [string]$OutputPath,
+        [string[]]$SourcePaths
+    )
+
+    $bitmap = [System.Drawing.Bitmap]::new(808, 420, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
+    $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
+    $graphics.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::AntiAlias
+    $graphics.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
+    $graphics.TextRenderingHint = [System.Drawing.Text.TextRenderingHint]::AntiAliasGridFit
+
+    $backgroundBrush = [System.Drawing.Drawing2D.LinearGradientBrush]::new(
+        [System.Drawing.PointF]::new(0, 0),
+        [System.Drawing.PointF]::new(808, 420),
+        [System.Drawing.Color]::FromArgb(255, 241, 245, 249),
+        [System.Drawing.Color]::FromArgb(255, 226, 232, 240)
+    )
+    $graphics.FillRectangle($backgroundBrush, 0, 0, 808, 420)
+
+    $titleFont = [System.Drawing.Font]::new("Segoe UI", 24, [System.Drawing.FontStyle]::Bold, [System.Drawing.GraphicsUnit]::Pixel)
+    $subtitleFont = [System.Drawing.Font]::new("Segoe UI", 12, [System.Drawing.FontStyle]::Regular, [System.Drawing.GraphicsUnit]::Pixel)
+    $titleBrush = [System.Drawing.SolidBrush]::new([System.Drawing.Color]::FromArgb(255, 15, 23, 42))
+    $subtitleBrush = [System.Drawing.SolidBrush]::new([System.Drawing.Color]::FromArgb(255, 71, 85, 105))
+    $graphics.DrawString("AltKey Tools Variants", $titleFont, $titleBrush, 34, 24)
+    $graphics.DrawString("Two higher-contrast directions for the tools app icon", $subtitleFont, $subtitleBrush, 36, 62)
+
+    $titles = @("Monochrome", "Large Cross Pencil")
+    $subtitles = @(
+        "Uses the current icon silhouette with a grayscale tools-only tone",
+        "Keeps the current icon and makes the pencil part of the main shape"
+    )
+
+    for ($i = 0; $i -lt $SourcePaths.Count; $i++) {
+        $image = [System.Drawing.Image]::FromFile($SourcePaths[$i])
+        Add-PreviewTile -Graphics $graphics -Image $image -X (34 + ($i * 372)) -Y 96 -Width 338 -Height 290 -Title $titles[$i] -Subtitle $subtitles[$i]
+        $image.Dispose()
+    }
+
+    $subtitleBrush.Dispose()
+    $titleBrush.Dispose()
+    $subtitleFont.Dispose()
+    $titleFont.Dispose()
+    $backgroundBrush.Dispose()
+
+    $bitmap.Save($OutputPath, [System.Drawing.Imaging.ImageFormat]::Png)
+    $graphics.Dispose()
+    $bitmap.Dispose()
+}
+
 $conceptAPath = Join-Path $outputDir "altkey-icon-concept-a-edit.png"
 $conceptGaPath = Join-Path $outputDir "altkey-icon-concept-ga-korean.png"
 $conceptFluentPath = Join-Path $outputDir "altkey-icon-concept-fluent-hybrid.png"
 $boardPath = Join-Path $outputDir "altkey-icon-concepts-board.png"
+$conceptMonoPath = Join-Path $outputDir "altkey-tools-icon-concept-monochrome.png"
+$conceptCrossPencilPath = Join-Path $outputDir "altkey-tools-icon-concept-cross-pencil.png"
+$toolsBoardPath = Join-Path $outputDir "altkey-tools-icon-variants-board.png"
 $gaGlyph = [string][char]0xAC00
 
 Save-ConceptA -OutputPath $conceptAPath
 Save-ConceptGa -OutputPath $conceptGaPath
 Save-ConceptFluent -OutputPath $conceptFluentPath
 Save-ConceptBoard -OutputPath $boardPath -SourcePaths @($conceptAPath, $conceptGaPath, $conceptFluentPath)
+Save-ConceptMono -OutputPath $conceptMonoPath
+Save-ConceptCrossPencil -OutputPath $conceptCrossPencilPath
+Save-ToolsVariantBoard -OutputPath $toolsBoardPath -SourcePaths @($conceptMonoPath, $conceptCrossPencilPath)
 
 Write-Host "Saved: $conceptAPath"
 Write-Host "Saved: $conceptGaPath"
 Write-Host "Saved: $conceptFluentPath"
 Write-Host "Saved: $boardPath"
+Write-Host "Saved: $conceptMonoPath"
+Write-Host "Saved: $conceptCrossPencilPath"
+Write-Host "Saved: $toolsBoardPath"
