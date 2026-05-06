@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="AltKey/Assets/Icon.png" width="180" alt="AltKey Icon">
+
 # AltKey
 
 **한국어 사용자 전용 커스터마이징 화상 키보드**
