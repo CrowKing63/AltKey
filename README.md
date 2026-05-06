@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="AltKey/Assets/Icon.png" width="180" alt="AltKey Icon">
+<img src="AltKey/Assets/icon.png" width="180" alt="AltKey Icon">
 
 # AltKey
 
