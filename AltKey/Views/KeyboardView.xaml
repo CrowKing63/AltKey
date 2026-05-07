@@ -218,7 +218,7 @@
                 DockPanel.Dock="Top"
                 DataContext="{Binding AutoComplete}"
                 Visibility="{Binding IsVisible, Converter={StaticResource BoolToVis}}"
-                Height="{Binding DataContext.Keyboard.KeyRowHeight, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                Height="{Binding DataContext.Keyboard.SuggestionBarHeight, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
 
             <!-- 08: LiveRegion 공지 (Narrator용) -->
             <TextBlock x:Name="ModeAnnouncer"

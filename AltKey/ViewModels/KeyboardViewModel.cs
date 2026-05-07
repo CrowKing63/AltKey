@@ -281,6 +281,21 @@ public partial class KeyboardViewModel : ObservableObject
     /// 빈 행을 포함해 모든 행이 확보해야 할 픽셀 높이 (KeyUnit + 키 Margin 상하 합)
     public double KeyRowHeight => KeyUnit + 4.0;
 
+    /// 추천 칩 자체 높이입니다. 창 배율이 커지면 KeyUnit을 따라 함께 커지고, 큰 텍스트 모드에서도 글자가 눌리지 않도록 최소 높이를 둡니다.
+    /// 너무 이른 구간에서 최소값이 먼저 걸리면 축소 배율에서 칩만 덜 줄어드니, 기본 모드에서는 조금 더 낮은 하한을 사용합니다.
+    public double SuggestionChipHeight
+    {
+        get
+        {
+            double scaledFontSize = 13.0 * _configService.Current.KeyFontScalePercent / 100.0;
+            double fontAwareMinHeight = scaledFontSize + 10.0;
+            return Math.Max(fontAwareMinHeight, KeyUnit * 0.62);
+        }
+    }
+
+    /// 추천 바 전체 높이입니다. 칩 높이에 상하 여백을 더한 값으로 계산해 100% 배율에서도 칩이 잘리지 않게 합니다.
+    public double SuggestionBarHeight => SuggestionChipHeight + 6.0;
+
     partial void OnColumnsChanged(ObservableCollection<KeyColumnVm> value)
     {
         RecalculateLayoutMetrics();
@@ -289,6 +304,8 @@ public partial class KeyboardViewModel : ObservableObject
     partial void OnKeyUnitChanged(double value)
     {
         OnPropertyChanged(nameof(KeyRowHeight));
+        OnPropertyChanged(nameof(SuggestionChipHeight));
+        OnPropertyChanged(nameof(SuggestionBarHeight));
     }
 
     /// 열 단위 기준으로 가로·세로 단위를 재계산.
@@ -585,6 +602,12 @@ public partial class KeyboardViewModel : ObservableObject
 
     private void OnConfigChanged(string? propertyName)
     {
+        if (propertyName is null or nameof(AppConfig.KeyFontScalePercent))
+        {
+            OnPropertyChanged(nameof(SuggestionChipHeight));
+            OnPropertyChanged(nameof(SuggestionBarHeight));
+        }
+
         if (propertyName is null or nameof(AppConfig.KeyboardA11yNavigationEnabled))
         {
             if (!_configService.Current.KeyboardA11yNavigationEnabled)

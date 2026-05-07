@@ -24,6 +24,14 @@
     <SolidColorBrush x:Key="PanelFg"      Color="#FF1A1A1A"/>
     <SolidColorBrush x:Key="PanelBorder"  Color="#33000000"/>
     <!-- 설정 패널 전용 -->
+    <SolidColorBrush x:Key="SuggestionBarBg"         Color="#DDF5F5F8"/>
+    <SolidColorBrush x:Key="SuggestionBarBorder"     Color="#28000000"/>
+    <SolidColorBrush x:Key="SuggestionCurrentBg"     Color="#665B9AD4"/>
+    <SolidColorBrush x:Key="SuggestionCurrentFg"     Color="#FF141420"/>
+    <SolidColorBrush x:Key="SuggestionCurrentBorder" Color="#33608BC4"/>
+    <SolidColorBrush x:Key="SuggestionChipBg"        Color="#F7FFFFFF"/>
+    <SolidColorBrush x:Key="SuggestionChipHoverBg"   Color="#FFDDE6F3"/>
+    <SolidColorBrush x:Key="SuggestionChipBorder"    Color="#22000000"/>
     <SolidColorBrush x:Key="SettingsBg"        Color="#FFF7F7FA"/>
     <SolidColorBrush x:Key="SettingsFg"        Color="#FF141420"/>
     <SolidColorBrush x:Key="SettingsFgSub"     Color="#FF3A3A46"/>

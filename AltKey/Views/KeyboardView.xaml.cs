@@ -74,6 +74,7 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
     {
         if (propertyName is null
             or nameof(AppConfig.AutoCompleteEnabled)
+            or nameof(AppConfig.KeyFontScalePercent)
             or "Window.Scale")
         {
             Dispatcher.InvokeAsync(() =>
@@ -119,6 +120,7 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
 
     // 상단 드래그 핸들이나 버튼들이 위치한 헤더의 높이입니다.
     private const double HeaderHeight = 28.0;
+    private const double SuggestionChipHeightRatio = 0.62;
 
     // 사용자가 설정할 수 있는 창 크기 배율의 최소/최대 범위(%)입니다.
     private const int    MinScale     = 60;
@@ -140,18 +142,13 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
         double wKeys  = Math.Max(1, vm.Keyboard.MaxRowCount);
         double rows   = Math.Max(1, vm.Keyboard.RowCount);
 
-        bool barVisible = AutoCompleteBar?.Visibility == Visibility.Visible;
-        double barH = barVisible ? AutoCompleteBar!.ActualHeight : 0;
-
         double availW = windowWidth - KbHorizontalPad;
-        double totalBudget = KeyboardBorder.ActualHeight + barH;
-        double availH = totalBudget - KbVerticalPad - (barVisible ? 4.0 : 0);
+        double availH = KeyboardBorder.ActualHeight - KbVerticalPad;
 
         if (availH < 1) return;
 
-        double rowsDiv = rows + (barVisible ? 1 : 0);
         double kW = (availW - wKeys * KeyMargin) / units;
-        double kH = (availH - rows  * KeyMargin) / rowsDiv;
+        double kH = (availH - rows * KeyMargin) / rows;
 
         vm.Keyboard.KeyUnit = Math.Max(MinKeyUnit, Math.Min(MaxKeyUnit, Math.Min(kW, kH)));
     }
@@ -176,7 +173,7 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
                          + rows * KeyMargin
                          + KbVerticalPad;
 
-        double barH = _autoCompleteBarAdded ? (BaseKeyUnit + 4.0) : 0;
+        double barH = _autoCompleteBarAdded ? ComputeSuggestionBarHeight(BaseKeyUnit) : 0;
 
         double baseH = HeaderHeight + barH + keyboardH;
 
@@ -202,6 +199,18 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
         window.Height = _isCollapsed
             ? CollapsedWindowHeight
             : baseH * scale / 100.0;
+    }
+
+    /// <summary>
+    /// 추천 바 높이는 칩 높이와 상하 여백을 합쳐 계산해, 창 배율과 큰 텍스트 모드 모두에서 같은 비례를 유지합니다.
+    /// 축소 배율에서도 칩이 같이 줄어들도록 기본 하한은 본문 계산과 같은 기준으로 맞춥니다.
+    /// </summary>
+    private double ComputeSuggestionBarHeight(double keyUnit)
+    {
+        double scaledFontSize = 13.0 * (_configService?.Current.KeyFontScalePercent ?? 100) / 100.0;
+        double fontAwareChipHeight = scaledFontSize + 10.0;
+        double chipHeight = Math.Max(fontAwareChipHeight, keyUnit * SuggestionChipHeightRatio);
+        return chipHeight + 6.0;
     }
 
     /// <summary>
