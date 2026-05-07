@@ -14,6 +14,12 @@
         WindowStartupLocation="Manual"
         Background="{DynamicResource SettingsBg}"
         d:DataContext="{d:DesignInstance vm:LayoutEditorViewModel}">
+    <Window.InputBindings>
+        <!-- 접근성/편집 효율: 키 단위 저장 버튼을 줄인 대신, 일반 편집기처럼 Ctrl+Z 되돌리기를 바로 제공합니다. -->
+        <KeyBinding Modifiers="Control"
+                    Key="Z"
+                    Command="{Binding UndoCommand}"/>
+    </Window.InputBindings>
     <Window.Resources>
         <!-- 접근성: 포커스 이동이 잦은 편집기이므로 공용 Fluent 스타일로 입력/버튼 식별성을 통일합니다. -->
         <Style TargetType="Button" BasedOn="{StaticResource FluentButtonStyle}"/>
@@ -160,8 +166,16 @@
                         </TextBlock>
                     </StackPanel>
 
-                    <!-- 저장 버튼들 -->
+                    <!-- 편집 제어 + 저장 버튼들 -->
                     <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button Content="되돌리기"
+                                Command="{Binding UndoCommand}"
+                                Style="{StaticResource DarkBtn}"
+                                Margin="0,0,6,0"/>
+                        <Button Content="취소"
+                                Command="{Binding CancelEditsCommand}"
+                                Style="{StaticResource DarkBtn}"
+                                Margin="0,0,8,0"/>
                         <Button Content="저장"
                                 Command="{Binding SaveCommand}"
                                 Style="{StaticResource AccentBtn}"/>
@@ -418,12 +432,6 @@
                             <TextBlock Text="액션" Foreground="{DynamicResource SettingsFg}"
                                        FontWeight="SemiBold" Margin="0,0,0,6"/>
                             <views:ActionBuilderView DataContext="{Binding ActionBuilder}"/>
-
-                            <Button Content="액션 적용"
-                                    Command="{Binding ApplyActionCommand}"
-                                    Style="{StaticResource AccentBtn}"
-                                    HorizontalAlignment="Stretch"
-                                    Margin="0,8,0,0"/>
 
                             <Button Content="라벨 자동 채우기 (VK 기반)"
                                     Command="{Binding AutoFillLabelsCommand}"

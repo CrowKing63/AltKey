@@ -1,5 +1,6 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
     <!-- 고대비 테마: 최대한의 대비를 위해 검은색과 흰색 사용 -->
     <!-- 키보드 컨테이너: 검정색 -->
     <SolidColorBrush x:Key="KeyboardBg"   Color="#FF000000"/>
@@ -43,8 +44,10 @@
     <SolidColorBrush x:Key="SettingsFg"        Color="#FFFFFFFF"/>
     <SolidColorBrush x:Key="SettingsFgSub"     Color="#FFCCCCCC"/>
     <SolidColorBrush x:Key="SettingsFgHint"    Color="#FF999999"/>
+    <SolidColorBrush x:Key="SecondaryButtonDisabledFg" Color="#FF999999"/>
     <SolidColorBrush x:Key="SettingsHighlight" Color="#FF333333"/>
     <SolidColorBrush x:Key="SettingsBorder"    Color="#FFFFFFFF"/>
+    <sys:Double x:Key="SecondaryButtonDisabledOpacity">0.72</sys:Double>
     <!-- UAC 경고 배너 -->
     <SolidColorBrush x:Key="ElevatedWarningBg"  Color="#FFFF0000"/>
     <SolidColorBrush x:Key="ElevatedWarningFg"  Color="#FF000000"/>

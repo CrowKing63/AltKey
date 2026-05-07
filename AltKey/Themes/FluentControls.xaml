@@ -99,6 +99,13 @@
         <Setter Property="Foreground" Value="{DynamicResource SettingsFg}"/>
         <Setter Property="Padding" Value="10,5"/>
         <Setter Property="Margin" Value="2,0"/>
+        <Style.Triggers>
+            <!-- 접근성: 보조 버튼은 비활성 상태에서도 기능 위치를 읽을 수 있어야 하므로, 테마별로 전용 대비를 조절합니다. -->
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Foreground" Value="{DynamicResource SecondaryButtonDisabledFg}"/>
+                <Setter Property="Opacity" Value="{DynamicResource SecondaryButtonDisabledOpacity}"/>
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
     <Style x:Key="FluentPrimaryButtonStyle" TargetType="Button" BasedOn="{StaticResource FluentButtonStyle}">

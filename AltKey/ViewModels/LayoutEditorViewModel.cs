@@ -4,6 +4,11 @@ using AltKey.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
+using System.Collections.Specialized;
+using System.ComponentModel;
+using System.Text.Json;
+using System.Windows.Threading;
+
 namespace AltKey.ViewModels;
 
 // ── 편집 가능한 키 슬롯 VM ──────────────────────────────────────────────────
@@ -105,12 +110,23 @@ public partial class EditableKeyColumnVm : ObservableObject
     public KeyColumn ToKeyColumn() => new(Gap, Rows.Select(r => r.ToKeyRow()).ToList());
 }
 
+internal sealed record LayoutEditorSnapshot(string CurrentFileName, LayoutConfig Layout);
+
 // ── LayoutEditorViewModel ───────────────────────────────────────────────────
 
 public partial class LayoutEditorViewModel : ObservableObject
 {
     private readonly ILayoutRepository _layoutRepository;
     private readonly ConfigService _configService;
+    private readonly DispatcherTimer _changeCheckpointTimer;
+    private readonly Stack<LayoutEditorSnapshot> _undoStack = [];
+    private readonly JsonSerializerOptions _snapshotJsonOptions = new() { WriteIndented = false };
+    private LayoutEditorSnapshot? _savedSnapshot;
+    private LayoutEditorSnapshot? _trackingSnapshot;
+    private LayoutEditorSnapshot? _pendingUndoSnapshot;
+    private ObservableCollection<ObservableString>? _actionBuilderComboCollection;
+    private bool _isRestoringSnapshot;
+    private bool _isLoadingActionBuilder;
 
     // ── VK → 한글 라벨 매핑 (QWERTY 한국어 표준 배열) ─────────────────────
     private static readonly Dictionary<string, (string Label, string? ShiftLabel, string? EnglishLabel)> VkLabelMap
@@ -141,7 +157,10 @@ public partial class LayoutEditorViewModel : ObservableObject
     partial void OnCurrentFileNameChanged(string value)
     {
         OnPropertyChanged(nameof(IsEditingCurrentLayout));
+        HandleWorkingCopyMutated();
     }
+
+    partial void OnLayoutNameChanged(string value) => HandleWorkingCopyMutated();
 
     /// 기존 파일에서 불러온 상태인지 (저장/다른 이름 저장 분기용)
     public bool IsExistingLayout => !string.IsNullOrEmpty(CurrentFileName)
@@ -216,6 +235,13 @@ public partial class LayoutEditorViewModel : ObservableObject
     // ── 저장 결과 알림 메시지 ─────────────────────────────────────────────
     [ObservableProperty] private string statusMessage = "";
 
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(UndoCommand))]
+    [NotifyCanExecuteChangedFor(nameof(CancelEditsCommand))]
+    private bool hasUnsavedChanges;
+
+    public bool CanUndo => _undoStack.Count > 0;
+
     // ── 열 삭제 확인 다이얼로그 ──────────────────────────────────────────
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CanMoveColumnContents))]
@@ -241,6 +267,12 @@ public partial class LayoutEditorViewModel : ObservableObject
     {
         _layoutRepository = layoutRepository;
         _configService = configService;
+        _changeCheckpointTimer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromMilliseconds(350)
+        };
+        _changeCheckpointTimer.Tick += (_, _) => FlushPendingCheckpoint();
+        HookActionBuilderEvents();
         RefreshAvailableLayouts();
         RefreshCurrentActiveLayoutInfo();
     }
@@ -269,44 +301,7 @@ public partial class LayoutEditorViewModel : ObservableObject
     {
         var config = _layoutRepository.TryLoad(fileName);
         if (config is null) return;
-
-        CurrentFileName = fileName;
-        LayoutName = config.Name;
-        RefreshCurrentActiveLayoutInfo();
-
-        if (config.Columns is { Count: > 0 })
-        {
-            Columns = new ObservableCollection<EditableKeyColumnVm>(
-                config.Columns.Select(col => new EditableKeyColumnVm
-                {
-                    Gap = col.Gap,
-                    Rows = new ObservableCollection<EditableKeyRowVm>(
-                        col.Rows?.Select(r => new EditableKeyRowVm
-                        {
-                            Keys = new ObservableCollection<EditableKeySlotVm>(
-                                r.Keys.Select(k => new EditableKeySlotVm
-                                {
-                                    EditLabel       = k.Label,
-                                    EditShiftLabel  = k.ShiftLabel,
-                                    EditWidth       = k.Width,
-                                    EditGapBefore   = k.GapBefore,
-                                    EditStyleKey    = k.StyleKey,
-                                    UseSoftAccentStyle = string.Equals(k.StyleKey, EditableKeySlotVm.SoftAccentStyleKey, StringComparison.Ordinal),
-                                    EditAction      = k.Action,
-                                    EnglishLabel     = k.EnglishLabel,
-                                    EnglishShiftLabel = k.EnglishShiftLabel,
-                                }).ToList())
-                        }).ToList() ?? [])
-                }).ToList());
-        }
-        else
-        {
-            Columns = [];
-        }
-
-        SelectedColumn = null;
-        SelectedRow    = null;
-        SelectedKey    = null;
+        ApplySnapshot(new LayoutEditorSnapshot(fileName, CloneLayoutConfig(config)), resetUndoHistory: true);
         StatusMessage  = $"'{config.Name}' 불러옴";
     }
 
@@ -321,13 +316,7 @@ public partial class LayoutEditorViewModel : ObservableObject
     [RelayCommand]
     private void NewLayout()
     {
-        CurrentFileName = "";
-        LayoutName = "새 레이아웃";
-        Columns = [];
-        SelectedColumn = null;
-        SelectedRow    = null;
-        SelectedKey    = null;
-        RefreshCurrentActiveLayoutInfo();
+        ApplySnapshot(new LayoutEditorSnapshot("", new LayoutConfig("새 레이아웃", null, [])), resetUndoHistory: true);
         StatusMessage  = "새 레이아웃 생성됨";
     }
 
@@ -336,6 +325,7 @@ public partial class LayoutEditorViewModel : ObservableObject
     {
         if (oldValue is not null) oldValue.IsSelected = false;
         if (newValue is not null) newValue.IsSelected = true;
+        LoadActionBuilderFromSelectedKey(newValue);
         OnPropertyChanged(nameof(CanMoveKeyLeft));
         OnPropertyChanged(nameof(CanMoveKeyRight));
     }
@@ -346,16 +336,6 @@ public partial class LayoutEditorViewModel : ObservableObject
     public void SelectKey(EditableKeySlotVm slot)
     {
         SelectedKey = slot;
-        ActionBuilder.LoadFromAction(slot.EditAction);
-    }
-
-    /// ActionBuilder 의 현재 값을 선택된 키에 적용
-    [RelayCommand]
-    private void ApplyAction()
-    {
-        if (SelectedKey is null) return;
-        SelectedKey.EditAction = ActionBuilder.BuildAction();
-        StatusMessage = "액션 적용됨";
     }
 
     /// 선택된 키의 VK 코드를 기반으로 한글/영어 라벨을 자동 채우기
@@ -637,14 +617,8 @@ public partial class LayoutEditorViewModel : ObservableObject
                 // 삭제 후 메인 앱이 목록/캐시를 다시 읽도록 최소 재로드 알림을 보냅니다.
                 ToolsReloadSignalService.NotifyReloadLayouts();
                 StatusMessage = $"'{_pendingDeleteLayoutName}' 삭제됨";
-                CurrentFileName = "";
-                LayoutName = "";
-                Columns = [];
-                SelectedColumn = null;
-                SelectedRow    = null;
-                SelectedKey    = null;
+                ApplySnapshot(new LayoutEditorSnapshot("", new LayoutConfig("", null, [])), resetUndoHistory: true);
                 RefreshAvailableLayouts();
-                RefreshCurrentActiveLayoutInfo();
             }
             else
             {
@@ -679,13 +653,17 @@ public partial class LayoutEditorViewModel : ObservableObject
             return;
         }
 
+        FlushPendingCheckpoint();
+
         try
         {
-            _layoutRepository.Save(CurrentFileName, BuildLayoutConfig());
+            var layoutToSave = BuildLayoutConfig();
+            _layoutRepository.Save(CurrentFileName, layoutToSave);
             // 데이터 본문을 IPC로 보내지 않고, "다시 읽기" 신호만 전달합니다.
             ToolsReloadSignalService.NotifyReloadLayouts();
             RefreshAvailableLayouts();
             RefreshCurrentActiveLayoutInfo();
+            ResetUndoHistory(new LayoutEditorSnapshot(CurrentFileName, CloneLayoutConfig(layoutToSave)));
 
             var verification = _layoutRepository.TryLoad(CurrentFileName);
             var accentKeyCount = verification is null ? 0 : CountSoftAccentKeys(verification);
@@ -714,7 +692,380 @@ public partial class LayoutEditorViewModel : ObservableObject
         SelectedLayoutToLoad = CurrentFileName;
     }
 
+    [RelayCommand(CanExecute = nameof(CanUndo))]
+    private void Undo()
+    {
+        FlushPendingCheckpoint();
+        if (_undoStack.Count == 0)
+            return;
+
+        var snapshot = _undoStack.Pop();
+        ApplySnapshot(snapshot, resetUndoHistory: false);
+        StatusMessage = "한 단계 되돌림";
+        OnPropertyChanged(nameof(CanUndo));
+        UndoCommand.NotifyCanExecuteChanged();
+    }
+
+    [RelayCommand(CanExecute = nameof(HasUnsavedChanges))]
+    private void CancelEdits()
+    {
+        if (_savedSnapshot is null)
+            return;
+
+        _changeCheckpointTimer.Stop();
+        _pendingUndoSnapshot = null;
+        ApplySnapshot(_savedSnapshot, resetUndoHistory: true);
+        StatusMessage = "저장 이후 변경을 모두 취소함";
+    }
+
     // ── 내부 헬퍼 ─────────────────────────────────────────────────────────
+
+    private void HookActionBuilderEvents()
+    {
+        ActionBuilder.PropertyChanged += OnActionBuilderPropertyChanged;
+        RewireActionBuilderComboCollection(_actionBuilderComboCollection, ActionBuilder.SendComboKeysCollection);
+    }
+
+    private void OnActionBuilderPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ActionBuilderViewModel.SendComboKeysCollection))
+        {
+            RewireActionBuilderComboCollection(_actionBuilderComboCollection, ActionBuilder.SendComboKeysCollection);
+        }
+
+        if (_isLoadingActionBuilder || SelectedKey is null)
+            return;
+
+        SelectedKey.EditAction = CloneAction(ActionBuilder.BuildAction());
+    }
+
+    private void RewireActionBuilderComboCollection(ObservableCollection<ObservableString>? oldCollection,
+        ObservableCollection<ObservableString> newCollection)
+    {
+        if (oldCollection is not null)
+        {
+            oldCollection.CollectionChanged -= OnActionBuilderComboCollectionChanged;
+            foreach (var item in oldCollection)
+                item.PropertyChanged -= OnActionBuilderComboItemPropertyChanged;
+        }
+
+        newCollection.CollectionChanged -= OnActionBuilderComboCollectionChanged;
+        newCollection.CollectionChanged += OnActionBuilderComboCollectionChanged;
+        foreach (var item in newCollection)
+        {
+            item.PropertyChanged -= OnActionBuilderComboItemPropertyChanged;
+            item.PropertyChanged += OnActionBuilderComboItemPropertyChanged;
+        }
+
+        _actionBuilderComboCollection = newCollection;
+    }
+
+    private void OnActionBuilderComboCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        if (e.OldItems is not null)
+        {
+            foreach (ObservableString item in e.OldItems)
+                item.PropertyChanged -= OnActionBuilderComboItemPropertyChanged;
+        }
+
+        if (e.NewItems is not null)
+        {
+            foreach (ObservableString item in e.NewItems)
+            {
+                item.PropertyChanged -= OnActionBuilderComboItemPropertyChanged;
+                item.PropertyChanged += OnActionBuilderComboItemPropertyChanged;
+            }
+        }
+
+        OnActionBuilderPropertyChanged(ActionBuilder, new PropertyChangedEventArgs(nameof(ActionBuilderViewModel.SendComboKeysCollection)));
+    }
+
+    private void OnActionBuilderComboItemPropertyChanged(object? sender, PropertyChangedEventArgs e) =>
+        OnActionBuilderPropertyChanged(ActionBuilder, new PropertyChangedEventArgs(nameof(ActionBuilderViewModel.SendComboKeysCollection)));
+
+    private void LoadActionBuilderFromSelectedKey(EditableKeySlotVm? key)
+    {
+        _isLoadingActionBuilder = true;
+        try
+        {
+            ActionBuilder.LoadFromAction(key?.EditAction);
+        }
+        finally
+        {
+            _isLoadingActionBuilder = false;
+        }
+    }
+
+    private void AttachWorkingCopyObservers()
+    {
+        Columns.CollectionChanged -= OnColumnsCollectionChanged;
+        Columns.CollectionChanged += OnColumnsCollectionChanged;
+        foreach (var column in Columns)
+            AttachColumnObservers(column);
+    }
+
+    private void DetachWorkingCopyObservers()
+    {
+        Columns.CollectionChanged -= OnColumnsCollectionChanged;
+        foreach (var column in Columns)
+            DetachColumnObservers(column);
+    }
+
+    private void OnColumnsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        if (e.OldItems is not null)
+        {
+            foreach (EditableKeyColumnVm column in e.OldItems)
+                DetachColumnObservers(column);
+        }
+
+        if (e.NewItems is not null)
+        {
+            foreach (EditableKeyColumnVm column in e.NewItems)
+                AttachColumnObservers(column);
+        }
+
+        HandleWorkingCopyMutated();
+    }
+
+    private void AttachColumnObservers(EditableKeyColumnVm column)
+    {
+        column.PropertyChanged -= OnWorkingItemPropertyChanged;
+        column.PropertyChanged += OnWorkingItemPropertyChanged;
+        column.Rows.CollectionChanged -= OnRowsCollectionChanged;
+        column.Rows.CollectionChanged += OnRowsCollectionChanged;
+        foreach (var row in column.Rows)
+            AttachRowObservers(row);
+    }
+
+    private void DetachColumnObservers(EditableKeyColumnVm column)
+    {
+        column.PropertyChanged -= OnWorkingItemPropertyChanged;
+        column.Rows.CollectionChanged -= OnRowsCollectionChanged;
+        foreach (var row in column.Rows)
+            DetachRowObservers(row);
+    }
+
+    private void OnRowsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        if (e.OldItems is not null)
+        {
+            foreach (EditableKeyRowVm row in e.OldItems)
+                DetachRowObservers(row);
+        }
+
+        if (e.NewItems is not null)
+        {
+            foreach (EditableKeyRowVm row in e.NewItems)
+                AttachRowObservers(row);
+        }
+
+        HandleWorkingCopyMutated();
+    }
+
+    private void AttachRowObservers(EditableKeyRowVm row)
+    {
+        row.PropertyChanged -= OnWorkingItemPropertyChanged;
+        row.PropertyChanged += OnWorkingItemPropertyChanged;
+        row.Keys.CollectionChanged -= OnKeysCollectionChanged;
+        row.Keys.CollectionChanged += OnKeysCollectionChanged;
+        foreach (var key in row.Keys)
+            AttachKeyObservers(key);
+    }
+
+    private void DetachRowObservers(EditableKeyRowVm row)
+    {
+        row.PropertyChanged -= OnWorkingItemPropertyChanged;
+        row.Keys.CollectionChanged -= OnKeysCollectionChanged;
+        foreach (var key in row.Keys)
+            DetachKeyObservers(key);
+    }
+
+    private void OnKeysCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        if (e.OldItems is not null)
+        {
+            foreach (EditableKeySlotVm key in e.OldItems)
+                DetachKeyObservers(key);
+        }
+
+        if (e.NewItems is not null)
+        {
+            foreach (EditableKeySlotVm key in e.NewItems)
+                AttachKeyObservers(key);
+        }
+
+        HandleWorkingCopyMutated();
+    }
+
+    private void AttachKeyObservers(EditableKeySlotVm key)
+    {
+        key.PropertyChanged -= OnWorkingItemPropertyChanged;
+        key.PropertyChanged += OnWorkingItemPropertyChanged;
+    }
+
+    private void DetachKeyObservers(EditableKeySlotVm key)
+    {
+        key.PropertyChanged -= OnWorkingItemPropertyChanged;
+    }
+
+    private void OnWorkingItemPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(EditableKeySlotVm.IsSelected))
+            return;
+
+        HandleWorkingCopyMutated();
+    }
+
+    private void HandleWorkingCopyMutated()
+    {
+        if (_isRestoringSnapshot || _trackingSnapshot is null)
+            return;
+
+        if (_pendingUndoSnapshot is null)
+            _pendingUndoSnapshot = _trackingSnapshot;
+
+        _changeCheckpointTimer.Stop();
+        _changeCheckpointTimer.Start();
+    }
+
+    private void FlushPendingCheckpoint()
+    {
+        _changeCheckpointTimer.Stop();
+        if (_pendingUndoSnapshot is null || _isRestoringSnapshot)
+            return;
+
+        var currentSnapshot = CaptureSnapshot();
+        if (!SnapshotEquals(currentSnapshot, _pendingUndoSnapshot))
+        {
+            _undoStack.Push(_pendingUndoSnapshot);
+            _trackingSnapshot = currentSnapshot;
+        }
+
+        _pendingUndoSnapshot = null;
+        UpdateDirtyState();
+        OnPropertyChanged(nameof(CanUndo));
+        UndoCommand.NotifyCanExecuteChanged();
+    }
+
+    private void ApplySnapshot(LayoutEditorSnapshot snapshot, bool resetUndoHistory)
+    {
+        _isRestoringSnapshot = true;
+        _changeCheckpointTimer.Stop();
+        _pendingUndoSnapshot = null;
+
+        try
+        {
+            DetachWorkingCopyObservers();
+
+            CurrentFileName = snapshot.CurrentFileName;
+            LayoutName = snapshot.Layout.Name;
+            Columns = BuildEditableColumns(snapshot.Layout);
+            SelectedColumn = null;
+            SelectedRow = null;
+            SelectedKey = null;
+            RefreshCurrentActiveLayoutInfo();
+            AttachWorkingCopyObservers();
+
+            var clonedSnapshot = CloneSnapshot(snapshot);
+            _trackingSnapshot = clonedSnapshot;
+
+            if (resetUndoHistory)
+            {
+                _savedSnapshot = clonedSnapshot;
+                _undoStack.Clear();
+            }
+        }
+        finally
+        {
+            _isRestoringSnapshot = false;
+        }
+
+        UpdateDirtyState();
+        OnPropertyChanged(nameof(CanUndo));
+        UndoCommand.NotifyCanExecuteChanged();
+    }
+
+    private void ResetUndoHistory(LayoutEditorSnapshot snapshot)
+    {
+        _savedSnapshot = CloneSnapshot(snapshot);
+        _trackingSnapshot = CloneSnapshot(snapshot);
+        _pendingUndoSnapshot = null;
+        _undoStack.Clear();
+        UpdateDirtyState();
+        OnPropertyChanged(nameof(CanUndo));
+        UndoCommand.NotifyCanExecuteChanged();
+    }
+
+    private void UpdateDirtyState() =>
+        HasUnsavedChanges = _savedSnapshot is not null && !SnapshotEquals(CaptureSnapshot(), _savedSnapshot);
+
+    private LayoutEditorSnapshot CaptureSnapshot() =>
+        new(CurrentFileName, CloneLayoutConfig(BuildLayoutConfig()));
+
+    private LayoutEditorSnapshot CloneSnapshot(LayoutEditorSnapshot snapshot) =>
+        new(snapshot.CurrentFileName, CloneLayoutConfig(snapshot.Layout));
+
+    private ObservableCollection<EditableKeyColumnVm> BuildEditableColumns(LayoutConfig config)
+    {
+        if (config.Columns is not { Count: > 0 })
+            return [];
+
+        return new ObservableCollection<EditableKeyColumnVm>(
+            config.Columns.Select(col => new EditableKeyColumnVm
+            {
+                Gap = col.Gap,
+                Rows = new ObservableCollection<EditableKeyRowVm>(
+                    col.Rows?.Select(r => new EditableKeyRowVm
+                    {
+                        Keys = new ObservableCollection<EditableKeySlotVm>(
+                            r.Keys.Select(k => new EditableKeySlotVm
+                            {
+                                EditLabel = k.Label,
+                                EditShiftLabel = k.ShiftLabel,
+                                EditWidth = k.Width,
+                                EditGapBefore = k.GapBefore,
+                                EditStyleKey = k.StyleKey,
+                                UseSoftAccentStyle = string.Equals(k.StyleKey, EditableKeySlotVm.SoftAccentStyleKey, StringComparison.Ordinal),
+                                EditAction = CloneAction(k.Action),
+                                EnglishLabel = k.EnglishLabel,
+                                EnglishShiftLabel = k.EnglishShiftLabel,
+                            }).ToList())
+                    }).ToList() ?? [])
+            }).ToList());
+    }
+
+    private static LayoutConfig CloneLayoutConfig(LayoutConfig config) =>
+        new(config.Name, null,
+            config.Columns?.Select(column =>
+                new KeyColumn(column.Gap,
+                    column.Rows?.Select(row =>
+                        new KeyRow(row.Keys.Select(slot =>
+                            new KeySlot(slot.Label, slot.ShiftLabel, CloneAction(slot.Action), slot.Width,
+                                slot.Height, slot.StyleKey, slot.GapBefore, slot.EnglishLabel, slot.EnglishShiftLabel)).ToList()
+                        )).ToList() ?? []
+                )).ToList() ?? []);
+
+    private static KeyAction? CloneAction(KeyAction? action) => action switch
+    {
+        SendKeyAction sendKey => new SendKeyAction(sendKey.Vk),
+        SendComboAction sendCombo => new SendComboAction(sendCombo.Keys.ToList()),
+        ToggleStickyAction sticky => new ToggleStickyAction(sticky.Vk),
+        SwitchLayoutAction switchLayout => new SwitchLayoutAction(switchLayout.Name),
+        RunAppAction runApp => new RunAppAction(runApp.Path, runApp.Args),
+        BoilerplateAction boilerplate => new BoilerplateAction(boilerplate.Text),
+        ShellCommandAction shell => new ShellCommandAction(shell.Command, shell.Shell),
+        VolumeControlAction volume => new VolumeControlAction(volume.Direction, volume.Step),
+        ClipboardPasteAction clipboard => new ClipboardPasteAction(clipboard.Text),
+        ToggleKoreanSubmodeAction => new ToggleKoreanSubmodeAction(),
+        _ => action
+    };
+
+    private bool SnapshotEquals(LayoutEditorSnapshot left, LayoutEditorSnapshot right) =>
+        string.Equals(SerializeSnapshot(left), SerializeSnapshot(right), StringComparison.Ordinal);
+
+    private string SerializeSnapshot(LayoutEditorSnapshot snapshot) =>
+        JsonSerializer.Serialize(snapshot, _snapshotJsonOptions);
 
     private LayoutConfig BuildLayoutConfig() =>
         new(LayoutName, null, Columns.Select(c => c.ToKeyColumn()).ToList());
