@@ -14,7 +14,9 @@
     <SolidColorBrush x:Key="KeyBorder"    Color="#1E000000"/>
     <SolidColorBrush x:Key="KeyShadow"    Color="#1E000000"/>
     <!-- 제목/버튼용: 라이트 배경에서 읽히는 진한 회색 -->
-    <SolidColorBrush x:Key="TitleFg"      Color="#FF505050"/>
+    <SolidColorBrush x:Key="TitleFg"      Color="#FF2F3137"/>
+    <SolidColorBrush x:Key="HeaderBarBg"  Color="#80FFFFFF"/>
+    <SolidColorBrush x:Key="HeaderBarBorder" Color="#22000000"/>
     <!-- 전체 창 배경: 상단/하단 바가 하얗고 투명하게 보이도록 -->
     <SolidColorBrush x:Key="WindowBg"     Color="#AAFFFFFF"/>
     <!-- 이모지/클립보드 패널 배경: 라이트 키보드 배경과 어울리는 밝은 계열 -->

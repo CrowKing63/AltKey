@@ -189,4 +189,4 @@ AltKey/
 
 ## 라이선스
 
-[MIT License](LICENSE) © 2025-2026 CrowKing63
+[MIT License](LICENSE) © 2026 CrowKing63

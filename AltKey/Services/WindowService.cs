@@ -25,7 +25,9 @@ public class WindowService
     /// </summary>
     public void ApplyBackground(Window window)
     {
-        window.Background = new SolidColorBrush(System.Windows.Media.Color.FromArgb(220, 26, 26, 26));
+        // 접근성/미관: 창 자체는 투명으로 두고, 실제 카드 배경은 XAML Border가 그린다.
+        // 이렇게 해야 메인 창 바깥 직각 레이어가 보이지 않고 투명도 기능도 그대로 유지된다.
+        window.Background = System.Windows.Media.Brushes.Transparent;
     }
 
     /// <summary>

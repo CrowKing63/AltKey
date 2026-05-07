@@ -16,6 +16,8 @@
     <SolidColorBrush x:Key="KeyShadow"    Color="#33000000"/>
     <!-- 제목/버튼용: 흰색 -->
     <SolidColorBrush x:Key="TitleFg"      Color="#FFFFFFFF"/>
+    <SolidColorBrush x:Key="HeaderBarBg"  Color="#FF000000"/>
+    <SolidColorBrush x:Key="HeaderBarBorder" Color="#FFFFFFFF"/>
     <!-- 전체 창 배경: 검정색 -->
     <SolidColorBrush x:Key="WindowBg"     Color="#FF000000"/>
     <!-- 이모지/클립보드 패널 배경: 검정색 -->

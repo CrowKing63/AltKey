@@ -4,6 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#f5f6f8" />
   <title>AltKey — 한국어 최적화 화상 키보드</title>
   <meta name="description"
     content="한국어 입력에 최적화된 가볍고 아름다운 Windows용 커스터마이징 화상 키보드 - 유니코드 조합 엔진, 지능형 자동완성, TTS, 스위치 스캔, Sticky Keys 지원" />
@@ -13,16 +14,101 @@
 
   <style>
     :root {
-      --bg: #0f1117;
-      --surface: #1a1d27;
-      --surface2: #21253a;
-      --border: #2e334d;
-      --accent: #2563eb;
-      --accent-h: #3b7bff;
-      --text: #e8ecf5;
-      --text-muted: #8b93b8;
+      --bg: #f5f6f8;
+      --bg-elevated: rgba(255, 255, 255, 0.82);
+      --surface: #f7f7fa;
+      --surface2: #f1f1f5;
+      --surface-strong: #e8e8ec;
+      --border: #c9cad3;
+      --border-soft: rgba(20, 20, 32, 0.12);
+      --accent: #5b9ad4;
+      --accent-h: #4a84b8;
+      --accent-soft: rgba(91, 154, 212, 0.16);
+      --accent-text: #1a4fc4;
+      --text: #141420;
+      --text-strong: #2f3137;
+      --text-muted: #3a3a46;
+      --shadow: 0 28px 70px rgba(26, 26, 32, 0.14);
+      --hero-glow: radial-gradient(circle at top, rgba(91, 154, 212, 0.2), transparent 42%);
+      --nav-bg: rgba(255, 255, 255, 0.82);
+      --nav-border: rgba(20, 20, 32, 0.1);
+      --kb-shell: rgba(232, 232, 236, 0.8);
+      --kb-title: #2f3137;
+      --kb-key: #ffffff;
+      --kb-key-hover: #d4d4d8;
+      --kb-key-border: rgba(0, 0, 0, 0.12);
+      --kb-key-text: #1a1a1a;
+      --kb-key-muted: #505050;
+      --kb-sub: #1a4fc4;
+      --kb-pill: rgba(47, 49, 55, 0.45);
+      --kb-arrow: rgba(47, 49, 55, 0.78);
       --radius: 12px;
       --radius-sm: 8px;
+      color-scheme: light;
+    }
+
+    :root[data-theme="dark"] {
+      --bg: #111317;
+      --bg-elevated: rgba(20, 20, 24, 0.82);
+      --surface: #1b1d22;
+      --surface2: #23262d;
+      --surface-strong: #2a2f37;
+      --border: rgba(255, 255, 255, 0.16);
+      --border-soft: rgba(255, 255, 255, 0.09);
+      --accent: #6fa5cc;
+      --accent-h: #8ab8d9;
+      --accent-soft: rgba(111, 165, 204, 0.18);
+      --accent-text: #93c5fd;
+      --text: #f4f5f7;
+      --text-strong: #e6e6e6;
+      --text-muted: #c4cad8;
+      --shadow: 0 30px 80px rgba(0, 0, 0, 0.42);
+      --hero-glow: radial-gradient(circle at top, rgba(74, 127, 204, 0.22), transparent 42%);
+      --nav-bg: rgba(17, 19, 23, 0.82);
+      --nav-border: rgba(255, 255, 255, 0.08);
+      --kb-shell: rgba(30, 30, 30, 0.8);
+      --kb-title: #e6e6e6;
+      --kb-key: rgba(60, 60, 60, 0.8);
+      --kb-key-hover: rgba(80, 80, 80, 0.82);
+      --kb-key-border: rgba(255, 255, 255, 0.08);
+      --kb-key-text: #e4e4e4;
+      --kb-key-muted: #d0d0d0;
+      --kb-sub: #93c5fd;
+      --kb-pill: rgba(230, 230, 230, 0.45);
+      --kb-arrow: rgba(230, 230, 230, 0.78);
+      color-scheme: dark;
+    }
+
+    :root[data-theme="high-contrast"] {
+      --bg: #000000;
+      --bg-elevated: #000000;
+      --surface: #000000;
+      --surface2: #1a1a1a;
+      --surface-strong: #000000;
+      --border: #ffffff;
+      --border-soft: #ffffff;
+      --accent: #ffff00;
+      --accent-h: #ffffff;
+      --accent-soft: #333333;
+      --accent-text: #ffff00;
+      --text: #ffffff;
+      --text-strong: #ffffff;
+      --text-muted: #e6e6e6;
+      --shadow: none;
+      --hero-glow: none;
+      --nav-bg: #000000;
+      --nav-border: #ffffff;
+      --kb-shell: #000000;
+      --kb-title: #ffffff;
+      --kb-key: #ffffff;
+      --kb-key-hover: #e6e6e6;
+      --kb-key-border: #ffffff;
+      --kb-key-text: #000000;
+      --kb-key-muted: #000000;
+      --kb-sub: #000000;
+      --kb-pill: #ffffff;
+      --kb-arrow: #ffffff;
+      color-scheme: dark;
     }
 
     *,
@@ -39,10 +125,13 @@
 
     body {
       font-family: 'Pretendard', 'Apple SD Gothic Neo', 'Noto Sans KR', system-ui, sans-serif;
-      background: var(--bg);
+      background:
+        var(--hero-glow),
+        linear-gradient(180deg, var(--bg) 0%, var(--surface) 100%);
       color: var(--text);
       line-height: 1.65;
       min-height: 100vh;
+      transition: background 0.2s ease, color 0.2s ease;
     }
 
     /* ── Nav ── */
@@ -53,11 +142,12 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
+      gap: 1rem;
       padding: 0 2rem;
-      height: 56px;
-      background: rgba(15, 17, 23, 0.82);
+      min-height: 56px;
+      background: var(--nav-bg);
       backdrop-filter: blur(16px);
-      border-bottom: 1px solid var(--border);
+      border-bottom: 1px solid var(--nav-border);
     }
 
     .nav-logo {
@@ -73,6 +163,12 @@
       gap: 1.5rem;
     }
 
+    .nav-tools {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
     .nav-links a {
       color: var(--text-muted);
       text-decoration: none;
@@ -82,6 +178,50 @@
 
     .nav-links a:hover {
       color: var(--text);
+    }
+
+    .theme-switcher {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.35rem 0.75rem;
+      border-radius: 999px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-soft);
+      color: var(--text-muted);
+      font-size: 0.8rem;
+    }
+
+    .theme-switcher label {
+      margin: 0;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    .theme-select {
+      min-width: 104px;
+      border: 1px solid var(--border-soft);
+      background: var(--surface);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 0.35rem 1.8rem 0.35rem 0.7rem;
+      font: inherit;
+      cursor: pointer;
+      appearance: none;
+      background-image:
+        linear-gradient(45deg, transparent 50%, var(--text-muted) 50%),
+        linear-gradient(135deg, var(--text-muted) 50%, transparent 50%);
+      background-position:
+        calc(100% - 14px) calc(50% - 2px),
+        calc(100% - 9px) calc(50% - 2px);
+      background-size: 5px 5px, 5px 5px;
+      background-repeat: no-repeat;
+    }
+
+    .theme-select:focus {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
     }
 
 
@@ -102,9 +242,9 @@
       gap: 6px;
       padding: 4px 14px;
       border-radius: 999px;
-      background: rgba(37, 99, 235, 0.15);
-      border: 1px solid rgba(37, 99, 235, 0.35);
-      color: #93b4ff;
+      background: var(--accent-soft);
+      border: 1px solid var(--accent);
+      color: var(--accent-text);
       font-size: 0.78rem;
       font-weight: 600;
       letter-spacing: 0.04em;
@@ -120,7 +260,7 @@
     }
 
     .hero h1 span {
-      background: linear-gradient(135deg, #60a5fa 0%, #2563eb 50%, #818cf8 100%);
+      background: linear-gradient(135deg, var(--accent-h) 0%, var(--accent) 55%, var(--accent-text) 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -196,7 +336,7 @@
 
     .btn-primary {
       background: var(--accent);
-      color: #fff;
+      color: var(--text-strong);
     }
 
     .btn-primary:hover {
@@ -211,7 +351,7 @@
     }
 
     .btn-secondary:hover {
-      background: #2a2f4a;
+      background: var(--surface-strong);
       transform: translateY(-1px);
     }
 
@@ -223,12 +363,12 @@
     }
 
     .kb-window {
-      background: rgba(30, 33, 50, 0.85);
-      border: 1px solid var(--border);
-      border-radius: 14px;
+      background: var(--kb-shell);
+      border: 1px solid var(--kb-key-border);
+      border-radius: 16px;
       overflow: hidden;
       backdrop-filter: blur(20px);
-      box-shadow: 0 32px 80px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+      box-shadow: var(--shadow);
     }
 
     .kb-titlebar {
@@ -237,14 +377,13 @@
       justify-content: space-between;
       padding: 0 12px;
       height: 30px;
-      background: rgba(255, 255, 255, 0.04);
-      border-bottom: 1px solid var(--border);
+      background: transparent;
     }
 
     .kb-title-text {
       font-size: 0.7rem;
-      color: var(--text-muted);
-      font-weight: 500;
+      color: var(--kb-title);
+      font-weight: 600;
     }
 
     .kb-arrow-group {
@@ -260,7 +399,7 @@
       align-items: center;
       justify-content: center;
       font-size: 0.6rem;
-      color: rgba(255, 255, 255, 0.35);
+      color: var(--kb-arrow);
       background: transparent;
       border-radius: 4px;
       cursor: default;
@@ -269,7 +408,7 @@
     .kb-pill {
       width: 32px;
       height: 3px;
-      background: rgba(255, 255, 255, 0.18);
+      background: var(--kb-pill);
       border-radius: 2px;
       margin: 0 8px;
     }
@@ -281,7 +420,7 @@
 
     .kb-btn-icon {
       font-size: 0.65rem;
-      color: rgba(255, 255, 255, 0.35);
+      color: var(--kb-arrow);
       padding: 0 6px;
     }
 
@@ -305,10 +444,10 @@
       justify-content: flex-end;
       padding: 4px 6px;
       border-radius: 5px;
-      background: rgba(255, 255, 255, 0.07);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: var(--kb-key);
+      border: 1px solid var(--kb-key-border);
       font-size: 0.6rem;
-      color: var(--text);
+      color: var(--kb-key-text);
       cursor: default;
       transition: background 0.1s;
       height: 36px;
@@ -317,7 +456,7 @@
     }
 
     .key:hover {
-      background: rgba(255, 255, 255, 0.13);
+      background: var(--kb-key-hover);
     }
 
     .key.wide-1-5 {
@@ -354,20 +493,20 @@
 
     .key .sub {
       font-size: 0.45rem;
-      color: #60a5fa;
+      color: var(--kb-sub);
       position: absolute;
       top: 3px;
       left: 5px;
     }
 
     .key.sticky {
-      background: rgba(37, 99, 235, 0.25);
-      border-color: rgba(37, 99, 235, 0.5);
+      background: var(--accent-soft);
+      border-color: var(--accent);
     }
 
     .key.special {
-      background: rgba(255, 255, 255, 0.05);
-      color: var(--text-muted);
+      background: var(--surface2);
+      color: var(--kb-key-muted);
       font-size: 0.55rem;
     }
 
@@ -412,6 +551,7 @@
       border: 1px solid var(--border);
       border-radius: var(--radius);
       padding: 1.5rem;
+      box-shadow: var(--shadow);
       transition: border-color 0.2s, transform 0.2s;
     }
 
@@ -465,7 +605,7 @@
       font-size: 0.8rem;
       font-weight: 700;
       font-family: 'JetBrains Mono', monospace;
-      color: #93b4ff;
+      color: var(--accent-text);
       margin-bottom: 2px;
     }
 
@@ -522,8 +662,8 @@
     }
 
     .tag-installer {
-      background: rgba(37, 99, 235, 0.2);
-      color: #93b4ff;
+      background: var(--accent-soft);
+      color: var(--accent-text);
     }
 
     .tag-portable {
@@ -557,7 +697,7 @@
       overflow-x: auto;
       font-size: 0.82rem;
       line-height: 1.7;
-      color: #c9d1f5;
+      color: var(--text);
     }
 
     .json-key {
@@ -608,11 +748,42 @@
         display: none;
       }
 
+      nav {
+        padding: 0.75rem 1rem;
+      }
+
+      .nav-tools {
+        width: 100%;
+        justify-content: space-between;
+      }
+
       .hero {
         padding: 4rem 1rem 3rem;
       }
     }
   </style>
+  <script>
+    (() => {
+      const storageKey = 'altkey-docs-theme';
+      const root = document.documentElement;
+
+      function resolveTheme(theme) {
+        if (theme === 'light' || theme === 'dark' || theme === 'high-contrast') {
+          return theme;
+        }
+
+        if (window.matchMedia('(forced-colors: active)').matches) {
+          return 'high-contrast';
+        }
+
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+
+      const savedTheme = localStorage.getItem(storageKey) || 'system';
+      root.dataset.theme = resolveTheme(savedTheme);
+      root.dataset.themePreference = savedTheme;
+    })();
+  </script>
 </head>
 
 <body>
@@ -620,6 +791,7 @@
   <!-- Nav -->
   <nav>
     <a class="nav-logo" href="#">⌨ AltKey</a>
+    <div class="nav-tools">
     <div class="nav-links">
       <a href="#features">기능</a>
       <a href="#video">영상</a>
@@ -629,6 +801,16 @@
       <a href="https://github.com/CrowKing63/AltKey/wiki" target="_blank">매뉴얼</a>
       <a href="feedback.html">피드백</a>
       <a href="https://github.com/CrowKing63/AltKey">GitHub</a>
+    </div>
+    <div class="theme-switcher">
+      <label for="theme-select">테마</label>
+      <select id="theme-select" class="theme-select" aria-label="홈페이지 테마 선택">
+        <option value="system">시스템</option>
+        <option value="light">라이트</option>
+        <option value="dark">다크</option>
+        <option value="high-contrast">고대비</option>
+      </select>
+    </div>
     </div>
   </nav>
 
@@ -1094,6 +1276,72 @@
     </p>
   </footer>
 
+  <script>
+    (() => {
+      const storageKey = 'altkey-docs-theme';
+      const root = document.documentElement;
+      const select = document.getElementById('theme-select');
+      const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+      const darkMedia = window.matchMedia('(prefers-color-scheme: dark)');
+      const forcedColorsMedia = window.matchMedia('(forced-colors: active)');
+
+      function resolveTheme(theme) {
+        if (theme === 'light' || theme === 'dark' || theme === 'high-contrast') {
+          return theme;
+        }
+
+        if (forcedColorsMedia.matches) {
+          return 'high-contrast';
+        }
+
+        return darkMedia.matches ? 'dark' : 'light';
+      }
+
+      function updateThemeColor(theme) {
+        if (!themeColorMeta) {
+          return;
+        }
+
+        const colors = {
+          light: '#f5f6f8',
+          dark: '#111317',
+          'high-contrast': '#000000'
+        };
+
+        themeColorMeta.setAttribute('content', colors[theme] || colors.light);
+      }
+
+      function applyTheme(preference, persist) {
+        const resolvedTheme = resolveTheme(preference);
+        root.dataset.theme = resolvedTheme;
+        root.dataset.themePreference = preference;
+        if (select) {
+          select.value = preference;
+        }
+        updateThemeColor(resolvedTheme);
+        if (persist) {
+          localStorage.setItem(storageKey, preference);
+        }
+      }
+
+      const initialPreference = root.dataset.themePreference || localStorage.getItem(storageKey) || 'system';
+      applyTheme(initialPreference, false);
+
+      if (select) {
+        select.addEventListener('change', (event) => {
+          applyTheme(event.target.value, true);
+        });
+      }
+
+      const handleSystemThemeChange = () => {
+        if ((root.dataset.themePreference || 'system') === 'system') {
+          applyTheme('system', false);
+        }
+      };
+
+      darkMedia.addEventListener('change', handleSystemThemeChange);
+      forcedColorsMedia.addEventListener('change', handleSystemThemeChange);
+    })();
   </script>
 
 </body>
