@@ -10,6 +10,119 @@
              Focusable="False"
              d:DesignWidth="900" d:DesignHeight="320">
 
+    <UserControl.Resources>
+        <!-- 접근성/시각 일관성: 상단바 버튼에 동일한 호버 대비를 적용해
+             버튼 위치가 달라도 반응을 예측하기 쉽게 맞춥니다. -->
+        <Style x:Key="HeaderBarButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{DynamicResource TitleFg}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="RootBorder"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="0">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="RootBorder"
+                                        Property="Background"
+                                        Value="{DynamicResource HeaderBarHoverBg}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="RootBorder"
+                                        Property="Background"
+                                        Value="{DynamicResource HeaderBarPressedBg}"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.6"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- 접근성/상태 구분: 자동완성 토글은 켜짐 상태를 유지하되, 호버 시에는
+             다른 상단바 버튼과 같은 색으로 반응해 일관된 피드백을 제공합니다. -->
+        <Style x:Key="HeaderBarToggleButtonStyle" TargetType="ToggleButton">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{DynamicResource TitleFg}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border x:Name="RootBorder"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="0">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="RootBorder"
+                                        Property="Background"
+                                        Value="{DynamicResource HeaderBarPressedBg}"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="RootBorder"
+                                        Property="Background"
+                                        Value="{DynamicResource HeaderBarHoverBg}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="RootBorder"
+                                        Property="Background"
+                                        Value="{DynamicResource HeaderBarPressedBg}"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.6"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- 접근성/시각 일관성: 닫기 버튼은 같은 호버색을 쓰되 오른쪽 모서리만
+             둥글게 처리해 접힌 상태의 외곽 라운드와 자연스럽게 이어집니다. -->
+        <Style x:Key="HeaderCloseButtonStyle" TargetType="Button" BasedOn="{StaticResource HeaderBarButtonStyle}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="RootBorder"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="0,16,16,0">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="RootBorder"
+                                        Property="Background"
+                                        Value="{DynamicResource HeaderBarHoverBg}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="RootBorder"
+                                        Property="Background"
+                                        Value="{DynamicResource HeaderBarPressedBg}"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.6"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
     <Grid>
         <!-- 전체 창 배경 -->
         <!-- 접근성/미관: 메인 창 전체를 하나의 둥근 카드로 그려 바깥 직각 레이어를 숨긴다. -->
@@ -36,7 +149,7 @@
                                VerticalAlignment="Center" IsHitTestVisible="False"/>
                     <!-- 업데이트 있을 때만 표시되는 미니 인디케이터 버튼 -->
                     <Button Width="14" Height="14" Margin="5,0,0,1"
-                            Background="Transparent" BorderThickness="0"
+                            Style="{StaticResource HeaderBarButtonStyle}"
                             Cursor="Hand" IsHitTestVisible="True"
                             Command="{Binding DownloadAndInstallUpdateCommand}"
                             Visibility="{Binding HasUpdate, Converter={StaticResource BoolToVis}}"
@@ -65,7 +178,7 @@
                                 <Grid>
                                     <!-- 일반 버튼 (IsToggle=false일 때 표시) -->
                                     <Button Width="{Binding Width}" Height="28"
-                                            Background="Transparent"
+                                            Style="{StaticResource HeaderBarButtonStyle}"
                                             Foreground="{DynamicResource TitleFg}"
                                             BorderThickness="0" Cursor="Hand" Focusable="False"
                                             Command="{Binding Command}"
@@ -76,7 +189,7 @@
                                     </Button>
                                     <!-- 토글 버튼 (AutoComplete 전용, IsToggle=true일 때 표시) -->
                                     <ToggleButton Width="{Binding Width}" Height="28"
-                                                  Background="{Binding AutoCompleteEnabled, Converter={StaticResource BoolToVis}, ConverterParameter=Background}"
+                                                  Style="{StaticResource HeaderBarToggleButtonStyle}"
                                                   Foreground="{DynamicResource TitleFg}"
                                                   BorderThickness="0" Cursor="Hand" Focusable="False"
                                                   IsChecked="{Binding DataContext.AutoCompleteEnabled, Mode=TwoWay, RelativeSource={RelativeSource AncestorType=UserControl}}"
@@ -97,13 +210,13 @@
                             HorizontalAlignment="Center" VerticalAlignment="Center"
                             Panel.ZIndex="1">
                     <Button Width="18" Height="18" Content="&#x2190;" ToolTip="화면 왼쪽으로 이동"
-                            Background="Transparent" BorderThickness="0" Focusable="False"
+                            Style="{StaticResource HeaderBarButtonStyle}"
                             Foreground="{DynamicResource TitleFg}" Opacity="0.78"
                             Cursor="Hand" Padding="0" FontSize="10"
                             Click="EdgeLeftBtn_Click"
                             AutomationProperties.Name="왼쪽으로 이동"/>
                     <Button Width="18" Height="18" Content="&#x2191;" ToolTip="화면 위쪽으로 이동"
-                            Background="Transparent" BorderThickness="0" Focusable="False"
+                            Style="{StaticResource HeaderBarButtonStyle}"
                             Foreground="{DynamicResource TitleFg}" Opacity="0.78"
                             Cursor="Hand" Padding="0" FontSize="10"
                             Click="EdgeUpBtn_Click"
@@ -127,13 +240,13 @@
                     </Border>
 
                     <Button Width="18" Height="18" Content="&#x2193;" ToolTip="화면 아래쪽으로 이동"
-                            Background="Transparent" BorderThickness="0" Focusable="False"
+                            Style="{StaticResource HeaderBarButtonStyle}"
                             Foreground="{DynamicResource TitleFg}" Opacity="0.78"
                             Cursor="Hand" Padding="0" FontSize="10"
                             Click="EdgeDownBtn_Click"
                             AutomationProperties.Name="아래쪽으로 이동"/>
                     <Button Width="18" Height="18" Content="&#x2192;" ToolTip="화면 오른쪽으로 이동"
-                            Background="Transparent" BorderThickness="0" Focusable="False"
+                            Style="{StaticResource HeaderBarButtonStyle}"
                             Foreground="{DynamicResource TitleFg}" Opacity="0.78"
                             Cursor="Hand" Padding="0" FontSize="10"
                             Click="EdgeRightBtn_Click"
@@ -157,7 +270,7 @@
                                 <Grid>
                                     <!-- 일반 버튼 (IsToggle=false일 때 표시) -->
                                     <Button Width="{Binding Width}" Height="28"
-                                            Background="Transparent"
+                                            Style="{StaticResource HeaderBarButtonStyle}"
                                             Foreground="{DynamicResource TitleFg}"
                                             BorderThickness="0" Cursor="Hand" Focusable="False"
                                             Command="{Binding Command}"
@@ -168,7 +281,7 @@
                                     </Button>
                                     <!-- 토글 버튼 (AutoComplete 전용, IsToggle=true일 때 표시) -->
                                     <ToggleButton Width="{Binding Width}" Height="28"
-                                                  Background="{Binding AutoCompleteEnabled, Converter={StaticResource BoolToVis}, ConverterParameter=Background}"
+                                                  Style="{StaticResource HeaderBarToggleButtonStyle}"
                                                   Foreground="{DynamicResource TitleFg}"
                                                   BorderThickness="0" Cursor="Hand" Focusable="False"
                                                   IsChecked="{Binding DataContext.AutoCompleteEnabled, Mode=TwoWay, RelativeSource={RelativeSource AncestorType=UserControl}}"
@@ -185,7 +298,7 @@
 
                     <!-- 고정 버튼: 접기/최소화/닫기 (항상 우측 끝) -->
                     <Button x:Name="CollapseButton" Width="32" Height="28"
-                            Background="Transparent" Foreground="{DynamicResource TitleFg}"
+                            Style="{StaticResource HeaderBarButtonStyle}" Foreground="{DynamicResource TitleFg}"
                             BorderThickness="0" Cursor="Hand" Focusable="False"
                             Click="CollapseButton_Click"
                             ToolTip="접기 / 펼치기"
@@ -193,7 +306,7 @@
                         <TextBlock x:Name="CollapseIcon" Text="&#x25B2;" FontSize="10"/>
                     </Button>
                     <Button x:Name="MinimizeButton" Width="32" Height="28"
-                            Background="Transparent" Foreground="{DynamicResource TitleFg}"
+                            Style="{StaticResource HeaderBarButtonStyle}" Foreground="{DynamicResource TitleFg}"
                             BorderThickness="0" Cursor="Hand" Focusable="False"
                             Click="MinimizeButton_Click"
                             ToolTip="최소화"
@@ -201,8 +314,7 @@
                         <TextBlock Text="&#x25AC;" FontSize="12"/>
                     </Button>
                     <Button x:Name="CloseButton" Width="32" Height="28"
-                            Background="Transparent" Foreground="{DynamicResource TitleFg}"
-                            BorderThickness="0" Cursor="Hand" Focusable="False"
+                            Style="{StaticResource HeaderCloseButtonStyle}"
                             Click="CloseButton_Click"
                             ToolTip="닫기 (트레이로 숨김)"
                             AutomationProperties.Name="닫기">
