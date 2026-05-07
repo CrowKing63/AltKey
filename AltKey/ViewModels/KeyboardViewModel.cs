@@ -25,6 +25,9 @@ public record KeyColumnVm(double Gap, IReadOnlyList<KeyRowVm> Rows);
 public class KeySlotVm(KeySlot slot, AutoCompleteService autoComplete) : ObservableObject
 {
     public KeySlot Slot { get; } = slot;
+    // 키 스타일 분기용 프록시입니다. ControlTemplate 안에서 깊은 경로 대신 직접 바인딩해 런타임 누락 가능성을 줄입니다.
+    public string StyleKey => Slot.StyleKey;
+    public bool HasSoftAccentStyle => string.Equals(StyleKey, EditableKeySlotVm.SoftAccentStyleKey, StringComparison.Ordinal);
     public double Width  { get; } = slot.Width;
     public double Height { get; } = slot.Height;
 

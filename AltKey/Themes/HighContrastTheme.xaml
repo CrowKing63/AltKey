@@ -7,12 +7,18 @@
     <SolidColorBrush x:Key="KeyBg"        Color="#FFFFFFFF"/>
     <SolidColorBrush x:Key="KeyBgHover"   Color="#FFE6E6E6"/>
     <SolidColorBrush x:Key="KeyBgPressed" Color="#FFCCCCCC"/>
+    <!-- 고대비에서는 강조 키도 충분한 대비를 유지해야 하므로 배경보다 테두리 차이로 먼저 구분합니다. -->
+    <SolidColorBrush x:Key="KeyBgAccent"        Color="#FFFFFFFF"/>
+    <SolidColorBrush x:Key="KeyBgAccentHover"   Color="#FFE6E6E6"/>
+    <SolidColorBrush x:Key="KeyBgAccentPressed" Color="#FFCCCCCC"/>
     <!-- Sticky: 노란색 (검은 배경에서 잘 보임) -->
     <SolidColorBrush x:Key="KeyBgSticky"  Color="#FFFFFF00"/>
     <SolidColorBrush x:Key="KeyFg"        Color="#FF000000"/>
+    <SolidColorBrush x:Key="KeyFgAccent"  Color="#FF000000"/>
     <SolidColorBrush x:Key="KeyFgSticky"  Color="#FF000000"/>
     <!-- 키 경계선: 흰색 -->
     <SolidColorBrush x:Key="KeyBorder"    Color="#FFFFFFFF"/>
+    <SolidColorBrush x:Key="KeyBorderAccent" Color="#FFFFFF00"/>
     <SolidColorBrush x:Key="KeyShadow"    Color="#33000000"/>
     <!-- 제목/버튼용: 흰색 -->
     <SolidColorBrush x:Key="TitleFg"      Color="#FFFFFFFF"/>

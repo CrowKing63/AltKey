@@ -96,6 +96,21 @@
                             Margin="12,0,0,0"/>
                 </StackPanel>
 
+                <Border Grid.Row="0"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center"
+                        Padding="8,4"
+                        CornerRadius="6"
+                        Background="{DynamicResource SettingsHighlight}"
+                        BorderBrush="{DynamicResource SettingsBorder}"
+                        BorderThickness="1">
+                    <TextBlock Foreground="{DynamicResource SettingsFgSub}"
+                               FontSize="11">
+                        <Run Text="현재 메인 키보드 레이아웃: "/>
+                        <Run Text="{Binding CurrentActiveLayoutName, Mode=OneWay}" FontWeight="SemiBold"/>
+                    </TextBlock>
+                </Border>
+
                 <!-- 2행: 파일명 + 표시이름 + 저장/다른이름저장/삭제 -->
                 <Grid Grid.Row="1">
                     <Grid.ColumnDefinitions>
@@ -120,6 +135,29 @@
                         <TextBox Text="{Binding LayoutName, UpdateSourceTrigger=PropertyChanged}"
                                  Width="200" Height="26"
                                  Style="{StaticResource InputBox}" Padding="6,2"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2"
+                                VerticalAlignment="Center"
+                                Margin="12,0,12,0">
+                        <TextBlock Foreground="{DynamicResource SettingsFgHint}"
+                                   TextTrimming="CharacterEllipsis">
+                            <Run Text="편집 중 파일: "/>
+                            <Run Text="{Binding CurrentFileName, TargetNullValue=''}"/>
+                        </TextBlock>
+                        <TextBlock Text="저장 후 바로 메인 키보드에 반영되는 대상입니다."
+                                   Foreground="{DynamicResource AdminOkFg}"
+                                   FontSize="10"
+                                   Visibility="{Binding IsEditingCurrentLayout,
+                                       Converter={StaticResource BoolToVis}}"/>
+                        <TextBlock Foreground="{DynamicResource ElevatedWarningFg}"
+                                   FontSize="10"
+                                   Visibility="{Binding IsEditingCurrentLayout,
+                                       Converter={StaticResource InvBoolToVis}}">
+                            <Run Text="메인 키보드는 현재 '"/>
+                            <Run Text="{Binding CurrentActiveLayoutName, Mode=OneWay}"/>
+                            <Run Text="' 레이아웃을 사용 중이라 저장해도 바로는 안 보일 수 있습니다."/>
+                        </TextBlock>
                     </StackPanel>
 
                     <!-- 저장 버튼들 -->
@@ -245,6 +283,11 @@
                                                                                     <Setter Property="BorderBrush"  Value="{DynamicResource SettingsBorder}"/>
                                                                                     <Setter Property="BorderThickness" Value="1"/>
                                                                                     <Style.Triggers>
+                                                                                        <!-- 접근성 미리보기: 저장 전에도 강조 키 톤 차이를 확인할 수 있게 편집기 타일에 바로 반영합니다. -->
+                                                                                        <DataTrigger Binding="{Binding EditStyleKey}" Value="soft_accent">
+                                                                                            <Setter Property="Background"  Value="{DynamicResource KeyBgAccent}"/>
+                                                                                            <Setter Property="BorderBrush" Value="{DynamicResource KeyBorderAccent}"/>
+                                                                                        </DataTrigger>
                                                                                         <DataTrigger Binding="{Binding IsSelected}" Value="True">
                                                                                             <Setter Property="Background"  Value="{DynamicResource AccentBrush}"/>
                                                                                             <Setter Property="BorderBrush" Value="{DynamicResource SettingsFg}"/>
@@ -361,6 +404,14 @@
                             <ctrl:NumericAdjuster Value="{Binding SelectedKey.EditGapBefore}"
                                                   Minimum="0.0" Maximum="4.0" Step="0.1" DecimalPlaces="1"
                                                   Margin="0,0,0,12"/>
+
+                            <!-- 접근성: 기본 문자 키는 설정을 숨겨 편집 부담을 줄이고, 일부 특수 키에만 간단한 체크 옵션을 노출합니다. -->
+                            <CheckBox Content="이 키를 기본 키보다 살짝 강조"
+                                      IsChecked="{Binding SelectedKey.UseSoftAccentStyle}"
+                                      Margin="0,0,0,12"
+                                      Foreground="{DynamicResource SettingsFg}"
+                                      Visibility="{Binding SelectedKey.SupportsAccentStyle,
+                                          Converter={StaticResource BoolToVis}}"/>
 
                             <Separator Background="{DynamicResource SettingsHighlight}" Margin="0,0,0,10"/>
 

@@ -10,20 +10,77 @@ namespace AltKey.ViewModels;
 
 public partial class EditableKeySlotVm : ObservableObject
 {
+    // 접근성/가시성: 기본 키와 살짝 다른 톤을 줄 때 사용하는 내부 style_key 값입니다.
+    public const string SoftAccentStyleKey = "soft_accent";
+
+    // 문자 키는 옵션을 숨기고, 탐색/수정/모디파이어 계열 키만 사용 가능하게 제한합니다.
+    private static readonly HashSet<string> AccentStyleSupportedVks = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "VK_LSHIFT", "VK_RSHIFT", "VK_SHIFT",
+        "VK_LCONTROL", "VK_RCONTROL", "VK_CONTROL",
+        "VK_LMENU", "VK_RMENU", "VK_MENU",
+        "VK_LEFT", "VK_RIGHT", "VK_UP", "VK_DOWN",
+        "VK_TAB", "VK_CAPITAL", "VK_BACK", "VK_RETURN",
+        "VK_SPACE", "VK_ESCAPE", "VK_LWIN", "VK_RWIN",
+        "VK_PRIOR", "VK_NEXT", "VK_HOME", "VK_END",
+        "VK_INSERT", "VK_DELETE"
+    };
+
     [ObservableProperty] private string  editLabel       = "";
     [ObservableProperty] private string? editShiftLabel;
     [ObservableProperty] private double  editWidth       = 1.0;
     [ObservableProperty] private double  editGapBefore   = 0.0;
     [ObservableProperty] private KeyAction? editAction;
+    [ObservableProperty] private string  editStyleKey    = "";
+    [ObservableProperty] private bool    useSoftAccentStyle;
     [ObservableProperty] private bool    isSelected      = false;
 
     [ObservableProperty] private string? englishLabel;
     [ObservableProperty] private string? englishShiftLabel;
 
+    /// <summary>
+    /// 편집기 단순화: 기본 문자 키에는 옵션을 숨기고, 일부 특수 키에만 색상 변형 체크를 노출합니다.
+    /// </summary>
+    public bool SupportsAccentStyle => TryGetActionVk(EditAction) is string vk && AccentStyleSupportedVks.Contains(vk);
+
     /// 편집 결과를 KeySlot 레코드로 변환
     public KeySlot ToKeySlot() =>
         new(EditLabel, EditShiftLabel, EditAction, EditWidth, 1.0,
-            "", EditGapBefore, EnglishLabel, EnglishShiftLabel);
+            SupportsAccentStyle && UseSoftAccentStyle ? SoftAccentStyleKey : "", EditGapBefore, EnglishLabel, EnglishShiftLabel);
+
+    partial void OnEditActionChanged(KeyAction? value)
+    {
+        // 액션이 문자 키에서 특수 키로, 또는 반대로 바뀌면 옵션 노출 여부와 저장값을 함께 정리합니다.
+        if (!SupportsAccentStyle)
+        {
+            UseSoftAccentStyle = false;
+            if (!string.IsNullOrEmpty(EditStyleKey))
+                EditStyleKey = "";
+        }
+
+        OnPropertyChanged(nameof(SupportsAccentStyle));
+    }
+
+    partial void OnEditStyleKeyChanged(string value)
+    {
+        var next = string.Equals(value, SoftAccentStyleKey, StringComparison.Ordinal);
+        if (UseSoftAccentStyle != next)
+            UseSoftAccentStyle = next;
+    }
+
+    partial void OnUseSoftAccentStyleChanged(bool value)
+    {
+        var next = value && SupportsAccentStyle ? SoftAccentStyleKey : "";
+        if (EditStyleKey != next)
+            EditStyleKey = next;
+    }
+
+    private static string? TryGetActionVk(KeyAction? action) => action switch
+    {
+        SendKeyAction sendKey => sendKey.Vk,
+        ToggleStickyAction toggleSticky => toggleSticky.Vk,
+        _ => null
+    };
 }
 
 // ── 편집 가능한 키 행 VM ────────────────────────────────────────────────────
@@ -53,6 +110,7 @@ public partial class EditableKeyColumnVm : ObservableObject
 public partial class LayoutEditorViewModel : ObservableObject
 {
     private readonly ILayoutRepository _layoutRepository;
+    private readonly ConfigService _configService;
 
     // ── VK → 한글 라벨 매핑 (QWERTY 한국어 표준 배열) ─────────────────────
     private static readonly Dictionary<string, (string Label, string? ShiftLabel, string? EnglishLabel)> VkLabelMap
@@ -80,6 +138,11 @@ public partial class LayoutEditorViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(CanDeleteLayout))]
     private string currentFileName = "";
 
+    partial void OnCurrentFileNameChanged(string value)
+    {
+        OnPropertyChanged(nameof(IsEditingCurrentLayout));
+    }
+
     /// 기존 파일에서 불러온 상태인지 (저장/다른 이름 저장 분기용)
     public bool IsExistingLayout => !string.IsNullOrEmpty(CurrentFileName)
         && _layoutRepository.GetAvailableLayouts().Contains(CurrentFileName);
@@ -88,6 +151,19 @@ public partial class LayoutEditorViewModel : ObservableObject
     public bool CanDeleteLayout => IsExistingLayout
         && !string.Equals(CurrentFileName, _layoutRepository.DefaultLayoutName,
             StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// 메인 키보드가 현재 기본으로 읽는 레이아웃 이름입니다.
+    /// 편집기 저장 대상과 다르면 저장 후에도 메인 키보드에 변화가 없을 수 있습니다.
+    /// </summary>
+    public string CurrentActiveLayoutName => _configService.Current.DefaultLayout;
+
+    /// <summary>
+    /// 현재 편집 중인 파일이 메인 키보드가 쓰는 기본 레이아웃과 같은지 표시합니다.
+    /// </summary>
+    public bool IsEditingCurrentLayout =>
+        !string.IsNullOrWhiteSpace(CurrentFileName)
+        && string.Equals(CurrentFileName, CurrentActiveLayoutName, StringComparison.OrdinalIgnoreCase);
 
     // ── 레이아웃 데이터 ────────────────────────────────────────────────────
     [ObservableProperty] private string layoutName = "";
@@ -161,10 +237,12 @@ public partial class LayoutEditorViewModel : ObservableObject
     [ObservableProperty]
     private string selectedLayoutToLoad = "";
 
-    public LayoutEditorViewModel(ILayoutRepository layoutRepository)
+    public LayoutEditorViewModel(ILayoutRepository layoutRepository, ConfigService configService)
     {
         _layoutRepository = layoutRepository;
+        _configService = configService;
         RefreshAvailableLayouts();
+        RefreshCurrentActiveLayoutInfo();
     }
 
     private void RefreshAvailableLayouts()
@@ -177,6 +255,13 @@ public partial class LayoutEditorViewModel : ObservableObject
         OnPropertyChanged(nameof(CanDeleteLayout));
     }
 
+    private void RefreshCurrentActiveLayoutInfo()
+    {
+        _configService.Load();
+        OnPropertyChanged(nameof(CurrentActiveLayoutName));
+        OnPropertyChanged(nameof(IsEditingCurrentLayout));
+    }
+
     // ── 레이아웃 로드 ──────────────────────────────────────────────────────
 
     [RelayCommand]
@@ -187,6 +272,7 @@ public partial class LayoutEditorViewModel : ObservableObject
 
         CurrentFileName = fileName;
         LayoutName = config.Name;
+        RefreshCurrentActiveLayoutInfo();
 
         if (config.Columns is { Count: > 0 })
         {
@@ -204,6 +290,8 @@ public partial class LayoutEditorViewModel : ObservableObject
                                     EditShiftLabel  = k.ShiftLabel,
                                     EditWidth       = k.Width,
                                     EditGapBefore   = k.GapBefore,
+                                    EditStyleKey    = k.StyleKey,
+                                    UseSoftAccentStyle = string.Equals(k.StyleKey, EditableKeySlotVm.SoftAccentStyleKey, StringComparison.Ordinal),
                                     EditAction      = k.Action,
                                     EnglishLabel     = k.EnglishLabel,
                                     EnglishShiftLabel = k.EnglishShiftLabel,
@@ -239,6 +327,7 @@ public partial class LayoutEditorViewModel : ObservableObject
         SelectedColumn = null;
         SelectedRow    = null;
         SelectedKey    = null;
+        RefreshCurrentActiveLayoutInfo();
         StatusMessage  = "새 레이아웃 생성됨";
     }
 
@@ -555,6 +644,7 @@ public partial class LayoutEditorViewModel : ObservableObject
                 SelectedRow    = null;
                 SelectedKey    = null;
                 RefreshAvailableLayouts();
+                RefreshCurrentActiveLayoutInfo();
             }
             else
             {
@@ -595,7 +685,15 @@ public partial class LayoutEditorViewModel : ObservableObject
             // 데이터 본문을 IPC로 보내지 않고, "다시 읽기" 신호만 전달합니다.
             ToolsReloadSignalService.NotifyReloadLayouts();
             RefreshAvailableLayouts();
-            StatusMessage = $"'{CurrentFileName}' 저장 완료";
+            RefreshCurrentActiveLayoutInfo();
+
+            var verification = _layoutRepository.TryLoad(CurrentFileName);
+            var accentKeyCount = verification is null ? 0 : CountSoftAccentKeys(verification);
+            var currentLayoutHint = IsEditingCurrentLayout
+                ? "현재 메인 키보드에 적용되는 레이아웃입니다."
+                : $"메인 키보드는 현재 '{CurrentActiveLayoutName}' 레이아웃을 사용 중입니다.";
+
+            StatusMessage = $"'{CurrentFileName}' 저장 완료 · 강조 키 {accentKeyCount}개 확인 · {currentLayoutHint}";
         }
         catch (Exception ex)
         {
@@ -620,4 +718,11 @@ public partial class LayoutEditorViewModel : ObservableObject
 
     private LayoutConfig BuildLayoutConfig() =>
         new(LayoutName, null, Columns.Select(c => c.ToKeyColumn()).ToList());
+
+    private static int CountSoftAccentKeys(LayoutConfig config) =>
+        config.Columns?
+            .SelectMany(column => column.Rows ?? [])
+            .SelectMany(row => row.Keys)
+            .Count(slot => string.Equals(slot.StyleKey, EditableKeySlotVm.SoftAccentStyleKey, StringComparison.Ordinal))
+        ?? 0;
 }

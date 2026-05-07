@@ -6,16 +6,28 @@ public static class PathResolver
 {
     private static readonly string _exeDir =
         Path.GetDirectoryName(Environment.ProcessPath ?? "") ?? "";
+    private static string? _overrideDataDir;
 
     /// <summary>exe 옆에 config.json이 있으면 포터블 모드</summary>
     public static bool IsPortable =>
         File.Exists(Path.Combine(_exeDir, "config.json"));
 
-    public static string DataDir => IsPortable
-        ? _exeDir
-        : Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "AltKey");
+    /// <summary>
+    /// 메인 앱이 도구 앱을 열 때 같은 데이터 폴더를 명시적으로 공유해야 할 경우 사용합니다.
+    /// 개발 환경의 분리된 bin 폴더뿐 아니라, 실행 주체와 관계없이 동일한 설정/레이아웃을 보장하는 공용 진입점입니다.
+    /// </summary>
+    public static void OverrideDataDir(string? dataDir)
+    {
+        _overrideDataDir = string.IsNullOrWhiteSpace(dataDir) ? null : dataDir;
+    }
+
+    public static string DataDir => !string.IsNullOrWhiteSpace(_overrideDataDir)
+        ? _overrideDataDir
+        : IsPortable
+            ? _exeDir
+            : Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "AltKey");
 
     public static string LayoutsDir => Path.Combine(DataDir, "layouts");
     public static string ConfigPath  => Path.Combine(DataDir, "config.json");

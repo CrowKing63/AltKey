@@ -206,6 +206,31 @@
                         </Trigger>
 
                         <!-- L2/T-4.7: Sticky 상태 (고정) — 색상 외 점선 테두리 + S 뱃지 추가 -->
+                        <!-- 접근성: 사용자가 지정한 일부 특수 키만 기본 키보다 살짝 다른 톤으로 구분합니다. -->
+                        <DataTrigger Binding="{Binding HasSoftAccentStyle}" Value="True">
+                            <Setter TargetName="Root" Property="Background"
+                                    Value="{DynamicResource KeyBgAccent}"/>
+                            <Setter Property="Foreground"
+                                    Value="{DynamicResource KeyFgAccent}"/>
+                            <Setter TargetName="Root" Property="BorderBrush"
+                                    Value="{DynamicResource KeyBorderAccent}"/>
+                        </DataTrigger>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding HasSoftAccentStyle}" Value="True"/>
+                                <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource TemplatedParent}}" Value="True"/>
+                            </MultiDataTrigger.Conditions>
+                            <Setter TargetName="Root" Property="Background"
+                                    Value="{DynamicResource KeyBgAccentHover}"/>
+                        </MultiDataTrigger>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding HasSoftAccentStyle}" Value="True"/>
+                                <Condition Binding="{Binding IsPressed, RelativeSource={RelativeSource TemplatedParent}}" Value="True"/>
+                            </MultiDataTrigger.Conditions>
+                            <Setter TargetName="Root" Property="Background"
+                                    Value="{DynamicResource KeyBgAccentPressed}"/>
+                        </MultiDataTrigger>
                         <Trigger Property="controls:KeyButton.IsSticky" Value="True">
                             <Setter TargetName="Root" Property="Background"
                                     Value="{DynamicResource KeyBgSticky}"/>

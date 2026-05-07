@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
+using System.Threading.Tasks;
 using System.Windows;
 using AltKey.Models;
 using AltKey.Services;
@@ -894,13 +895,39 @@ public partial class SettingsViewModel : ObservableObject
 
         try
         {
-            var arguments = string.IsNullOrWhiteSpace(toolName) ? "" : $"--tool {toolName}";
-            Process.Start(new ProcessStartInfo
+            // 개발 환경에서는 도구 앱이 별도 bin 폴더에서 실행되므로, 메인 앱과 같은 데이터 폴더를 명시적으로 전달합니다.
+            var toolArgument = string.IsNullOrWhiteSpace(toolName) ? "" : $"--tool {toolName}";
+            var dataDirArgument = $"--data-dir \"{PathResolver.DataDir}\"";
+            var arguments = string.IsNullOrWhiteSpace(toolArgument)
+                ? dataDirArgument
+                : $"{toolArgument} {dataDirArgument}";
+            var process = Process.Start(new ProcessStartInfo
             {
                 FileName = toolsExePath,
                 Arguments = arguments,
                 UseShellExecute = true
             });
+
+            // 접근성/진단: 시작 직후 종료 여부는 백그라운드에서 짧게 감시해 UI 멈춤 없이 알립니다.
+            if (process is not null)
+            {
+                _ = Task.Run(() =>
+                {
+                    if (!process.WaitForExit(1200))
+                    {
+                        return;
+                    }
+
+                    WpfApp.Current.Dispatcher.BeginInvoke(() =>
+                    {
+                        WpfMsgBox.Show(
+                            $"편집 도구 앱이 시작 직후 종료되었습니다.\n\n경로: {toolsExePath}\n도구 앱에서 표시된 오류 대화상자를 확인해 주세요.",
+                            "편집 도구 시작 실패",
+                            WpfMsgBoxButton.OK,
+                            WpfMsgBoxImage.Error);
+                    });
+                });
+            }
         }
         catch (Exception ex)
         {
