@@ -17,5 +17,10 @@ public record KeySlot(
     /// <summary>Shift 상태에서 표시되지 않는 영어 알파벳 (통합 레이아웃용)</summary>
     [property: JsonPropertyName("english_label")]      string? EnglishLabel = null,
     /// <summary>Shift 상태에서 표시되는 영어 알파벳</summary>
-    [property: JsonPropertyName("english_shift_label")] string? EnglishShiftLabel = null
+    [property: JsonPropertyName("english_shift_label")] string? EnglishShiftLabel = null,
+    [property: JsonPropertyName("fn_action")]          KeyAction? FunctionAction = null,
+    [property: JsonPropertyName("fn_label")]           string? FunctionLabel = null,
+    [property: JsonPropertyName("fn_shift_label")]     string? FunctionShiftLabel = null,
+    [property: JsonPropertyName("fn_english_label")]   string? FunctionEnglishLabel = null,
+    [property: JsonPropertyName("fn_english_shift_label")] string? FunctionEnglishShiftLabel = null
 );

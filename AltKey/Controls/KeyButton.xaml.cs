@@ -66,6 +66,21 @@ public class KeyButton : System.Windows.Controls.Button
             nameof(IsLocked), typeof(bool), typeof(KeyButton),
             new PropertyMetadata(false));
 
+    public static readonly DependencyProperty IsFunctionOneShotProperty =
+        DependencyProperty.Register(
+            nameof(IsFunctionOneShot), typeof(bool), typeof(KeyButton),
+            new PropertyMetadata(false));
+
+    public static readonly DependencyProperty IsFunctionLockedProperty =
+        DependencyProperty.Register(
+            nameof(IsFunctionLocked), typeof(bool), typeof(KeyButton),
+            new PropertyMetadata(false));
+
+    public static readonly DependencyProperty HasFunctionLayerAccentProperty =
+        DependencyProperty.Register(
+            nameof(HasFunctionLayerAccent), typeof(bool), typeof(KeyButton),
+            new PropertyMetadata(false));
+
     // 버튼의 크기 기준(픽셀)입니다. 이 값이 커지면 버튼이 커집니다.
     public static readonly DependencyProperty KeyUnitProperty =
         DependencyProperty.Register(
@@ -174,6 +189,24 @@ public class KeyButton : System.Windows.Controls.Button
     {
         get => (bool)GetValue(IsLockedProperty);
         set => SetValue(IsLockedProperty, value);
+    }
+
+    public bool IsFunctionOneShot
+    {
+        get => (bool)GetValue(IsFunctionOneShotProperty);
+        set => SetValue(IsFunctionOneShotProperty, value);
+    }
+
+    public bool IsFunctionLocked
+    {
+        get => (bool)GetValue(IsFunctionLockedProperty);
+        set => SetValue(IsFunctionLockedProperty, value);
+    }
+
+    public bool HasFunctionLayerAccent
+    {
+        get => (bool)GetValue(HasFunctionLayerAccentProperty);
+        set => SetValue(HasFunctionLayerAccentProperty, value);
     }
 
     public double KeyUnit

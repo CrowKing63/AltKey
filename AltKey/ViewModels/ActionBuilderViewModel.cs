@@ -72,7 +72,7 @@ public partial class ActionBuilderViewModel : ObservableObject
     [
         "SendKey", "SendCombo", "ToggleSticky", "SwitchLayout",
         "RunApp", "Boilerplate", "ShellCommand", "VolumeControl", "ClipboardPaste",
-        "ToggleKoreanSubmode"
+        "ToggleKoreanSubmode", "ToggleFunctionLayer"
     ];
 
     public static IReadOnlyList<string> ShellTypes  { get; } = ["cmd", "powershell"];
@@ -116,6 +116,7 @@ public partial class ActionBuilderViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(IsVolumeControl))]
     [NotifyPropertyChangedFor(nameof(IsClipboardPaste))]
     [NotifyPropertyChangedFor(nameof(IsToggleKoreanSubmode))]
+    [NotifyPropertyChangedFor(nameof(IsToggleFunctionLayer))]
     private string selectedActionType = "SendKey";
 
     // ── Visibility 계산 프로퍼티 ───────────────────────────────────────────────
@@ -129,6 +130,7 @@ public partial class ActionBuilderViewModel : ObservableObject
     public bool IsVolumeControl        => SelectedActionType == "VolumeControl";
     public bool IsClipboardPaste       => SelectedActionType == "ClipboardPaste";
     public bool IsToggleKoreanSubmode  => SelectedActionType == "ToggleKoreanSubmode";
+    public bool IsToggleFunctionLayer  => SelectedActionType == "ToggleFunctionLayer";
 
     // ── 각 타입별 파라미터 ─────────────────────────────────────────────────────
 
@@ -211,6 +213,9 @@ public partial class ActionBuilderViewModel : ObservableObject
             case ToggleKoreanSubmodeAction:
                 SelectedActionType = "ToggleKoreanSubmode";
                 break;
+            case ToggleFunctionLayerAction:
+                SelectedActionType = "ToggleFunctionLayer";
+                break;
             default:
                 SelectedActionType = "SendKey";
                 break;
@@ -232,6 +237,7 @@ public partial class ActionBuilderViewModel : ObservableObject
         "VolumeControl"=> new VolumeControlAction(VolumeDirection, VolumeStep),
         "ClipboardPaste"      => new ClipboardPasteAction(ClipboardText),
         "ToggleKoreanSubmode" => new ToggleKoreanSubmodeAction(),
+        "ToggleFunctionLayer" => new ToggleFunctionLayerAction(),
         _                     => null
     };
 

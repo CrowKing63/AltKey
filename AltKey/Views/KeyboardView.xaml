@@ -390,6 +390,9 @@
                                                       IsDimmed="{Binding IsDimmed}"
                                                       IsSticky="{Binding IsSticky}"
                                                       IsLocked="{Binding IsLocked}"
+                                                      IsFunctionOneShot="{Binding IsFunctionOneShot}"
+                                                      IsFunctionLocked="{Binding IsFunctionLocked}"
+                                                      HasFunctionLayerAccent="{Binding HasFunctionLayerAccent}"
                                                       IsA11yFocused="{Binding IsA11yFocused}"
                                                       KeyUnit="{Binding DataContext.Keyboard.KeyUnit,
                                                           RelativeSource={RelativeSource AncestorType=UserControl}}"

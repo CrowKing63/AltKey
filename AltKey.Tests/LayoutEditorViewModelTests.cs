@@ -52,6 +52,95 @@ public class LayoutEditorViewModelTests
         });
     }
 
+    [Fact]
+    public void Save_preserves_function_action_and_labels()
+    {
+        RunSta(() =>
+        {
+            var repo = new FakeLayoutRepository();
+            repo.Seed("fn-layout", new LayoutConfig("fn-layout", null,
+            [
+                new KeyColumn(0,
+                [
+                    new KeyRow([
+                        new KeySlot("A", null, new SendKeyAction("VK_A"), 1.0, 1.0, "", 0.0, "a", null,
+                            new SendKeyAction("VK_F1"), "F1", null, "f1", null)
+                    ])
+                ])
+            ]));
+
+            var vm = new LayoutEditorViewModel(repo, new ConfigService());
+            vm.LoadLayout("fn-layout");
+            vm.SaveCommand.Execute(null);
+
+            var savedKey = repo.LastSavedConfig!.Columns![0].Rows![0].Keys[0];
+            Assert.Equal("F1", savedKey.FunctionLabel);
+            Assert.Equal("f1", savedKey.FunctionEnglishLabel);
+            Assert.IsType<SendKeyAction>(savedKey.FunctionAction);
+        });
+    }
+
+    [Fact]
+    public void Changing_key_to_function_toggle_clears_and_locks_function_overrides()
+    {
+        RunSta(() =>
+        {
+            var repo = new FakeLayoutRepository();
+            repo.Seed("fn-lock", new LayoutConfig("fn-lock", null,
+            [
+                new KeyColumn(0,
+                [
+                    new KeyRow([
+                        new KeySlot("A", null, new SendKeyAction("VK_A"), 1.0, 1.0, "", 0.0, "a", null,
+                            new SendKeyAction("VK_F1"), "F1", null, "f1", null)
+                    ])
+                ])
+            ]));
+
+            var vm = new LayoutEditorViewModel(repo, new ConfigService());
+            vm.LoadLayout("fn-lock");
+            vm.SelectedKey = vm.Columns[0].Rows[0].Keys[0];
+
+            vm.ActionBuilder.LoadFromAction(new ToggleFunctionLayerAction());
+
+            Assert.NotNull(vm.SelectedKey);
+            Assert.False(vm.SelectedKey!.CanEditFunctionOverrides);
+            Assert.Null(vm.SelectedKey.FunctionAction);
+            Assert.Null(vm.SelectedKey.FunctionLabel);
+            Assert.Null(vm.SelectedKey.FunctionEnglishLabel);
+        });
+    }
+
+    [Fact]
+    public void AutoFillFunctionLabels_uses_function_send_key_mapping()
+    {
+        RunSta(() =>
+        {
+            var repo = new FakeLayoutRepository();
+            repo.Seed("fn-autofill", new LayoutConfig("fn-autofill", null,
+            [
+                new KeyColumn(0,
+                [
+                    new KeyRow([
+                        new KeySlot("A", null, new SendKeyAction("VK_A"), 1.0, 1.0, "", 0.0, "a", null)
+                    ])
+                ])
+            ]));
+
+            var vm = new LayoutEditorViewModel(repo, new ConfigService());
+            vm.LoadLayout("fn-autofill");
+            vm.SelectedKey = vm.Columns[0].Rows[0].Keys[0];
+
+            vm.FunctionActionBuilder.LoadFromAction(new SendKeyAction("VK_F1"));
+            vm.AutoFillFunctionLabelsCommand.Execute(null);
+
+            Assert.NotNull(vm.SelectedKey);
+            Assert.Equal("F1", vm.SelectedKey!.FunctionLabel);
+            Assert.Null(vm.SelectedKey.FunctionShiftLabel);
+            Assert.Null(vm.SelectedKey.FunctionEnglishLabel);
+        });
+    }
+
     private static LayoutConfig CreateTwoColumnLayout(double firstRowHeight = EditableKeySlotVm.DefaultHeightRatio) =>
         new("shared-row", null,
         [

@@ -46,16 +46,34 @@ public partial class EditableKeySlotVm : ObservableObject
 
     [ObservableProperty] private string? englishLabel;
     [ObservableProperty] private string? englishShiftLabel;
+    [ObservableProperty] private KeyAction? functionAction;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(FunctionPreviewLabel))]
+    private string? functionLabel;
+    [ObservableProperty] private string? functionShiftLabel;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(FunctionPreviewLabel))]
+    private string? functionEnglishLabel;
+    [ObservableProperty] private string? functionEnglishShiftLabel;
 
     /// <summary>
     /// 편집기 단순화: 기본 문자 키에는 옵션을 숨기고, 일부 특수 키에만 색상 변형 체크를 노출합니다.
     /// </summary>
     public bool SupportsAccentStyle => TryGetActionVk(EditAction) is string vk && AccentStyleSupportedVks.Contains(vk);
 
+    /// <summary>
+    /// Fn 키 자체는 Fn 레이어가 켜져 있어도 항상 Fn 동작만 해야 하므로,
+    /// Fn 전용 액션/라벨은 별도로 편집하지 않게 잠급니다.
+    /// </summary>
+    public bool CanEditFunctionOverrides => EditAction is not ToggleFunctionLayerAction;
+
     /// 편집 결과를 KeySlot 레코드로 변환
     public KeySlot ToKeySlot() =>
         new(EditLabel, EditShiftLabel, EditAction, EditWidth, EditHeight,
-            SupportsAccentStyle && UseSoftAccentStyle ? SoftAccentStyleKey : "", EditGapBefore, EnglishLabel, EnglishShiftLabel);
+            SupportsAccentStyle && UseSoftAccentStyle ? SoftAccentStyleKey : "", EditGapBefore, EnglishLabel, EnglishShiftLabel,
+            FunctionAction, FunctionLabel, FunctionShiftLabel, FunctionEnglishLabel, FunctionEnglishShiftLabel);
+
+    public string? FunctionPreviewLabel => FunctionLabel ?? FunctionEnglishLabel;
 
     partial void OnEditActionChanged(KeyAction? value)
     {
@@ -67,7 +85,19 @@ public partial class EditableKeySlotVm : ObservableObject
                 EditStyleKey = "";
         }
 
+        // Fn 키로 바뀌면 Fn 전용 값은 실제로 사용되지 않으므로 즉시 비워
+        // 숨은 값이 남아 편집기에서 혼동을 만들지 않게 합니다.
+        if (value is ToggleFunctionLayerAction)
+        {
+            FunctionAction = null;
+            FunctionLabel = null;
+            FunctionShiftLabel = null;
+            FunctionEnglishLabel = null;
+            FunctionEnglishShiftLabel = null;
+        }
+
         OnPropertyChanged(nameof(SupportsAccentStyle));
+        OnPropertyChanged(nameof(CanEditFunctionOverrides));
     }
 
     partial void OnEditStyleKeyChanged(string value)
@@ -147,8 +177,10 @@ public partial class LayoutEditorViewModel : ObservableObject
     private LayoutEditorSnapshot? _trackingSnapshot;
     private LayoutEditorSnapshot? _pendingUndoSnapshot;
     private ObservableCollection<ObservableString>? _actionBuilderComboCollection;
+    private ObservableCollection<ObservableString>? _functionActionBuilderComboCollection;
     private bool _isRestoringSnapshot;
     private bool _isLoadingActionBuilder;
+    private bool _isLoadingFunctionActionBuilder;
 
     // ── VK → 한글 라벨 매핑 (QWERTY 한국어 표준 배열) ─────────────────────
     private static readonly Dictionary<string, (string Label, string? ShiftLabel, string? EnglishLabel)> VkLabelMap
@@ -277,6 +309,7 @@ public partial class LayoutEditorViewModel : ObservableObject
 
     // ── 내장 ActionBuilder ────────────────────────────────────────────────
     public ActionBuilderViewModel ActionBuilder { get; } = new();
+    public ActionBuilderViewModel FunctionActionBuilder { get; } = new();
 
     // ── 사용 가능한 레이아웃 파일 목록 ────────────────────────────────────
     [ObservableProperty]
@@ -295,6 +328,7 @@ public partial class LayoutEditorViewModel : ObservableObject
         };
         _changeCheckpointTimer.Tick += (_, _) => FlushPendingCheckpoint();
         HookActionBuilderEvents();
+        HookFunctionActionBuilderEvents();
         RefreshAvailableLayouts();
         RefreshCurrentActiveLayoutInfo();
     }
@@ -348,6 +382,7 @@ public partial class LayoutEditorViewModel : ObservableObject
         if (oldValue is not null) oldValue.IsSelected = false;
         if (newValue is not null) newValue.IsSelected = true;
         LoadActionBuilderFromSelectedKey(newValue);
+        LoadFunctionActionBuilderFromSelectedKey(newValue);
         OnPropertyChanged(nameof(CanMoveKeyLeft));
         OnPropertyChanged(nameof(CanMoveKeyRight));
     }
@@ -360,41 +395,61 @@ public partial class LayoutEditorViewModel : ObservableObject
         SelectedKey = slot;
     }
 
-    /// 선택된 키의 VK 코드를 기반으로 한글/영어 라벨을 자동 채우기
+    /// 선택된 키의 기본 액션 VK 코드를 기반으로 기본 라벨을 자동 채웁니다.
     [RelayCommand]
-    private void AutoFillLabels()
+    private void AutoFillBaseLabels()
     {
         if (SelectedKey is null) return;
 
         var action = SelectedKey.EditAction ?? ActionBuilder.BuildAction();
-        string? vk = action switch
-        {
-            SendKeyAction a => a.Vk,
-            _ => null
-        };
+        StatusMessage = TryApplyLabelsFromVk(
+            action,
+            applyMapped: mapping =>
+            {
+                SelectedKey.EditLabel = mapping.Label;
+                SelectedKey.EditShiftLabel = mapping.ShiftLabel;
+                SelectedKey.EnglishLabel = mapping.EnglishLabel;
+                SelectedKey.EnglishShiftLabel = null;
+            },
+            applyDisplayOnly: displayName =>
+            {
+                SelectedKey.EditLabel = displayName;
+                SelectedKey.EditShiftLabel = null;
+                SelectedKey.EnglishLabel = null;
+                SelectedKey.EnglishShiftLabel = null;
+            },
+            "기본 라벨");
+    }
 
-        if (vk is null) { StatusMessage = "SendKey 액션이 아닙니다"; return; }
+    /// 선택된 키의 Fn 액션 VK 코드를 기반으로 Fn 라벨을 자동 채웁니다.
+    [RelayCommand]
+    private void AutoFillFunctionLabels()
+    {
+        if (SelectedKey is null) return;
+        if (!SelectedKey.CanEditFunctionOverrides)
+        {
+            StatusMessage = "Fn 키에는 Fn 전용 액션과 라벨을 지정할 수 없습니다";
+            return;
+        }
 
-        if (VkLabelMap.TryGetValue(vk, out var mapping))
-        {
-            SelectedKey.EditLabel       = mapping.Label;
-            SelectedKey.EditShiftLabel  = mapping.ShiftLabel;
-            SelectedKey.EnglishLabel     = mapping.EnglishLabel;
-            SelectedKey.EnglishShiftLabel = null;
-            StatusMessage = $"라벨 자동 채움: {mapping.Label} / {mapping.EnglishLabel}";
-        }
-        else if (ActionBuilderViewModel.KeyDisplayNameMap.TryGetValue(vk, out var displayName))
-        {
-            SelectedKey.EditLabel = displayName;
-            SelectedKey.EditShiftLabel  = null;
-            SelectedKey.EnglishLabel     = null;
-            SelectedKey.EnglishShiftLabel = null;
-            StatusMessage = $"라벨 자동 채움: {displayName}";
-        }
-        else
-        {
-            StatusMessage = $"'{vk}'에 대한 라벨 매핑 없음";
-        }
+        var action = SelectedKey.FunctionAction ?? FunctionActionBuilder.BuildAction();
+        StatusMessage = TryApplyLabelsFromVk(
+            action,
+            applyMapped: mapping =>
+            {
+                SelectedKey.FunctionLabel = mapping.Label;
+                SelectedKey.FunctionShiftLabel = mapping.ShiftLabel;
+                SelectedKey.FunctionEnglishLabel = mapping.EnglishLabel;
+                SelectedKey.FunctionEnglishShiftLabel = null;
+            },
+            applyDisplayOnly: displayName =>
+            {
+                SelectedKey.FunctionLabel = displayName;
+                SelectedKey.FunctionShiftLabel = null;
+                SelectedKey.FunctionEnglishLabel = null;
+                SelectedKey.FunctionEnglishShiftLabel = null;
+            },
+            "Fn 라벨");
     }
 
     // ── 열 추가/삭제 ─────────────────────────────────────────────────────
@@ -771,6 +826,12 @@ public partial class LayoutEditorViewModel : ObservableObject
         RewireActionBuilderComboCollection(_actionBuilderComboCollection, ActionBuilder.SendComboKeysCollection);
     }
 
+    private void HookFunctionActionBuilderEvents()
+    {
+        FunctionActionBuilder.PropertyChanged += OnFunctionActionBuilderPropertyChanged;
+        RewireFunctionActionBuilderComboCollection(_functionActionBuilderComboCollection, FunctionActionBuilder.SendComboKeysCollection);
+    }
+
     private void OnActionBuilderPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(ActionBuilderViewModel.SendComboKeysCollection))
@@ -782,6 +843,7 @@ public partial class LayoutEditorViewModel : ObservableObject
             return;
 
         SelectedKey.EditAction = CloneAction(ActionBuilder.BuildAction());
+        LoadFunctionActionBuilderFromSelectedKey(SelectedKey);
     }
 
     private void RewireActionBuilderComboCollection(ObservableCollection<ObservableString>? oldCollection,
@@ -828,6 +890,63 @@ public partial class LayoutEditorViewModel : ObservableObject
     private void OnActionBuilderComboItemPropertyChanged(object? sender, PropertyChangedEventArgs e) =>
         OnActionBuilderPropertyChanged(ActionBuilder, new PropertyChangedEventArgs(nameof(ActionBuilderViewModel.SendComboKeysCollection)));
 
+    private void OnFunctionActionBuilderPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ActionBuilderViewModel.SendComboKeysCollection))
+        {
+            RewireFunctionActionBuilderComboCollection(_functionActionBuilderComboCollection, FunctionActionBuilder.SendComboKeysCollection);
+        }
+
+        if (_isLoadingFunctionActionBuilder || SelectedKey is null)
+            return;
+
+        SelectedKey.FunctionAction = CloneAction(FunctionActionBuilder.BuildAction());
+    }
+
+    private void RewireFunctionActionBuilderComboCollection(ObservableCollection<ObservableString>? oldCollection,
+        ObservableCollection<ObservableString> newCollection)
+    {
+        if (oldCollection is not null)
+        {
+            oldCollection.CollectionChanged -= OnFunctionActionBuilderComboCollectionChanged;
+            foreach (var item in oldCollection)
+                item.PropertyChanged -= OnFunctionActionBuilderComboItemPropertyChanged;
+        }
+
+        newCollection.CollectionChanged -= OnFunctionActionBuilderComboCollectionChanged;
+        newCollection.CollectionChanged += OnFunctionActionBuilderComboCollectionChanged;
+        foreach (var item in newCollection)
+        {
+            item.PropertyChanged -= OnFunctionActionBuilderComboItemPropertyChanged;
+            item.PropertyChanged += OnFunctionActionBuilderComboItemPropertyChanged;
+        }
+
+        _functionActionBuilderComboCollection = newCollection;
+    }
+
+    private void OnFunctionActionBuilderComboCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        if (e.OldItems is not null)
+        {
+            foreach (ObservableString item in e.OldItems)
+                item.PropertyChanged -= OnFunctionActionBuilderComboItemPropertyChanged;
+        }
+
+        if (e.NewItems is not null)
+        {
+            foreach (ObservableString item in e.NewItems)
+            {
+                item.PropertyChanged -= OnFunctionActionBuilderComboItemPropertyChanged;
+                item.PropertyChanged += OnFunctionActionBuilderComboItemPropertyChanged;
+            }
+        }
+
+        OnFunctionActionBuilderPropertyChanged(FunctionActionBuilder, new PropertyChangedEventArgs(nameof(ActionBuilderViewModel.SendComboKeysCollection)));
+    }
+
+    private void OnFunctionActionBuilderComboItemPropertyChanged(object? sender, PropertyChangedEventArgs e) =>
+        OnFunctionActionBuilderPropertyChanged(FunctionActionBuilder, new PropertyChangedEventArgs(nameof(ActionBuilderViewModel.SendComboKeysCollection)));
+
     private void LoadActionBuilderFromSelectedKey(EditableKeySlotVm? key)
     {
         _isLoadingActionBuilder = true;
@@ -839,6 +958,49 @@ public partial class LayoutEditorViewModel : ObservableObject
         {
             _isLoadingActionBuilder = false;
         }
+    }
+
+    private void LoadFunctionActionBuilderFromSelectedKey(EditableKeySlotVm? key)
+    {
+        _isLoadingFunctionActionBuilder = true;
+        try
+        {
+            FunctionActionBuilder.LoadFromAction(key?.FunctionAction);
+        }
+        finally
+        {
+            _isLoadingFunctionActionBuilder = false;
+        }
+    }
+
+    private string TryApplyLabelsFromVk(
+        KeyAction? action,
+        Action<(string Label, string? ShiftLabel, string? EnglishLabel)> applyMapped,
+        Action<string> applyDisplayOnly,
+        string targetLabel)
+    {
+        string? vk = action switch
+        {
+            SendKeyAction sendKey => sendKey.Vk,
+            _ => null
+        };
+
+        if (vk is null)
+            return "SendKey 액션이 아닙니다";
+
+        if (VkLabelMap.TryGetValue(vk, out var mapping))
+        {
+            applyMapped(mapping);
+            return $"{targetLabel} 자동 채움: {mapping.Label} / {mapping.EnglishLabel}";
+        }
+
+        if (ActionBuilderViewModel.KeyDisplayNameMap.TryGetValue(vk, out var displayName))
+        {
+            applyDisplayOnly(displayName);
+            return $"{targetLabel} 자동 채움: {displayName}";
+        }
+
+        return $"'{vk}'에 대한 라벨 매핑 없음";
     }
 
     private void AttachWorkingCopyObservers()
@@ -1085,6 +1247,11 @@ public partial class LayoutEditorViewModel : ObservableObject
                                 EditAction = CloneAction(k.Action),
                                 EnglishLabel = k.EnglishLabel,
                                 EnglishShiftLabel = k.EnglishShiftLabel,
+                                FunctionAction = CloneAction(k.FunctionAction),
+                                FunctionLabel = k.FunctionLabel,
+                                FunctionShiftLabel = k.FunctionShiftLabel,
+                                FunctionEnglishLabel = k.FunctionEnglishLabel,
+                                FunctionEnglishShiftLabel = k.FunctionEnglishShiftLabel,
                             }).ToList())
                     }).ToList() ?? [])
             }).ToList());
@@ -1097,7 +1264,9 @@ public partial class LayoutEditorViewModel : ObservableObject
                     column.Rows?.Select(row =>
                         new KeyRow(row.Keys.Select(slot =>
                             new KeySlot(slot.Label, slot.ShiftLabel, CloneAction(slot.Action), slot.Width,
-                                slot.Height, slot.StyleKey, slot.GapBefore, slot.EnglishLabel, slot.EnglishShiftLabel)).ToList()
+                                slot.Height, slot.StyleKey, slot.GapBefore, slot.EnglishLabel, slot.EnglishShiftLabel,
+                                CloneAction(slot.FunctionAction), slot.FunctionLabel, slot.FunctionShiftLabel,
+                                slot.FunctionEnglishLabel, slot.FunctionEnglishShiftLabel)).ToList()
                         )).ToList() ?? []
                 )).ToList() ?? []);
 
@@ -1113,6 +1282,7 @@ public partial class LayoutEditorViewModel : ObservableObject
         VolumeControlAction volume => new VolumeControlAction(volume.Direction, volume.Step),
         ClipboardPasteAction clipboard => new ClipboardPasteAction(clipboard.Text),
         ToggleKoreanSubmodeAction => new ToggleKoreanSubmodeAction(),
+        ToggleFunctionLayerAction => new ToggleFunctionLayerAction(),
         _ => action
     };
 

@@ -49,9 +49,15 @@ public class KeySlotVm(KeySlot slot, AutoCompleteService autoComplete) : Observa
     private bool _isSticky;
     private bool _isLocked;
     private bool _isA11yFocused;
+    private FunctionLayerState _functionLayerState;
+    private string? _autoCompleteComposeStateLabel;
+    private bool _showUpperCase;
     public bool IsSticky { get => _isSticky; set => SetProperty(ref _isSticky, value); }
     public bool IsLocked { get => _isLocked; set => SetProperty(ref _isLocked, value); }
     public bool IsA11yFocused { get => _isA11yFocused; set => SetProperty(ref _isA11yFocused, value); }
+    public bool IsFunctionOneShot => _functionLayerState == FunctionLayerState.OneShot;
+    public bool IsFunctionLocked => _functionLayerState == FunctionLayerState.Locked;
+    public bool HasFunctionLayerAccent => IsFunctionLayerToggle || Slot.FunctionAction is not null;
 
     public VirtualKeyCode? StickyVk =>
         Slot.Action is ToggleStickyAction ta &&
@@ -59,6 +65,7 @@ public class KeySlotVm(KeySlot slot, AutoCompleteService autoComplete) : Observa
             ? vk : null;
 
     public bool IsKoreanSubmodeToggle => Slot.Action is ToggleKoreanSubmodeAction;
+    public bool IsFunctionLayerToggle => Slot.Action is ToggleFunctionLayerAction;
 
     private InputSubmode _activeSubmode = InputSubmode.HangulJamo;
     public InputSubmode ActiveSubmode
@@ -100,18 +107,52 @@ public class KeySlotVm(KeySlot slot, AutoCompleteService autoComplete) : Observa
     public string SubLabelText { get; private set; } = "";
     public bool IsDimmed { get; private set; }
 
-    private string? _autoCompleteComposeStateLabel;
-    private bool _showUpperCase;
-
     public void RefreshDisplay()
     {
         DisplayLabel = GetLabel(_showUpperCase, _activeSubmode);
         SubLabelText = GetSubLabel(_showUpperCase);
+        ApplyFunctionLayerDisplay();
         IsDimmed = GetIsDimmed(_activeSubmode);
         OnPropertyChanged(nameof(DisplayLabel));
         OnPropertyChanged(nameof(SubLabelText));
         OnPropertyChanged(nameof(IsDimmed));
         OnPropertyChanged(nameof(AccessibleName));
+        OnPropertyChanged(nameof(AccessibleHelp));
+        OnPropertyChanged(nameof(AutomationId));
+    }
+
+    private void ApplyFunctionLayerDisplay()
+    {
+        if (_functionLayerState == FunctionLayerState.Inactive || IsFunctionLayerToggle || IsKoreanSubmodeToggle)
+            return;
+
+        if (_activeSubmode == InputSubmode.QuietEnglish && Slot.FunctionEnglishLabel is { Length: > 0 } fnEnglish)
+        {
+            DisplayLabel = _showUpperCase
+                ? (Slot.FunctionEnglishShiftLabel ?? fnEnglish.ToUpperInvariant())
+                : fnEnglish;
+        }
+        else if (_showUpperCase && Slot.FunctionShiftLabel is { Length: > 0 } fnShift)
+        {
+            DisplayLabel = fnShift;
+        }
+        else if (Slot.FunctionLabel is { Length: > 0 } fnLabel)
+        {
+            DisplayLabel = fnLabel;
+        }
+
+        if (_activeSubmode == InputSubmode.HangulJamo && Slot.FunctionEnglishLabel is { Length: > 0 } fnSubEnglish)
+        {
+            SubLabelText = _showUpperCase
+                ? (Slot.FunctionEnglishShiftLabel ?? fnSubEnglish.ToUpperInvariant())
+                : fnSubEnglish;
+        }
+        else if (_activeSubmode == InputSubmode.QuietEnglish && Slot.FunctionLabel is { Length: > 0 } fnSubLabel)
+        {
+            SubLabelText = _showUpperCase && Slot.FunctionShiftLabel is { Length: > 0 } fnSubShift
+                ? fnSubShift
+                : fnSubLabel;
+        }
     }
 
     public void SetShowUpperCase(bool value)
@@ -131,6 +172,17 @@ public class KeySlotVm(KeySlot slot, AutoCompleteService autoComplete) : Observa
             if (IsKoreanSubmodeToggle)
                 RefreshDisplay();
         }
+    }
+
+    public void SetFunctionLayerState(FunctionLayerState state)
+    {
+        if (_functionLayerState == state)
+            return;
+
+        _functionLayerState = state;
+        OnPropertyChanged(nameof(IsFunctionOneShot));
+        OnPropertyChanged(nameof(IsFunctionLocked));
+        RefreshDisplay();
     }
 
     public string GetSubLabel(bool upperCase)
@@ -160,10 +212,25 @@ public class KeySlotVm(KeySlot slot, AutoCompleteService autoComplete) : Observa
 
     public string AccessibleName => ComputeAccessibleName();
     public string AccessibleHelp => ComputeAccessibleHelp();
-    public string AutomationId   => Slot.Action?.GetType().Name ?? "UnknownAction";
+    public string AutomationId   => (_functionLayerState != FunctionLayerState.Inactive && Slot.FunctionAction is not null && !IsFunctionLayerToggle
+        ? Slot.FunctionAction
+        : Slot.Action)?.GetType().Name ?? "UnknownAction";
 
     private string ComputeAccessibleName()
     {
+        if (IsFunctionLayerToggle)
+        {
+            return _functionLayerState switch
+            {
+                FunctionLayerState.OneShot => "Fn 키, 한 번만 적용 상태",
+                FunctionLayerState.Locked => "Fn 키, 고정 상태",
+                _ => "Fn 키"
+            };
+        }
+
+        if (_functionLayerState != FunctionLayerState.Inactive && !string.IsNullOrWhiteSpace(DisplayLabel))
+            return $"{DisplayLabel} 키";
+
         if (Slot.Action is ToggleKoreanSubmodeAction)
         {
             return autoComplete.ActiveSubmode == InputSubmode.HangulJamo
@@ -191,6 +258,16 @@ public class KeySlotVm(KeySlot slot, AutoCompleteService autoComplete) : Observa
 
     private string ComputeAccessibleHelp()
     {
+        if (IsFunctionLayerToggle)
+        {
+            return _functionLayerState switch
+            {
+                FunctionLayerState.OneShot => "Fn 한 번만 적용",
+                FunctionLayerState.Locked => "Fn 고정 상태",
+                _ => "Fn 해제됨"
+            };
+        }
+
         if (IsSticky) return "일회성 고정 상태";
         if (IsLocked) return "영구 고정 상태";
         return "";
@@ -451,6 +528,7 @@ public partial class KeyboardViewModel : ObservableObject
         UpdateRowPixelHeights();
 
         _autoComplete.ResetState();
+        _inputService.ResetFunctionLayer();
         RefreshKeyLabels(_autoComplete.ActiveSubmode);
         ResetA11yNavigationState();
 
@@ -521,11 +599,26 @@ public partial class KeyboardViewModel : ObservableObject
     {
         _soundService.Play();
 
-        if (slot.Action is ToggleKoreanSubmodeAction)
+        KeyAction? effectiveAction = ResolveEffectiveAction(slot);
+        bool isFunctionToggleKey = slot.Action is ToggleFunctionLayerAction;
+        bool shouldConsumeFunctionLayer = false;
+
+        if (effectiveAction is ToggleKoreanSubmodeAction)
         {
             _autoComplete.ToggleKoreanSubmode();
             UpdateModifierState();
             KeyTapped?.Invoke();
+            return;
+        }
+
+        if (_inputService.IsFunctionLayerActive
+            && !isFunctionToggleKey
+            && slot.FunctionAction is not null)
+        {
+            if (effectiveAction is not null)
+                _inputService.HandleAction(effectiveAction);
+
+            FinalizeFunctionLayerKeypress(slot, effectiveAction is not null);
             return;
         }
 
@@ -540,26 +633,31 @@ public partial class KeyboardViewModel : ObservableObject
 
             if (IsSeparatorKey(slot))
             {
-                if (slot.Action is not null)
-                    _inputService.HandleAction(slot.Action);
+                if (effectiveAction is not null)
+                {
+                    _inputService.HandleAction(effectiveAction);
+                    shouldConsumeFunctionLayer = !isFunctionToggleKey;
+                }
             }
-            else if (slot.Action is not null)
+            else if (effectiveAction is not null)
             {
-                _inputService.HandleAction(slot.Action);
+                _inputService.HandleAction(effectiveAction);
+                shouldConsumeFunctionLayer = !isFunctionToggleKey;
             }
 
-            UpdateModifierState();
-            KeyTapped?.Invoke();
+            FinalizeFunctionLayerKeypress(slot, shouldConsumeFunctionLayer);
             return;
         }
 
         if (IsSeparatorKey(slot))
         {
             _autoComplete.OnSeparator();
-            if (slot.Action is not null)
-                _inputService.HandleAction(slot.Action);
-            UpdateModifierState();
-            KeyTapped?.Invoke();
+            if (effectiveAction is not null)
+            {
+                _inputService.HandleAction(effectiveAction);
+                shouldConsumeFunctionLayer = !isFunctionToggleKey;
+            }
+            FinalizeFunctionLayerKeypress(slot, shouldConsumeFunctionLayer);
             return;
         }
 
@@ -571,13 +669,37 @@ public partial class KeyboardViewModel : ObservableObject
             _inputService.TrackedOnScreenLength);
 
         bool handled = _autoComplete.OnKey(slot, ctx);
-        if (!handled && slot.Action is not null)
-            _inputService.HandleAction(slot.Action);
+        if (!handled && effectiveAction is not null)
+        {
+            _inputService.HandleAction(effectiveAction);
+            handled = true;
+        }
+
+        shouldConsumeFunctionLayer = handled && !isFunctionToggleKey;
+        FinalizeFunctionLayerKeypress(slot, shouldConsumeFunctionLayer);
+
+    }
+
+    private KeyAction? ResolveEffectiveAction(KeySlot slot)
+    {
+        if (_inputService.IsFunctionLayerActive
+            && slot.Action is not ToggleFunctionLayerAction
+            && slot.FunctionAction is not null)
+        {
+            return slot.FunctionAction;
+        }
+
+        return slot.Action;
+    }
+
+    private void FinalizeFunctionLayerKeypress(KeySlot slot, bool consumeFunctionLayer)
+    {
+        if (consumeFunctionLayer)
+            _inputService.ConsumeFunctionLayerAfterAction();
 
         UpdateModifierState();
         KeyTapped?.Invoke();
 
-        // L2: 키 라벨 TTS 읽기 (입력 처리 후 라벨 발화)
         var slotVm = EnumerateSlotVms().FirstOrDefault(vm => vm.Slot == slot);
         _accessibilityService.SpeakLabel(slotVm?.DisplayLabel ?? slot.Label);
     }
@@ -1006,6 +1128,7 @@ public partial class KeyboardViewModel : ObservableObject
                 {
                     keyVm.ActiveSubmode = submode;
                     keyVm.SetComposeStateLabel(_autoComplete.ComposeStateLabel);
+                    keyVm.SetFunctionLayerState(_inputService.FunctionLayerState);
                 }
     }
 
@@ -1038,6 +1161,7 @@ public partial class KeyboardViewModel : ObservableObject
                 slotVm.IsLocked = _inputService.IsCapsLockOn;
             }
 
+            slotVm.SetFunctionLayerState(_inputService.FunctionLayerState);
             slotVm.SetShowUpperCase(ShowUpperCase);
         }
     }

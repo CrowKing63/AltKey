@@ -18,6 +18,7 @@ namespace AltKey.Models;
 [JsonDerivedType(typeof(VolumeControlAction), "VolumeControl")]
 [JsonDerivedType(typeof(ClipboardPasteAction),"ClipboardPaste")]
 [JsonDerivedType(typeof(ToggleKoreanSubmodeAction), "ToggleKoreanSubmode")]
+[JsonDerivedType(typeof(ToggleFunctionLayerAction), "ToggleFunctionLayer")]
 [JsonDerivedType(typeof(AiAction),               "Ai")]
 public abstract record KeyAction;
 
@@ -52,6 +53,8 @@ public record ClipboardPasteAction(string Text) : KeyAction;
 /// "가/A" 토글 버튼이 트리거하는 액션.
 /// KeyboardViewModel.KeyPressed가 이 액션을 감지하면 KoreanInputModule.ToggleSubmode()를 호출한다.
 public sealed record ToggleKoreanSubmodeAction() : KeyAction;
+
+public sealed record ToggleFunctionLayerAction() : KeyAction;
 
 /// AI 텍스트 처리 액션.
 /// 선택된 텍스트를 Prompt에 따라 AI가 가공하여 결과로 대체합니다.

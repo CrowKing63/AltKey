@@ -81,6 +81,17 @@
                                            Visibility="Collapsed"
                                            IsHitTestVisible="False"
                                            AutomationProperties.Name=""/>
+                                <TextBlock x:Name="FunctionBadge"
+                                           Text="Fn"
+                                           FontSize="8"
+                                           FontWeight="Bold"
+                                           HorizontalAlignment="Left"
+                                           VerticalAlignment="Bottom"
+                                           Margin="4,0,0,2"
+                                           Foreground="{DynamicResource KeyFgAccent}"
+                                           Visibility="Collapsed"
+                                           IsHitTestVisible="False"
+                                           AutomationProperties.Name=""/>
                             </Grid>
                         </Border>
 
@@ -88,6 +99,16 @@
                         <Rectangle x:Name="StickyDashBorder"
                                    Stroke="{DynamicResource KeyFgSticky}"
                                    StrokeDashArray="2,2"
+                                   StrokeThickness="1.5"
+                                   Fill="Transparent"
+                                   RadiusX="8"
+                                   RadiusY="8"
+                                   Visibility="Collapsed"
+                                   IsHitTestVisible="False"
+                                   SnapsToDevicePixels="True"/>
+                        <Rectangle x:Name="FunctionDashBorder"
+                                   Stroke="{DynamicResource KeyBorderAccent}"
+                                   StrokeDashArray="3,2"
                                    StrokeThickness="1.5"
                                    Fill="Transparent"
                                    RadiusX="8"
@@ -255,6 +276,36 @@
                             <Setter TargetName="StickyBadge" Property="Visibility"
                                     Value="Collapsed"/>
                         </Trigger>
+
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="controls:KeyButton.IsFunctionOneShot" Value="True"/>
+                                <Condition Property="controls:KeyButton.HasFunctionLayerAccent" Value="True"/>
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="Root" Property="BorderBrush"
+                                    Value="{DynamicResource KeyBorderAccent}"/>
+                            <Setter TargetName="FunctionDashBorder" Property="Visibility"
+                                    Value="Visible"/>
+                            <Setter TargetName="FunctionBadge" Property="Visibility"
+                                    Value="Visible"/>
+                        </MultiTrigger>
+
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="controls:KeyButton.IsFunctionLocked" Value="True"/>
+                                <Condition Property="controls:KeyButton.HasFunctionLayerAccent" Value="True"/>
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="Root" Property="Background"
+                                    Value="{DynamicResource KeyBgAccent}"/>
+                            <Setter TargetName="Root" Property="BorderBrush"
+                                    Value="{DynamicResource KeyBorderAccent}"/>
+                            <Setter Property="Foreground"
+                                    Value="{DynamicResource KeyFgAccent}"/>
+                            <Setter TargetName="FunctionDashBorder" Property="Visibility"
+                                    Value="Visible"/>
+                            <Setter TargetName="FunctionBadge" Property="Visibility"
+                                    Value="Visible"/>
+                        </MultiTrigger>
 
                         <!-- 07: 가/A 서브모드 토글 키 강조 -->
                         <DataTrigger Binding="{Binding Slot.IsKoreanSubmodeToggle, RelativeSource={RelativeSource TemplatedParent}}" Value="True">

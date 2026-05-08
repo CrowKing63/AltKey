@@ -179,5 +179,9 @@
         <StackPanel Visibility="{Binding IsToggleKoreanSubmode, Converter={StaticResource BoolToVis}}">
             <TextBlock Text="한/영 입력 모드 전환 키 (파라미터 없음)" Style="{StaticResource HintText}"/>
         </StackPanel>
+
+        <StackPanel Visibility="{Binding IsToggleFunctionLayer, Converter={StaticResource BoolToVis}}">
+            <TextBlock Text="Fn 레이어 전환 키 (1회: 원샷, 2회: 고정, 3회: 해제)" Style="{StaticResource HintText}"/>
+        </StackPanel>
     </StackPanel>
 </UserControl>

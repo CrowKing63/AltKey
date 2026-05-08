@@ -132,4 +132,34 @@ public class InputServiceTests
         svc.TrySetMode(InputMode.VirtualKey);
         Assert.Equal(InputMode.VirtualKey, svc.Mode);
     }
+
+    [Fact]
+    public void ToggleFunctionLayer_cycles_oneShot_locked_inactive()
+    {
+        var svc = new TrackingInputService();
+
+        svc.ToggleFunctionLayer();
+        Assert.Equal(FunctionLayerState.OneShot, svc.FunctionLayerState);
+
+        svc.ToggleFunctionLayer();
+        Assert.Equal(FunctionLayerState.Locked, svc.FunctionLayerState);
+
+        svc.ToggleFunctionLayer();
+        Assert.Equal(FunctionLayerState.Inactive, svc.FunctionLayerState);
+    }
+
+    [Fact]
+    public void ConsumeFunctionLayerAfterAction_clears_only_oneShot()
+    {
+        var svc = new TrackingInputService();
+
+        svc.ToggleFunctionLayer();
+        svc.ConsumeFunctionLayerAfterAction();
+        Assert.Equal(FunctionLayerState.Inactive, svc.FunctionLayerState);
+
+        svc.ToggleFunctionLayer();
+        svc.ToggleFunctionLayer();
+        svc.ConsumeFunctionLayerAfterAction();
+        Assert.Equal(FunctionLayerState.Locked, svc.FunctionLayerState);
+    }
 }
