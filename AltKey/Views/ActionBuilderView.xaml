@@ -183,5 +183,12 @@
         <StackPanel Visibility="{Binding IsToggleFunctionLayer, Converter={StaticResource BoolToVis}}">
             <TextBlock Text="Fn 레이어 전환 키 (1회: 원샷, 2회: 고정, 3회: 해제)" Style="{StaticResource HintText}"/>
         </StackPanel>
+
+        <StackPanel Visibility="{Binding IsAi, Converter={StaticResource BoolToVis}}">
+            <TextBlock Text="AI 프롬프트 (비워 두면 설정의 기본 프롬프트 사용)" Style="{StaticResource HintText}"/>
+            <TextBox Text="{Binding AiPrompt, UpdateSourceTrigger=PropertyChanged}"
+                     AcceptsReturn="True" Height="72" TextWrapping="Wrap"
+                     Style="{StaticResource InputBox}"/>
+        </StackPanel>
     </StackPanel>
 </UserControl>

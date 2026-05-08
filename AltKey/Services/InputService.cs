@@ -53,6 +53,7 @@ public class InputService
     public event Action<InputMode>? ModeChanged;
     public event Action? StickyStateChanged;
     public event Action? ElevatedAppDetected;
+    public event Action<KeyAction>? SpecialActionRequested;
 
     public InputService()
     {
@@ -257,6 +258,10 @@ public class InputService
 
             case ToggleFunctionLayerAction:
                 ToggleFunctionLayer();
+                break;
+
+            case AiAction aiAction:
+                SpecialActionRequested?.Invoke(aiAction);
                 break;
 
             case RunAppAction { Path: var path, Args: var args }:

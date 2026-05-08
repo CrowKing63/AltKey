@@ -84,7 +84,7 @@ public partial class App : Application
 
     /// <summary>
     /// 시작 인자에서 직접 열 편집기를 판별해 해당 창 인스턴스를 반환합니다.
-    /// 지원 값: layout, dictionary, profile, ai-prompt
+    /// 지원 값: layout, dictionary, profile, ai-prompt, header-shortcut
     /// </summary>
     private static Window? CreateDirectToolWindow(string[] args)
     {
@@ -114,6 +114,13 @@ public partial class App : Application
         if (string.Equals(toolName, "ai-prompt", StringComparison.OrdinalIgnoreCase))
         {
             return new AiPromptEditorWindow();
+        }
+
+        if (string.Equals(toolName, "header-shortcut", StringComparison.OrdinalIgnoreCase))
+        {
+            var headerButtonId = GetArgumentValue(args, "--header-button-id");
+            var isCreateMode = string.Equals(GetArgumentValue(args, "--header-button-mode"), "create", StringComparison.OrdinalIgnoreCase);
+            return new HeaderShortcutEditorWindow(headerButtonId, isCreateMode);
         }
 
         return null;
@@ -159,6 +166,29 @@ public partial class App : Application
         for (var i = 0; i < args.Length; i++)
         {
             if (!string.Equals(args[i], "--data-dir", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            if (i + 1 < args.Length)
+            {
+                return args[i + 1];
+            }
+        }
+
+        return null;
+    }
+
+    private static string? GetArgumentValue(string[] args, string optionName)
+    {
+        if (args is null || args.Length == 0)
+        {
+            return null;
+        }
+
+        for (var i = 0; i < args.Length; i++)
+        {
+            if (!string.Equals(args[i], optionName, StringComparison.OrdinalIgnoreCase))
             {
                 continue;
             }

@@ -182,8 +182,9 @@
                                             Foreground="{DynamicResource TitleFg}"
                                             BorderThickness="0" Cursor="Hand" Focusable="False"
                                             Command="{Binding Command}"
-                                            ToolTip="{Binding Label}"
-                                            AutomationProperties.Name="{Binding Label}"
+                                            ToolTip="{Binding ToolTip}"
+                                            AutomationProperties.Name="{Binding AccessibleName}"
+                                            AutomationProperties.HelpText="{Binding AccessibleHelp}"
                                             Visibility="{Binding IsToggle, Converter={StaticResource InvBoolToVis}}">
                                         <TextBlock Text="{Binding Icon}" FontSize="{Binding FontSize}"/>
                                     </Button>
@@ -194,8 +195,9 @@
                                                   BorderThickness="0" Cursor="Hand" Focusable="False"
                                                   IsChecked="{Binding DataContext.AutoCompleteEnabled, Mode=TwoWay, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                   IsEnabled="{Binding DataContext.CanToggleAutoComplete, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                  ToolTip="{Binding Label}"
-                                                  AutomationProperties.Name="{Binding Label}"
+                                                  ToolTip="{Binding ToolTip}"
+                                                  AutomationProperties.Name="{Binding AccessibleName}"
+                                                  AutomationProperties.HelpText="{Binding AccessibleHelp}"
                                                   Visibility="{Binding IsToggle, Converter={StaticResource BoolToVis}}">
                                         <TextBlock Text="{Binding Icon}" FontWeight="Bold" FontSize="12"/>
                                     </ToggleButton>
@@ -274,8 +276,9 @@
                                             Foreground="{DynamicResource TitleFg}"
                                             BorderThickness="0" Cursor="Hand" Focusable="False"
                                             Command="{Binding Command}"
-                                            ToolTip="{Binding Label}"
-                                            AutomationProperties.Name="{Binding Label}"
+                                            ToolTip="{Binding ToolTip}"
+                                            AutomationProperties.Name="{Binding AccessibleName}"
+                                            AutomationProperties.HelpText="{Binding AccessibleHelp}"
                                             Visibility="{Binding IsToggle, Converter={StaticResource InvBoolToVis}}">
                                         <TextBlock Text="{Binding Icon}" FontSize="{Binding FontSize}"/>
                                     </Button>
@@ -286,8 +289,9 @@
                                                   BorderThickness="0" Cursor="Hand" Focusable="False"
                                                   IsChecked="{Binding DataContext.AutoCompleteEnabled, Mode=TwoWay, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                   IsEnabled="{Binding DataContext.CanToggleAutoComplete, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                  ToolTip="{Binding Label}"
-                                                  AutomationProperties.Name="{Binding Label}"
+                                                  ToolTip="{Binding ToolTip}"
+                                                  AutomationProperties.Name="{Binding AccessibleName}"
+                                                  AutomationProperties.HelpText="{Binding AccessibleHelp}"
                                                   Visibility="{Binding IsToggle, Converter={StaticResource BoolToVis}}">
                                         <TextBlock Text="{Binding Icon}" FontWeight="Bold" FontSize="12"/>
                                     </ToggleButton>

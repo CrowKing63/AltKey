@@ -52,6 +52,10 @@ public class ConfigService
                 Current.HeaderButtons = HeaderButtonConfig.CreateDefaults();
                 Save();
             }
+            else
+            {
+                NormalizeHeaderButtons();
+            }
         }
         catch
         {
@@ -119,6 +123,35 @@ public class ConfigService
             LegacyDefaultLayoutPlusName => CurrentDefaultLayoutPlusName,
             _ => layoutName ?? CurrentDefaultLayoutName
         };
+    }
+
+    /// <summary>
+    /// 과거 버전 설정 파일에도 새 상단바 속성을 안전하게 채워 넣습니다.
+    /// 기존 기본 버튼은 Kind가 비어 있어도 BuiltIn으로 해석하고, 커스텀 버튼은 최소 식별 정보를 보정합니다.
+    /// </summary>
+    private void NormalizeHeaderButtons()
+    {
+        foreach (var button in Current.HeaderButtons)
+        {
+            button.Position = HeaderButtonConfig.NormalizePosition(button.Position);
+            button.DisplayMode = HeaderButtonDisplayMode.IconOnly;
+
+            if (button.Kind == HeaderButtonKind.BuiltIn && !HeaderButtonConfig.IsBuiltInId(button.Id))
+            {
+                button.Kind = HeaderButtonKind.Custom;
+            }
+
+            if (button.Kind == HeaderButtonKind.Custom)
+            {
+                if (string.IsNullOrWhiteSpace(button.Id))
+                    button.Id = HeaderButtonConfig.CreateCustomDefault().Id;
+
+                button.IconText = string.IsNullOrWhiteSpace(button.IconText) ? "새" : button.IconText.Trim();
+                button.Tooltip = string.IsNullOrWhiteSpace(button.Tooltip) ? "커스텀 상단바 단축키" : button.Tooltip.Trim();
+                button.AccessibleName = string.IsNullOrWhiteSpace(button.AccessibleName) ? button.Tooltip : button.AccessibleName.Trim();
+                button.CustomAction ??= new SendKeyAction("VK_A");
+            }
+        }
     }
 
     /// <summary>

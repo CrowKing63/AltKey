@@ -16,6 +16,7 @@ public partial class MainWindow : Window
     private UserDictionaryEditorWindow? _userDictionaryEditorWindow;
     private ProfileMappingEditorWindow? _profileMappingEditorWindow;
     private AiPromptEditorWindow? _aiPromptEditorWindow;
+    private HeaderShortcutEditorWindow? _headerShortcutEditorWindow;
 
     public MainWindow()
     {
@@ -30,7 +31,7 @@ public partial class MainWindow : Window
 
     /// <summary>
     /// 시작 인자에서 도구 이름을 읽어, 메인 앱에서 특정 편집기로 바로 열 수 있게 합니다.
-    /// 지원 값: "layout", "dictionary", "profile", "ai-prompt"
+    /// 지원 값: "layout", "dictionary", "profile", "ai-prompt", "header-shortcut"
     /// </summary>
     public void ApplyStartupArguments(string[] args)
     {
@@ -47,6 +48,9 @@ public partial class MainWindow : Window
 
         Loaded += (_, _) =>
         {
+            var headerButtonId = GetArgumentValue(args, "--header-button-id");
+            var createNewHeaderButton = string.Equals(GetArgumentValue(args, "--header-button-mode"), "create", StringComparison.OrdinalIgnoreCase);
+
             if (string.Equals(toolName, "layout", StringComparison.OrdinalIgnoreCase))
             {
                 OpenLayoutEditorWindow(attachOwner: false);
@@ -73,6 +77,13 @@ public partial class MainWindow : Window
             {
                 OpenAiPromptEditorWindow(attachOwner: false);
                 Close();
+                return;
+            }
+
+            if (string.Equals(toolName, "header-shortcut", StringComparison.OrdinalIgnoreCase))
+            {
+                OpenHeaderShortcutEditorWindow(attachOwner: false, headerButtonId, createNewHeaderButton);
+                Close();
             }
         };
     }
@@ -85,6 +96,24 @@ public partial class MainWindow : Window
         for (var i = 0; i < args.Length; i++)
         {
             if (!string.Equals(args[i], "--tool", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            if (i + 1 < args.Length)
+            {
+                return args[i + 1];
+            }
+        }
+
+        return null;
+    }
+
+    private static string? GetArgumentValue(string[] args, string optionName)
+    {
+        for (var i = 0; i < args.Length; i++)
+        {
+            if (!string.Equals(args[i], optionName, StringComparison.OrdinalIgnoreCase))
             {
                 continue;
             }
@@ -218,6 +247,33 @@ public partial class MainWindow : Window
         }
         _aiPromptEditorWindow.Closed += (_, _) => _aiPromptEditorWindow = null;
         _aiPromptEditorWindow.Show();
+    }
+
+    /// <summary>
+    /// 상단바 단축키 편집기를 엽니다.
+    /// 메인 앱 설정 탭에서는 특정 버튼 편집 인자를 주고, 허브에서는 일반 편집기로 진입할 수 있습니다.
+    /// </summary>
+    private void OnOpenHeaderShortcutEditor(object sender, RoutedEventArgs e)
+    {
+        OpenHeaderShortcutEditorWindow(attachOwner: true, headerButtonId: null, createNew: false);
+    }
+
+    private void OpenHeaderShortcutEditorWindow(bool attachOwner, string? headerButtonId, bool createNew)
+    {
+        if (_headerShortcutEditorWindow is { IsLoaded: true })
+        {
+            _headerShortcutEditorWindow.Activate();
+            return;
+        }
+
+        _headerShortcutEditorWindow = new HeaderShortcutEditorWindow(headerButtonId, createNew);
+        if (attachOwner)
+        {
+            _headerShortcutEditorWindow.Owner = this;
+        }
+
+        _headerShortcutEditorWindow.Closed += (_, _) => _headerShortcutEditorWindow = null;
+        _headerShortcutEditorWindow.Show();
     }
 
     /// <summary>

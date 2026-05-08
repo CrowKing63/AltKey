@@ -1256,6 +1256,7 @@ public partial class LayoutEditorViewModel : ObservableObject
         ClipboardPasteAction clipboard => new ClipboardPasteAction(clipboard.Text),
         ToggleKoreanSubmodeAction => new ToggleKoreanSubmodeAction(),
         ToggleFunctionLayerAction => new ToggleFunctionLayerAction(),
+        AiAction ai => new AiAction(ai.Prompt),
         _ => action
     };
 

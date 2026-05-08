@@ -109,13 +109,27 @@
                                Text="긴 문장 프롬프트를 읽기 쉬운 형태로 편집합니다."
                                TextWrapping="Wrap"
                                AutomationProperties.Name="AI 프롬프트 편집기 설명" />
+
+                    <Button x:Name="HeaderShortcutEditorButton"
+                            Margin="0,10,0,8"
+                            HorizontalAlignment="Stretch"
+                            TabIndex="4"
+                            Content="상단바 단축키 편집기 열기"
+                            Click="OnOpenHeaderShortcutEditor"
+                            AutomationProperties.Name="상단바 단축키 편집기 열기 버튼"
+                            AutomationProperties.HelpText="상단바 커스텀 단축키의 아이콘, 툴팁, 액션을 편집하는 창으로 이동합니다." />
+                    <TextBlock Margin="2,0,0,0"
+                               Foreground="{DynamicResource SettingsFgSub}"
+                               Text="커스텀 상단바 버튼의 아이콘형 텍스트, 툴팁, 접근성 이름, 실행 액션을 수정합니다."
+                               TextWrapping="Wrap"
+                               AutomationProperties.Name="상단바 단축키 편집기 설명" />
                 </StackPanel>
             </Border>
 
             <Button Grid.Row="3"
                     Margin="0,16,0,0"
                     HorizontalAlignment="Right"
-                    TabIndex="4"
+                    TabIndex="5"
                     Content="닫기 (Esc)"
                     Click="OnClose"
                     AutomationProperties.Name="도구 창 닫기 버튼"

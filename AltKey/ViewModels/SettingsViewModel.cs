@@ -150,6 +150,12 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private ObservableCollection<HeaderButtonConfig> headerButtons = [];
 
+    public IEnumerable<HeaderButtonConfig> BuiltInHeaderButtons =>
+        HeaderButtons.Where(button => button.Kind == HeaderButtonKind.BuiltIn);
+
+    public IEnumerable<HeaderButtonConfig> CustomHeaderButtons =>
+        HeaderButtons.Where(button => button.Kind == HeaderButtonKind.Custom);
+
     // T-5.12: 관리자 권한 실행 여부
     public bool IsRunningAsAdmin { get; } = System.Security.Principal.WindowsIdentity.GetCurrent() is { } identity
         && new System.Security.Principal.WindowsPrincipal(identity).IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator);
@@ -214,7 +220,9 @@ public partial class SettingsViewModel : ObservableObject
 
     private void OnConfigChanged(string? propertyName)
     {
-        if (propertyName is not nameof(AppConfig.AiDefaultPrompt) and not nameof(AppConfig.Profiles))
+        if (propertyName is not nameof(AppConfig.AiDefaultPrompt)
+            and not nameof(AppConfig.Profiles)
+            and not nameof(AppConfig.HeaderButtons))
         {
             return;
         }
@@ -304,6 +312,7 @@ public partial class SettingsViewModel : ObservableObject
              // 상단바 설정
              HeaderButtons = new ObservableCollection<HeaderButtonConfig>(
                  c.HeaderButtons.Select(CloneHeaderButtonConfig));
+             RaiseHeaderButtonCollectionChanged();
 
             // T-8.5: 프로필
             Profiles = new ObservableCollection<ProfileEntry>(
@@ -716,22 +725,98 @@ public partial class SettingsViewModel : ObservableObject
     private static HeaderButtonConfig CloneHeaderButtonConfig(HeaderButtonConfig source) => new()
     {
         Id = source.Id,
+        Kind = source.Kind,
         Visible = source.Visible,
-        Position = string.Equals(source.Position, "Left", StringComparison.OrdinalIgnoreCase) ? "Left" : "Right"
+        Position = HeaderButtonConfig.NormalizePosition(source.Position),
+        DisplayMode = HeaderButtonDisplayMode.IconOnly,
+        IconText = source.IconText,
+        Tooltip = source.Tooltip,
+        AccessibleName = source.AccessibleName,
+        CustomAction = CloneKeyAction(source.CustomAction)
     };
+
+    private static KeyAction? CloneKeyAction(KeyAction? action) => action switch
+    {
+        SendKeyAction sendKey => new SendKeyAction(sendKey.Vk),
+        SendComboAction sendCombo => new SendComboAction(sendCombo.Keys.ToList()),
+        ToggleStickyAction sticky => new ToggleStickyAction(sticky.Vk),
+        SwitchLayoutAction switchLayout => new SwitchLayoutAction(switchLayout.Name),
+        RunAppAction runApp => new RunAppAction(runApp.Path, runApp.Args),
+        BoilerplateAction boilerplate => new BoilerplateAction(boilerplate.Text),
+        ShellCommandAction shell => new ShellCommandAction(shell.Command, shell.Shell),
+        VolumeControlAction volume => new VolumeControlAction(volume.Direction, volume.Step),
+        ClipboardPasteAction clipboard => new ClipboardPasteAction(clipboard.Text),
+        ToggleKoreanSubmodeAction => new ToggleKoreanSubmodeAction(),
+        ToggleFunctionLayerAction => new ToggleFunctionLayerAction(),
+        AiAction ai => new AiAction(ai.Prompt),
+        _ => null
+    };
+
+    private static string GetHeaderButtonDisplayName(HeaderButtonConfig item)
+    {
+        if (item.Kind == HeaderButtonKind.BuiltIn)
+        {
+            return HeaderButtonConfig.GetDisplayName(item.Id);
+        }
+
+        return string.IsNullOrWhiteSpace(item.Tooltip) ? "커스텀 단축키" : item.Tooltip;
+    }
+
+    public string DescribeHeaderButton(HeaderButtonConfig item) => GetHeaderButtonDisplayName(item);
+
+    public string DescribeHeaderButtonAction(HeaderButtonConfig item)
+    {
+        if (item.Kind == HeaderButtonKind.BuiltIn)
+        {
+            return HeaderButtonConfig.GetBuiltInTooltip(item.Id);
+        }
+
+        return item.CustomAction switch
+        {
+            SendKeyAction sendKey => sendKey.Vk,
+            SendComboAction sendCombo => string.Join(" + ", sendCombo.Keys),
+            ToggleStickyAction sticky => $"{sticky.Vk} 고정 토글",
+            SwitchLayoutAction switchLayout => $"{switchLayout.Name} 레이아웃 전환",
+            RunAppAction runApp => runApp.Path,
+            BoilerplateAction => "텍스트 입력",
+            ShellCommandAction => "셸 명령 실행",
+            VolumeControlAction volume => $"볼륨 {volume.Direction}",
+            ClipboardPasteAction => "클립보드 붙여넣기",
+            ToggleKoreanSubmodeAction => "한국어/영어 모드 전환",
+            ToggleFunctionLayerAction => "Fn 레이어 전환",
+            AiAction => "AI 텍스트 처리",
+            _ => "액션 미지정"
+        };
+    }
+
+    private void RaiseHeaderButtonCollectionChanged()
+    {
+        OnPropertyChanged(nameof(BuiltInHeaderButtons));
+        OnPropertyChanged(nameof(CustomHeaderButtons));
+    }
 
     [RelayCommand]
     private void MoveHeaderButtonUp(HeaderButtonConfig item)
     {
         var idx = HeaderButtons.IndexOf(item);
-        if (idx > 0) { HeaderButtons.Move(idx, idx - 1); SaveHeaderButtons(); }
+        if (idx > 0)
+        {
+            HeaderButtons.Move(idx, idx - 1);
+            RaiseHeaderButtonCollectionChanged();
+            SaveHeaderButtons();
+        }
     }
 
     [RelayCommand]
     private void MoveHeaderButtonDown(HeaderButtonConfig item)
     {
         var idx = HeaderButtons.IndexOf(item);
-        if (idx >= 0 && idx < HeaderButtons.Count - 1) { HeaderButtons.Move(idx, idx + 1); SaveHeaderButtons(); }
+        if (idx >= 0 && idx < HeaderButtons.Count - 1)
+        {
+            HeaderButtons.Move(idx, idx + 1);
+            RaiseHeaderButtonCollectionChanged();
+            SaveHeaderButtons();
+        }
     }
     [RelayCommand]
     private void ToggleHeaderButtonPosition(HeaderButtonConfig item)
@@ -742,6 +827,7 @@ public partial class SettingsViewModel : ObservableObject
         // HeaderButtonConfig는 ObservableObject가 아니므로 컬렉션을 재할당해 UI를 갱신합니다.
         HeaderButtons = new ObservableCollection<HeaderButtonConfig>(
             HeaderButtons.Select(CloneHeaderButtonConfig));
+        RaiseHeaderButtonCollectionChanged();
 
         SaveHeaderButtons();
     }
@@ -751,6 +837,53 @@ public partial class SettingsViewModel : ObservableObject
     {
         if (_isLoading) return;
         _configService.Update(c => c.HeaderButtons = HeaderButtons.Select(CloneHeaderButtonConfig).ToList(), "HeaderButtons");
+    }
+
+    [RelayCommand]
+    private void AddCustomHeaderButton()
+    {
+        LaunchTools("header-shortcut", "--header-button-mode create");
+    }
+
+    [RelayCommand]
+    private void EditCustomHeaderButton(HeaderButtonConfig? item)
+    {
+        if (item is null || item.Kind != HeaderButtonKind.Custom)
+            return;
+
+        LaunchTools("header-shortcut", $"--header-button-id \"{item.Id}\"");
+    }
+
+    [RelayCommand]
+    private void DuplicateCustomHeaderButton(HeaderButtonConfig? item)
+    {
+        if (item is null || item.Kind != HeaderButtonKind.Custom)
+            return;
+
+        var copy = CloneHeaderButtonConfig(item);
+        copy.Id = HeaderButtonConfig.CreateCustomDefault().Id;
+        copy.Tooltip = string.IsNullOrWhiteSpace(copy.Tooltip) ? "커스텀 단축키 복사본" : $"{copy.Tooltip} 복사본";
+        copy.AccessibleName = string.IsNullOrWhiteSpace(copy.AccessibleName) ? copy.Tooltip : $"{copy.AccessibleName} 복사본";
+
+        var index = HeaderButtons.IndexOf(item);
+        if (index < 0)
+            HeaderButtons.Add(copy);
+        else
+            HeaderButtons.Insert(index + 1, copy);
+
+        RaiseHeaderButtonCollectionChanged();
+        SaveHeaderButtons();
+    }
+
+    [RelayCommand]
+    private void RemoveCustomHeaderButton(HeaderButtonConfig? item)
+    {
+        if (item is null || item.Kind != HeaderButtonKind.Custom)
+            return;
+
+        HeaderButtons.Remove(item);
+        RaiseHeaderButtonCollectionChanged();
+        SaveHeaderButtons();
     }
 
     // ── 설정 창 열기 (싱글톤) ──────────────────────────────────────────────
@@ -877,9 +1010,9 @@ public partial class SettingsViewModel : ObservableObject
 
     /// <summary>
     /// 편집 도구 앱(AltKey.Tools)을 실행합니다.
-    /// toolName은 layout/dictionary/profile/ai-prompt 값을 권장하며, 값이 없으면 도구 홈 화면을 엽니다.
+    /// toolName은 layout/dictionary/profile/ai-prompt/header-shortcut 값을 권장하며, 값이 없으면 도구 홈 화면을 엽니다.
     /// </summary>
-    private static void LaunchTools(string? toolName)
+    private static void LaunchTools(string? toolName, string? extraArguments = null)
     {
         var toolsExePath = PathResolver.ToolsExePath;
         if (!File.Exists(toolsExePath))
@@ -897,10 +1030,11 @@ public partial class SettingsViewModel : ObservableObject
         {
             // 개발 환경에서는 도구 앱이 별도 bin 폴더에서 실행되므로, 메인 앱과 같은 데이터 폴더를 명시적으로 전달합니다.
             var toolArgument = string.IsNullOrWhiteSpace(toolName) ? "" : $"--tool {toolName}";
+            var extraArgument = string.IsNullOrWhiteSpace(extraArguments) ? "" : extraArguments.Trim();
             var dataDirArgument = $"--data-dir \"{PathResolver.DataDir}\"";
-            var arguments = string.IsNullOrWhiteSpace(toolArgument)
-                ? dataDirArgument
-                : $"{toolArgument} {dataDirArgument}";
+            var argumentParts = new[] { toolArgument, extraArgument, dataDirArgument }
+                .Where(part => !string.IsNullOrWhiteSpace(part));
+            var arguments = string.Join(" ", argumentParts);
             var process = Process.Start(new ProcessStartInfo
             {
                 FileName = toolsExePath,

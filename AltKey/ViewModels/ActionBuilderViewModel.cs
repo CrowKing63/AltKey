@@ -72,7 +72,7 @@ public partial class ActionBuilderViewModel : ObservableObject
     [
         "SendKey", "SendCombo", "ToggleSticky", "SwitchLayout",
         "RunApp", "Boilerplate", "ShellCommand", "VolumeControl", "ClipboardPaste",
-        "ToggleKoreanSubmode", "ToggleFunctionLayer"
+        "ToggleKoreanSubmode", "ToggleFunctionLayer", "Ai"
     ];
 
     public static IReadOnlyList<string> ShellTypes  { get; } = ["cmd", "powershell"];
@@ -117,6 +117,7 @@ public partial class ActionBuilderViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(IsClipboardPaste))]
     [NotifyPropertyChangedFor(nameof(IsToggleKoreanSubmode))]
     [NotifyPropertyChangedFor(nameof(IsToggleFunctionLayer))]
+    [NotifyPropertyChangedFor(nameof(IsAi))]
     private string selectedActionType = "SendKey";
 
     // ── Visibility 계산 프로퍼티 ───────────────────────────────────────────────
@@ -131,6 +132,7 @@ public partial class ActionBuilderViewModel : ObservableObject
     public bool IsClipboardPaste       => SelectedActionType == "ClipboardPaste";
     public bool IsToggleKoreanSubmode  => SelectedActionType == "ToggleKoreanSubmode";
     public bool IsToggleFunctionLayer  => SelectedActionType == "ToggleFunctionLayer";
+    public bool IsAi                   => SelectedActionType == "Ai";
 
     // ── 각 타입별 파라미터 ─────────────────────────────────────────────────────
 
@@ -164,6 +166,9 @@ public partial class ActionBuilderViewModel : ObservableObject
 
     // ClipboardPaste
     [ObservableProperty] private string clipboardText = "";
+
+    // Ai
+    [ObservableProperty] private string aiPrompt = "";
 
     // ── 기존 KeyAction 에서 로드 ───────────────────────────────────────────────
     public void LoadFromAction(KeyAction? action)
@@ -216,6 +221,10 @@ public partial class ActionBuilderViewModel : ObservableObject
             case ToggleFunctionLayerAction:
                 SelectedActionType = "ToggleFunctionLayer";
                 break;
+            case AiAction a:
+                SelectedActionType = "Ai";
+                AiPrompt = a.Prompt;
+                break;
             default:
                 SelectedActionType = "SendKey";
                 break;
@@ -238,6 +247,7 @@ public partial class ActionBuilderViewModel : ObservableObject
         "ClipboardPaste"      => new ClipboardPasteAction(ClipboardText),
         "ToggleKoreanSubmode" => new ToggleKoreanSubmodeAction(),
         "ToggleFunctionLayer" => new ToggleFunctionLayerAction(),
+        "Ai"                  => new AiAction(AiPrompt),
         _                     => null
     };
 

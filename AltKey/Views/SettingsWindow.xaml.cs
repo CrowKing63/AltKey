@@ -77,6 +77,7 @@ public partial class SettingsWindow : Window
         FrameworkElement? primary = tab.Header?.ToString() switch
         {
             "외형" => AppearanceFirstFocusable,
+            "상단바" => TopBarFirstFocusable,
             "동작" => BehaviorFirstFocusable,
             "보조기능" => A11yFirstFocusable,
             "고급" => AdvancedFirstFocusable,

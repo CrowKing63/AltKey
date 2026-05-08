@@ -236,6 +236,7 @@ public partial class MainViewModel : ObservableObject
 
         _profileService.ForegroundAppChanged += OnForegroundAppChanged;
         _configService.ConfigChanged += OnConfigChanged;
+        _inputService.SpecialActionRequested += OnSpecialActionRequested;
         Keyboard.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == nameof(KeyboardViewModel.A11yFocusOwner))
@@ -530,7 +531,12 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private async Task ExecuteAi()
     {
-        if (IsAiProcessing || !_configService.Current.AiEnabled) return;
+        await ExecuteAiCoreAsync("");
+    }
+
+    private async Task ExecuteAiCoreAsync(string prompt)
+    {
+        if (IsAiProcessing) return;
         IsAiProcessing = true;
         _aiCts = new CancellationTokenSource();
         var ct = _aiCts.Token;
@@ -556,7 +562,7 @@ public partial class MainViewModel : ObservableObject
             { _liveRegion.Announce("선택된 텍스트가 없습니다"); return; }
 
             _liveRegion.Announce("AI 처리 중...");
-            var result = await _aiService.ProcessTextAsync(selectedText, "", ct);
+            var result = await _aiService.ProcessTextAsync(selectedText, prompt, ct);
 
             await WpfApp.Current.Dispatcher.InvokeAsync(() =>
                 ClipboardHelper.SetTextWithRetry(result));
@@ -583,6 +589,14 @@ public partial class MainViewModel : ObservableObject
 
     [RelayCommand] private void CancelAi() => _aiCts?.Cancel();
 
+    private void OnSpecialActionRequested(KeyAction action)
+    {
+        if (action is AiAction aiAction)
+        {
+            _ = ExecuteAiCoreAsync(aiAction.Prompt);
+        }
+    }
+
     // ── 상단바 동적 버튼 ─────────────────────────────────────────
 
     [ObservableProperty] private ObservableCollection<HeaderButtonVm> headerButtonsLeft = [];
@@ -602,7 +616,7 @@ public partial class MainViewModel : ObservableObject
         foreach (var cfg in configs)
         {
             if (!cfg.Visible) continue;
-            var vm = CreateHeaderButtonVm(cfg.Id);
+            var vm = CreateHeaderButtonVm(cfg);
             if (vm is null) continue;
             if (cfg.Position == "Left") left.Add(vm); else right.Add(vm);
         }
@@ -610,18 +624,117 @@ public partial class MainViewModel : ObservableObject
         HeaderButtonsRight = right;
     }
 
-    private HeaderButtonVm? CreateHeaderButtonVm(string id) => id switch
+    private HeaderButtonVm? CreateHeaderButtonVm(HeaderButtonConfig config)
     {
-        HeaderButtonConfig.IdClipboard => new() { Id=id, Icon="\ud83d\udccb", Label="\ud074\ub9bd\ubcf4\ub4dc", Command=ToggleClipboardPanelCommand },
-        HeaderButtonConfig.IdEmoji => new() { Id=id, Icon="\ud83d\ude0a", Label="\uc774\ubaa8\uc9c0", Command=ToggleEmojiPanelCommand },
-        HeaderButtonConfig.IdAutoComplete => new() { Id=id, Icon="AC", Label="\uc790\ub3d9\uc644\uc131", IsToggle=true },
-        HeaderButtonConfig.IdOsIme => new() { Id=id, Icon="\ud55c/\uc601", Label="OS IME", Command=SendOsImeHangulCommand, Width=40, FontSize=10 },
-        HeaderButtonConfig.IdOsk => new() { Id=id, Icon="\u2328", Label="\ud654\uba74 \ud0a4\ubcf4\ub4dc", Command=SendOskCommand },
-        HeaderButtonConfig.IdSettings => new() { Id=id, Icon="\u2699", Label="\uc124\uc815", Command=Settings.OpenSettingsCommand },
-        HeaderButtonConfig.IdAi => _configService.Current.AiEnabled
-            ? new() { Id=id, Icon="\u2728", Label="AI", Command=ExecuteAiCommand } : null,
-        _ => null
-    };
+        if (config.Kind == HeaderButtonKind.Custom)
+        {
+            return CreateCustomHeaderButtonVm(config);
+        }
+
+        return config.Id switch
+        {
+            HeaderButtonConfig.IdClipboard => CreateBuiltInHeaderButtonVm(config, ToggleClipboardPanelCommand),
+            HeaderButtonConfig.IdEmoji => CreateBuiltInHeaderButtonVm(config, ToggleEmojiPanelCommand),
+            HeaderButtonConfig.IdAutoComplete => CreateBuiltInHeaderButtonVm(config, command: null, isToggle: true),
+            HeaderButtonConfig.IdOsIme => CreateBuiltInHeaderButtonVm(config, SendOsImeHangulCommand, width: 40, fontSize: 10),
+            HeaderButtonConfig.IdOsk => CreateBuiltInHeaderButtonVm(config, SendOskCommand),
+            HeaderButtonConfig.IdSettings => CreateBuiltInHeaderButtonVm(config, Settings.OpenSettingsCommand),
+            HeaderButtonConfig.IdAi => _configService.Current.AiEnabled
+                ? CreateBuiltInHeaderButtonVm(config, ExecuteAiCommand)
+                : null,
+            _ => null
+        };
+    }
+
+    private HeaderButtonVm CreateBuiltInHeaderButtonVm(
+        HeaderButtonConfig config,
+        System.Windows.Input.ICommand? command,
+        bool isToggle = false,
+        double width = 32,
+        double fontSize = 14)
+    {
+        return new HeaderButtonVm
+        {
+            Id = config.Id,
+            Icon = HeaderButtonConfig.GetBuiltInIconText(config.Id),
+            Label = HeaderButtonConfig.GetDisplayName(config.Id),
+            ToolTip = HeaderButtonConfig.GetBuiltInTooltip(config.Id),
+            AccessibleName = HeaderButtonConfig.GetBuiltInAccessibleName(config.Id),
+            AccessibleHelp = BuildHeaderActionHelp(config.CustomAction, config.Id),
+            Command = command,
+            IsToggle = isToggle,
+            Width = width,
+            FontSize = fontSize
+        };
+    }
+
+    private HeaderButtonVm? CreateCustomHeaderButtonVm(HeaderButtonConfig config)
+    {
+        if (config.CustomAction is null)
+            return null;
+
+        return new HeaderButtonVm
+        {
+            Id = config.Id,
+            Icon = string.IsNullOrWhiteSpace(config.IconText) ? "새" : config.IconText,
+            Label = HeaderButtonConfig.GetDisplayName(config.Id),
+            ToolTip = string.IsNullOrWhiteSpace(config.Tooltip) ? "커스텀 상단바 단축키" : config.Tooltip,
+            AccessibleName = string.IsNullOrWhiteSpace(config.AccessibleName) ? config.Tooltip : config.AccessibleName,
+            AccessibleHelp = BuildHeaderActionHelp(config.CustomAction, null),
+            Command = new RelayCommand(() => ExecuteHeaderButtonAction(config.CustomAction)),
+            Width = 32,
+            FontSize = 12
+        };
+    }
+
+    private void ExecuteHeaderButtonAction(KeyAction? action)
+    {
+        if (action is null)
+            return;
+
+        if (action is ToggleKoreanSubmodeAction)
+        {
+            _autoCompleteService.ToggleKoreanSubmode();
+            return;
+        }
+
+        _inputService.HandleAction(action);
+    }
+
+    private static string BuildHeaderActionHelp(KeyAction? action, string? builtInId)
+    {
+        if (builtInId is not null)
+        {
+            return builtInId switch
+            {
+                HeaderButtonConfig.IdClipboard => "클립보드 패널을 엽니다.",
+                HeaderButtonConfig.IdEmoji => "이모지 패널을 엽니다.",
+                HeaderButtonConfig.IdAutoComplete => "자동완성을 켜거나 끕니다.",
+                HeaderButtonConfig.IdOsIme => "OS IME에 한영 전환 신호를 보냅니다.",
+                HeaderButtonConfig.IdOsk => "화면 키보드를 엽니다.",
+                HeaderButtonConfig.IdSettings => "설정 창을 엽니다.",
+                HeaderButtonConfig.IdAi => "선택한 텍스트를 AI로 가공합니다.",
+                _ => ""
+            };
+        }
+
+        return action switch
+        {
+            SendKeyAction sendKey => $"{sendKey.Vk} 키를 보냅니다.",
+            SendComboAction sendCombo => $"{string.Join(" + ", sendCombo.Keys)} 조합키를 보냅니다.",
+            ToggleStickyAction sticky => $"{sticky.Vk} 고정 상태를 전환합니다.",
+            SwitchLayoutAction switchLayout => $"{switchLayout.Name} 레이아웃으로 전환합니다.",
+            RunAppAction runApp => $"{runApp.Path} 프로그램을 실행합니다.",
+            BoilerplateAction => "미리 지정한 텍스트를 입력합니다.",
+            ShellCommandAction => "셸 명령을 실행합니다.",
+            VolumeControlAction volume => $"볼륨을 {volume.Direction} 방향으로 조절합니다.",
+            ClipboardPasteAction => "지정한 텍스트를 클립보드로 붙여넣습니다.",
+            ToggleKoreanSubmodeAction => "AltKey 내부 한국어/영어 입력 모드를 전환합니다.",
+            ToggleFunctionLayerAction => "Fn 레이어 상태를 전환합니다.",
+            AiAction => "선택한 텍스트를 AI로 가공합니다.",
+            _ => ""
+        };
+    }
 
     // T-5.4: 앱 프로필 자동 전환
     private void OnForegroundAppChanged(string processName)
@@ -645,6 +758,9 @@ public class HeaderButtonVm : ObservableObject
     public string Id { get; init; } = "";
     public string Icon { get; init; } = "";
     public string Label { get; init; } = "";
+    public string ToolTip { get; init; } = "";
+    public string AccessibleName { get; init; } = "";
+    public string AccessibleHelp { get; init; } = "";
     public System.Windows.Input.ICommand? Command { get; init; }
     public bool IsToggle { get; init; }
     public double Width { get; init; } = 32;

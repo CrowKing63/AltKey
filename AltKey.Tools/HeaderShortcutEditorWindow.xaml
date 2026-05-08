@@ -1,0 +1,134 @@
+<Window x:Class="AltKey.Tools.HeaderShortcutEditorWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:views="clr-namespace:AltKey.Views;assembly=AltKey"
+        Title="상단바 단축키 편집기"
+        Width="820"
+        Height="760"
+        MinWidth="700"
+        MinHeight="620"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource SettingsBg}"
+        KeyboardNavigation.TabNavigation="Cycle"
+        AutomationProperties.Name="상단바 단축키 편집기 창">
+    <Window.Resources>
+        <Style TargetType="Button" BasedOn="{StaticResource FluentButtonStyle}"/>
+        <Style TargetType="TextBox" BasedOn="{StaticResource FluentTextBoxStyle}"/>
+        <Style TargetType="ComboBox" BasedOn="{StaticResource FluentComboBoxStyle}"/>
+    </Window.Resources>
+
+    <Border Margin="14"
+            Padding="16"
+            Background="{DynamicResource SettingsBg}"
+            BorderBrush="{DynamicResource SettingsBorder}"
+            BorderThickness="1"
+            CornerRadius="12">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <Border Grid.Row="0" Style="{StaticResource FluentCardBorderStyle}" Margin="0,0,0,10">
+                <TextBlock FontSize="22"
+                           FontWeight="SemiBold"
+                           Text="{Binding WindowTitle}"
+                           AutomationProperties.Name="상단바 단축키 편집기 제목"/>
+            </Border>
+
+            <Border Grid.Row="1" Style="{StaticResource FluentCardBorderStyle}" Margin="0,0,0,10">
+                <StackPanel>
+                    <TextBlock Text="아이콘만 보이는 상단바 버튼을 편집합니다. 툴팁과 접근성 이름은 자세히 적을수록 사용성이 좋아집니다."
+                               TextWrapping="Wrap"
+                               AutomationProperties.Name="상단바 단축키 편집 안내"/>
+                    <TextBlock Text="액션 종류와 파라미터는 아래 액션 빌더에서 설정합니다."
+                               Margin="0,4,0,0"
+                               Foreground="{DynamicResource SettingsFgSub}"
+                               TextWrapping="Wrap"
+                               AutomationProperties.Name="상단바 단축키 액션 안내"/>
+                </StackPanel>
+            </Border>
+
+            <ScrollViewer Grid.Row="2"
+                          VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled">
+                <StackPanel>
+                    <Border Style="{StaticResource FluentCardBorderStyle}" Margin="0,0,0,10">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Grid.ColumnSpan="2" Text="버튼 기본 정보" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,10"/>
+
+                            <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,10,8">
+                                <TextBlock Text="상단바 아이콘형 텍스트" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
+                                <TextBox x:Name="IconTextBox"
+                                         Text="{Binding IconText, UpdateSourceTrigger=PropertyChanged}"
+                                         AutomationProperties.Name="상단바 아이콘형 텍스트 입력"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,0,0,8">
+                                <TextBlock Text="배치 위치" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
+                                <ComboBox ItemsSource="{Binding Positions}"
+                                          SelectedItem="{Binding SelectedPosition}"
+                                          AutomationProperties.Name="상단바 배치 위치 선택"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,0,0,8">
+                                <TextBlock Text="툴팁 문구" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
+                                <TextBox Text="{Binding TooltipText, UpdateSourceTrigger=PropertyChanged}"
+                                         AutomationProperties.Name="상단바 툴팁 입력"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Row="3" Grid.Column="0" Margin="0,0,10,0">
+                                <TextBlock Text="스크린리더 이름" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
+                                <TextBox Text="{Binding AccessibleNameText, UpdateSourceTrigger=PropertyChanged}"
+                                         AutomationProperties.Name="상단바 스크린리더 이름 입력"/>
+                            </StackPanel>
+
+                            <CheckBox Grid.Row="3" Grid.Column="1"
+                                      Content="상단바에 표시"
+                                      IsChecked="{Binding IsHeaderButtonVisible}"
+                                      VerticalAlignment="Center"
+                                      AutomationProperties.Name="상단바 표시 여부"/>
+                        </Grid>
+                    </Border>
+
+                    <Border Style="{StaticResource FluentCardBorderStyle}">
+                        <StackPanel>
+                            <TextBlock Text="실행 액션" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,10"/>
+                            <views:ActionBuilderView DataContext="{Binding ActionBuilder}"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+
+            <StackPanel Grid.Row="3"
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Right"
+                        Margin="0,12,0,0">
+                <Button Content="저장"
+                        Width="96"
+                        Height="34"
+                        Margin="0,0,8,0"
+                        Click="OnSave"
+                        AutomationProperties.Name="상단바 단축키 저장 버튼"/>
+                <Button Content="닫기 (Esc)"
+                        Width="120"
+                        Height="34"
+                        Click="OnClose"
+                        AutomationProperties.Name="상단바 단축키 닫기 버튼"/>
+            </StackPanel>
+        </Grid>
+    </Border>
+</Window>

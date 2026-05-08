@@ -14,6 +14,7 @@ public sealed class ToolsReloadSignalService : IDisposable
     private const string ReloadBigramDataEventName = "AltKey.Tools.ReloadBigramData";
     private const string ReloadProfilesEventName = "AltKey.Tools.ReloadProfiles";
     private const string ReloadAiSettingsEventName = "AltKey.Tools.ReloadAiSettings";
+    private const string ReloadHeaderButtonsEventName = "AltKey.Tools.ReloadHeaderButtons";
 
     private readonly LayoutService _layoutService;
     private readonly ConfigService _configService;
@@ -25,12 +26,14 @@ public sealed class ToolsReloadSignalService : IDisposable
     private readonly EventWaitHandle _reloadBigramDataEvent;
     private readonly EventWaitHandle _reloadProfilesEvent;
     private readonly EventWaitHandle _reloadAiSettingsEvent;
+    private readonly EventWaitHandle _reloadHeaderButtonsEvent;
 
     private readonly RegisteredWaitHandle _reloadLayoutsWaitHandle;
     private readonly RegisteredWaitHandle _reloadUserDictionaryWaitHandle;
     private readonly RegisteredWaitHandle _reloadBigramDataWaitHandle;
     private readonly RegisteredWaitHandle _reloadProfilesWaitHandle;
     private readonly RegisteredWaitHandle _reloadAiSettingsWaitHandle;
+    private readonly RegisteredWaitHandle _reloadHeaderButtonsWaitHandle;
 
     public ToolsReloadSignalService(
         ConfigService configService,
@@ -48,6 +51,7 @@ public sealed class ToolsReloadSignalService : IDisposable
         _reloadBigramDataEvent = new EventWaitHandle(false, EventResetMode.AutoReset, ReloadBigramDataEventName);
         _reloadProfilesEvent = new EventWaitHandle(false, EventResetMode.AutoReset, ReloadProfilesEventName);
         _reloadAiSettingsEvent = new EventWaitHandle(false, EventResetMode.AutoReset, ReloadAiSettingsEventName);
+        _reloadHeaderButtonsEvent = new EventWaitHandle(false, EventResetMode.AutoReset, ReloadHeaderButtonsEventName);
 
         _reloadLayoutsWaitHandle = ThreadPool.RegisterWaitForSingleObject(
             _reloadLayoutsEvent,
@@ -92,6 +96,13 @@ public sealed class ToolsReloadSignalService : IDisposable
             null,
             Timeout.Infinite,
             false);
+
+        _reloadHeaderButtonsWaitHandle = ThreadPool.RegisterWaitForSingleObject(
+            _reloadHeaderButtonsEvent,
+            (_, _) => System.Windows.Application.Current.Dispatcher.BeginInvoke(() => _configService.ReloadFromDiskAndNotify(nameof(Models.AppConfig.HeaderButtons))),
+            null,
+            Timeout.Infinite,
+            false);
     }
 
     /// <summary>도구 앱에서 레이아웃 저장 후 메인 앱이 목록과 UI를 다시 계산하게 합니다.</summary>
@@ -108,6 +119,9 @@ public sealed class ToolsReloadSignalService : IDisposable
 
     /// <summary>AI 프롬프트처럼 한글 입력이 필요한 설정을 외부 편집기에서 저장한 뒤 메인 앱 설정을 다시 읽게 합니다.</summary>
     public static void NotifyReloadAiSettings() => Signal(ReloadAiSettingsEventName);
+
+    /// <summary>상단바 버튼 설정을 외부 편집기에서 저장한 뒤 메인 앱과 설정 창이 즉시 다시 읽게 합니다.</summary>
+    public static void NotifyReloadHeaderButtons() => Signal(ReloadHeaderButtonsEventName);
 
     private static void Signal(string eventName)
     {
@@ -129,11 +143,13 @@ public sealed class ToolsReloadSignalService : IDisposable
         _reloadBigramDataWaitHandle.Unregister(_reloadBigramDataEvent);
         _reloadProfilesWaitHandle.Unregister(_reloadProfilesEvent);
         _reloadAiSettingsWaitHandle.Unregister(_reloadAiSettingsEvent);
+        _reloadHeaderButtonsWaitHandle.Unregister(_reloadHeaderButtonsEvent);
 
         _reloadLayoutsEvent.Dispose();
         _reloadUserDictionaryEvent.Dispose();
         _reloadBigramDataEvent.Dispose();
         _reloadProfilesEvent.Dispose();
         _reloadAiSettingsEvent.Dispose();
+        _reloadHeaderButtonsEvent.Dispose();
     }
 }
