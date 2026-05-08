@@ -15,6 +15,9 @@ namespace AltKey.ViewModels;
 
 public partial class EditableKeySlotVm : ObservableObject
 {
+    public const double DefaultHeightRatio = 1.0;
+    public const double CompactHeightRatio = 2.0 / 3.0;
+
     // 접근성/가시성: 기본 키와 살짝 다른 톤을 줄 때 사용하는 내부 style_key 값입니다.
     public const string SoftAccentStyleKey = "soft_accent";
 
@@ -34,6 +37,7 @@ public partial class EditableKeySlotVm : ObservableObject
     [ObservableProperty] private string  editLabel       = "";
     [ObservableProperty] private string? editShiftLabel;
     [ObservableProperty] private double  editWidth       = 1.0;
+    [ObservableProperty] private double  editHeight      = DefaultHeightRatio;
     [ObservableProperty] private double  editGapBefore   = 0.0;
     [ObservableProperty] private KeyAction? editAction;
     [ObservableProperty] private string  editStyleKey    = "";
@@ -50,7 +54,7 @@ public partial class EditableKeySlotVm : ObservableObject
 
     /// 편집 결과를 KeySlot 레코드로 변환
     public KeySlot ToKeySlot() =>
-        new(EditLabel, EditShiftLabel, EditAction, EditWidth, 1.0,
+        new(EditLabel, EditShiftLabel, EditAction, EditWidth, EditHeight,
             SupportsAccentStyle && UseSoftAccentStyle ? SoftAccentStyleKey : "", EditGapBefore, EnglishLabel, EnglishShiftLabel);
 
     partial void OnEditActionChanged(KeyAction? value)
@@ -92,8 +96,26 @@ public partial class EditableKeySlotVm : ObservableObject
 
 public partial class EditableKeyRowVm : ObservableObject
 {
+    [ObservableProperty] private int sharedRowIndex;
+    [ObservableProperty] private double heightRatio = EditableKeySlotVm.DefaultHeightRatio;
+
     [ObservableProperty]
     private ObservableCollection<EditableKeySlotVm> keys = [];
+
+    /// <summary>
+    /// 행 높이는 첫 버전에서 기본/낮음 두 단계만 허용합니다.
+    /// 숫자열처럼 얇은 줄을 빠르게 만들 수 있게 하되, 자유 수치 편집은 나중 단계로 남겨 둡니다.
+    /// </summary>
+    public string HeightPresetLabel =>
+        Math.Abs(HeightRatio - EditableKeySlotVm.CompactHeightRatio) < 0.001 ? "낮음" : "기본";
+
+    public void ApplyHeight(double heightRatio)
+    {
+        HeightRatio = heightRatio;
+        foreach (var key in Keys)
+            key.EditHeight = heightRatio;
+        OnPropertyChanged(nameof(HeightPresetLabel));
+    }
 
     public KeyRow ToKeyRow() => new(Keys.Select(k => k.ToKeySlot()).ToList());
 }
@@ -382,6 +404,7 @@ public partial class LayoutEditorViewModel : ObservableObject
     {
         var newColumn = new EditableKeyColumnVm { Gap = 0 };
         Columns.Add(newColumn);
+        NormalizeSharedRowHeights();
         SelectedColumn = newColumn;
         StatusMessage = "열 추가됨";
     }
@@ -443,6 +466,7 @@ public partial class LayoutEditorViewModel : ObservableObject
             }
             // 행을 이동한 후 열 제거
             ExecuteRemoveColumn(_pendingDeleteColumn, clearSelection: true);
+            NormalizeSharedRowHeights();
             _pendingDeleteColumn = null;
         }
         ShowColumnDeleteDialog = false;
@@ -476,6 +500,7 @@ public partial class LayoutEditorViewModel : ObservableObject
             SelectedColumn = null;
 
         Columns.Remove(column);
+        NormalizeSharedRowHeights();
         StatusMessage = "열 삭제됨";
     }
 
@@ -495,6 +520,7 @@ public partial class LayoutEditorViewModel : ObservableObject
 
         var newRow = new EditableKeyRowVm();
         targetColumn.Rows.Add(newRow);
+        NormalizeSharedRowHeights();
         SelectedColumn = targetColumn;
         SelectedRow = newRow;
         StatusMessage = "행 추가됨";
@@ -518,7 +544,22 @@ public partial class LayoutEditorViewModel : ObservableObject
             }
         }
 
+        NormalizeSharedRowHeights();
         StatusMessage = "행 삭제됨";
+    }
+
+    [RelayCommand]
+    private void SetRowDefaultHeight(EditableKeyRowVm row)
+    {
+        ApplySharedHeightToRowBand(row, EditableKeySlotVm.DefaultHeightRatio);
+        StatusMessage = "행 높이를 기본으로 되돌림";
+    }
+
+    [RelayCommand]
+    private void SetRowCompactHeight(EditableKeyRowVm row)
+    {
+        ApplySharedHeightToRowBand(row, EditableKeySlotVm.CompactHeightRatio);
+        StatusMessage = "행 높이를 낮게 조정함";
     }
 
     // ── 키 추가/삭제/이동 ─────────────────────────────────────────────────
@@ -561,7 +602,11 @@ public partial class LayoutEditorViewModel : ObservableObject
     [RelayCommand]
     private void AddKeyToRow(EditableKeyRowVm row)
     {
-        row.Keys.Add(new EditableKeySlotVm { EditLabel = "Key" });
+        row.Keys.Add(new EditableKeySlotVm
+        {
+            EditLabel = "Key",
+            EditHeight = row.HeightRatio
+        });
     }
 
     [RelayCommand]
@@ -961,6 +1006,7 @@ public partial class LayoutEditorViewModel : ObservableObject
             CurrentFileName = snapshot.CurrentFileName;
             LayoutName = snapshot.Layout.Name;
             Columns = BuildEditableColumns(snapshot.Layout);
+            NormalizeSharedRowHeights();
             SelectedColumn = null;
             SelectedRow = null;
             SelectedKey = null;
@@ -1011,19 +1057,28 @@ public partial class LayoutEditorViewModel : ObservableObject
         if (config.Columns is not { Count: > 0 })
             return [];
 
+        var sharedRowHeights = BuildSharedRowHeights(config);
+
         return new ObservableCollection<EditableKeyColumnVm>(
             config.Columns.Select(col => new EditableKeyColumnVm
             {
                 Gap = col.Gap,
                 Rows = new ObservableCollection<EditableKeyRowVm>(
-                    col.Rows?.Select(r => new EditableKeyRowVm
+                    col.Rows?.Select((r, rowIndex) => new EditableKeyRowVm
                     {
+                        SharedRowIndex = rowIndex,
+                        HeightRatio = sharedRowHeights.TryGetValue(rowIndex, out var rowHeight)
+                            ? rowHeight
+                            : EditableKeySlotVm.DefaultHeightRatio,
                         Keys = new ObservableCollection<EditableKeySlotVm>(
                             r.Keys.Select(k => new EditableKeySlotVm
                             {
                                 EditLabel = k.Label,
                                 EditShiftLabel = k.ShiftLabel,
                                 EditWidth = k.Width,
+                                EditHeight = sharedRowHeights.TryGetValue(rowIndex, out var slotHeight)
+                                    ? slotHeight
+                                    : NormalizeHeight(k.Height),
                                 EditGapBefore = k.GapBefore,
                                 EditStyleKey = k.StyleKey,
                                 UseSoftAccentStyle = string.Equals(k.StyleKey, EditableKeySlotVm.SoftAccentStyleKey, StringComparison.Ordinal),
@@ -1069,6 +1124,87 @@ public partial class LayoutEditorViewModel : ObservableObject
 
     private LayoutConfig BuildLayoutConfig() =>
         new(LayoutName, null, Columns.Select(c => c.ToKeyColumn()).ToList());
+
+    /// <summary>
+    /// 같은 행 번호는 모든 열에서 같은 높이로 다루므로, 편집기 안에서도 행 인덱스를 다시 계산해
+    /// 공통 높이를 맞춰 둡니다. 새 열/행 추가나 삭제 뒤에 보조 열만 어긋나는 일을 막기 위한 정리 단계입니다.
+    /// </summary>
+    private void NormalizeSharedRowHeights()
+    {
+        for (int columnIndex = 0; columnIndex < Columns.Count; columnIndex++)
+        {
+            var column = Columns[columnIndex];
+            for (int rowIndex = 0; rowIndex < column.Rows.Count; rowIndex++)
+                column.Rows[rowIndex].SharedRowIndex = rowIndex;
+        }
+
+        foreach (var entry in BuildSharedRowHeightMap())
+        {
+            foreach (var row in FindRowsBySharedIndex(entry.Key))
+                row.ApplyHeight(entry.Value);
+        }
+    }
+
+    private void ApplySharedHeightToRowBand(EditableKeyRowVm sourceRow, double heightRatio)
+    {
+        foreach (var row in FindRowsBySharedIndex(sourceRow.SharedRowIndex))
+            row.ApplyHeight(heightRatio);
+    }
+
+    private IEnumerable<EditableKeyRowVm> FindRowsBySharedIndex(int sharedRowIndex) =>
+        Columns.SelectMany(column => column.Rows)
+            .Where(row => row.SharedRowIndex == sharedRowIndex);
+
+    private Dictionary<int, double> BuildSharedRowHeightMap()
+    {
+        var result = new Dictionary<int, double>();
+
+        foreach (var row in Columns.SelectMany(column => column.Rows))
+        {
+            var normalizedHeight = NormalizeHeight(row.HeightRatio);
+            if (!result.TryGetValue(row.SharedRowIndex, out var existing)
+                || normalizedHeight < existing)
+            {
+                result[row.SharedRowIndex] = normalizedHeight;
+            }
+        }
+
+        return result;
+    }
+
+    private static Dictionary<int, double> BuildSharedRowHeights(LayoutConfig config)
+    {
+        var result = new Dictionary<int, double>();
+        if (config.Columns is null)
+            return result;
+
+        foreach (var column in config.Columns)
+        {
+            if (column.Rows is null)
+                continue;
+
+            for (int rowIndex = 0; rowIndex < column.Rows.Count; rowIndex++)
+            {
+                var row = column.Rows[rowIndex];
+                var rowHeight = row.Keys.Count > 0
+                    ? NormalizeHeight(row.Keys[0].Height)
+                    : EditableKeySlotVm.DefaultHeightRatio;
+
+                if (!result.TryGetValue(rowIndex, out var existing)
+                    || rowHeight < existing)
+                {
+                    result[rowIndex] = rowHeight;
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private static double NormalizeHeight(double heightRatio) =>
+        Math.Abs(heightRatio - EditableKeySlotVm.CompactHeightRatio) < 0.001
+            ? EditableKeySlotVm.CompactHeightRatio
+            : EditableKeySlotVm.DefaultHeightRatio;
 
     private static int CountSoftAccentKeys(LayoutConfig config) =>
         config.Columns?

@@ -12,7 +12,22 @@ namespace AltKey.ViewModels;
 /// <summary>
 /// [역할] 키보드의 한 줄(행)을 나타내며, 그 줄에 포함된 키들의 목록을 가집니다.
 /// </summary>
-public record KeyRowVm(IReadOnlyList<KeySlotVm> Keys);
+public partial class KeyRowVm : ObservableObject
+{
+    public KeyRowVm(int sharedRowIndex, double heightRatio, IReadOnlyList<KeySlotVm> keys)
+    {
+        SharedRowIndex = sharedRowIndex;
+        HeightRatio = heightRatio;
+        Keys = keys;
+    }
+
+    public int SharedRowIndex { get; }
+    public double HeightRatio { get; }
+    public IReadOnlyList<KeySlotVm> Keys { get; }
+
+    [ObservableProperty]
+    private double pixelHeight;
+}
 
 /// <summary>
 /// [역할] 키보드의 한 열(세로 줄)을 나타내며, 열 사이의 간격과 그 안의 행들을 관리합니다.
@@ -283,6 +298,7 @@ public partial class KeyboardViewModel : ObservableObject
 
     /// 빈 행을 포함해 모든 행이 확보해야 할 픽셀 높이 (KeyUnit + 키 Margin 상하 합)
     public double KeyRowHeight => KeyUnit + 4.0;
+    public double TotalRowUnits => Math.Max(1.0, GetSharedRowHeightMap().Values.Sum());
 
     /// 추천 칩 자체 높이입니다. 창 배율이 커지면 KeyUnit을 따라 함께 커지고, 큰 텍스트 모드에서도 글자가 눌리지 않도록 최소 높이를 둡니다.
     /// 너무 이른 구간에서 최소값이 먼저 걸리면 축소 배율에서 칩만 덜 줄어드니, 기본 모드에서는 조금 더 낮은 하한을 사용합니다.
@@ -306,7 +322,9 @@ public partial class KeyboardViewModel : ObservableObject
 
     partial void OnKeyUnitChanged(double value)
     {
+        UpdateRowPixelHeights();
         OnPropertyChanged(nameof(KeyRowHeight));
+        OnPropertyChanged(nameof(TotalRowUnits));
         OnPropertyChanged(nameof(SuggestionChipHeight));
         OnPropertyChanged(nameof(SuggestionBarHeight));
     }
@@ -322,6 +340,7 @@ public partial class KeyboardViewModel : ObservableObject
             MaxRowUnits = 15.0;
             MaxRowCount = 14.0;
             RowCount    = 5.0;
+            UpdateRowPixelHeights();
             return;
         }
 
@@ -349,6 +368,8 @@ public partial class KeyboardViewModel : ObservableObject
         MaxRowUnits = Math.Max(1, totalUnits);
         MaxRowCount = Math.Max(1, totalKeys);
         RowCount    = Math.Max(1, maxRows);
+        UpdateRowPixelHeights();
+        OnPropertyChanged(nameof(TotalRowUnits));
     }
 
     [ObservableProperty]
@@ -410,10 +431,13 @@ public partial class KeyboardViewModel : ObservableObject
     {
         if (layout.Columns is { Count: > 0 })
         {
+            var sharedRowHeights = BuildSharedRowHeights(layout);
             Columns = new ObservableCollection<KeyColumnVm>(
                 layout.Columns.Select(col => new KeyColumnVm(
                     col.Gap,
-                    col.Rows?.Select(r => new KeyRowVm(
+                    col.Rows?.Select((r, rowIndex) => new KeyRowVm(
+                        rowIndex,
+                        sharedRowHeights.TryGetValue(rowIndex, out var rowHeight) ? rowHeight : 1.0,
                         r.Keys.Select(k => new KeySlotVm(k, _autoComplete)).ToList()
                     )).ToList() ?? []
                 ))
@@ -424,6 +448,8 @@ public partial class KeyboardViewModel : ObservableObject
             Columns = [];
         }
 
+        UpdateRowPixelHeights();
+
         _autoComplete.ResetState();
         RefreshKeyLabels(_autoComplete.ActiveSubmode);
         ResetA11yNavigationState();
@@ -432,6 +458,57 @@ public partial class KeyboardViewModel : ObservableObject
         if (_configService.Current.SwitchScanEnabled)
             StartScan();
     }
+
+    private void UpdateRowPixelHeights()
+    {
+        var sharedRowHeights = GetSharedRowHeightMap();
+        foreach (var row in Columns.SelectMany(column => column.Rows))
+        {
+            var sharedHeight = sharedRowHeights.TryGetValue(row.SharedRowIndex, out var heightRatio)
+                ? heightRatio
+                : row.HeightRatio;
+            row.PixelHeight = sharedHeight * KeyUnit + 4.0;
+        }
+    }
+
+    private Dictionary<int, double> GetSharedRowHeightMap() =>
+        Columns.SelectMany(column => column.Rows)
+            .GroupBy(row => row.SharedRowIndex)
+            .ToDictionary(group => group.Key, group => group.Min(row => row.HeightRatio));
+
+    private static Dictionary<int, double> BuildSharedRowHeights(LayoutConfig layout)
+    {
+        var result = new Dictionary<int, double>();
+        if (layout.Columns is null)
+            return result;
+
+        foreach (var column in layout.Columns)
+        {
+            if (column.Rows is null)
+                continue;
+
+            for (int rowIndex = 0; rowIndex < column.Rows.Count; rowIndex++)
+            {
+                var row = column.Rows[rowIndex];
+                var heightRatio = row.Keys.Count > 0
+                    ? NormalizeHeight(row.Keys[0].Height)
+                    : EditableKeySlotVm.DefaultHeightRatio;
+
+                if (!result.TryGetValue(rowIndex, out var existing)
+                    || heightRatio < existing)
+                {
+                    result[rowIndex] = heightRatio;
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private static double NormalizeHeight(double heightRatio) =>
+        Math.Abs(heightRatio - EditableKeySlotVm.CompactHeightRatio) < 0.001
+            ? EditableKeySlotVm.CompactHeightRatio
+            : EditableKeySlotVm.DefaultHeightRatio;
 
     public event Action? KeyTapped;
 

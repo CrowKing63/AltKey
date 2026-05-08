@@ -53,7 +53,8 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
                 {
                     if (e.PropertyName is nameof(KeyboardViewModel.MaxRowUnits)
                                        or nameof(KeyboardViewModel.MaxRowCount)
-                                       or nameof(KeyboardViewModel.RowCount))
+                                       or nameof(KeyboardViewModel.RowCount)
+                                       or nameof(KeyboardViewModel.TotalRowUnits))
                     {
                         Dispatcher.InvokeAsync(() => ApplyScale());
                     }
@@ -141,6 +142,7 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
         double units  = Math.Max(1, vm.Keyboard.MaxRowUnits);
         double wKeys  = Math.Max(1, vm.Keyboard.MaxRowCount);
         double rows   = Math.Max(1, vm.Keyboard.RowCount);
+        double rowUnits = Math.Max(1, vm.Keyboard.TotalRowUnits);
 
         double availW = windowWidth - KbHorizontalPad;
         double availH = KeyboardBorder.ActualHeight - KbVerticalPad;
@@ -148,7 +150,7 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
         if (availH < 1) return;
 
         double kW = (availW - wKeys * KeyMargin) / units;
-        double kH = (availH - rows * KeyMargin) / rows;
+        double kH = (availH - rows * KeyMargin) / rowUnits;
 
         vm.Keyboard.KeyUnit = Math.Max(MinKeyUnit, Math.Min(MaxKeyUnit, Math.Min(kW, kH)));
     }
@@ -164,12 +166,13 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
         double units  = Math.Max(1, vm.Keyboard.MaxRowUnits);
         double wKeys  = Math.Max(1, vm.Keyboard.MaxRowCount);
         double rows   = Math.Max(1, vm.Keyboard.RowCount);
+        double rowUnits = Math.Max(1, vm.Keyboard.TotalRowUnits);
 
         double baseW = units * BaseKeyUnit
                      + wKeys * KeyMargin
                      + KbHorizontalPad;
 
-        double keyboardH = rows * BaseKeyUnit
+        double keyboardH = rowUnits * BaseKeyUnit
                          + rows * KeyMargin
                          + KbVerticalPad;
 

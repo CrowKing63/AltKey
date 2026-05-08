@@ -373,8 +373,7 @@
                                         <DataTemplate DataType="{x:Type vm:KeyRowVm}">
                                             <ItemsControl ItemsSource="{Binding Keys}"
                                                           HorizontalAlignment="Center"
-                                                          MinHeight="{Binding DataContext.Keyboard.KeyRowHeight,
-                                                              RelativeSource={RelativeSource AncestorType=UserControl}}">
+                                                          MinHeight="{Binding PixelHeight}">
                                                 <ItemsControl.ItemsPanel>
                                                     <ItemsPanelTemplate>
                                                         <StackPanel Orientation="Horizontal"/>
