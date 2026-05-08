@@ -19,7 +19,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": null,
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "`",
@@ -28,12 +33,17 @@
                 "type": "SendKey",
                 "vk": "VK_OEM_3"
               },
-              "width": 1,
+              "width": 0.8,
               "height": 1,
               "style_key": "",
               "gap_before": 0,
               "english_label": null,
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "1",
@@ -47,7 +57,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": null,
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "2",
@@ -61,7 +76,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": null,
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "3",
@@ -75,7 +95,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": null,
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "4",
@@ -89,7 +114,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": null,
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "5",
@@ -103,7 +133,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": null,
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "6",
@@ -117,7 +152,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": null,
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "7",
@@ -131,7 +171,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": null,
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "8",
@@ -145,7 +190,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": null,
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "9",
@@ -159,7 +209,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": null,
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "0",
@@ -173,7 +228,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": null,
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "-",
@@ -187,7 +247,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": null,
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "=",
@@ -201,7 +266,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": null,
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "⌫",
@@ -215,7 +285,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": null,
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             }
           ]
         },
@@ -233,7 +308,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": null,
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "ㅂ",
@@ -247,7 +327,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": "q",
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "ㅈ",
@@ -261,7 +346,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": "w",
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "ㄷ",
@@ -275,7 +365,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": "e",
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "ㄱ",
@@ -289,7 +384,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": "r",
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "ㅅ",
@@ -303,7 +403,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": "t",
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "ㅛ",
@@ -317,7 +422,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": "y",
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "ㅕ",
@@ -331,7 +441,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": "u",
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "ㅑ",
@@ -345,7 +460,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": "i",
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "ㅐ",
@@ -359,7 +479,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": "o",
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "ㅔ",
@@ -373,7 +498,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": "p",
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "[",
@@ -387,7 +517,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": null,
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "]",
@@ -401,7 +536,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": null,
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "\\",
@@ -410,12 +550,17 @@
                 "type": "SendKey",
                 "vk": "VK_OEM_5"
               },
-              "width": 1.8,
+              "width": 1.7,
               "height": 1,
               "style_key": "",
               "gap_before": 0,
               "english_label": null,
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             }
           ]
         },
@@ -433,7 +578,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": null,
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "ㅁ",
@@ -447,7 +597,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": "a",
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "ㄴ",
@@ -461,7 +616,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": "s",
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "ㅇ",
@@ -475,7 +635,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": "d",
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "ㄹ",
@@ -489,7 +654,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": "f",
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "ㅎ",
@@ -503,7 +673,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": "g",
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "ㅗ",
@@ -517,7 +692,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": "h",
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "ㅓ",
@@ -531,7 +711,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": "j",
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "ㅏ",
@@ -545,7 +730,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": "k",
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "ㅣ",
@@ -559,7 +749,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": "l",
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": ";",
@@ -573,7 +768,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": null,
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "'",
@@ -587,7 +787,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": null,
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "Enter",
@@ -596,12 +801,17 @@
                 "type": "SendKey",
                 "vk": "VK_RETURN"
               },
-              "width": 2.5,
+              "width": 2.4,
               "height": 1,
               "style_key": "",
               "gap_before": 0,
               "english_label": null,
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             }
           ]
         },
@@ -619,7 +829,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": null,
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "ㅋ",
@@ -633,7 +848,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": "z",
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "ㅌ",
@@ -647,7 +867,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": "x",
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "ㅊ",
@@ -661,7 +886,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": "c",
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "ㅍ",
@@ -675,7 +905,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": "v",
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "ㅠ",
@@ -689,7 +924,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": "b",
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "ㅜ",
@@ -703,7 +943,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": "n",
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "ㅡ",
@@ -717,7 +962,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": "m",
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": ",",
@@ -731,7 +981,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": null,
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": ".",
@@ -745,7 +1000,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": null,
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "/",
@@ -759,7 +1019,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": null,
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "↑",
@@ -773,7 +1038,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": null,
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "Shift",
@@ -787,7 +1057,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": null,
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             }
           ]
         },
@@ -805,7 +1080,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": null,
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "Win",
@@ -819,7 +1099,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": null,
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "Alt",
@@ -833,7 +1118,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": null,
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "한자",
@@ -847,7 +1137,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": null,
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "",
@@ -861,7 +1156,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": null,
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "가",
@@ -874,7 +1174,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": null,
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "Alt",
@@ -888,7 +1193,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": null,
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "←",
@@ -902,7 +1212,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": null,
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "↓",
@@ -916,7 +1231,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": null,
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "→",
@@ -930,7 +1250,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": null,
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             },
             {
               "label": "한/영",
@@ -944,7 +1269,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": null,
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             }
           ]
         }
@@ -967,7 +1297,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": null,
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             }
           ]
         },
@@ -985,7 +1320,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": null,
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             }
           ]
         },
@@ -1003,7 +1343,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": null,
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             }
           ]
         },
@@ -1021,7 +1366,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": null,
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             }
           ]
         },
@@ -1039,7 +1389,12 @@
               "style_key": "",
               "gap_before": 0,
               "english_label": null,
-              "english_shift_label": null
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
             }
           ]
         }
