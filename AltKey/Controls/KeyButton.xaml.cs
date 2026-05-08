@@ -471,7 +471,8 @@ public class KeyButton : System.Windows.Controls.Button
         if (d is not KeyButton kb || e.NewValue is not KeySlotVm slot) return;
         kb.UpdateSize();
         kb.UpdateLabel();
-        ToolTipService.SetToolTip(kb, slot.Slot.StyleKey is { Length: > 0 } sk ? sk : null);
+        // 접근성: style_key는 내부 렌더링 용도이므로 사용자에게 원문 값을 툴팁으로 노출하지 않습니다.
+        ToolTipService.SetToolTip(kb, null);
     }
 
     private static void OnShowUpperCaseChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
