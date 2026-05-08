@@ -168,7 +168,7 @@ Wiki/AltKey.wiki/
 | W06 | 수식자-고정 | `Services/InputService.cs` (StickyKeys, LockedKeys), `Controls/KeyButton.xaml.cs` (IsSticky, IsLocked), `ViewModels/KeyboardViewModel.cs` |
 | W07 | 체류클릭 | `Controls/KeyButton.xaml.cs` (DwellProgress), `ViewModels/MainViewModel.cs`, `Models/AppConfig.cs` (DwellTimeMs) |
 | W08 | 키-반복 | `Controls/KeyButton.xaml.cs` (KeyRepeat관련), `Models/AppConfig.cs` (KeyRepeatDelayMs, IntervalMs) |
-| W09 | 레이아웃-커스터마이징 | `Services/LayoutService.cs`, `Models/LayoutConfig.cs`, `Models/KeySlot.cs` (`english_label` 포함), `ViewModels/LayoutEditorViewModel.cs`, `layouts/Bagic.json` |
+| W09 | 레이아웃-커스터마이징 | `Services/LayoutService.cs`, `Models/LayoutConfig.cs`, `Models/KeySlot.cs` (`english_label` 포함), `ViewModels/LayoutEditorViewModel.cs`, `layouts/Basic.json` |
 | W10 | 앱별-레이아웃 | `Services/ProfileService.cs`, `ViewModels/SettingsViewModel.cs` (Profiles), `ViewModels/MainViewModel.cs` (OnForegroundAppChanged) |
 | W11 | 액션-키 | `Models/KeyAction.cs`, `Services/InputService.cs` (HandleAction), `Services/KeyNotationParser.cs` |
 | W12 | 이모지 | `ViewModels/EmojiViewModel.cs`, `Views/EmojiPanel.xaml`, `Assets/emoji.json` |
@@ -179,7 +179,7 @@ Wiki/AltKey.wiki/
 | W17 | 업데이트 | `Services/UpdateService.cs`, `Services/DownloadService.cs`, `Services/InstallerService.cs` |
 | W18 | 관리자-권한 | `Services/InputService.cs` (IsElevated, Mode), `Platform/Win32.cs`, `ViewModels/SettingsViewModel.cs` |
 | W19 | 문제해결 | `Platform/Win32.cs` (제약), `docs/BLUEPRINT.md`, `docs/ime-korean-detection-problem.md` |
-| W20 | 단축키-모음 | `Services/HotkeyService.cs`, `layouts/Bagic.json` |
+| W20 | 단축키-모음 | `Services/HotkeyService.cs`, `layouts/Basic.json` |
 | W22 | 접근성-탐색 | `Services/AccessibilityNavigationService.cs`, `ViewModels/KeyboardViewModel.cs` (MoveA11yFocus, ActivateA11yFocused), `Models/AppConfig.cs` (KeyboardA11yNavigationEnabled) |
 
 ---

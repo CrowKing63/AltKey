@@ -12,6 +12,11 @@ namespace AltKey.Services;
 /// </summary>
 public class ConfigService
 {
+    private const string LegacyDefaultLayoutName = "Bagic";
+    private const string LegacyDefaultLayoutPlusName = "Bagic Plus";
+    private const string CurrentDefaultLayoutName = "Basic";
+    private const string CurrentDefaultLayoutPlusName = "Basic Plus";
+
     /// 현재 앱에 적용된 모든 설정 데이터입니다.
     public AppConfig Current { get; private set; } = new();
 
@@ -37,6 +42,7 @@ public class ConfigService
             var json = File.ReadAllText(PathResolver.ConfigPath);
             Current = JsonSerializer.Deserialize<AppConfig>(json, JsonOptions.Default) ?? new();
             MigrateWindowConfig(json); // 예전 버전의 설정 형식을 최신 형식으로 변환합니다.
+            MigrateLegacyLayoutNames();
 
             // 상단바 버튼 목록이 비어 있으면 기본 구성을 넣고 저장합니다.
             // (이전에는 MainViewModel 생성 후에만 기본값이 생겨, 첫 실행에서 설정 창 목록이 비어 보이는 문제가 있었습니다.)
@@ -82,6 +88,37 @@ public class ConfigService
             }
         }
         catch { }
+    }
+
+    /// <summary>
+    /// 예전 기본 제공 레이아웃 오타(Bagic)를 현재 이름(Basic)으로 맞춰
+    /// 기존 사용자 설정과 앱별 프로필 매핑이 배포 후에도 그대로 이어지도록 정리합니다.
+    /// </summary>
+    private void MigrateLegacyLayoutNames()
+    {
+        Current.DefaultLayout = MigrateLegacyLayoutName(Current.DefaultLayout);
+
+        if (Current.Profiles.Count == 0)
+            return;
+
+        var migratedProfiles = new Dictionary<string, string>(Current.Profiles.Count, StringComparer.OrdinalIgnoreCase);
+        foreach (var pair in Current.Profiles)
+            migratedProfiles[pair.Key] = MigrateLegacyLayoutName(pair.Value);
+
+        Current.Profiles = migratedProfiles;
+    }
+
+    /// <summary>
+    /// 기본 제공 레이아웃 이름만 현재 표기로 교정하고, 사용자가 만든 다른 이름은 유지합니다.
+    /// </summary>
+    private static string MigrateLegacyLayoutName(string? layoutName)
+    {
+        return layoutName switch
+        {
+            LegacyDefaultLayoutName => CurrentDefaultLayoutName,
+            LegacyDefaultLayoutPlusName => CurrentDefaultLayoutPlusName,
+            _ => layoutName ?? CurrentDefaultLayoutName
+        };
     }
 
     /// <summary>

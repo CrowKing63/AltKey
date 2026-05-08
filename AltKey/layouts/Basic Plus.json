@@ -1,0 +1,1567 @@
+{
+  "name": "Basic Plus",
+  "language": null,
+  "columns": [
+    {
+      "gap": 0,
+      "rows": [
+        {
+          "keys": [
+            {
+              "label": "Esc",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_ESCAPE"
+              },
+              "width": 1,
+              "height": 0.6666666666666666,
+              "style_key": "soft_accent",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "`",
+              "shift_label": "~",
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_OEM_3"
+              },
+              "width": 0.8,
+              "height": 0.6666666666666666,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "1",
+              "shift_label": "!",
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_1"
+              },
+              "width": 1,
+              "height": 0.6666666666666666,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null,
+              "fn_action": {
+                "type": "SendKey",
+                "vk": "VK_F1"
+              },
+              "fn_label": "F1",
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "2",
+              "shift_label": "@",
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_2"
+              },
+              "width": 1,
+              "height": 0.6666666666666666,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null,
+              "fn_action": {
+                "type": "SendKey",
+                "vk": "VK_F2"
+              },
+              "fn_label": "F2",
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "3",
+              "shift_label": "#",
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_3"
+              },
+              "width": 1,
+              "height": 0.6666666666666666,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null,
+              "fn_action": {
+                "type": "SendKey",
+                "vk": "VK_F3"
+              },
+              "fn_label": "F3",
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "4",
+              "shift_label": "$",
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_4"
+              },
+              "width": 1,
+              "height": 0.6666666666666666,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null,
+              "fn_action": {
+                "type": "SendKey",
+                "vk": "VK_F4"
+              },
+              "fn_label": "F4",
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "5",
+              "shift_label": "%",
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_5"
+              },
+              "width": 1,
+              "height": 0.6666666666666666,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null,
+              "fn_action": {
+                "type": "SendKey",
+                "vk": "VK_F5"
+              },
+              "fn_label": "F5",
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "6",
+              "shift_label": "^",
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_6"
+              },
+              "width": 1,
+              "height": 0.6666666666666666,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null,
+              "fn_action": {
+                "type": "SendKey",
+                "vk": "VK_F6"
+              },
+              "fn_label": "F6",
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "7",
+              "shift_label": "&",
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_7"
+              },
+              "width": 1,
+              "height": 0.6666666666666666,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null,
+              "fn_action": {
+                "type": "SendKey",
+                "vk": "VK_F7"
+              },
+              "fn_label": "F7",
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "8",
+              "shift_label": "*",
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_8"
+              },
+              "width": 1,
+              "height": 0.6666666666666666,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null,
+              "fn_action": {
+                "type": "SendKey",
+                "vk": "VK_F8"
+              },
+              "fn_label": "F8",
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "9",
+              "shift_label": "(",
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_9"
+              },
+              "width": 1,
+              "height": 0.6666666666666666,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null,
+              "fn_action": {
+                "type": "SendKey",
+                "vk": "VK_F9"
+              },
+              "fn_label": "F9",
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "0",
+              "shift_label": ")",
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_0"
+              },
+              "width": 1,
+              "height": 0.6666666666666666,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null,
+              "fn_action": {
+                "type": "SendKey",
+                "vk": "VK_F10"
+              },
+              "fn_label": "F10",
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "-",
+              "shift_label": "_",
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_OEM_MINUS"
+              },
+              "width": 1,
+              "height": 0.6666666666666666,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null,
+              "fn_action": {
+                "type": "SendKey",
+                "vk": "VK_F11"
+              },
+              "fn_label": "F11",
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "=",
+              "shift_label": "+",
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_OEM_PLUS"
+              },
+              "width": 1,
+              "height": 0.6666666666666666,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null,
+              "fn_action": {
+                "type": "SendKey",
+                "vk": "VK_F12"
+              },
+              "fn_label": "F12",
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "⌫",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_BACK"
+              },
+              "width": 1.4,
+              "height": 0.6666666666666666,
+              "style_key": "soft_accent",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null,
+              "fn_action": {
+                "type": "SendKey",
+                "vk": "VK_DELETE"
+              },
+              "fn_label": "Del",
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            }
+          ]
+        },
+        {
+          "keys": [
+            {
+              "label": "Tab",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_ESCAPE"
+              },
+              "width": 1.6,
+              "height": 1,
+              "style_key": "soft_accent",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "ㅂ",
+              "shift_label": "ㅃ",
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_Q"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": "q",
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "ㅈ",
+              "shift_label": "ㅉ",
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_W"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": "w",
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "ㄷ",
+              "shift_label": "ㄸ",
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_E"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": "e",
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "ㄱ",
+              "shift_label": "ㄲ",
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_R"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": "r",
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "ㅅ",
+              "shift_label": "ㅆ",
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_T"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": "t",
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "ㅛ",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_Y"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": "y",
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "ㅕ",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_U"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": "u",
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "ㅑ",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_I"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": "i",
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "ㅐ",
+              "shift_label": "ㅒ",
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_O"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": "o",
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "ㅔ",
+              "shift_label": "ㅖ",
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_P"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": "p",
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "[",
+              "shift_label": "{",
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_OEM_4"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "]",
+              "shift_label": "}",
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_OEM_6"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "\\",
+              "shift_label": "|",
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_OEM_5"
+              },
+              "width": 1.7,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            }
+          ]
+        },
+        {
+          "keys": [
+            {
+              "label": "CapsLock",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_CAPITAL"
+              },
+              "width": 2,
+              "height": 1,
+              "style_key": "soft_accent",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "ㅁ",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_A"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": "a",
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "ㄴ",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_S"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": "s",
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "ㅇ",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_D"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": "d",
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "ㄹ",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_F"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": "f",
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "ㅎ",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_G"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": "g",
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "ㅗ",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_H"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": "h",
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "ㅓ",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_J"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": "j",
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "ㅏ",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_K"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": "k",
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "ㅣ",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_L"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": "l",
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": ";",
+              "shift_label": ":",
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_OEM_1"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "'",
+              "shift_label": "\"",
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_OEM_7"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "Enter",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_RETURN"
+              },
+              "width": 2.4,
+              "height": 1,
+              "style_key": "soft_accent",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            }
+          ]
+        },
+        {
+          "keys": [
+            {
+              "label": "Shift",
+              "shift_label": null,
+              "action": {
+                "type": "ToggleSticky",
+                "vk": "VK_SHIFT"
+              },
+              "width": 2.4,
+              "height": 1,
+              "style_key": "soft_accent",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "ㅋ",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_Z"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": "z",
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "ㅌ",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_X"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": "x",
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "ㅊ",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_C"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": "c",
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "ㅍ",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_V"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": "v",
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "ㅠ",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_B"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": "b",
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "ㅜ",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_N"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": "n",
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "ㅡ",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_M"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": "m",
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": ",",
+              "shift_label": "<",
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_OEM_COMMA"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": ".",
+              "shift_label": ">",
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_OEM_PERIOD"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "/",
+              "shift_label": "?",
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_OEM_2"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "↑",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_UP"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "soft_accent",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null,
+              "fn_action": {
+                "type": "SendKey",
+                "vk": "VK_PRIOR"
+              },
+              "fn_label": "PgUp",
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "Shift",
+              "shift_label": null,
+              "action": {
+                "type": "ToggleSticky",
+                "vk": "VK_SHIFT"
+              },
+              "width": 2,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            }
+          ]
+        },
+        {
+          "keys": [
+            {
+              "label": "Ctrl",
+              "shift_label": null,
+              "action": {
+                "type": "ToggleSticky",
+                "vk": "VK_CONTROL"
+              },
+              "width": 1.4,
+              "height": 1,
+              "style_key": "soft_accent",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "Win",
+              "shift_label": null,
+              "action": {
+                "type": "ToggleSticky",
+                "vk": "VK_LWIN"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "soft_accent",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "Alt",
+              "shift_label": null,
+              "action": {
+                "type": "ToggleSticky",
+                "vk": "VK_MENU"
+              },
+              "width": 1.4,
+              "height": 1,
+              "style_key": "soft_accent",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "Fn",
+              "shift_label": null,
+              "action": {
+                "type": "ToggleFunctionLayer"
+              },
+              "width": 1.4,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_SPACE"
+              },
+              "width": 4.1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "가",
+              "shift_label": null,
+              "action": {
+                "type": "ToggleKoreanSubmode"
+              },
+              "width": 1.4,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "Alt",
+              "shift_label": null,
+              "action": {
+                "type": "ToggleSticky",
+                "vk": "VK_MENU"
+              },
+              "width": 0.9,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null,
+              "fn_action": {
+                "type": "SendKey",
+                "vk": "VK_SNAPSHOT"
+              },
+              "fn_label": "Print",
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "←",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_LEFT"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "soft_accent",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null,
+              "fn_action": {
+                "type": "SendKey",
+                "vk": "VK_HOME"
+              },
+              "fn_label": "Home",
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "↓",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_DOWN"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "soft_accent",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null,
+              "fn_action": {
+                "type": "SendKey",
+                "vk": "VK_NEXT"
+              },
+              "fn_label": "PgDn",
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "→",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_RIGHT"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "soft_accent",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null,
+              "fn_action": {
+                "type": "SendKey",
+                "vk": "VK_END"
+              },
+              "fn_label": "End",
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "한/영",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_HANGUL"
+              },
+              "width": 0.9,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null,
+              "fn_action": {
+                "type": "SendKey",
+                "vk": "VK_HANJA"
+              },
+              "fn_label": "한자",
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "gap": 0,
+      "rows": [
+        {
+          "keys": [
+            {
+              "label": "Del",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_DELETE"
+              },
+              "width": 1,
+              "height": 0.6666666666666666,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "Ins",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_INSERT"
+              },
+              "width": 1,
+              "height": 0.6666666666666666,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            }
+          ]
+        },
+        {
+          "keys": [
+            {
+              "label": "Home",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_HOME"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "All",
+              "shift_label": null,
+              "action": {
+                "type": "SendCombo",
+                "keys": [
+                  "VK_CONTROL",
+                  "VK_A"
+                ]
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            }
+          ]
+        },
+        {
+          "keys": [
+            {
+              "label": "End",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_END"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "Cut",
+              "shift_label": null,
+              "action": {
+                "type": "SendCombo",
+                "keys": [
+                  "VK_CONTROL",
+                  "VK_X"
+                ]
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            }
+          ]
+        },
+        {
+          "keys": [
+            {
+              "label": "PgUp",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_PRIOR"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "Copy",
+              "shift_label": null,
+              "action": {
+                "type": "SendCombo",
+                "keys": [
+                  "VK_CONTROL",
+                  "VK_C"
+                ]
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            }
+          ]
+        },
+        {
+          "keys": [
+            {
+              "label": "PgDn",
+              "shift_label": null,
+              "action": {
+                "type": "SendKey",
+                "vk": "VK_NEXT"
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            },
+            {
+              "label": "Paste",
+              "shift_label": null,
+              "action": {
+                "type": "SendCombo",
+                "keys": [
+                  "VK_CONTROL",
+                  "VK_V"
+                ]
+              },
+              "width": 1,
+              "height": 1,
+              "style_key": "",
+              "gap_before": 0,
+              "english_label": null,
+              "english_shift_label": null,
+              "fn_action": null,
+              "fn_label": null,
+              "fn_shift_label": null,
+              "fn_english_label": null,
+              "fn_english_shift_label": null
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -2,6 +2,7 @@
 using System.Threading;
 using AltKey.Controls;
 using AltKey.Models;
+using AltKey.Services;
 
 namespace AltKey.Tests;
 
@@ -89,6 +90,40 @@ public class AccessibilitySafetyTests
     }
 
     [Fact]
+    public void ConfigService_migrates_legacy_default_layout_names()
+    {
+        var tempDir = Path.Combine(Path.GetTempPath(), $"AltKey-ConfigMigration-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(tempDir);
+
+        try
+        {
+            PathResolver.OverrideDataDir(tempDir);
+            var legacyJson = """
+                {
+                  "DefaultLayout": "Bagic",
+                  "Profiles": {
+                    "notepad.exe": "Bagic Plus",
+                    "calc.exe": "Bagic"
+                  }
+                }
+                """;
+            File.WriteAllText(PathResolver.ConfigPath, legacyJson);
+
+            var service = new ConfigService();
+
+            Assert.Equal("Basic", service.Current.DefaultLayout);
+            Assert.Equal("Basic Plus", service.Current.Profiles["notepad.exe"]);
+            Assert.Equal("Basic", service.Current.Profiles["calc.exe"]);
+        }
+        finally
+        {
+            PathResolver.OverrideDataDir(null);
+            if (Directory.Exists(tempDir))
+                Directory.Delete(tempDir, true);
+        }
+    }
+
+    [Fact]
     public void KeyButton_KeyboardA11yNavigationEnabled_toggles_tab_navigation_flags()
     {
         Exception? captured = null;
@@ -124,12 +159,12 @@ public class AccessibilitySafetyTests
     }
 
     [Fact]
-    public void BagicLayout_WinKey_uses_toggle_sticky()
+    public void BasicLayout_WinKey_uses_toggle_sticky()
     {
         var layoutPath = Path.GetFullPath(Path.Combine(
             AppContext.BaseDirectory,
             "..", "..", "..", "..",
-            "AltKey", "layouts", "Bagic.json"));
+            "AltKey", "layouts", "Basic.json"));
 
         var json = File.ReadAllText(layoutPath);
         var layout = JsonSerializer.Deserialize<LayoutConfig>(json, JsonOptions.Default);

@@ -1,7 +1,7 @@
 {
   "Version": "1.0.0",
   "Language": "ko",
-  "DefaultLayout": "Bagic",
+  "DefaultLayout": "Basic",
   "AlwaysOnTop": true,
   "OpacityIdle": 0.4,
   "OpacityActive": 1.0,

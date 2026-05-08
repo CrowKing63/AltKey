@@ -27,7 +27,7 @@ public class AppConfig
     public string Version           { get; set; } = "1.0.0";
     
     // 앱 시작 시 기본으로 불러올 레이아웃 파일의 이름입니다.
-    public string DefaultLayout     { get; set; } = "Bagic";
+    public string DefaultLayout     { get; set; } = "Basic";
     
     // 키보드 창을 항상 다른 창들보다 위에 띄울지 여부입니다. (true: 항상 위)
     public bool   AlwaysOnTop       { get; set; } = true;

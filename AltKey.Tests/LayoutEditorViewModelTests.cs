@@ -188,7 +188,7 @@ public class LayoutEditorViewModelTests
 
         public event Action? LayoutsChanged;
 
-        public string DefaultLayoutName => "Bagic";
+        public string DefaultLayoutName => "Basic";
 
         public LayoutConfig? LastSavedConfig { get; private set; }
 
