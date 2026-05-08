@@ -21,19 +21,6 @@ public partial class EditableKeySlotVm : ObservableObject
     // 접근성/가시성: 기본 키와 살짝 다른 톤을 줄 때 사용하는 내부 style_key 값입니다.
     public const string SoftAccentStyleKey = "soft_accent";
 
-    // 문자 키는 옵션을 숨기고, 탐색/수정/모디파이어 계열 키만 사용 가능하게 제한합니다.
-    private static readonly HashSet<string> AccentStyleSupportedVks = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "VK_LSHIFT", "VK_RSHIFT", "VK_SHIFT",
-        "VK_LCONTROL", "VK_RCONTROL", "VK_CONTROL",
-        "VK_LMENU", "VK_RMENU", "VK_MENU",
-        "VK_LEFT", "VK_RIGHT", "VK_UP", "VK_DOWN",
-        "VK_TAB", "VK_CAPITAL", "VK_BACK", "VK_RETURN",
-        "VK_SPACE", "VK_ESCAPE", "VK_LWIN", "VK_RWIN",
-        "VK_PRIOR", "VK_NEXT", "VK_HOME", "VK_END",
-        "VK_INSERT", "VK_DELETE"
-    };
-
     [ObservableProperty] private string  editLabel       = "";
     [ObservableProperty] private string? editShiftLabel;
     [ObservableProperty] private double  editWidth       = 1.0;
@@ -57,9 +44,10 @@ public partial class EditableKeySlotVm : ObservableObject
     [ObservableProperty] private string? functionEnglishShiftLabel;
 
     /// <summary>
-    /// 편집기 단순화: 기본 문자 키에는 옵션을 숨기고, 일부 특수 키에만 색상 변형 체크를 노출합니다.
+    /// 접근성/가시성: 사용자가 자주 찾는 키를 모든 영역에서 같은 방식으로 식별할 수 있도록
+    /// 강조 색상 옵션은 문자 키를 포함한 모든 키에서 사용할 수 있게 엽니다.
     /// </summary>
-    public bool SupportsAccentStyle => TryGetActionVk(EditAction) is string vk && AccentStyleSupportedVks.Contains(vk);
+    public bool SupportsAccentStyle => true;
 
     /// <summary>
     /// Fn 키 자체는 Fn 레이어가 켜져 있어도 항상 Fn 동작만 해야 하므로,
@@ -70,21 +58,13 @@ public partial class EditableKeySlotVm : ObservableObject
     /// 편집 결과를 KeySlot 레코드로 변환
     public KeySlot ToKeySlot() =>
         new(EditLabel, EditShiftLabel, EditAction, EditWidth, EditHeight,
-            SupportsAccentStyle && UseSoftAccentStyle ? SoftAccentStyleKey : "", EditGapBefore, EnglishLabel, EnglishShiftLabel,
+            UseSoftAccentStyle ? SoftAccentStyleKey : "", EditGapBefore, EnglishLabel, EnglishShiftLabel,
             FunctionAction, FunctionLabel, FunctionShiftLabel, FunctionEnglishLabel, FunctionEnglishShiftLabel);
 
     public string? FunctionPreviewLabel => FunctionLabel ?? FunctionEnglishLabel;
 
     partial void OnEditActionChanged(KeyAction? value)
     {
-        // 액션이 문자 키에서 특수 키로, 또는 반대로 바뀌면 옵션 노출 여부와 저장값을 함께 정리합니다.
-        if (!SupportsAccentStyle)
-        {
-            UseSoftAccentStyle = false;
-            if (!string.IsNullOrEmpty(EditStyleKey))
-                EditStyleKey = "";
-        }
-
         // Fn 키로 바뀌면 Fn 전용 값은 실제로 사용되지 않으므로 즉시 비워
         // 숨은 값이 남아 편집기에서 혼동을 만들지 않게 합니다.
         if (value is ToggleFunctionLayerAction)
@@ -109,17 +89,10 @@ public partial class EditableKeySlotVm : ObservableObject
 
     partial void OnUseSoftAccentStyleChanged(bool value)
     {
-        var next = value && SupportsAccentStyle ? SoftAccentStyleKey : "";
+        var next = value ? SoftAccentStyleKey : "";
         if (EditStyleKey != next)
             EditStyleKey = next;
     }
-
-    private static string? TryGetActionVk(KeyAction? action) => action switch
-    {
-        SendKeyAction sendKey => sendKey.Vk,
-        ToggleStickyAction toggleSticky => toggleSticky.Vk,
-        _ => null
-    };
 }
 
 // ── 편집 가능한 키 행 VM ────────────────────────────────────────────────────

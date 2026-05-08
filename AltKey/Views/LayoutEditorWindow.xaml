@@ -480,13 +480,11 @@
                                                   Minimum="0.0" Maximum="4.0" Step="0.1" DecimalPlaces="1"
                                                   Margin="0,0,0,12"/>
 
-                            <!-- 접근성: 기본 문자 키는 설정을 숨겨 편집 부담을 줄이고, 일부 특수 키에만 간단한 체크 옵션을 노출합니다. -->
+                            <!-- 접근성: 자주 찾는 키를 종류와 무관하게 같은 톤으로 표시할 수 있도록 모든 키에 강조 옵션을 제공합니다. -->
                             <CheckBox Content="이 키를 기본 키보다 살짝 강조"
                                       IsChecked="{Binding SelectedKey.UseSoftAccentStyle}"
                                       Margin="0,0,0,12"
-                                      Foreground="{DynamicResource SettingsFg}"
-                                      Visibility="{Binding SelectedKey.SupportsAccentStyle,
-                                          Converter={StaticResource BoolToVis}}"/>
+                                      Foreground="{DynamicResource SettingsFg}"/>
 
                             <Separator Background="{DynamicResource SettingsHighlight}" Margin="0,0,0,10"/>
 

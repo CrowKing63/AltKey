@@ -141,6 +141,54 @@ public class LayoutEditorViewModelTests
         });
     }
 
+    [Fact]
+    public void All_keys_can_enable_soft_accent_style()
+    {
+        RunSta(() =>
+        {
+            var repo = new FakeLayoutRepository();
+            repo.Seed("accent-all-keys", new LayoutConfig("accent-all-keys", null,
+            [
+                new KeyColumn(0,
+                [
+                    new KeyRow([
+                        new KeySlot("ㅁ", null, new SendKeyAction("VK_A"), 1.0, 1.0, "", 0.0, "a", null)
+                    ])
+                ])
+            ]));
+
+            var vm = new LayoutEditorViewModel(repo, new ConfigService());
+            vm.LoadLayout("accent-all-keys");
+            vm.SelectedKey = vm.Columns[0].Rows[0].Keys[0];
+            vm.SelectedKey!.UseSoftAccentStyle = true;
+
+            vm.SaveCommand.Execute(null);
+
+            var savedKey = repo.LastSavedConfig!.Columns![0].Rows![0].Keys[0];
+            Assert.True(vm.SelectedKey.SupportsAccentStyle);
+            Assert.Equal(EditableKeySlotVm.SoftAccentStyleKey, savedKey.StyleKey);
+        });
+    }
+
+    [Fact]
+    public void Soft_accent_style_survives_action_change_on_regular_key()
+    {
+        RunSta(() =>
+        {
+            var slot = new EditableKeySlotVm
+            {
+                EditLabel = "ㅁ",
+                EditAction = new SendKeyAction("VK_A"),
+                UseSoftAccentStyle = true
+            };
+
+            slot.EditAction = new SendKeyAction("VK_F1");
+
+            Assert.True(slot.UseSoftAccentStyle);
+            Assert.Equal(EditableKeySlotVm.SoftAccentStyleKey, slot.EditStyleKey);
+        });
+    }
+
     private static LayoutConfig CreateTwoColumnLayout(double firstRowHeight = EditableKeySlotVm.DefaultHeightRatio) =>
         new("shared-row", null,
         [
