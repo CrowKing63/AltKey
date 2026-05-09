@@ -124,6 +124,58 @@ public class AccessibilitySafetyTests
     }
 
     [Fact]
+    public void ConfigService_hides_header_buttons_that_exceed_side_limit()
+    {
+        var tempDir = Path.Combine(Path.GetTempPath(), $"AltKey-HeaderButtons-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(tempDir);
+
+        try
+        {
+            PathResolver.OverrideDataDir(tempDir);
+
+            var config = new AppConfig
+            {
+                HeaderButtons = HeaderButtonConfig.CreateDefaults()
+            };
+
+            for (int i = 0; i < 3; i++)
+            {
+                config.HeaderButtons.Add(new HeaderButtonConfig
+                {
+                    Id = $"custom-test-{i}",
+                    Kind = HeaderButtonKind.Custom,
+                    Visible = true,
+                    Position = "Right",
+                    DisplayMode = HeaderButtonDisplayMode.IconOnly,
+                    IconText = $"C{i}",
+                    Tooltip = $"커스텀 {i}",
+                    AccessibleName = $"커스텀 {i}",
+                    CustomAction = new SendKeyAction("VK_A")
+                });
+            }
+
+            File.WriteAllText(
+                PathResolver.ConfigPath,
+                JsonSerializer.Serialize(config, JsonOptions.Default));
+
+            var service = new ConfigService();
+
+            var visibleRightButtons = service.Current.HeaderButtons
+                .Where(button => button.Visible && HeaderButtonConfig.NormalizePosition(button.Position) == "Right")
+                .ToList();
+
+            Assert.Equal(HeaderButtonConfig.MaxVisibleButtonsRight, visibleRightButtons.Count);
+            Assert.False(service.Current.HeaderButtons.Last().Visible);
+        }
+        finally
+        {
+            PathResolver.OverrideDataDir(null);
+            if (Directory.Exists(tempDir))
+                Directory.Delete(tempDir, true);
+        }
+    }
+
+    [Fact]
     public void KeyButton_KeyboardA11yNavigationEnabled_toggles_tab_navigation_flags()
     {
         Exception? captured = null;

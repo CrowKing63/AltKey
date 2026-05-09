@@ -7,8 +7,8 @@ using AltKey.Models;
 namespace AltKey.Services;
 
 /// <summary>
-/// [역할] 앱의 설정(config.json)을 로드하고 저장하며, 변경 사항을 관리하는 서비스입니다.
-/// [기능] 파일 읽기/쓰기, 설정값 업데이트 알림, 이전 버전 설정 파일의 호환성 유지(Migration)를 처리합니다.
+/// [역할] 앱 설정(config.json)을 읽고 저장하며, 변경 알림과 마이그레이션을 담당합니다.
+/// [기능] 구버전 설정 보정, 상단바 버튼 정규화, 파일 저장 재시도까지 한곳에서 처리합니다.
 /// </summary>
 public class ConfigService
 {
@@ -17,44 +17,53 @@ public class ConfigService
     private const string CurrentDefaultLayoutName = "Basic";
     private const string CurrentDefaultLayoutPlusName = "Basic Plus";
 
-    /// 현재 앱에 적용된 모든 설정 데이터입니다.
+    /// <summary>현재 앱에 적용 중인 설정 데이터입니다.</summary>
     public AppConfig Current { get; private set; } = new();
 
-    /// <summary>설정 값이 변경되었을 때 발생하는 이벤트입니다.</summary>
-    /// <param name="propertyName">변경된 속성의 이름입니다. 전체가 바뀌었으면 null입니다.</param>
+    /// <summary>설정이 바뀌면 발생하는 알림입니다.</summary>
+    /// <param name="propertyName">변경된 속성 이름입니다. 전체 변경이면 null입니다.</param>
     public event Action<string?>? ConfigChanged;
 
     public ConfigService()
     {
-        // 설정 파일이 저장될 폴더가 없다면 생성합니다.
+        // 설정 파일 폴더가 없으면 먼저 만들어, 첫 실행에서도 저장이 실패하지 않게 합니다.
         Directory.CreateDirectory(Path.GetDirectoryName(PathResolver.ConfigPath)!);
         Load();
     }
 
     /// <summary>
-    /// config.json 파일에서 설정을 불러옵니다. 파일이 없으면 기본 설정으로 파일을 생성합니다.
+    /// config.json을 읽어 현재 설정으로 반영합니다.
+    /// 파일이 없으면 기본값을 그대로 저장해 이후 편집 기준 파일을 만듭니다.
     /// </summary>
     public void Load()
     {
-        if (!File.Exists(PathResolver.ConfigPath)) { Save(); return; }
+        if (!File.Exists(PathResolver.ConfigPath))
+        {
+            Save();
+            return;
+        }
+
         try
         {
             var json = File.ReadAllText(PathResolver.ConfigPath);
             Current = JsonSerializer.Deserialize<AppConfig>(json, JsonOptions.Default) ?? new();
-            MigrateWindowConfig(json); // 예전 버전의 설정 형식을 최신 형식으로 변환합니다.
+
+            MigrateWindowConfig(json);
             MigrateLegacyLayoutNames();
 
-            // 상단바 버튼 목록이 비어 있으면 기본 구성을 넣고 저장합니다.
-            // (이전에는 MainViewModel 생성 후에만 기본값이 생겨, 첫 실행에서 설정 창 목록이 비어 보이는 문제가 있었습니다.)
+            // 상단바 버튼 목록은 설정 창과 메인 화면 모두 즉시 써야 하므로,
+            // 비어 있으면 여기서 바로 기본값을 채우고 저장합니다.
             Current.HeaderButtons ??= [];
             if (Current.HeaderButtons.Count == 0)
             {
                 Current.HeaderButtons = HeaderButtonConfig.CreateDefaults();
                 Save();
+                return;
             }
-            else
+
+            if (NormalizeHeaderButtons())
             {
-                NormalizeHeaderButtons();
+                Save();
             }
         }
         catch
@@ -64,8 +73,7 @@ public class ConfigService
     }
 
     /// <summary>
-    /// 외부 프로세스가 설정 파일을 저장한 뒤, 메모리 설정을 파일 기준으로 다시 읽고 변경 알림까지 보냅니다.
-    /// propertyName을 null로 주면 "어느 한 항목이 아니라 설정 전반이 바뀌었다"는 의미로 해석할 수 있습니다.
+    /// 다른 프로세스가 설정 파일을 저장한 뒤, 현재 메모리 값을 파일 기준으로 다시 읽고 변경 알림까지 보냅니다.
     /// </summary>
     public void ReloadFromDiskAndNotify(string? propertyName = null)
     {
@@ -74,15 +82,15 @@ public class ConfigService
     }
 
     /// <summary>
-    /// 예전 버전(Width/Height 기반)의 설정을 최신 버전(배율 Scale 기반)으로 변환해주는 도우미 함수입니다.
+    /// 과거 Width/Height 기반 창 설정을 현재 Scale 기반 설정으로 옮깁니다.
     /// </summary>
     private void MigrateWindowConfig(string json)
     {
         try
         {
             var node = JsonNode.Parse(json)?["Window"]?.AsObject();
-            if (node == null) return;
-            if (node.ContainsKey("Scale")) return;
+            if (node == null || node.ContainsKey("Scale"))
+                return;
 
             if (node.TryGetPropertyValue("Width", out var widthNode) && widthNode != null)
             {
@@ -91,12 +99,14 @@ public class ConfigService
                 Current.Window.Scale = Math.Clamp(scale, 60, 200);
             }
         }
-        catch { }
+        catch
+        {
+        }
     }
 
     /// <summary>
-    /// 예전 기본 제공 레이아웃 오타(Bagic)를 현재 이름(Basic)으로 맞춰
-    /// 기존 사용자 설정과 앱별 프로필 매핑이 배포 후에도 그대로 이어지도록 정리합니다.
+    /// 과거 기본 레이아웃 이름(Bagic)을 현재 이름(Basic)으로 맞춥니다.
+    /// 사용자 커스텀 이름은 건드리지 않고, 기본 이름에만 보정 규칙을 적용합니다.
     /// </summary>
     private void MigrateLegacyLayoutNames()
     {
@@ -113,7 +123,7 @@ public class ConfigService
     }
 
     /// <summary>
-    /// 기본 제공 레이아웃 이름만 현재 표기로 교정하고, 사용자가 만든 다른 이름은 유지합니다.
+    /// 기본 레이아웃 이름만 현재 표기로 교정하고, 사용자가 만든 다른 이름은 그대로 둡니다.
     /// </summary>
     private static string MigrateLegacyLayoutName(string? layoutName)
     {
@@ -126,37 +136,109 @@ public class ConfigService
     }
 
     /// <summary>
-    /// 과거 버전 설정 파일에도 새 상단바 속성을 안전하게 채워 넣습니다.
-    /// 기존 기본 버튼은 Kind가 비어 있어도 BuiltIn으로 해석하고, 커스텀 버튼은 최소 식별 정보를 보정합니다.
+    /// 구버전 설정도 현재 상단바 규칙에 맞게 보정합니다.
+    /// 커스텀 버튼 기본값을 채우고, 중앙 이동/드래그 영역을 침범할 수 있는 초과 표시 항목은 자동으로 숨깁니다.
     /// </summary>
-    private void NormalizeHeaderButtons()
+    private bool NormalizeHeaderButtons()
     {
+        var changed = false;
+
         foreach (var button in Current.HeaderButtons)
         {
-            button.Position = HeaderButtonConfig.NormalizePosition(button.Position);
-            button.DisplayMode = HeaderButtonDisplayMode.IconOnly;
+            var normalizedPosition = HeaderButtonConfig.NormalizePosition(button.Position);
+            if (button.Position != normalizedPosition)
+            {
+                button.Position = normalizedPosition;
+                changed = true;
+            }
+
+            if (button.DisplayMode != HeaderButtonDisplayMode.IconOnly)
+            {
+                button.DisplayMode = HeaderButtonDisplayMode.IconOnly;
+                changed = true;
+            }
 
             if (button.Kind == HeaderButtonKind.BuiltIn && !HeaderButtonConfig.IsBuiltInId(button.Id))
             {
                 button.Kind = HeaderButtonKind.Custom;
+                changed = true;
             }
 
-            if (button.Kind == HeaderButtonKind.Custom)
-            {
-                if (string.IsNullOrWhiteSpace(button.Id))
-                    button.Id = HeaderButtonConfig.CreateCustomDefault().Id;
+            if (button.Kind != HeaderButtonKind.Custom)
+                continue;
 
-                button.IconText = string.IsNullOrWhiteSpace(button.IconText) ? "새" : button.IconText.Trim();
-                button.Tooltip = string.IsNullOrWhiteSpace(button.Tooltip) ? "커스텀 상단바 단축키" : button.Tooltip.Trim();
-                button.AccessibleName = string.IsNullOrWhiteSpace(button.AccessibleName) ? button.Tooltip : button.AccessibleName.Trim();
-                button.CustomAction ??= new SendKeyAction("VK_A");
+            if (string.IsNullOrWhiteSpace(button.Id))
+            {
+                button.Id = HeaderButtonConfig.CreateCustomDefault().Id;
+                changed = true;
+            }
+
+            var iconText = string.IsNullOrWhiteSpace(button.IconText) ? "새" : button.IconText.Trim();
+            if (button.IconText != iconText)
+            {
+                button.IconText = iconText;
+                changed = true;
+            }
+
+            var tooltip = string.IsNullOrWhiteSpace(button.Tooltip) ? "커스텀 상단바 단축키" : button.Tooltip.Trim();
+            if (button.Tooltip != tooltip)
+            {
+                button.Tooltip = tooltip;
+                changed = true;
+            }
+
+            var accessibleName = string.IsNullOrWhiteSpace(button.AccessibleName) ? button.Tooltip : button.AccessibleName.Trim();
+            if (button.AccessibleName != accessibleName)
+            {
+                button.AccessibleName = accessibleName;
+                changed = true;
+            }
+
+            if (button.CustomAction is null)
+            {
+                button.CustomAction = new SendKeyAction("VK_A");
+                changed = true;
             }
         }
+
+        // 같은 쪽에 버튼이 너무 많으면 중앙 이동/드래그 조작부를 덮을 수 있으므로,
+        // 목록 순서상 뒤에 있는 항목부터 숨겨 기존 사용자의 배치 순서를 최대한 보존합니다.
+        var visibleLeft = 0;
+        var visibleRight = 0;
+        foreach (var button in Current.HeaderButtons)
+        {
+            if (!button.Visible)
+                continue;
+
+            if (HeaderButtonConfig.NormalizePosition(button.Position) == "Left")
+            {
+                if (visibleLeft >= HeaderButtonConfig.MaxVisibleButtonsLeft)
+                {
+                    button.Visible = false;
+                    changed = true;
+                    continue;
+                }
+
+                visibleLeft++;
+                continue;
+            }
+
+            if (visibleRight >= HeaderButtonConfig.MaxVisibleButtonsRight)
+            {
+                button.Visible = false;
+                changed = true;
+                continue;
+            }
+
+            visibleRight++;
+        }
+
+        return changed;
     }
 
     /// <summary>
-    /// 현재 설정 내용을 config.json 파일에 물리적으로 저장합니다.
-    /// 다른 프로세스가 파일을 사용 중일 수 있으므로 실패 시 몇 번 재시도합니다.
+    /// 현재 설정을 config.json에 저장합니다.
+    /// 잠깐 파일 사용 충돌이 나면 몇 번 재시도해, 외부 도구와 함께 써도 저장 성공률을 높입니다.
     /// </summary>
     public void Save()
     {
@@ -165,22 +247,21 @@ public class ConfigService
         {
             try
             {
-                File.WriteAllText(PathResolver.ConfigPath,
+                File.WriteAllText(
+                    PathResolver.ConfigPath,
                     JsonSerializer.Serialize(Current, JsonOptions.Default));
                 return;
             }
             catch (IOException) when (i < maxRetries - 1)
             {
-                Thread.Sleep(300); // 잠시 기다린 후 재시도
+                Thread.Sleep(300);
             }
         }
     }
 
     /// <summary>
-    /// 설정을 안전하게 변경하고 즉시 파일에 저장하며, 변경되었음을 다른 컴포넌트들에 알립니다.
+    /// 설정을 안전하게 수정하고 즉시 저장한 뒤, 필요한 화면이 다시 읽을 수 있도록 변경 알림을 보냅니다.
     /// </summary>
-    /// <param name="updater">설정 값을 수정하는 함수</param>
-    /// <param name="propertyName">수정한 속성 이름</param>
     public void Update(Action<AppConfig> updater, string? propertyName = null)
     {
         updater(Current);

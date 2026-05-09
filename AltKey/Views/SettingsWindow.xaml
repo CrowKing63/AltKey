@@ -275,11 +275,13 @@
                             <Separator Background="{DynamicResource SettingsHighlight}" Margin="0,16,0,16"/>
                             <TextBlock Text="상세 편집 진입" Style="{StaticResource SectionTitleStyle}"/>
                             <TextBlock Text="새 항목 추가는 아래 버튼으로, 기존 항목 수정은 각 행의 편집 버튼으로 독립 편집기를 엽니다." Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,8"/>
+                            <TextBlock Text="{Binding HeaderButtonLimitSummary}" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,8"/>
                             <Button x:Name="TopBarFirstFocusable"
                                     Content="새 커스텀 단축키 추가"
                                     Command="{Binding AddCustomHeaderButtonCommand}"
                                     Style="{StaticResource SettingsPrimaryButtonStyle}"
                                     HorizontalAlignment="Left"
+                                    IsEnabled="{Binding CanAddMoreCustomHeaderButtons}"
                                     KeyboardNavigation.TabIndex="25"/>
                         </StackPanel>
                     </ScrollViewer>

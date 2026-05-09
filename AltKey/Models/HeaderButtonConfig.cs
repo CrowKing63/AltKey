@@ -21,6 +21,24 @@ public enum HeaderButtonDisplayMode
 public class HeaderButtonConfig
 {
     /// <summary>
+    /// 사용자가 만들 수 있는 커스텀 상단바 단축키의 최대 개수입니다.
+    /// 너무 많은 항목이 쌓이면 설정 탐색이 어려워지고, 상단바 배치 안전성도 떨어지므로 상한을 둡니다.
+    /// </summary>
+    public const int MaxCustomButtonCount = 10;
+
+    /// <summary>
+    /// 좌측 상단바에 동시에 표시할 수 있는 최대 버튼 수입니다.
+    /// 좌우 기준을 같게 유지해 사용자가 한도를 직관적으로 이해할 수 있게 합니다.
+    /// </summary>
+    public const int MaxVisibleButtonsLeft = 8;
+
+    /// <summary>
+    /// 우측 상단바에 동시에 표시할 수 있는 최대 버튼 수입니다.
+    /// 좌우 기준을 같게 유지해 사용자가 한도를 직관적으로 이해할 수 있게 합니다.
+    /// </summary>
+    public const int MaxVisibleButtonsRight = 8;
+
+    /// <summary>
     /// 각 버튼을 식별하는 고유 ID입니다.
     /// 기본 버튼은 아래 상수를 사용하고, 커스텀 버튼은 "custom-..." 형태의 ID를 사용합니다.
     /// </summary>
@@ -205,4 +223,33 @@ public class HeaderButtonConfig
 
     public static string NormalizePosition(string? position) =>
         string.Equals(position, "Left", StringComparison.OrdinalIgnoreCase) ? "Left" : "Right";
+
+    /// <summary>
+    /// 지정한 위치에 허용되는 상단바 표시 개수를 반환합니다.
+    /// Left/Right 외 값은 모두 Right로 보정해 같은 기준을 적용합니다.
+    /// </summary>
+    public static int GetMaxVisibleButtons(string? position) =>
+        NormalizePosition(position) == "Left" ? MaxVisibleButtonsLeft : MaxVisibleButtonsRight;
+
+    /// <summary>
+    /// 현재 목록에서 커스텀 단축키가 몇 개인지 셉니다.
+    /// 편집 중인 항목은 제외할 수 있어, "새로 추가"와 "기존 수정" 검증을 같은 규칙으로 처리할 수 있습니다.
+    /// </summary>
+    public static int CountCustomButtons(IEnumerable<HeaderButtonConfig> buttons, string? excludingId = null) =>
+        buttons.Count(button =>
+            button.Kind == HeaderButtonKind.Custom
+            && !string.Equals(button.Id, excludingId, StringComparison.Ordinal));
+
+    /// <summary>
+    /// 지정한 위치에 현재 몇 개의 버튼이 표시 중인지 셉니다.
+    /// 편집 중인 버튼 하나를 빼고 계산할 수 있어, 같은 항목 저장 시 중복 계산을 막습니다.
+    /// </summary>
+    public static int CountVisibleButtons(IEnumerable<HeaderButtonConfig> buttons, string? position, string? excludingId = null)
+    {
+        var normalizedPosition = NormalizePosition(position);
+        return buttons.Count(button =>
+            button.Visible
+            && NormalizePosition(button.Position) == normalizedPosition
+            && !string.Equals(button.Id, excludingId, StringComparison.Ordinal));
+    }
 }

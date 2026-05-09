@@ -156,6 +156,27 @@ public partial class SettingsViewModel : ObservableObject
     public IEnumerable<HeaderButtonConfig> CustomHeaderButtons =>
         HeaderButtons.Where(button => button.Kind == HeaderButtonKind.Custom);
 
+    /// <summary>
+    /// 설정 화면에서 현재 관리 중인 커스텀 단축키 수입니다.
+    /// 추가 버튼 비활성화와 안내 문구를 같은 기준으로 맞추기 위해 계산 속성으로 둡니다.
+    /// </summary>
+    public int CustomHeaderButtonCount =>
+        HeaderButtons.Count(button => button.Kind == HeaderButtonKind.Custom);
+
+    /// <summary>
+    /// 새 커스텀 단축키를 더 추가할 수 있는지 여부입니다.
+    /// 너무 많은 항목이 누적되면 설정 탐색성이 떨어지므로 상한을 넘기지 않게 막습니다.
+    /// </summary>
+    public bool CanAddMoreCustomHeaderButtons =>
+        CustomHeaderButtonCount < HeaderButtonConfig.MaxCustomButtonCount;
+
+    /// <summary>
+    /// 상단바 배치 한도를 사용자에게 직접 보여 주는 안내 문구입니다.
+    /// 설정 화면에서 한도를 짧게 보여 줘, 추가/배치 규칙을 바로 이해할 수 있게 합니다.
+    /// </summary>
+    public string HeaderButtonLimitSummary =>
+        $"커스텀 단축키 최대 {HeaderButtonConfig.MaxCustomButtonCount}개, 상단바 좌우 각 {HeaderButtonConfig.MaxVisibleButtonsLeft}개까지 표시할 수 있습니다.";
+
     // T-5.12: 관리자 권한 실행 여부
     public bool IsRunningAsAdmin { get; } = System.Security.Principal.WindowsIdentity.GetCurrent() is { } identity
         && new System.Security.Principal.WindowsPrincipal(identity).IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator);
@@ -793,6 +814,75 @@ public partial class SettingsViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(BuiltInHeaderButtons));
         OnPropertyChanged(nameof(CustomHeaderButtons));
+        OnPropertyChanged(nameof(CustomHeaderButtonCount));
+        OnPropertyChanged(nameof(CanAddMoreCustomHeaderButtons));
+        OnPropertyChanged(nameof(HeaderButtonLimitSummary));
+    }
+
+    /// <summary>
+    /// 저장 직전 상단바 표시 개수가 좌우 한도를 넘지 않는지 확인합니다.
+    /// 한도를 넘으면 현재 편집값을 되돌려 중앙 이동/드래그 영역이 가려지는 배치를 즉시 막습니다.
+    /// </summary>
+    private bool TryValidateHeaderButtonLayout()
+    {
+        var leftVisibleCount = HeaderButtonConfig.CountVisibleButtons(HeaderButtons, "Left");
+        if (leftVisibleCount > HeaderButtonConfig.MaxVisibleButtonsLeft)
+        {
+            ShowHeaderButtonSideLimitMessage("좌측", HeaderButtonConfig.MaxVisibleButtonsLeft);
+            RestoreHeaderButtonsFromConfig();
+            return false;
+        }
+
+        var rightVisibleCount = HeaderButtonConfig.CountVisibleButtons(HeaderButtons, "Right");
+        if (rightVisibleCount > HeaderButtonConfig.MaxVisibleButtonsRight)
+        {
+            ShowHeaderButtonSideLimitMessage("우측", HeaderButtonConfig.MaxVisibleButtonsRight);
+            RestoreHeaderButtonsFromConfig();
+            return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// 상단바 편집 제한에 걸렸을 때 현재 설정 파일 기준 값으로 되돌립니다.
+    /// 체크박스/위치 토글처럼 즉시 바인딩되는 항목도 안전하게 복구하려고 상단바 컬렉션만 다시 읽습니다.
+    /// </summary>
+    private void RestoreHeaderButtonsFromConfig()
+    {
+        HeaderButtons = new ObservableCollection<HeaderButtonConfig>(
+            _configService.Current.HeaderButtons.Select(CloneHeaderButtonConfig));
+        RaiseHeaderButtonCollectionChanged();
+    }
+
+    /// <summary>
+    /// 좌우 표시 한도를 넘겼다는 안내를 보여 줍니다.
+    /// 어떤 쪽이 꽉 찼는지 직접 알려 줘야 사용자가 위치 이동이나 숨김으로 바로 조정할 수 있습니다.
+    /// </summary>
+    private static void ShowHeaderButtonSideLimitMessage(string sideName, int maxCount)
+    {
+        WpfMsgBox.Show(
+            $"상단바 {sideName}에는 최대 {maxCount}개까지만 표시할 수 있습니다.\n초과 항목은 위치를 바꾸거나 표시를 꺼 주세요.",
+            "상단바 표시 한도",
+            WpfMsgBoxButton.OK,
+            WpfMsgBoxImage.Information);
+    }
+
+    /// <summary>
+    /// 커스텀 단축키 총개수 한도를 넘지 않는지 확인합니다.
+    /// 설정 목록이 지나치게 길어지면 찾기와 관리가 어려워지므로 새 추가와 복제를 같은 기준으로 제한합니다.
+    /// </summary>
+    private bool EnsureCanAddCustomHeaderButton()
+    {
+        if (CanAddMoreCustomHeaderButtons)
+            return true;
+
+        WpfMsgBox.Show(
+            $"커스텀 상단바 단축키는 최대 {HeaderButtonConfig.MaxCustomButtonCount}개까지 만들 수 있습니다.",
+            "상단바 단축키 한도",
+            WpfMsgBoxButton.OK,
+            WpfMsgBoxImage.Information);
+        return false;
     }
 
     [RelayCommand]
@@ -836,12 +926,16 @@ public partial class SettingsViewModel : ObservableObject
     private void SaveHeaderButtons()
     {
         if (_isLoading) return;
+        if (!TryValidateHeaderButtonLayout()) return;
         _configService.Update(c => c.HeaderButtons = HeaderButtons.Select(CloneHeaderButtonConfig).ToList(), "HeaderButtons");
     }
 
     [RelayCommand]
     private void AddCustomHeaderButton()
     {
+        if (!EnsureCanAddCustomHeaderButton())
+            return;
+
         LaunchTools("header-shortcut", "--header-button-mode create");
     }
 
@@ -858,6 +952,9 @@ public partial class SettingsViewModel : ObservableObject
     private void DuplicateCustomHeaderButton(HeaderButtonConfig? item)
     {
         if (item is null || item.Kind != HeaderButtonKind.Custom)
+            return;
+
+        if (!EnsureCanAddCustomHeaderButton())
             return;
 
         var copy = CloneHeaderButtonConfig(item);

@@ -161,6 +161,11 @@ public partial class HeaderShortcutEditorWindow : Window, INotifyPropertyChanged
             nextButtons.Add(savedButton);
         }
 
+        if (!ValidateHeaderButtonLimits(nextButtons, savedButton, existingIndex >= 0))
+        {
+            return;
+        }
+
         _configService.Update(config => config.HeaderButtons = nextButtons);
         ToolsReloadSignalService.NotifyReloadHeaderButtons();
 
@@ -173,6 +178,45 @@ public partial class HeaderShortcutEditorWindow : Window, INotifyPropertyChanged
             "상단바 단축키 저장",
             MessageBoxButton.OK,
             MessageBoxImage.Information);
+    }
+
+    /// <summary>
+    /// 새 커스텀 단축키 개수와 좌우 표시 개수가 안전 한도를 넘지 않는지 확인합니다.
+    /// 독립 편집기에서도 메인 앱과 같은 기준을 써야 저장 직후 상단바가 중앙 조작부를 가리지 않습니다.
+    /// </summary>
+    private static bool ValidateHeaderButtonLimits(
+        IReadOnlyCollection<HeaderButtonConfig> buttons,
+        HeaderButtonConfig savedButton,
+        bool isEditingExisting)
+    {
+        if (!isEditingExisting
+            && HeaderButtonConfig.CountCustomButtons(buttons, savedButton.Id) >= HeaderButtonConfig.MaxCustomButtonCount)
+        {
+            MessageBox.Show(
+                $"커스텀 상단바 단축키는 최대 {HeaderButtonConfig.MaxCustomButtonCount}개까지 만들 수 있습니다.",
+                "상단바 단축키 한도",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+            return false;
+        }
+
+        if (!savedButton.Visible)
+            return true;
+
+        var maxVisibleButtons = HeaderButtonConfig.GetMaxVisibleButtons(savedButton.Position);
+        var visibleButtonsOnSide = HeaderButtonConfig.CountVisibleButtons(buttons, savedButton.Position, savedButton.Id);
+        if (visibleButtonsOnSide >= maxVisibleButtons)
+        {
+            var sideName = HeaderButtonConfig.NormalizePosition(savedButton.Position) == "Left" ? "좌측" : "우측";
+            MessageBox.Show(
+                $"상단바 {sideName}에는 최대 {maxVisibleButtons}개까지만 표시할 수 있습니다.\n위치를 바꾸거나 표시를 끄고 다시 저장해 주세요.",
+                "상단바 표시 한도",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+            return false;
+        }
+
+        return true;
     }
 
     private HeaderButtonConfig BuildEditedButton()

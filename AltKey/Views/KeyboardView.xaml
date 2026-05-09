@@ -139,11 +139,18 @@
                     Background="Transparent"
                     CornerRadius="16,16,0,0">
             <Grid Height="28">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
 
                 <!-- 앱 타이틀 + 업데이트 인디케이터 + 좌측 구성 버튼 (좌측 고정) -->
+                <Border Grid.Column="0"
+                        Margin="12,0,8,0"
+                        ClipToBounds="True">
                 <StackPanel Orientation="Horizontal"
-                            HorizontalAlignment="Left" VerticalAlignment="Center"
-                            Margin="12,0,0,0">
+                            HorizontalAlignment="Left" VerticalAlignment="Center">
                     <TextBlock Text="AltKey" Foreground="{DynamicResource TitleFg}"
                                FontSize="11" FontWeight="SemiBold"
                                VerticalAlignment="Center" IsHitTestVisible="False"/>
@@ -206,9 +213,11 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </StackPanel>
+                </Border>
 
                 <!-- 중앙: 위치 이동 버튼 + 드래그 핸들 -->
                 <StackPanel Orientation="Horizontal"
+                            Grid.Column="1"
                             HorizontalAlignment="Center" VerticalAlignment="Center"
                             Panel.ZIndex="1">
                     <Button Width="18" Height="18" Content="&#x2190;" ToolTip="화면 왼쪽으로 이동"
@@ -256,6 +265,9 @@
                 </StackPanel>
 
                 <!-- 우측 영역: 구성 가능 버튼 + 고정 버튼 -->
+                <Border Grid.Column="2"
+                        Margin="8,0,0,0"
+                        ClipToBounds="True">
                 <StackPanel Orientation="Horizontal"
                             HorizontalAlignment="Right" VerticalAlignment="Center">
 
@@ -325,6 +337,7 @@
                         <TextBlock Text="&#x2715;" FontSize="14"/>
                     </Button>
                 </StackPanel>
+                </Border>
             </Grid>
             </Border>
 
