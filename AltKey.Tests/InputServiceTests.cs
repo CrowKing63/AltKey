@@ -1,5 +1,6 @@
 using AltKey.Models;
 using AltKey.Services;
+using System.Diagnostics;
 
 namespace AltKey.Tests;
 
@@ -12,6 +13,7 @@ public class InputServiceTests
         public List<string> ReleaseAllReasons { get; } = [];
         public List<string> ReleaseHighRiskReasons { get; } = [];
         public List<string> ReleaseHeldReasons { get; } = [];
+        public ProcessStartInfo? LastStartedProcess { get; private set; }
 
         public override void SendKeyDown(VirtualKeyCode vk) => KeyDowns.Add(vk);
 
@@ -33,6 +35,11 @@ public class InputServiceTests
         {
             ReleaseHeldReasons.Add(reason);
             base.ReleaseAllHeldKeys(reason);
+        }
+
+        protected override void StartProcess(ProcessStartInfo psi)
+        {
+            LastStartedProcess = psi;
         }
     }
 
@@ -227,5 +234,51 @@ public class InputServiceTests
         Assert.True(svc.StickyKeys.Contains(VirtualKeyCode.VK_SHIFT));
         Assert.DoesNotContain(VirtualKeyCode.VK_SHIFT, svc.KeyUps);
         Assert.Contains(VirtualKeyCode.VK_W, svc.KeyUps);
+    }
+
+    [Fact]
+    public void HandleAction_shell_command_preserves_literal_quotes_for_powershell()
+    {
+        var svc = new TrackingInputService();
+        const string command = "Write-Output \"C:\\Temp\\a\\b\"";
+
+        svc.HandleAction(new ShellCommandAction(command, "powershell"));
+
+        Assert.NotNull(svc.LastStartedProcess);
+        Assert.Equal("powershell.exe", svc.LastStartedProcess!.FileName);
+        Assert.Equal("-NoProfile", svc.LastStartedProcess.ArgumentList[0]);
+        Assert.Equal("-Command", svc.LastStartedProcess.ArgumentList[1]);
+        Assert.Equal(command, svc.LastStartedProcess.ArgumentList[2]);
+    }
+
+    [Fact]
+    public void HandleAction_shell_command_preserves_literal_quotes_for_cmd()
+    {
+        var svc = new TrackingInputService();
+        const string command = "echo \"C:\\Temp\\a\\b\" && dir /b";
+
+        svc.HandleAction(new ShellCommandAction(command, "cmd"));
+
+        Assert.NotNull(svc.LastStartedProcess);
+        Assert.Equal("cmd.exe", svc.LastStartedProcess!.FileName);
+        Assert.Equal("/d", svc.LastStartedProcess.ArgumentList[0]);
+        Assert.Equal("/s", svc.LastStartedProcess.ArgumentList[1]);
+        Assert.Equal("/c", svc.LastStartedProcess.ArgumentList[2]);
+        Assert.Equal(command, svc.LastStartedProcess.ArgumentList[3]);
+    }
+
+    [Fact]
+    public void HandleAction_run_app_keeps_user_argument_string_as_is()
+    {
+        var svc = new TrackingInputService();
+        const string path = "notepad.exe";
+        const string args = "\"C:\\Temp\\memo \\\"draft\\\".txt\" /A";
+
+        svc.HandleAction(new RunAppAction(path, args));
+
+        Assert.NotNull(svc.LastStartedProcess);
+        Assert.Equal(path, svc.LastStartedProcess!.FileName);
+        Assert.Equal(args, svc.LastStartedProcess.Arguments);
+        Assert.True(svc.LastStartedProcess.UseShellExecute);
     }
 }

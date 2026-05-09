@@ -307,6 +307,14 @@ public class InputService
             StickyStateChanged?.Invoke();
     }
 
+    /// <summary>
+    /// 테스트에서는 실제 프로세스를 띄우지 않고, 만들어진 실행 정보를 검사할 수 있게 분리한 진입점입니다.
+    /// </summary>
+    protected virtual void StartProcess(ProcessStartInfo psi)
+    {
+        Process.Start(psi);
+    }
+
     public void HandleAction(KeyAction action)
     {
         switch (action)
@@ -353,7 +361,7 @@ public class InputService
             case RunAppAction { Path: var path, Args: var args }:
                 try
                 {
-                    Process.Start(new ProcessStartInfo(path, args) { UseShellExecute = true });
+                    StartProcess(CreateRunAppProcessStartInfo(path, args));
                 }
                 catch (Exception ex)
                 {
@@ -366,17 +374,9 @@ public class InputService
                 break;
 
             case ShellCommandAction { Command: var cmd, Shell: var shell, Hidden: var hidden }:
-                var shellExe = shell == "powershell" ? "powershell.exe" : "cmd.exe";
-                var shellArg = shell == "powershell" ? $"-Command \"{cmd}\"" : $"/c \"{cmd}\"";
-                var psi = new ProcessStartInfo(shellExe, shellArg)
-                {
-                    UseShellExecute = false,
-                    CreateNoWindow = hidden
-                };
-
                 try
                 {
-                    Process.Start(psi);
+                    StartProcess(CreateShellCommandProcessStartInfo(cmd, shell, hidden));
                 }
                 catch (Exception ex)
                 {
@@ -444,6 +444,42 @@ public class InputService
         using var identity = WindowsIdentity.GetCurrent();
         var principal = new WindowsPrincipal(identity);
         return principal.IsInRole(WindowsBuiltInRole.Administrator);
+    }
+
+    /// <summary>
+    /// 실행 파일 인수 문자열은 사용자가 입력한 따옴표와 슬래시 배치를 그대로 유지해야 하므로 추가 감싸기를 하지 않습니다.
+    /// </summary>
+    private static ProcessStartInfo CreateRunAppProcessStartInfo(string path, string args) => new(path)
+    {
+        Arguments = args,
+        UseShellExecute = true
+    };
+
+    /// <summary>
+    /// 셸 명령 본문은 ArgumentList로 분리해 전달하여 AltKey가 바깥 따옴표를 덧씌우면서 내용을 바꾸지 않도록 합니다.
+    /// </summary>
+    private static ProcessStartInfo CreateShellCommandProcessStartInfo(string command, string shell, bool hidden)
+    {
+        var shellExe = shell == "powershell" ? "powershell.exe" : "cmd.exe";
+        var psi = new ProcessStartInfo(shellExe)
+        {
+            UseShellExecute = false,
+            CreateNoWindow = hidden
+        };
+
+        if (shell == "powershell")
+        {
+            psi.ArgumentList.Add("-NoProfile");
+            psi.ArgumentList.Add("-Command");
+            psi.ArgumentList.Add(command);
+            return psi;
+        }
+
+        psi.ArgumentList.Add("/d");
+        psi.ArgumentList.Add("/s");
+        psi.ArgumentList.Add("/c");
+        psi.ArgumentList.Add(command);
+        return psi;
     }
 
     private void DispatchInput(Win32.INPUT[] inputs)
