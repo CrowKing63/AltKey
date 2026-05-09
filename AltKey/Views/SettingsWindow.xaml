@@ -143,7 +143,8 @@
                         <StackPanel Margin="8,10,8,10">
                             <TextBlock Text="기본 상단바 버튼" Style="{StaticResource SectionTitleStyle}"/>
                             <TextBlock Text="기본 버튼의 표시 여부, 좌우 위치, 순서를 조정합니다." Foreground="{DynamicResource SettingsFgSub}" FontSize="11"/>
-                            <TextBlock Text="접기, 최소화, 닫기 버튼은 항상 우측 끝에 고정됩니다." Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,8"/>
+                            <TextBlock Text="최소화, 접기, 닫기 버튼은 항상 우측 끝에 고정되며, 화면 맨 오른쪽부터는 닫기 → 접기 → 최소화 순서로 보입니다." Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,2"/>
+                            <TextBlock Text="상단바의 버튼 없는 빈 칸과 가운데 드래그 핸들은 더블 클릭으로 접기/펼치기를 지원하며, 더블 클릭 시간은 윈도우 설정을 따릅니다." Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,8"/>
                             <ItemsControl ItemsSource="{Binding BuiltInHeaderButtons}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>

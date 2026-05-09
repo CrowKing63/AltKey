@@ -2,11 +2,15 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Automation.Peers;
 using AltKey.Models;
 using AltKey.Services;
 using AltKey.ViewModels;
+using WpfButtonBase = System.Windows.Controls.Primitives.ButtonBase;
+using WpfMouseEventArgs = System.Windows.Input.MouseEventArgs;
+using WpfPoint = System.Windows.Point;
 using WpfRect = System.Windows.Shapes.Rectangle;
 
 namespace AltKey.Views;
@@ -23,6 +27,8 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
     private bool _autoCompleteBarAdded = false;
 
     private ConfigService? _configService;
+    private bool _isDragHandlePressed;
+    private WpfPoint _dragHandlePressPoint;
     
     // 키보드를 접었을 때의 최소 높이입니다.
     private const double CollapsedWindowHeight = 28.0;
@@ -217,14 +223,83 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
     }
 
     /// <summary>
-    /// 상단 핸들을 마우스로 잡고 끌었을 때 키보드 창이 따라 움직이게 합니다.
+    /// 상단바의 버튼 없는 빈 칸을 더블 클릭하면 키보드를 접거나 다시 펼칩니다.
+    /// 일반적인 윈도우 제목 표시줄처럼 더블 클릭 시간은 운영체제 설정을 그대로 따릅니다.
+    /// </summary>
+    private void HeaderBlankArea_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (e.ClickCount != 2) return;
+        if (IsHeaderInteractiveElement(e.OriginalSource as DependencyObject)) return;
+
+        ToggleCollapsedState();
+        e.Handled = true;
+    }
+
+    /// <summary>
+    /// 상단 핸들은 한 번 누른 뒤 움직이면 창 이동, 같은 자리에서 두 번 누르면 접기/펼치기로 동작을 나눕니다.
     /// </summary>
     private void DragHandle_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
-        if (Window.GetWindow(this) is { } window)
+        if (sender is not UIElement dragHandle) return;
+
+        if (e.ClickCount == 2)
         {
-            window.DragMove();
+            ToggleCollapsedState();
+            dragHandle.ReleaseMouseCapture();
+            _isDragHandlePressed = false;
+            e.Handled = true;
+            return;
         }
+
+        _isDragHandlePressed = true;
+        _dragHandlePressPoint = e.GetPosition(this);
+        dragHandle.CaptureMouse();
+        e.Handled = true;
+    }
+
+    /// <summary>
+    /// 드래그 핸들을 누른 상태로 일정 거리 이상 움직였을 때만 창 이동을 시작해 더블 클릭과 충돌하지 않게 합니다.
+    /// </summary>
+    private void DragHandle_MouseMove(object sender, WpfMouseEventArgs e)
+    {
+        if (!_isDragHandlePressed || e.LeftButton != MouseButtonState.Pressed) return;
+        if (sender is not UIElement dragHandle) return;
+        if (Window.GetWindow(this) is not { } window) return;
+
+        var currentPoint = e.GetPosition(this);
+        var movedX = Math.Abs(currentPoint.X - _dragHandlePressPoint.X);
+        var movedY = Math.Abs(currentPoint.Y - _dragHandlePressPoint.Y);
+
+        if (movedX < SystemParameters.MinimumHorizontalDragDistance
+            && movedY < SystemParameters.MinimumVerticalDragDistance)
+        {
+            return;
+        }
+
+        _isDragHandlePressed = false;
+        dragHandle.ReleaseMouseCapture();
+        window.DragMove();
+    }
+
+    /// <summary>
+    /// 드래그 핸들에서 마우스를 떼면 대기 중이던 드래그 상태를 정리합니다.
+    /// </summary>
+    private void DragHandle_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is UIElement dragHandle && dragHandle.IsMouseCaptured)
+        {
+            dragHandle.ReleaseMouseCapture();
+        }
+
+        _isDragHandlePressed = false;
+    }
+
+    /// <summary>
+    /// 외부 요인으로 마우스 캡처가 해제되더라도 다음 입력에 영향을 주지 않도록 상태를 초기화합니다.
+    /// </summary>
+    private void DragHandle_LostMouseCapture(object sender, WpfMouseEventArgs e)
+    {
+        _isDragHandlePressed = false;
     }
 
     private void MinimizeButton_Click(object sender, RoutedEventArgs e)
@@ -241,10 +316,15 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
     }
 
     /// <summary>
-    /// 접기(▼)/펼치기(▲) 버튼을 눌렀을 때 실행됩니다.
-    /// 창을 작게 줄여서 화면을 덜 차지하게 하거나 다시 원래 크기로 돌립니다.
+    /// 접기(▼)/펼치기(▲) 버튼을 눌렀을 때 공용 접기 토글 로직을 실행합니다.
     /// </summary>
     private void CollapseButton_Click(object sender, RoutedEventArgs e)
+        => ToggleCollapsedState();
+
+    /// <summary>
+    /// 버튼 클릭과 상단바 더블 클릭이 모두 같은 경로를 사용하도록 접힘 상태 변경을 한곳에서 처리합니다.
+    /// </summary>
+    private void ToggleCollapsedState()
     {
         var window = Window.GetWindow(this);
         if (window is null) return;
@@ -263,6 +343,27 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
             if (FindName("CollapseIcon") is TextBlock collapseIcon)
                 collapseIcon.Text = "▲";
         }
+    }
+
+    /// <summary>
+    /// 상단바의 실제 조작 요소(버튼, 토글 버튼 등)에서 발생한 입력인지를 검사합니다.
+    /// 빈 영역 더블 클릭만 접기 동작으로 연결해 기존 버튼 기능과 섞이지 않게 합니다.
+    /// </summary>
+    private static bool IsHeaderInteractiveElement(DependencyObject? source)
+    {
+        while (source is not null)
+        {
+            if (source is WpfButtonBase)
+            {
+                return true;
+            }
+
+            source = source is Visual or System.Windows.Media.Media3D.Visual3D
+                ? VisualTreeHelper.GetParent(source)
+                : LogicalTreeHelper.GetParent(source);
+        }
+
+        return false;
     }
 
     private static void CaptureAndClearHeightAnimation(Window window)
