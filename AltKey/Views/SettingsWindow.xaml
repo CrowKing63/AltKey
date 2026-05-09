@@ -111,28 +111,60 @@
                             <ctrl:NumericAdjuster Value="{Binding KeyFontScalePercent}" Minimum="80" Maximum="220" Step="5" DecimalPlaces="0"
                                                   Margin="0,0,0,16" KeyboardNavigation.TabIndex="16" AutomationProperties.Name="키 글자 크기 백분율"/>
 
-                            <TextBlock Text="유휴 투명도" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
-                            <ctrl:NumericAdjuster Value="{Binding OpacityIdle}" Minimum="0.1" Maximum="1.0" Step="0.05" DecimalPlaces="2"
-                                                  Margin="0,0,0,16" KeyboardNavigation.TabIndex="17" AutomationProperties.Name="유휴 투명도"/>
+                            <TextBlock Text="투명도 단계" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
+                            <TextBlock Text="1.0 = 완전 표시, 0.2 = 20%만 보임"
+                                       Foreground="{DynamicResource SettingsFgSub}"
+                                       FontSize="11"
+                                       Margin="0,0,0,8"/>
 
-                            <TextBlock Text="페이드 지연 (초)" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
+                            <CheckBox Content="상시 투명도 사용"
+                                      Foreground="{DynamicResource SettingsFg}"
+                                      IsChecked="{Binding ActiveOpacityEnabled}"
+                                      Margin="0,0,0,8"
+                                      KeyboardNavigation.TabIndex="17"
+                                      AutomationProperties.Name="상시 투명도 사용"/>
+                            <TextBlock Text="상시 투명도" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="16,0,0,4"/>
+                            <ctrl:NumericAdjuster Value="{Binding OpacityActive}" Minimum="0.1" Maximum="1.0" Step="0.05" DecimalPlaces="2"
+                                                  IsEnabled="{Binding ActiveOpacityEnabled}"
+                                                  Margin="16,0,0,16" KeyboardNavigation.TabIndex="18" AutomationProperties.Name="상시 투명도"/>
+
+                            <TextBlock Text="유휴는 상시 투명도보다 더 진하게 설정할 수 없으며, 상시를 낮추면 유휴 최대치도 함께 내려갑니다."
+                                       Foreground="{DynamicResource SettingsFgSub}"
+                                       FontSize="11"
+                                       Margin="16,0,0,8"
+                                       TextWrapping="Wrap"/>
+
+                            <CheckBox Content="유휴 시 더 흐리게"
+                                      Foreground="{DynamicResource SettingsFg}"
+                                      IsChecked="{Binding IdleOpacityEnabled}"
+                                      IsEnabled="{Binding CanUseIdleOpacity}"
+                                      Margin="0,0,0,8"
+                                      KeyboardNavigation.TabIndex="19"
+                                      AutomationProperties.Name="유휴 시 더 흐리게"/>
+                            <TextBlock Text="유휴 투명도" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="16,0,0,4"/>
+                            <ctrl:NumericAdjuster Value="{Binding OpacityIdle}" Minimum="0.1" Maximum="{Binding IdleOpacityMaximum}" Step="0.05" DecimalPlaces="2"
+                                                  IsEnabled="{Binding CanEditIdleOpacity}"
+                                                  Margin="16,0,0,8" KeyboardNavigation.TabIndex="20" AutomationProperties.Name="유휴 투명도"/>
+
+                            <TextBlock Text="유휴 전환 지연 (초)" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="16,0,0,4"/>
                             <ctrl:NumericAdjuster Value="{Binding FadeDelaySec}" Minimum="1" Maximum="30" Step="1" DecimalPlaces="0"
-                                                  Margin="0,0,0,16" KeyboardNavigation.TabIndex="18" AutomationProperties.Name="페이드 지연"/>
+                                                  IsEnabled="{Binding CanEditIdleOpacity}"
+                                                  Margin="16,0,0,16" KeyboardNavigation.TabIndex="21" AutomationProperties.Name="유휴 전환 지연"/>
 
                             <TextBlock Text="기본 레이아웃" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
-                            <ComboBox ItemsSource="{Binding AvailableLayouts}" SelectedItem="{Binding SelectedLayout}" Height="30" Margin="0,0,0,8" KeyboardNavigation.TabIndex="19" AutomationProperties.Name="기본 레이아웃 선택"/>
+                            <ComboBox ItemsSource="{Binding AvailableLayouts}" SelectedItem="{Binding SelectedLayout}" Height="30" Margin="0,0,0,8" KeyboardNavigation.TabIndex="22" AutomationProperties.Name="기본 레이아웃 선택"/>
 
                             <Button Content="레이아웃 편집기 열기"
                                     Command="{Binding OpenLayoutEditorCommand}"
                                     Style="{StaticResource SettingsActionButtonStyle}"
                                     Margin="0,0,0,8"
-                                    KeyboardNavigation.TabIndex="20" AutomationProperties.Name="레이아웃 편집기 열기"/>
+                                    KeyboardNavigation.TabIndex="23" AutomationProperties.Name="레이아웃 편집기 열기"/>
 
                             <Button Content="사용자 단어 편집기 열기"
                                     Command="{Binding OpenUserDictionaryEditorCommand}"
                                     Style="{StaticResource SettingsActionButtonStyle}"
                                     Margin="0,0,0,8"
-                                    KeyboardNavigation.TabIndex="21" AutomationProperties.Name="사용자 단어 편집기 열기"
+                                    KeyboardNavigation.TabIndex="24" AutomationProperties.Name="사용자 단어 편집기 열기"
                                     ToolTip="자동완성에서 학습한 단어 목록을 확인하고 수정합니다."/>
                         </StackPanel>
                     </ScrollViewer>

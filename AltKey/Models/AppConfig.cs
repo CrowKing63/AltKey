@@ -32,11 +32,21 @@ public class AppConfig
     // 키보드 창을 항상 다른 창들보다 위에 띄울지 여부입니다. (true: 항상 위)
     public bool   AlwaysOnTop       { get; set; } = true;
     
-    // 키보드를 사용하지 않을 때의 투명도 (0.0: 투명 ~ 1.0: 불투명).
-    public double OpacityIdle       { get; set; } = 0.4;
+    // 유휴가 아닐 때 적용할 기본 투명도 기능의 활성화 여부입니다.
+    // false이면 상시 투명도를 사용하지 않고, 기본값 1.0(완전 표시)로 유지합니다.
+    public bool   ActiveOpacityEnabled { get; set; } = false;
+
+    // 키보드가 유휴가 아닐 때의 기본 투명도입니다. (0.0: 투명 ~ 1.0: 불투명)
+    // 예: 0.8이면 평소에 80% 정도 보이는 상태를 유지합니다.
+    public double OpacityActive        { get; set; } = 1.0;
+
+    // 마우스가 벗어난 뒤 일정 시간이 지나면 유휴 투명도로 낮추는 기능의 활성화 여부입니다.
+    // false이면 마우스가 벗어나도 추가로 더 흐려지지 않습니다.
+    public bool   IdleOpacityEnabled   { get; set; } = false;
     
-    // 키보드 위에 마우스를 올리거나 사용할 때의 투명도 (1.0 권장).
-    public double OpacityActive     { get; set; } = 1.0;
+    // 키보드를 사용하지 않을 때의 유휴 투명도입니다. (0.0: 투명 ~ 1.0: 불투명)
+    // 예: 0.2이면 유휴 상태에서 20% 정도만 보이게 됩니다.
+    public double OpacityIdle          { get; set; } = 1.0;
     
     // 키보드 사용을 멈춘 후 '사용하지 않는 상태(Idle)'로 전환될 때까지의 대기 시간 (단위: 밀리초, 1000 = 1초).
     public int    FadeDelayMs       { get; set; } = 5000;

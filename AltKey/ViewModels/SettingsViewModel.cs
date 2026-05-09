@@ -46,7 +46,10 @@ public partial class SettingsViewModel : ObservableObject
 
     [ObservableProperty] private string themeMode      = "system";
     [ObservableProperty] private bool   alwaysOnTop    = true;
-    [ObservableProperty] private double opacityIdle    = 0.4;
+    [ObservableProperty] private bool   activeOpacityEnabled;
+    [ObservableProperty] private double opacityActive  = 1.0;
+    [ObservableProperty] private bool   idleOpacityEnabled;
+    [ObservableProperty] private double opacityIdle    = 1.0;
     [ObservableProperty] private int    fadeDelaySec   = 5;
     [ObservableProperty] private bool   dwellEnabled   = false;
     [ObservableProperty] private int    dwellTimeMs    = 800;
@@ -204,6 +207,9 @@ public partial class SettingsViewModel : ObservableObject
      public bool ThemeIsLight  { get => ThemeMode == "Light";  set { if (value) ThemeMode = "Light";  } }
      public bool ThemeIsDark   { get => ThemeMode == "Dark";   set { if (value) ThemeMode = "Dark";   } }
      public bool ThemeIsHighContrast { get => ThemeMode == "HighContrast"; set { if (value) ThemeMode = "HighContrast"; } }
+     public double IdleOpacityMaximum => ActiveOpacityEnabled ? Math.Clamp(OpacityActive, 0.1, 1.0) : 1.0;
+     public bool CanUseIdleOpacity => ActiveOpacityEnabled;
+     public bool CanEditIdleOpacity => ActiveOpacityEnabled && IdleOpacityEnabled;
 
     // ── 생성자 ──────────────────────────────────────────────────────────────
 
@@ -259,6 +265,26 @@ public partial class SettingsViewModel : ObservableObject
             _layoutService.GetAvailableLayouts());
     }
 
+    /// <summary>
+    /// 상시 투명도보다 더 진한 값으로 유휴 투명도를 저장하지 않도록 상한을 맞춥니다.
+    /// 예를 들어 상시가 0.8이면 유휴는 0.8 이하에서만 머물러야 사용자 체감이 자연스럽습니다.
+    /// </summary>
+    private void ClampIdleOpacityIfNeeded(bool saveIfChanged)
+    {
+        var maxIdleOpacity = IdleOpacityMaximum;
+        if (OpacityIdle <= maxIdleOpacity + 0.0001)
+        {
+            return;
+        }
+
+        OpacityIdle = maxIdleOpacity;
+
+        if (saveIfChanged && !_isLoading)
+        {
+            _configService.Update(c => c.OpacityIdle = maxIdleOpacity, nameof(AppConfig.OpacityIdle));
+        }
+    }
+
     private bool _isLoading;
 
     private void LoadFromConfig()
@@ -269,6 +295,9 @@ public partial class SettingsViewModel : ObservableObject
             var c = _configService.Current;
             ThemeMode      = c.Theme;
             AlwaysOnTop    = c.AlwaysOnTop;
+            ActiveOpacityEnabled = c.ActiveOpacityEnabled;
+            OpacityActive  = c.OpacityActive;
+            IdleOpacityEnabled = c.IdleOpacityEnabled;
             OpacityIdle    = c.OpacityIdle;
             FadeDelaySec   = c.FadeDelayMs / 1000;
             DwellEnabled   = c.DwellEnabled;
@@ -342,6 +371,8 @@ public partial class SettingsViewModel : ObservableObject
 
             AvailableLayouts = new ObservableCollection<string>(
                 _layoutService.GetAvailableLayouts());
+
+            ClampIdleOpacityIfNeeded(saveIfChanged: false);
         }
         finally
         {
@@ -373,16 +404,56 @@ public partial class SettingsViewModel : ObservableObject
             WpfApp.Current.MainWindow.Topmost = value;
     }
 
+    partial void OnActiveOpacityEnabledChanged(bool value)
+    {
+        if (_isLoading) return;
+        OnPropertyChanged(nameof(IdleOpacityMaximum));
+        OnPropertyChanged(nameof(CanUseIdleOpacity));
+        OnPropertyChanged(nameof(CanEditIdleOpacity));
+
+        if (!value && IdleOpacityEnabled)
+        {
+            IdleOpacityEnabled = false;
+        }
+
+        ClampIdleOpacityIfNeeded(saveIfChanged: false);
+        _configService.Update(c => c.ActiveOpacityEnabled = value, nameof(AppConfig.ActiveOpacityEnabled));
+    }
+
+    partial void OnOpacityActiveChanged(double value)
+    {
+        if (_isLoading) return;
+        OnPropertyChanged(nameof(IdleOpacityMaximum));
+        OnPropertyChanged(nameof(CanUseIdleOpacity));
+        OnPropertyChanged(nameof(CanEditIdleOpacity));
+        ClampIdleOpacityIfNeeded(saveIfChanged: true);
+        _configService.Update(c => c.OpacityActive = value, nameof(AppConfig.OpacityActive));
+    }
+
+    partial void OnIdleOpacityEnabledChanged(bool value)
+    {
+        if (_isLoading) return;
+        OnPropertyChanged(nameof(CanEditIdleOpacity));
+        _configService.Update(c => c.IdleOpacityEnabled = value, nameof(AppConfig.IdleOpacityEnabled));
+    }
+
     partial void OnOpacityIdleChanged(double value)
     {
         if (_isLoading) return;
-        _configService.Update(c => c.OpacityIdle = value);
+        var clamped = Math.Min(value, IdleOpacityMaximum);
+        if (Math.Abs(clamped - value) > 0.0001)
+        {
+            OpacityIdle = clamped;
+            return;
+        }
+
+        _configService.Update(c => c.OpacityIdle = clamped, nameof(AppConfig.OpacityIdle));
     }
 
     partial void OnFadeDelaySecChanged(int value)
     {
         if (_isLoading) return;
-        _configService.Update(c => c.FadeDelayMs = value * 1000);
+        _configService.Update(c => c.FadeDelayMs = value * 1000, nameof(AppConfig.FadeDelayMs));
     }
 
     partial void OnDwellEnabledChanged(bool value)

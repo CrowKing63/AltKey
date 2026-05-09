@@ -20,6 +20,7 @@ public partial class MainWindow : Window
     private readonly InputService   _inputService;
 
     private DispatcherTimer _fadeTimer = null!;
+    private bool _isIdleOpacityApplied;
 
     /// T-5.6: 실제 종료(Shutdown) 여부 플래그
     public bool IsShuttingDown { get; set; }
@@ -53,6 +54,7 @@ public partial class MainWindow : Window
         _hotkeyService = hotkeyService;
         _viewModel     = viewModel;
         _inputService  = inputService;
+        _configService.ConfigChanged += OnConfigChanged;
 
         // T-5.5: 트레이 초기화
         _trayService.Initialize(this);
@@ -67,8 +69,8 @@ public partial class MainWindow : Window
         {
             if (WindowState == WindowState.Normal)
             {
-                Opacity = 1.0;
                 BeginAnimation(OpacityProperty, null);
+                ApplyOpacityForCurrentState(animated: false);
             }
         };
 
@@ -91,6 +93,7 @@ public partial class MainWindow : Window
 
         // T-1.7: 자동 페이딩 타이머
         SetupFadeTimer();
+        ApplyOpacityForCurrentState(animated: false);
 
         MouseEnter += MainWindow_MouseEnter;
         MouseLeave += MainWindow_MouseLeave;
@@ -181,40 +184,108 @@ public partial class MainWindow : Window
     // T-1.7: 자동 페이딩
     private void SetupFadeTimer()
     {
-        var config = _configService.Current;
         _fadeTimer = new DispatcherTimer
         {
-            Interval = TimeSpan.FromMilliseconds(config.FadeDelayMs)
+            Interval = TimeSpan.FromMilliseconds(_configService.Current.FadeDelayMs)
         };
         _fadeTimer.Tick += FadeTimer_Tick;
     }
 
     private void MainWindow_MouseEnter(object? sender, System.Windows.Input.MouseEventArgs e)
     {
+        _isIdleOpacityApplied = false;
         _fadeTimer.Stop();
-        BeginAnimation(OpacityProperty,
-            new DoubleAnimation(1.0, TimeSpan.FromMilliseconds(150)));
+        ApplyOpacityForCurrentState();
     }
 
     private void MainWindow_MouseLeave(object? sender, System.Windows.Input.MouseEventArgs e)
     {
-        _fadeTimer.Start();
+        _isIdleOpacityApplied = false;
+
+        if (WindowOpacityProfile.ShouldStartIdleTimer(_configService.Current))
+        {
+            _fadeTimer.Stop();
+            _fadeTimer.Start();
+        }
+        else
+        {
+            _fadeTimer.Stop();
+        }
+
+        ApplyOpacityForCurrentState();
     }
 
     private void FadeTimer_Tick(object? s, EventArgs e)
     {
         _fadeTimer.Stop();
+        _isIdleOpacityApplied = true;
+        ApplyOpacityForCurrentState(durationMs: 400);
+    }
+
+    /// <summary>
+    /// [접근성] 투명도 적용 규칙을 한곳에 모아 설정 변경과 마우스 이동이 겹쳐도 같은 기준으로 보이게 합니다.
+    /// 상시 투명도는 '유휴가 아닐 때의 기본값', 유휴 투명도는 '이탈 후 일정 시간이 지난 뒤의 값'으로 해석합니다.
+    /// </summary>
+    private void ApplyOpacityForCurrentState(bool animated = true, int durationMs = 150)
+    {
+        var targetOpacity = GetCurrentTargetOpacity();
+
+        if (!animated)
+        {
+            BeginAnimation(OpacityProperty, null);
+            Opacity = targetOpacity;
+            return;
+        }
+
+        BeginAnimation(
+            OpacityProperty,
+            new DoubleAnimation
+            {
+                From = Opacity,
+                To = targetOpacity,
+                Duration = TimeSpan.FromMilliseconds(durationMs)
+            });
+    }
+
+    private double GetCurrentTargetOpacity()
+    {
         var config = _configService.Current;
-        BeginAnimation(OpacityProperty,
-            new DoubleAnimation(config.OpacityIdle, TimeSpan.FromMilliseconds(400)));
+        return _isIdleOpacityApplied
+            ? WindowOpacityProfile.GetIdleOpacity(config)
+            : WindowOpacityProfile.GetBaseOpacity(config);
+    }
+
+    private void OnConfigChanged(string? propertyName)
+    {
+        if (propertyName is not null
+            and not nameof(Models.AppConfig.ActiveOpacityEnabled)
+            and not nameof(Models.AppConfig.OpacityActive)
+            and not nameof(Models.AppConfig.IdleOpacityEnabled)
+            and not nameof(Models.AppConfig.OpacityIdle)
+            and not nameof(Models.AppConfig.FadeDelayMs))
+        {
+            return;
+        }
+
+        _fadeTimer.Interval = TimeSpan.FromMilliseconds(_configService.Current.FadeDelayMs);
+
+        if (!WindowOpacityProfile.ShouldStartIdleTimer(_configService.Current))
+        {
+            _fadeTimer.Stop();
+            _isIdleOpacityApplied = false;
+        }
+
+        // 유휴 상태에서 수치를 바꿔도 앱 재시작 없이 즉시 현재 규칙으로 다시 그립니다.
+        ApplyOpacityForCurrentState();
     }
 
     // T-4.9: 진입 애니메이션 (Window는 RenderTransform 미지원 → 페이드인만)
     private void PlayOpenAnimation()
     {
+        BeginAnimation(OpacityProperty, null);
         Opacity = 0;
         BeginAnimation(OpacityProperty,
-            new DoubleAnimation(0, 1, new Duration(TimeSpan.FromMilliseconds(280))));
+            new DoubleAnimation(0, GetCurrentTargetOpacity(), new Duration(TimeSpan.FromMilliseconds(280))));
     }
 
     private void OnPreviewGotKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
