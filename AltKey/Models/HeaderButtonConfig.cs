@@ -189,7 +189,7 @@ public class HeaderButtonConfig
     {
         IdClipboard => "📋",
         IdEmoji => "😊",
-        IdAutoComplete => "AC",
+        IdAutoComplete => "제안",
         IdOsIme => "한/영",
         IdOsk => "⌨",
         IdSettings => "⚙",
