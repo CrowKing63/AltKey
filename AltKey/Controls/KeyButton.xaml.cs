@@ -284,6 +284,9 @@ public class KeyButton : System.Windows.Controls.Button
     private DispatcherTimer? _repeatDelayTimer;
     private DispatcherTimer? _repeatTimer;
     private bool _isRepeating;
+    private bool _isHoldPrimed;
+    private VirtualKeyCode? _primedHeldKey;
+    private VirtualKeyCode? _activeHeldKey;
 
     protected override void OnMouseEnter(System.Windows.Input.MouseEventArgs e)
     {
@@ -316,7 +319,8 @@ public class KeyButton : System.Windows.Controls.Button
     {
         base.OnMouseLeave(e);
         CancelDwell();
-        CancelRepeat();
+        if (!IsMouseCaptured)
+            CancelRepeat();
     }
 
     protected override void OnPreviewMouseLeftButtonDown(System.Windows.Input.MouseButtonEventArgs e)
@@ -332,7 +336,9 @@ public class KeyButton : System.Windows.Controls.Button
             e.Handled = true;
             CancelRepeat();
             _isRepeating = false;
+            StartHoldGestureIfNeeded();
             ExecuteKeyPress();
+            FinalizePressDispatch();
 
             _repeatDelayTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(Math.Max(1, KeyRepeatDelayMs)) };
             _repeatDelayTimer.Tick += RepeatDelayTick;
@@ -356,10 +362,38 @@ public class KeyButton : System.Windows.Controls.Button
         {
             e.Handled = true;
             CancelRepeat();
+            ReleaseHeldKey("mouse-up");
         }
         else
         {
             e.Handled = false;
+        }
+    }
+
+    protected override void OnLostMouseCapture(System.Windows.Input.MouseEventArgs e)
+    {
+        base.OnLostMouseCapture(e);
+        CancelRepeat();
+        ReleaseHeldKey("lost-mouse-capture");
+    }
+
+    protected override void OnMouseMove(System.Windows.Input.MouseEventArgs e)
+    {
+        base.OnMouseMove(e);
+
+        // 홀드 입력은 "버튼 안을 누르고 있는 동안"만 유지합니다.
+        // 마우스 캡처는 버튼 밖에서 놓아도 KeyUp을 놓치지 않기 위한 안전장치이고,
+        // 버튼 밖까지 홀드를 계속 유지하라는 의미는 아니므로 영역을 벗어나면 즉시 해제합니다.
+        if (!IsMouseCaptured)
+            return;
+
+        if (_activeHeldKey is null)
+            return;
+
+        if (e.LeftButton != MouseButtonState.Pressed || !IsPointerWithinButton(e))
+        {
+            CancelRepeat();
+            ReleaseHeldKey("pointer-left-button");
         }
     }
 
@@ -380,12 +414,21 @@ public class KeyButton : System.Windows.Controls.Button
         _repeatTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(Math.Max(1, KeyRepeatIntervalMs)) };
         _repeatTimer.Tick += RepeatTick;
         _repeatTimer.Start();
+
+        if (_activeHeldKey is not null)
+            CaptureMouse();
     }
 
     private void RepeatTick(object? sender, EventArgs e)
     {
         if (_isRepeating)
         {
+            if (_activeHeldKey is { } heldVk)
+            {
+                App.Services?.GetService<InputService>()?.PulseHeldKey(heldVk);
+                return;
+            }
+
             ExecuteKeyPress();
         }
     }
@@ -400,6 +443,90 @@ public class KeyButton : System.Windows.Controls.Button
         {
             Command.Execute(CommandParameter);
         }
+    }
+
+    /// <summary>
+    /// 현재 버튼이 VirtualKey 홀드 대상이면 InputService에 "다음 SendKeyAction은 KeyDown 유지"라고 알려줍니다.
+    /// 실제 실행 여부는 KeyboardViewModel의 최종 액션 해석 결과에 따라 InputService가 다시 확인합니다.
+    /// </summary>
+    private void StartHoldGestureIfNeeded()
+    {
+        var holdVk = TryGetHoldableVirtualKey();
+        if (holdVk is null)
+            return;
+
+        if (App.Services?.GetService<InputService>() is not { } inputService)
+            return;
+
+        _isHoldPrimed = true;
+        _primedHeldKey = holdVk.Value;
+        inputService.ArmHeldKeyGesture(holdVk.Value);
+    }
+
+    /// <summary>
+    /// Command 실행 직후, 실제로 홀드가 시작됐는지 확인합니다.
+    /// 홀드가 아니었다면 예약만 정리하고 기존 반복 클릭 경로로 폴백합니다.
+    /// </summary>
+    private void FinalizePressDispatch()
+    {
+        if (!_isHoldPrimed)
+            return;
+
+        _isHoldPrimed = false;
+
+        var holdVk = _primedHeldKey;
+        if (holdVk is null)
+            return;
+
+        if (App.Services?.GetService<InputService>() is not { } inputService)
+            return;
+
+        if (inputService.IsHeldKey(holdVk.Value))
+        {
+            _activeHeldKey = holdVk;
+            _primedHeldKey = null;
+            CaptureMouse();
+            return;
+        }
+
+        inputService.CancelHeldKeyGesture(holdVk.Value);
+        _primedHeldKey = null;
+    }
+
+    /// <summary>
+    /// 길게 누름을 마칠 때 대응하는 KeyUp을 보냅니다.
+    /// 마우스 업이 버튼 밖에서 일어나더라도 capture 해제 경로와 같은 정리 함수를 사용합니다.
+    /// </summary>
+    private void ReleaseHeldKey(string reason)
+    {
+        if (App.Services?.GetService<InputService>() is not { } inputService)
+        {
+            _activeHeldKey = null;
+            _isHoldPrimed = false;
+            _primedHeldKey = null;
+            if (IsMouseCaptured)
+                ReleaseMouseCapture();
+            return;
+        }
+
+        if (_isHoldPrimed)
+        {
+            var pendingVk = _primedHeldKey;
+            _isHoldPrimed = false;
+            if (pendingVk is not null)
+                inputService.CancelHeldKeyGesture(pendingVk.Value);
+            _primedHeldKey = null;
+        }
+
+        if (_activeHeldKey is { } vk)
+        {
+            inputService.EndHeldKey(vk);
+            System.Diagnostics.Debug.WriteLine($"[KeyButton] Held key released ({reason}) - {vk}");
+            _activeHeldKey = null;
+        }
+
+        if (IsMouseCaptured)
+            ReleaseMouseCapture();
     }
 
     private void CancelRepeat()
@@ -424,14 +551,42 @@ public class KeyButton : System.Windows.Controls.Button
         if (!KeyRepeatEnabled)
             return false;
 
-        if (Slot?.Slot.Action is not SendKeyAction { Vk: var vkText })
-            return false;
+        return ResolveRepeatAction() is SendKeyAction;
+    }
+
+    /// <summary>
+    /// 현재 버튼이 반복/홀드 대상으로 볼 최종 액션을 계산합니다.
+    /// Fn 레이어가 켜져 있으면 FunctionAction이 실제 입력으로 쓰이므로 그쪽을 우선 봅니다.
+    /// </summary>
+    private KeyAction? ResolveRepeatAction()
+    {
+        if (App.Services?.GetService<InputService>() is { IsFunctionLayerActive: true } inputService
+            && Slot?.Slot.Action is not ToggleFunctionLayerAction
+            && Slot?.Slot.FunctionAction is not null)
+        {
+            return Slot.Slot.FunctionAction;
+        }
+
+        return Slot?.Slot.Action;
+    }
+
+    /// <summary>
+    /// VirtualKey 모드에서만 적용할 홀드 대상 가상 키를 구합니다.
+    /// Unicode/자동완성 경로와 ToggleStickyAction은 여기서 제외되어 기존 동작을 유지합니다.
+    /// </summary>
+    private VirtualKeyCode? TryGetHoldableVirtualKey()
+    {
+        if (App.Services?.GetService<InputService>() is not { Mode: AltKey.Services.InputMode.VirtualKey })
+            return null;
+
+        var action = ResolveRepeatAction();
+        if (action is not SendKeyAction { Vk: var vkText })
+            return null;
 
         if (!Enum.TryParse<VirtualKeyCode>(vkText, ignoreCase: true, out var vk))
-            return true;
+            return null;
 
-        // Sticky 키로 쓸 수 있는 modifier들은 홀드 반복을 허용하지 않는다.
-        return !vk.IsModifier();
+        return vk;
     }
 
     private void DwellTick(object? sender, EventArgs e)
@@ -462,6 +617,20 @@ public class KeyButton : System.Windows.Controls.Button
         _dwellTimer  = null;
         DwellProgress = 0;
         CancelRepeat();
+        ReleaseHeldKey("dwell-cancel");
+    }
+
+    /// <summary>
+    /// 현재 마우스 포인터가 버튼의 실제 영역 안에 있는지 확인합니다.
+    /// 길게 누름은 이 영역 안에서만 유지하고, 밖으로 나가면 즉시 KeyUp을 보내도록 판단할 때 사용합니다.
+    /// </summary>
+    private bool IsPointerWithinButton(System.Windows.Input.MouseEventArgs e)
+    {
+        var point = e.GetPosition(this);
+        return point.X >= 0
+            && point.Y >= 0
+            && point.X <= ActualWidth
+            && point.Y <= ActualHeight;
     }
 
     // ── 변경 콜백 ────────────────────────────────────────────────────────────

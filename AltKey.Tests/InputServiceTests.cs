@@ -11,6 +11,7 @@ public class InputServiceTests
         public List<VirtualKeyCode> KeyUps { get; } = [];
         public List<string> ReleaseAllReasons { get; } = [];
         public List<string> ReleaseHighRiskReasons { get; } = [];
+        public List<string> ReleaseHeldReasons { get; } = [];
 
         public override void SendKeyDown(VirtualKeyCode vk) => KeyDowns.Add(vk);
 
@@ -26,6 +27,12 @@ public class InputServiceTests
         {
             ReleaseHighRiskReasons.Add(reason);
             base.ReleaseHighRiskModifiers(reason);
+        }
+
+        public override void ReleaseAllHeldKeys(string reason = "manual")
+        {
+            ReleaseHeldReasons.Add(reason);
+            base.ReleaseAllHeldKeys(reason);
         }
     }
 
@@ -161,5 +168,64 @@ public class InputServiceTests
         svc.ToggleFunctionLayer();
         svc.ConsumeFunctionLayerAfterAction();
         Assert.Equal(FunctionLayerState.Locked, svc.FunctionLayerState);
+    }
+
+    [Fact]
+    public void HandleAction_begins_held_key_once_when_gesture_is_armed()
+    {
+        var svc = new TrackingInputService();
+        svc.TrySetMode(InputMode.VirtualKey);
+
+        svc.ArmHeldKeyGesture(VirtualKeyCode.VK_W);
+        svc.HandleAction(new SendKeyAction(nameof(VirtualKeyCode.VK_W)));
+        svc.ArmHeldKeyGesture(VirtualKeyCode.VK_W);
+        svc.HandleAction(new SendKeyAction(nameof(VirtualKeyCode.VK_W)));
+
+        Assert.True(svc.IsHeldKey(VirtualKeyCode.VK_W));
+        Assert.Single(svc.KeyDowns, vk => vk == VirtualKeyCode.VK_W);
+        Assert.DoesNotContain(VirtualKeyCode.VK_W, svc.KeyUps);
+    }
+
+    [Fact]
+    public void EndHeldKey_releases_key_up_only_once()
+    {
+        var svc = new TrackingInputService();
+
+        svc.BeginHeldKey(VirtualKeyCode.VK_A);
+        svc.EndHeldKey(VirtualKeyCode.VK_A);
+        svc.EndHeldKey(VirtualKeyCode.VK_A);
+
+        Assert.False(svc.IsHeldKey(VirtualKeyCode.VK_A));
+        Assert.Single(svc.KeyDowns, vk => vk == VirtualKeyCode.VK_A);
+        Assert.Single(svc.KeyUps, vk => vk == VirtualKeyCode.VK_A);
+    }
+
+    [Fact]
+    public void ReleaseAllHeldKeys_releases_every_active_key()
+    {
+        var svc = new TrackingInputService();
+
+        svc.BeginHeldKey(VirtualKeyCode.VK_W);
+        svc.BeginHeldKey(VirtualKeyCode.VK_D);
+        svc.ReleaseAllHeldKeys("hide");
+
+        Assert.Empty(svc.HeldKeys);
+        Assert.Contains(VirtualKeyCode.VK_W, svc.KeyUps);
+        Assert.Contains(VirtualKeyCode.VK_D, svc.KeyUps);
+        Assert.Contains("hide", svc.ReleaseHeldReasons);
+    }
+
+    [Fact]
+    public void Sticky_modifier_and_held_key_keep_separate_state()
+    {
+        var svc = new TrackingInputService();
+
+        svc.ToggleModifier(VirtualKeyCode.VK_SHIFT);
+        svc.BeginHeldKey(VirtualKeyCode.VK_W);
+        svc.ReleaseAllHeldKeys("hold-release");
+
+        Assert.True(svc.StickyKeys.Contains(VirtualKeyCode.VK_SHIFT));
+        Assert.DoesNotContain(VirtualKeyCode.VK_SHIFT, svc.KeyUps);
+        Assert.Contains(VirtualKeyCode.VK_W, svc.KeyUps);
     }
 }

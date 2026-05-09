@@ -39,7 +39,9 @@ public class InputService
     private readonly bool _isElevated;
     private readonly HashSet<VirtualKeyCode> _stickyKeys = [];
     private readonly HashSet<VirtualKeyCode> _lockedKeys = [];
+    private readonly HashSet<VirtualKeyCode> _heldKeys = [];
     private FunctionLayerState _functionLayerState;
+    private VirtualKeyCode? _armedHeldKey;
 
     public InputMode Mode { get; private set; }
     public bool IsElevated => _isElevated;
@@ -49,6 +51,7 @@ public class InputService
 
     public IReadOnlySet<VirtualKeyCode> StickyKeys => _stickyKeys;
     public IReadOnlySet<VirtualKeyCode> LockedKeys => _lockedKeys;
+    public IReadOnlySet<VirtualKeyCode> HeldKeys => _heldKeys;
 
     public event Action<InputMode>? ModeChanged;
     public event Action? StickyStateChanged;
@@ -166,6 +169,80 @@ public class InputService
         DispatchInput([MakeKeyUp((ushort)vk)]);
     }
 
+    /// <summary>
+    /// 다음 SendKeyAction 1회를 "눌린 상태 유지"로 해석하도록 예약합니다.
+    /// KeyButton이 마우스 누름을 시작할 때 호출하고, 실제 KeyDown은 HandleAction이 담당합니다.
+    /// </summary>
+    public void ArmHeldKeyGesture(VirtualKeyCode vk)
+    {
+        _armedHeldKey = vk;
+    }
+
+    /// <summary>
+    /// 예약된 홀드 시작 요청을 취소합니다.
+    /// 다른 키가 실행되었거나, 사용자가 길게 누름을 끝내기 전에 입력이 무효가 된 경우에 사용합니다.
+    /// </summary>
+    public void CancelHeldKeyGesture(VirtualKeyCode? vk = null)
+    {
+        if (vk is null || _armedHeldKey == vk)
+            _armedHeldKey = null;
+    }
+
+    /// <summary>
+    /// 가상 키를 실제 키보드처럼 누른 상태로 유지합니다.
+    /// 이미 눌린 키는 중복 KeyDown을 보내지 않아 게임/앱 쪽 상태가 꼬이지 않게 막습니다.
+    /// </summary>
+    public virtual void BeginHeldKey(VirtualKeyCode vk)
+    {
+        if (!_heldKeys.Add(vk))
+            return;
+
+        SendKeyDown(vk);
+    }
+
+    /// <summary>
+    /// BeginHeldKey로 유지 중인 키를 해제합니다.
+    /// </summary>
+    public virtual void EndHeldKey(VirtualKeyCode vk)
+    {
+        if (!_heldKeys.Remove(vk))
+            return;
+
+        SendKeyUp(vk);
+    }
+
+    /// <summary>
+    /// 홀드 중인 키에 추가 KeyDown 신호만 한 번 더 보냅니다.
+    /// 일부 앱은 "눌린 상태"만으로는 반복 입력을 만들지 않으므로, 기존 반복 간격을 보조 pulse로 재활용합니다.
+    /// </summary>
+    public virtual void PulseHeldKey(VirtualKeyCode vk)
+    {
+        if (!_heldKeys.Contains(vk))
+            return;
+
+        SendKeyDown(vk);
+    }
+
+    /// <summary>
+    /// 현재 유지 중인 키를 전부 해제합니다.
+    /// 창 숨김, 캡처 손실, 앱 종료처럼 KeyUp 누락이 치명적인 경로에서 사용합니다.
+    /// </summary>
+    public virtual void ReleaseAllHeldKeys(string reason = "manual")
+    {
+        CancelHeldKeyGesture();
+
+        foreach (var vk in _heldKeys.ToList())
+            SendKeyUp(vk);
+
+        _heldKeys.Clear();
+    }
+
+    /// <summary>
+    /// 특정 키가 홀드 상태인지 확인합니다.
+    /// KeyButton이 마우스 업 시점에 자신이 해제할 키를 판단할 때 사용합니다.
+    /// </summary>
+    public bool IsHeldKey(VirtualKeyCode vk) => _heldKeys.Contains(vk);
+
     public void ToggleModifier(VirtualKeyCode vk)
     {
         if (_lockedKeys.Contains(vk))
@@ -237,7 +314,16 @@ public class InputService
             case SendKeyAction { Vk: var vkStr }:
                 if (Enum.TryParse<VirtualKeyCode>(vkStr, out var vk))
                 {
-                    SendKeyPress(vk);
+                    if (Mode == InputMode.VirtualKey && _armedHeldKey == vk)
+                    {
+                        BeginHeldKey(vk);
+                        _armedHeldKey = null;
+                    }
+                    else
+                    {
+                        SendKeyPress(vk);
+                    }
+
                     ReleaseTransientModifiers("SendKeyAction");
                 }
                 break;
