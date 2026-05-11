@@ -322,7 +322,10 @@ public class InputService
             case SendKeyAction { Vk: var vkStr }:
                 if (Enum.TryParse<VirtualKeyCode>(vkStr, out var vk))
                 {
-                    if (Mode == InputMode.VirtualKey && _armedHeldKey == vk)
+                    // 반복 가능한 키는 입력 모드와 상관없이 "누른 채 유지" 경로로 승격될 수 있습니다.
+                    // Unicode 모드에서도 KeyButton이 허용한 비문자 키만 여기까지 들어오므로,
+                    // 문자 조합 경로(SendAtomicReplace)와 충돌하지 않습니다.
+                    if (_armedHeldKey == vk)
                     {
                         BeginHeldKey(vk);
                         _armedHeldKey = null;

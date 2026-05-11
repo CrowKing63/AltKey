@@ -194,6 +194,22 @@ public class InputServiceTests
     }
 
     [Fact]
+    public void HandleAction_begins_held_key_once_when_gesture_is_armed_in_unicode_mode()
+    {
+        var svc = new TrackingInputService();
+        svc.TrySetMode(InputMode.Unicode);
+
+        svc.ArmHeldKeyGesture(VirtualKeyCode.VK_BACK);
+        svc.HandleAction(new SendKeyAction(nameof(VirtualKeyCode.VK_BACK)));
+        svc.ArmHeldKeyGesture(VirtualKeyCode.VK_BACK);
+        svc.HandleAction(new SendKeyAction(nameof(VirtualKeyCode.VK_BACK)));
+
+        Assert.True(svc.IsHeldKey(VirtualKeyCode.VK_BACK));
+        Assert.Single(svc.KeyDowns, vk => vk == VirtualKeyCode.VK_BACK);
+        Assert.DoesNotContain(VirtualKeyCode.VK_BACK, svc.KeyUps);
+    }
+
+    [Fact]
     public void EndHeldKey_releases_key_up_only_once()
     {
         var svc = new TrackingInputService();

@@ -346,8 +346,12 @@
                             <CheckBox Content="키 반복 입력 사용"
                                       Foreground="{DynamicResource SettingsFg}"
                                       IsChecked="{Binding KeyRepeatEnabled}"
-                                      Margin="0,0,0,8" KeyboardNavigation.TabIndex="32"/>
-
+                                      Margin="0,0,0,4" KeyboardNavigation.TabIndex="32"/>
+                            <TextBlock Text="반복은 SendKey 기반 키에만 적용됩니다. 유니코드 입력 모드에서는 조합 충돌 방지를 위해 문자 키 반복이 제한되며, 방향키·백스페이스 같은 비문자 키만 반복됩니다."
+                                       Foreground="{DynamicResource SettingsFgSub}"
+                                       FontSize="11"
+                                       TextWrapping="Wrap"
+                                       Margin="0,0,0,8"/>
                             <TextBlock Text="초기 지연" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="16,0,0,4"/>
                             <ctrl:NumericAdjuster Value="{Binding KeyRepeatDelayMs}" Minimum="100" Maximum="1000" Step="50" DecimalPlaces="0"
                                                   IsEnabled="{Binding KeyRepeatEnabled}"

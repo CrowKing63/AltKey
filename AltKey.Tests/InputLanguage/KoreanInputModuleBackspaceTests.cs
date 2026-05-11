@@ -81,4 +81,25 @@ public class KoreanInputModuleBackspaceTests : KoreanInputModuleTestBase
         Assert.Equal(before, after);
         Assert.Equal("", module.CurrentWord);
     }
+
+    [Fact]
+    public void Backspace_tap_in_unicode_composition_uses_atomic_replace_without_virtual_key_press()
+    {
+        var (module, input, _) = TestSlotFactory.CreateModuleWithInput();
+        var bsSlot = TestSlotFactory.Backspace();
+
+        TestSlotFactory.FeedSyllables(module, "한", CtxFromInput(input));
+
+        int beforeAtomicReplace = input.AtomicReplaces.Count;
+        int beforeKeyPress = input.KeyPresses.Count(k => k == VirtualKeyCode.VK_BACK);
+
+        bool handled = module.HandleKey(bsSlot, CtxFromInput(input));
+
+        int afterKeyPress = input.KeyPresses.Count(k => k == VirtualKeyCode.VK_BACK);
+
+        Assert.True(handled);
+        Assert.True(input.AtomicReplaces.Count > beforeAtomicReplace);
+        Assert.Equal(beforeKeyPress, afterKeyPress);
+        Assert.NotEqual("", module.CurrentWord);
+    }
 }

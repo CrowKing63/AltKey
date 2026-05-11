@@ -1,4 +1,4 @@
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
@@ -15,6 +15,13 @@ namespace AltKey.Controls;
 /// </summary>
 public class KeyButton : System.Windows.Controls.Button
 {
+    private enum RepeatPolicy
+    {
+        Disabled,
+        HeldVirtualKey,
+        LegacyRepeat
+    }
+
     static KeyButton()
     {
         DefaultStyleKeyProperty.OverrideMetadata(
@@ -288,6 +295,19 @@ public class KeyButton : System.Windows.Controls.Button
     private VirtualKeyCode? _primedHeldKey;
     private VirtualKeyCode? _activeHeldKey;
 
+    internal static string DescribeRepeatPolicyForTests(AltKey.Services.InputMode inputMode, KeyAction? action)
+        => ClassifyRepeatPolicy(inputMode, action).ToString();
+
+    internal static bool ShouldCancelCompositionOnRepeatStartForTests(AltKey.Services.InputMode inputMode, KeyAction? action)
+        => ShouldCancelCompositionOnRepeatStart(ClassifyRepeatPolicy(inputMode, action), TryGetVirtualKey(action));
+
+    internal static VirtualKeyCode? GetHoldableVirtualKeyForTests(AltKey.Services.InputMode inputMode, KeyAction? action)
+    {
+        var policy = ClassifyRepeatPolicy(inputMode, action);
+        var vk = TryGetVirtualKey(action);
+        return policy == RepeatPolicy.Disabled ? null : vk;
+    }
+
     protected override void OnMouseEnter(System.Windows.Input.MouseEventArgs e)
     {
         base.OnMouseEnter(e);
@@ -406,7 +426,17 @@ public class KeyButton : System.Windows.Controls.Button
         }
         _repeatDelayTimer = null;
 
-        if (!CanStartRepeat()) return;
+        var action = ResolveRepeatAction();
+        var policy = GetRepeatPolicy(action);
+        if (policy == RepeatPolicy.Disabled)
+            return;
+
+        // 빠른 연타와 홀드를 분리하기 위해, 조합 취소는 실제 홀드 시작 시점에만 수행합니다.
+        // 그중에서도 Backspace 홀드만 조합을 한 번 끊고 이후 반복을 일반 삭제로 넘깁니다.
+        if (ShouldCancelCompositionOnRepeatStart(policy, TryGetVirtualKey(action)))
+        {
+            App.Services?.GetService<AutoCompleteService>()?.CancelComposition();
+        }
 
         System.Diagnostics.Debug.WriteLine($"[KeyButton] Repeat started");
         _isRepeating = true;
@@ -551,8 +581,22 @@ public class KeyButton : System.Windows.Controls.Button
         if (!KeyRepeatEnabled)
             return false;
 
-        return ResolveRepeatAction() is SendKeyAction;
+        return GetRepeatPolicy() != RepeatPolicy.Disabled;
     }
+
+    /// <summary>
+    /// 유니코드 입력 모드에서 홀드 반복을 허용할 비문자 키 목록입니다.
+    /// 문자·자모·기호 키는 SendAtomicReplace 기반 조합과 충돌하므로 여기서 제외합니다.
+    /// </summary>
+    private static bool IsUnicodeHeldRepeatKey(VirtualKeyCode vk) => vk is
+        // 삭제
+        VirtualKeyCode.VK_BACK or VirtualKeyCode.VK_DELETE or
+        // 방향키
+        VirtualKeyCode.VK_LEFT or VirtualKeyCode.VK_RIGHT or
+        VirtualKeyCode.VK_UP or VirtualKeyCode.VK_DOWN or
+        // 페이지 이동
+        VirtualKeyCode.VK_HOME or VirtualKeyCode.VK_END or
+        VirtualKeyCode.VK_PRIOR or VirtualKeyCode.VK_NEXT;
 
     /// <summary>
     /// 현재 버튼이 반복/홀드 대상으로 볼 최종 액션을 계산합니다.
@@ -571,22 +615,58 @@ public class KeyButton : System.Windows.Controls.Button
     }
 
     /// <summary>
-    /// VirtualKey 모드에서만 적용할 홀드 대상 가상 키를 구합니다.
-    /// Unicode/자동완성 경로와 ToggleStickyAction은 여기서 제외되어 기존 동작을 유지합니다.
+    /// 반복 정책상 홀드 입력으로 보낼 수 있는 가상 키를 구합니다.
+    /// Unicode 모드에서는 허용된 비문자 키만 홀드 대상으로 승격합니다.
     /// </summary>
     private VirtualKeyCode? TryGetHoldableVirtualKey()
     {
-        if (App.Services?.GetService<InputService>() is not { Mode: AltKey.Services.InputMode.VirtualKey })
+        var action = ResolveRepeatAction();
+        return GetHoldableVirtualKey(GetRepeatPolicy(action), action);
+    }
+
+    private RepeatPolicy GetRepeatPolicy()
+        => GetRepeatPolicy(ResolveRepeatAction());
+
+    private RepeatPolicy GetRepeatPolicy(KeyAction? action)
+    {
+        if (App.Services?.GetService<InputService>() is not { } inputService)
+            return RepeatPolicy.Disabled;
+
+        return ClassifyRepeatPolicy(inputService.Mode, action);
+    }
+
+    private static RepeatPolicy ClassifyRepeatPolicy(AltKey.Services.InputMode inputMode, KeyAction? action)
+    {
+        var vk = TryGetVirtualKey(action);
+        if (vk is null)
+            return RepeatPolicy.Disabled;
+
+        if (inputMode == AltKey.Services.InputMode.Unicode)
+            return IsUnicodeHeldRepeatKey(vk.Value) ? RepeatPolicy.HeldVirtualKey : RepeatPolicy.Disabled;
+
+        return RepeatPolicy.LegacyRepeat;
+    }
+
+    private static VirtualKeyCode? GetHoldableVirtualKey(RepeatPolicy policy, KeyAction? action)
+    {
+        var vk = TryGetVirtualKey(action);
+        if (vk is null)
             return null;
 
-        var action = ResolveRepeatAction();
+        return policy == RepeatPolicy.Disabled ? null : vk;
+    }
+
+    private static bool ShouldCancelCompositionOnRepeatStart(RepeatPolicy policy, VirtualKeyCode? vk)
+        => policy == RepeatPolicy.HeldVirtualKey && vk == VirtualKeyCode.VK_BACK;
+
+    private static VirtualKeyCode? TryGetVirtualKey(KeyAction? action)
+    {
         if (action is not SendKeyAction { Vk: var vkText })
             return null;
 
-        if (!Enum.TryParse<VirtualKeyCode>(vkText, ignoreCase: true, out var vk))
-            return null;
-
-        return vk;
+        return Enum.TryParse<VirtualKeyCode>(vkText, ignoreCase: true, out var vk)
+            ? vk
+            : null;
     }
 
     private void DwellTick(object? sender, EventArgs e)
