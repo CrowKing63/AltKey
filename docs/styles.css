@@ -1,22 +1,33 @@
 :root {
+  /* [색상] 기본 배경색 */
   --bg: #f7f3ff;
   --bg-2: #eef7ff;
+  
+  /* [UI 요소] 투명한 카드/패널 배경색 */
   --surface: rgba(255, 255, 255, 0.68);
   --surface-strong: rgba(255, 255, 255, 0.86);
   --surface-fallback: #ffffff;
+  
+  /* [테두리] 선 색상 */
   --border: rgba(87, 72, 119, 0.18);
   --border-strong: rgba(95, 76, 142, 0.32);
+  
+  /* [포인트 컬러] 보라색 테마 */
   --accent: #a78bfa;
   --accent-strong: #7c3aed;
   --accent-soft: rgba(167, 139, 250, 0.24);
   --accent-glow: rgba(167, 139, 250, 0.36);
+  
+  /* [텍스트] 글자 색상 */
   --text: #171321;
   --text-muted: #574f63;
   --text-subtle: #6d6578;
+  
+  /* [효과] 그림자와 둥글기 */
   --shadow: 0 28px 80px rgba(65, 49, 96, 0.18);
   --inner-light: rgba(255, 255, 255, 0.72);
-  --radius: 28px;
-  --radius-sm: 18px;
+  --radius: 28px; /* 큰 패널의 모서리 둥글기 */
+  --radius-sm: 18px; /* 작은 버튼/입력창의 모서리 둥글기 */
   color-scheme: light;
 }
 
@@ -75,13 +86,14 @@ html {
 body {
   min-height: 100vh;
   margin: 0;
+  /* [폰트] 전체 글꼴 설정 */
   font-family: "Pretendard", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", system-ui, sans-serif;
   color: var(--text);
   background:
     radial-gradient(circle at 12% 12%, var(--accent-glow), transparent 28rem),
     radial-gradient(circle at 82% 8%, rgba(125, 211, 252, 0.18), transparent 24rem),
     linear-gradient(135deg, var(--bg) 0%, var(--bg-2) 100%);
-  line-height: 1.6;
+  line-height: 1.6; /* [줄간격] 본문 텍스트의 상하 간격 */
 }
 
 body::before {
@@ -114,12 +126,12 @@ img {
   grid-template-columns: auto 1fr auto;
   gap: 1rem;
   align-items: center;
-  width: min(1180px, calc(100% - 32px));
-  min-height: 72px;
-  margin: 16px auto 0;
+  width: min(1180px, calc(100% - 32px)); /* [헤더 너비] 상단 바의 최대 가로 길이 */
+  min-height: 72px; /* [헤더 높이] 상단 바의 최소 높이 */
+  margin: 16px auto 0; /* [상단 여백] 웹페이지 맨 위에서 헤더까지의 거리 */
   padding: 0.75rem 1rem;
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: 999px; /* 완전 둥근 형태 */
   background: var(--surface);
   box-shadow: 0 18px 50px rgba(31, 27, 45, 0.1);
 }
@@ -158,7 +170,7 @@ img {
 
 .top-nav a {
   color: var(--text-muted);
-  font-size: 0.94rem;
+  font-size: 0.94rem; /* [메뉴 폰트] 상단 메뉴 글자 크기 */
   font-weight: 700;
   text-decoration: none;
 }
@@ -240,28 +252,28 @@ h3,
 
 h1 {
   margin-bottom: 1.25rem;
-  font-size: clamp(2.15rem, 3.7vw, 3.8rem);
+  font-size: clamp(2.15rem, 3.7vw, 3.8rem); /* [제목 크기] 화면 너비에 따라 2.15~3.8rem 사이로 조절됨 */
   line-height: 1.08;
   letter-spacing: 0;
 }
 
 h2 {
   margin-bottom: 0.8rem;
-  font-size: clamp(1.8rem, 3vw, 3rem);
+  font-size: clamp(1.8rem, 3vw, 3rem); /* [소제목 크기] 화면 너비에 따라 1.8~3rem 사이로 조절됨 */
   line-height: 1.12;
   letter-spacing: 0;
 }
 
 h3 {
   margin-bottom: 0.55rem;
-  font-size: 1.15rem;
+  font-size: 1.15rem; /* [작은 제목 크기] */
 }
 
 .hero-lead {
   max-width: 34rem;
   margin-bottom: 1.8rem;
   color: var(--text-muted);
-  font-size: 1.08rem;
+  font-size: 1.08rem; /* [설명 텍스트 크기] 메인 제목 아래 문구의 크기 */
 }
 
 .hero-actions,
@@ -274,10 +286,10 @@ h3 {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 48px;
-  padding: 0.78rem 1.15rem;
+  min-height: 48px; /* [버튼 높이] */
+  padding: 0.78rem 1.15rem; /* [버튼 안쪽 여백] 상하 0.78rem, 좌우 1.15rem */
   border: 1px solid var(--border-strong);
-  border-radius: 999px;
+  border-radius: 999px; /* [버튼 둥글기] 999px는 알약 모양 */
   font-weight: 850;
   text-decoration: none;
 }
@@ -311,7 +323,7 @@ h3 {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface-fallback);
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow); /* [그림자] 패널의 입체감을 주는 그림자 */
 }
 
 @supports ((backdrop-filter: blur(22px)) or (-webkit-backdrop-filter: blur(22px))) {
@@ -364,7 +376,7 @@ figcaption {
 .video-section,
 .manual,
 .download {
-  padding: 3.25rem 0;
+  padding: 3.25rem 0; /* [섹션 간격] 각 섹션(가이드, 쇼케이스 등)의 위아래 여백 */
 }
 
 .section-heading {
