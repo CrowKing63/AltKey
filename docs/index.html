@@ -25,6 +25,7 @@
       <a href="#guide">필수 가이드</a>
       <a href="#video">영상</a>
       <a href="#manual">매뉴얼</a>
+      <a href="#faq">FAQ</a>
       <a href="#download">다운로드</a>
       <a href="feedback.html">피드백</a>
     </nav>
@@ -138,6 +139,7 @@
           <a href="https://github.com/CrowKing63/AltKey/wiki/화상키보드-기본">화상키보드 기본</a>
           <a href="https://github.com/CrowKing63/AltKey/wiki/한국어-입력">한국어 입력</a>
           <a href="https://github.com/CrowKing63/AltKey/wiki/자동완성">자동완성</a>
+          <a href="https://github.com/CrowKing63/AltKey/wiki/자주-묻는-질문">FAQ</a>
           <a href="https://github.com/CrowKing63/AltKey/wiki/수식자-고정">수식자 고정</a>
           <a href="https://github.com/CrowKing63/AltKey/wiki/체류클릭">체류클릭</a>
           <a href="https://github.com/CrowKing63/AltKey/wiki/키-반복">키 반복</a>
@@ -157,6 +159,74 @@
           <a href="https://github.com/CrowKing63/AltKey/wiki/업데이트">업데이트</a>
           <a href="https://github.com/CrowKing63/AltKey/wiki/관리자-권한">관리자 권한</a>
         </div>
+      </div>
+    </section>
+
+    <section class="faq section-shell" id="faq" aria-labelledby="faq-title">
+      <div class="faq-panel glass-panel">
+        <div class="section-heading">
+          <p class="eyebrow">FAQ</p>
+          <h2 id="faq-title">자주 묻는 질문을 먼저 모아두었습니다</h2>
+          <p>
+            처음 설치할 때 많이 헷갈리는 부분과 입력 안정성에 직접 연결되는 질문을 우선 정리했습니다.
+            자세한 설명은 위키 FAQ 문서로 이어집니다.
+          </p>
+        </div>
+
+        <div class="faq-list" aria-label="자주 묻는 질문 목록">
+          <!-- details/summary는 키보드와 스크린리더에서 기본 동작이 안정적이라 별도 스크립트 없이 FAQ에 적합합니다. -->
+          <details class="faq-item" open>
+            <summary class="faq-summary">가/A 버튼과 Windows 한/영 전환은 무엇이 다른가요?</summary>
+            <div class="faq-answer">
+              <p><strong>가/A</strong>는 AltKey 내부 자판 모드를 바꾸고, <strong>한/영</strong>은 Windows IME 상태를 바꿉니다.</p>
+              <p>특히 자동완성을 사용할 때는 AltKey 안의 <strong>가/A 토글을 우선</strong> 쓰는 편이 입력 상태가 덜 꼬입니다.</p>
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-summary">자동완성은 켜는 것이 좋은가요?</summary>
+            <div class="faq-answer">
+              <p>대부분의 한국어 사용자에게는 켜는 편을 권장합니다. AltKey가 한글 조합을 직접 관리해 입력 안정성이 좋아지고, 자주 쓰는 단어도 더 적은 입력으로 완성할 수 있습니다.</p>
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-summary">입력이 꼬인 것처럼 보일 때는 무엇부터 확인하면 되나요?</summary>
+            <div class="faq-answer">
+              <p>먼저 <strong>가/A 상태</strong>가 기대한 모드와 맞는지 보고, 입력 칸을 다시 선택하거나 AltKey를 다시 실행해 상태를 초기화해 보세요.</p>
+              <p>관리자 권한 앱이나 특수 입력 칸에서는 추가 제한이 있을 수 있으므로, 필요하면 문제해결 문서도 함께 확인하는 것이 좋습니다.</p>
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-summary">AltKey.Tools는 왜 메인 앱과 따로 열리나요?</summary>
+            <div class="faq-answer">
+              <p>레이아웃, 사용자 단어, 프로필, AI 프롬프트 편집은 입력 중인 메인 키보드와 분리해 두는 편이 더 안정적이기 때문입니다.</p>
+              <p>이 구조 덕분에 긴 문장 편집과 실제 입력 작업을 섞지 않고, 저장 후 필요한 데이터만 메인 앱이 다시 읽어 반영할 수 있습니다.</p>
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-summary">관리자 권한으로 실행된 프로그램에는 입력이 안 될 수 있나요?</summary>
+            <div class="faq-answer">
+              <p>그럴 수 있습니다. Windows 보안 정책 때문에 일반 권한 앱이 관리자 권한 앱에 입력을 보내지 못하는 경우가 있습니다.</p>
+              <p>이때는 AltKey를 관리자 권한으로 다시 실행하고, 계속 제한되면 대상 앱 자체의 보호 정책도 함께 의심해야 합니다.</p>
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-summary">상단바 버튼과 자주 쓰는 기능 배치는 바꿀 수 있나요?</summary>
+            <div class="faq-answer">
+              <p>가능합니다. 설정에서 상단바 버튼 표시와 순서를 조정할 수 있고, 최근 버전에서는 상단바 커스텀 단축키 편집기도 사용할 수 있습니다.</p>
+            </div>
+          </details>
+        </div>
+
+        <p class="faq-footer">
+          더 자세한 설명과 추가 질문은
+          <a href="https://github.com/CrowKing63/AltKey/wiki/자주-묻는-질문">위키 FAQ 전체 문서</a>
+          에서 확인할 수 있습니다.
+        </p>
       </div>
     </section>
 
