@@ -696,6 +696,100 @@ textarea.text-input {
   box-shadow: none;
 }
 
+/* 동영상 섹션 확장 스타일 */
+.video-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 1rem;
+  max-width: none; /* 상단 한정 너비 해제 */
+}
+
+.youtube-shortcut {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.35rem; /* 제목 높이에 맞춤 */
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-strong);
+  color: var(--text);
+  font-weight: 800;
+  font-size: 0.9rem;
+  text-decoration: none;
+  transition: transform 0.2s, background 0.2s;
+}
+
+.youtube-shortcut:hover {
+  background: var(--accent-soft);
+  transform: translateY(-2px);
+}
+
+.youtube-icon {
+  font-size: 1.2rem;
+}
+
+.video-playlist-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.25rem;
+  margin-top: 2rem;
+}
+
+.playlist-item {
+  display: flex;
+  flex-direction: column;
+  padding: 0.75rem;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.3s;
+}
+
+.playlist-item:hover {
+  transform: translateY(-6px);
+}
+
+.playlist-thumb {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: calc(var(--radius-sm) - 4px);
+  background: linear-gradient(135deg, var(--bg-2), var(--accent-soft));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+  overflow: hidden;
+}
+
+.playlist-thumb::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.play-hint {
+  font-size: 2.5rem;
+  color: var(--accent-strong);
+  opacity: 0.8;
+  filter: drop-shadow(0 4px 12px var(--accent-glow));
+}
+
+.playlist-info h4 {
+  margin: 0 0 0.4rem;
+  font-size: 1.1rem;
+  font-weight: 850;
+}
+
+.playlist-info p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
 @media (max-width: 920px) {
   .site-header {
     grid-template-columns: 1fr;

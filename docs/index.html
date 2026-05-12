@@ -111,16 +111,58 @@
     </section>
 
     <section class="video-section section-shell" id="video" aria-labelledby="video-title">
-      <div class="section-heading">
-        <p class="eyebrow">Video</p>
-        <h2 id="video-title">짧게 보고 흐름을 파악하세요</h2>
+      <div class="section-heading video-heading">
+        <div>
+          <p class="eyebrow">Video</p>
+          <h2 id="video-title">짧게 보고 흐름을 파악하세요</h2>
+        </div>
+        <!-- 유튜브 재생 목록 바로가기 -->
+        <a href="https://www.youtube.com/playlist?list=PLgMd9V3mFSIMveUd9FYfyUV-DJ-Q_Ixkx" class="youtube-shortcut"
+          target="_blank" rel="noopener" aria-label="YouTube 재생 목록 바로가기">
+          <span class="youtube-icon">🎬</span>
+          <span>Playlist</span>
+        </a>
       </div>
       <div class="video-frame glass-panel">
-        <!-- YouTube 동영상 주소는 기존 소개 영상의 임베드 URL을 유지합니다. -->
+        <!-- 메인 영상: 핵심 기능 소개 (index=2) -->
         <iframe src="https://www.youtube.com/embed/y-kHDagh5S0?autoplay=1&mute=1&loop=1&playlist=y-kHDagh5S0"
-          title="AltKey 소개 영상"
+          title="AltKey 핵심 기능 소개"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowfullscreen></iframe>
+      </div>
+
+      <!-- 동영상 재생 목록 (주요 기능 3가지) -->
+      <div class="video-playlist-grid">
+        <a href="https://www.youtube.com/watch?v=LJGfowfc3Io&list=PLgMd9V3mFSIMveUd9FYfyUV-DJ-Q_Ixkx&index=3"
+          class="playlist-item glass-panel" target="_blank" rel="noopener" aria-label="다양한 입력 방식 설명 영상 재생">
+          <div class="playlist-thumb">
+            <span class="play-hint">▶</span>
+          </div>
+          <div class="playlist-info">
+            <h4>입력 방식 및 접근성 설정</h4>
+            <p>체류 클릭, 수식자 키 고정 등 다양한 입력 옵션을 다룹니다.</p>
+          </div>
+        </a>
+        <a href="https://www.youtube.com/watch?v=u2zgNGrv5zU&list=PLgMd9V3mFSIMveUd9FYfyUV-DJ-Q_Ixkx&index=4"
+          class="playlist-item glass-panel" target="_blank" rel="noopener" aria-label="자동 완성 기능 설명 영상 재생">
+          <div class="playlist-thumb">
+            <span class="play-hint">▶</span>
+          </div>
+          <div class="playlist-info">
+            <h4>자동 완성 기능 활용</h4>
+            <p>한글/영어 자동 완성 시연 및 사전 등록 방법을 설명합니다.</p>
+          </div>
+        </a>
+        <a href="https://www.youtube.com/watch?v=4J8vhP7QlOg&list=PLgMd9V3mFSIMveUd9FYfyUV-DJ-Q_Ixkx&index=5"
+          class="playlist-item glass-panel" target="_blank" rel="noopener" aria-label="창 이동 및 관리 영상 재생">
+          <div class="playlist-thumb">
+            <span class="play-hint">▶</span>
+          </div>
+          <div class="playlist-info">
+            <h4>창 이동 및 관리</h4>
+            <p>화상 키보드의 위치 이동과 크기 조절 방법을 안내합니다.</p>
+          </div>
+        </a>
       </div>
     </section>
 
