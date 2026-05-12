@@ -294,6 +294,7 @@ public class KeyButton : System.Windows.Controls.Button
     private bool _isHoldPrimed;
     private VirtualKeyCode? _primedHeldKey;
     private VirtualKeyCode? _activeHeldKey;
+    private bool _suppressNextClick;
 
     internal static string DescribeRepeatPolicyForTests(AltKey.Services.InputMode inputMode, KeyAction? action)
         => ClassifyRepeatPolicy(inputMode, action).ToString();
@@ -307,6 +308,8 @@ public class KeyButton : System.Windows.Controls.Button
         var vk = TryGetVirtualKey(action);
         return policy == RepeatPolicy.Disabled ? null : vk;
     }
+
+    internal void SuppressNextClickForTests() => _suppressNextClick = true;
 
     protected override void OnMouseEnter(System.Windows.Input.MouseEventArgs e)
     {
@@ -356,6 +359,11 @@ public class KeyButton : System.Windows.Controls.Button
             e.Handled = true;
             CancelRepeat();
             _isRepeating = false;
+            // 반복/홀드 입력은 마우스를 누르는 즉시 직접 실행합니다.
+            // 이때 마우스를 놓을 때 WPF 기본 Click까지 다시 들어오면
+            // 원샷 Fn이 먼저 소비된 뒤 기본 액션이 연달아 실행될 수 있으므로
+            // 다음 기본 Click 1회는 명시적으로 막습니다.
+            _suppressNextClick = true;
             StartHoldGestureIfNeeded();
             ExecuteKeyPress();
             FinalizePressDispatch();
@@ -388,6 +396,17 @@ public class KeyButton : System.Windows.Controls.Button
         {
             e.Handled = false;
         }
+    }
+
+    protected override void OnClick()
+    {
+        if (_suppressNextClick)
+        {
+            _suppressNextClick = false;
+            return;
+        }
+
+        base.OnClick();
     }
 
     protected override void OnLostMouseCapture(System.Windows.Input.MouseEventArgs e)

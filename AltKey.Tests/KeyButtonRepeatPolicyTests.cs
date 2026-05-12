@@ -1,6 +1,8 @@
 using AltKey.Controls;
 using AltKey.Models;
 using AltKey.Services;
+using CommunityToolkit.Mvvm.Input;
+using System.Threading;
 
 namespace AltKey.Tests;
 
@@ -52,5 +54,46 @@ public class KeyButtonRepeatPolicyTests
         Assert.Equal("LegacyRepeat", KeyButton.DescribeRepeatPolicyForTests(InputMode.VirtualKey, action));
         Assert.Equal(VirtualKeyCode.VK_A, KeyButton.GetHoldableVirtualKeyForTests(InputMode.VirtualKey, action));
         Assert.False(KeyButton.ShouldCancelCompositionOnRepeatStartForTests(InputMode.VirtualKey, action));
+    }
+
+    [Fact]
+    public void Repeat_path_suppresses_next_wpf_click_once()
+    {
+        Exception? captured = null;
+
+        var thread = new Thread(() =>
+        {
+            try
+            {
+                int executionCount = 0;
+                var button = new TestKeyButton
+                {
+                    Command = new RelayCommand(() => executionCount++)
+                };
+
+                button.TriggerClick();
+                button.SuppressNextClickForTests();
+                button.TriggerClick();
+                button.TriggerClick();
+
+                Assert.Equal(2, executionCount);
+            }
+            catch (Exception ex)
+            {
+                captured = ex;
+            }
+        });
+
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
+        thread.Join();
+
+        if (captured is not null)
+            throw captured;
+    }
+
+    private sealed class TestKeyButton : KeyButton
+    {
+        public void TriggerClick() => base.OnClick();
     }
 }

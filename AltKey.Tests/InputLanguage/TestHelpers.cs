@@ -84,17 +84,26 @@ public sealed class KoreanDictionaryTestable : KoreanDictionary
     public int UserWordCount => _store.UserWordCount;
 
     public KoreanDictionaryTestable()
-        : base(lang => CreateStore(lang), lang => new BigramFrequencyStore(lang))
+        : base(lang => CreateStore(lang), _ => CreateIsolatedBigramStore(out var dir))
     {
         _store = s_lastCreated!;
     }
 
     private static WordFrequencyStoreInMemory? s_lastCreated;
-
     private static WordFrequencyStore CreateStore(string lang)
     {
         s_lastCreated = new WordFrequencyStoreInMemory();
         return s_lastCreated;
+    }
+
+    /// <summary>
+    /// bigram 테스트는 실제 %AppData% 파일을 공유하면 이전 실행 데이터가 섞일 수 있으므로
+    /// 매 테스트 인스턴스마다 별도 임시 폴더 저장소를 만들어 격리합니다.
+    /// </summary>
+    private static BigramFrequencyStore CreateIsolatedBigramStore(out string dir)
+    {
+        dir = Directory.CreateTempSubdirectory("altkey-test-ko-bigram-").FullName;
+        return new BigramFrequencyStore(dir, "ko");
     }
 }
 
@@ -104,7 +113,8 @@ public sealed class KoreanDictionaryTestable : KoreanDictionary
 public sealed class EnglishDictionaryTestable : EnglishDictionary
 {
     public EnglishDictionaryTestable()
-        : base(_ => new WordFrequencyStoreInMemory(), lang => new BigramFrequencyStore(lang))
+        : base(_ => new WordFrequencyStoreInMemory(), _ => new BigramFrequencyStore(
+            Directory.CreateTempSubdirectory("altkey-test-en-bigram-").FullName, "en"))
     { }
 }
 
