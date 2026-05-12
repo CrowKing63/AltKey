@@ -36,6 +36,11 @@ internal static class Win32
     [DllImport("user32.dll", SetLastError = true)]
     public static extern uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
 
+    // 가상 키(VK_*)를 키보드의 물리 위치 번호(스캔코드)로 바꿉니다.
+    // SendKey 기반 입력을 더 물리 키보드에 가깝게 보내기 위해 사용합니다.
+    [DllImport("user32.dll")]
+    public static extern uint MapVirtualKey(uint uCode, uint uMapType);
+
     [DllImport("user32.dll")]
     public static extern short GetKeyState(int nVirtKey);
 
@@ -254,7 +259,9 @@ internal static class Win32
     public const uint INPUT_KEYBOARD = 1;
     public const uint KEYEVENTF_KEYUP       = 0x0002;
     public const uint KEYEVENTF_UNICODE     = 0x0004;
+    public const uint KEYEVENTF_SCANCODE    = 0x0008;
     public const uint KEYEVENTF_EXTENDEDKEY = 0x0001;
+    public const uint MAPVK_VK_TO_VSC_EX    = 0x0004;
 
     public const int ERROR_ACCESS_DENIED = 5;
 

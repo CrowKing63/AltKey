@@ -1,4 +1,5 @@
 using AltKey.Models;
+using AltKey.Platform;
 using AltKey.Services;
 using System.Diagnostics;
 
@@ -41,6 +42,18 @@ public class InputServiceTests
         {
             LastStartedProcess = psi;
         }
+    }
+
+    private sealed class CapturingInputService : InputService
+    {
+        public List<Win32.INPUT[]> Dispatches { get; } = [];
+
+        internal override void DispatchInput(Win32.INPUT[] inputs)
+        {
+            Dispatches.Add(inputs.ToArray());
+        }
+
+        public Win32.INPUT[] LastDispatch => Dispatches.Last();
     }
 
     [Fact]
@@ -137,6 +150,117 @@ public class InputServiceTests
     {
         var svc = new TrackingInputService();
         Assert.IsType<bool>(svc.IsElevated);
+    }
+
+    [Theory]
+    [InlineData(VirtualKeyCode.VK_W)]
+    [InlineData(VirtualKeyCode.VK_C)]
+    [InlineData(VirtualKeyCode.VK_1)]
+    [InlineData(VirtualKeyCode.VK_F1)]
+    [InlineData(VirtualKeyCode.VK_SPACE)]
+    [InlineData(VirtualKeyCode.VK_SHIFT)]
+    public void SendKeyPress_uses_scan_code_by_default(VirtualKeyCode vk)
+    {
+        var svc = new CapturingInputService();
+
+        svc.SendKeyPress(vk);
+
+        var inputs = svc.LastDispatch;
+        Assert.Equal(0, inputs[0].U.Ki.WVk);
+        Assert.NotEqual(0, inputs[0].U.Ki.WScan);
+        Assert.Equal(Win32.KEYEVENTF_SCANCODE, inputs[0].U.Ki.DwFlags);
+        Assert.Equal(0, inputs[1].U.Ki.WVk);
+        Assert.Equal(inputs[0].U.Ki.WScan, inputs[1].U.Ki.WScan);
+        Assert.Equal(Win32.KEYEVENTF_SCANCODE | Win32.KEYEVENTF_KEYUP, inputs[1].U.Ki.DwFlags);
+    }
+
+    [Fact]
+    public void SendKeyPress_marks_arrow_keys_as_extended_scan_codes()
+    {
+        var svc = new CapturingInputService();
+
+        svc.SendKeyPress(VirtualKeyCode.VK_UP);
+
+        var inputs = svc.LastDispatch;
+        Assert.Equal(0, inputs[0].U.Ki.WVk);
+        Assert.NotEqual(0, inputs[0].U.Ki.WScan);
+        Assert.True((inputs[0].U.Ki.DwFlags & Win32.KEYEVENTF_SCANCODE) != 0);
+        Assert.True((inputs[0].U.Ki.DwFlags & Win32.KEYEVENTF_EXTENDEDKEY) != 0);
+        Assert.True((inputs[1].U.Ki.DwFlags & Win32.KEYEVENTF_KEYUP) != 0);
+        Assert.True((inputs[1].U.Ki.DwFlags & Win32.KEYEVENTF_EXTENDEDKEY) != 0);
+    }
+
+    [Fact]
+    public void SendKeyPress_keeps_ime_and_media_keys_on_virtual_key_path()
+    {
+        var svc = new CapturingInputService();
+
+        svc.SendKeyPress(VirtualKeyCode.VK_HANGUL);
+        svc.SendKeyPress((VirtualKeyCode)0xAF);
+
+        Assert.Equal((ushort)VirtualKeyCode.VK_HANGUL, svc.Dispatches[0][0].U.Ki.WVk);
+        Assert.Equal(0, svc.Dispatches[0][0].U.Ki.WScan);
+        Assert.Equal(0xAF, svc.Dispatches[1][0].U.Ki.WVk);
+        Assert.Equal(0, svc.Dispatches[1][0].U.Ki.WScan);
+    }
+
+    [Fact]
+    public void SendUnicode_and_atomic_replace_keep_unicode_path()
+    {
+        var svc = new CapturingInputService();
+
+        svc.SendUnicode("가");
+        svc.SendAtomicReplace(1, "나");
+
+        var unicodeInputs = svc.Dispatches[0];
+        Assert.Equal(0, unicodeInputs[0].U.Ki.WVk);
+        Assert.Equal(Win32.KEYEVENTF_UNICODE, unicodeInputs[0].U.Ki.DwFlags);
+        Assert.Equal(Win32.KEYEVENTF_UNICODE | Win32.KEYEVENTF_KEYUP, unicodeInputs[1].U.Ki.DwFlags);
+
+        var replaceInputs = svc.Dispatches[1];
+        Assert.Equal((ushort)VirtualKeyCode.VK_BACK, replaceInputs[0].U.Ki.WVk);
+        Assert.Equal(0, replaceInputs[0].U.Ki.WScan);
+        Assert.Equal(0, replaceInputs[2].U.Ki.WVk);
+        Assert.Equal(Win32.KEYEVENTF_UNICODE, replaceInputs[2].U.Ki.DwFlags);
+    }
+
+    [Fact]
+    public void SendCombo_uses_scan_code_path_for_each_key()
+    {
+        var svc = new CapturingInputService();
+
+        svc.SendCombo([VirtualKeyCode.VK_CONTROL, VirtualKeyCode.VK_V]);
+
+        Assert.Equal(4, svc.Dispatches.Count);
+        Assert.All(svc.Dispatches, dispatch =>
+        {
+            Assert.Single(dispatch);
+            Assert.Equal(0, dispatch[0].U.Ki.WVk);
+            Assert.NotEqual(0, dispatch[0].U.Ki.WScan);
+            Assert.True((dispatch[0].U.Ki.DwFlags & Win32.KEYEVENTF_SCANCODE) != 0);
+        });
+        Assert.True((svc.Dispatches[2][0].U.Ki.DwFlags & Win32.KEYEVENTF_KEYUP) != 0);
+        Assert.True((svc.Dispatches[3][0].U.Ki.DwFlags & Win32.KEYEVENTF_KEYUP) != 0);
+    }
+
+    [Fact]
+    public void Modifier_and_held_key_inputs_use_scan_code_path()
+    {
+        var svc = new CapturingInputService();
+
+        svc.ToggleModifier(VirtualKeyCode.VK_SHIFT);
+        svc.BeginHeldKey(VirtualKeyCode.VK_W);
+        svc.EndHeldKey(VirtualKeyCode.VK_W);
+
+        Assert.Equal(3, svc.Dispatches.Count);
+        Assert.All(svc.Dispatches, dispatch =>
+        {
+            Assert.Single(dispatch);
+            Assert.Equal(0, dispatch[0].U.Ki.WVk);
+            Assert.NotEqual(0, dispatch[0].U.Ki.WScan);
+            Assert.True((dispatch[0].U.Ki.DwFlags & Win32.KEYEVENTF_SCANCODE) != 0);
+        });
+        Assert.True((svc.Dispatches[2][0].U.Ki.DwFlags & Win32.KEYEVENTF_KEYUP) != 0);
     }
 
     [Fact]

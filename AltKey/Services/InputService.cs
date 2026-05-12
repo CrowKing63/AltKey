@@ -155,18 +155,18 @@ public class InputService
 
     public virtual void SendKeyPress(VirtualKeyCode vk)
     {
-        var inputs = new Win32.INPUT[] { MakeKeyDown((ushort)vk), MakeKeyUp((ushort)vk) };
+        var inputs = new Win32.INPUT[] { MakeSendKeyDown(vk), MakeSendKeyUp(vk) };
         DispatchInput(inputs);
     }
 
     public virtual void SendKeyDown(VirtualKeyCode vk)
     {
-        DispatchInput([MakeKeyDown((ushort)vk)]);
+        DispatchInput([MakeSendKeyDown(vk)]);
     }
 
     public virtual void SendKeyUp(VirtualKeyCode vk)
     {
-        DispatchInput([MakeKeyUp((ushort)vk)]);
+        DispatchInput([MakeSendKeyUp(vk)]);
     }
 
     /// <summary>
@@ -485,7 +485,7 @@ public class InputService
         return psi;
     }
 
-    private void DispatchInput(Win32.INPUT[] inputs)
+    internal virtual void DispatchInput(Win32.INPUT[] inputs)
     {
         uint sent = Win32.SendInput((uint)inputs.Length, inputs, Marshal.SizeOf<Win32.INPUT>());
         if (sent == 0 && Marshal.GetLastWin32Error() == Win32.ERROR_ACCESS_DENIED)
@@ -512,6 +512,73 @@ public class InputService
 
     private static bool IsHighRiskModifier(VirtualKeyCode vk) => HighRiskModifiers.Contains(vk);
 
+    private Win32.INPUT MakeSendKeyDown(VirtualKeyCode vk)
+        => TryMakeScanCodeInput(vk, keyUp: false, out var input)
+            ? input
+            : MakeKeyDown((ushort)vk);
+
+    private Win32.INPUT MakeSendKeyUp(VirtualKeyCode vk)
+        => TryMakeScanCodeInput(vk, keyUp: true, out var input)
+            ? input
+            : MakeKeyUp((ushort)vk);
+
+    /// <summary>
+    /// SendKey 기반 VK_* 키를 먼저 물리 키 위치(스캔코드) 입력으로 바꿔 봅니다.
+    /// 변환이 불안정한 IME·특수키는 기존 가상키 방식으로 남겨 일반 입력 안정성을 지킵니다.
+    /// </summary>
+    private bool TryMakeScanCodeInput(VirtualKeyCode vk, bool keyUp, out Win32.INPUT input)
+    {
+        input = default;
+        if (IsScanCodeFallbackKey(vk))
+            return false;
+
+        uint mapped = Win32.MapVirtualKey((uint)vk, Win32.MAPVK_VK_TO_VSC_EX);
+        if (mapped == 0 || mapped > 0xFFFF)
+            return false;
+
+        ushort scanCode = (ushort)(mapped & 0x00FF);
+        if (scanCode == 0)
+            return false;
+
+        uint flags = Win32.KEYEVENTF_SCANCODE;
+        if (keyUp)
+            flags |= Win32.KEYEVENTF_KEYUP;
+        if ((mapped & 0xFF00) != 0 || IsExtendedScanCodeKey(vk))
+            flags |= Win32.KEYEVENTF_EXTENDEDKEY;
+
+        input = MakeScanCodeKey(scanCode, flags);
+        return true;
+    }
+
+    private static bool IsScanCodeFallbackKey(VirtualKeyCode vk)
+    {
+        if (vk is
+            // IME 전환 키는 물리 위치보다 Windows/IME 의미가 중요하므로 기존 VK 방식이 더 안전합니다.
+            VirtualKeyCode.VK_HANGUL or VirtualKeyCode.VK_HANJA or
+            // Pause와 PrintScreen은 Windows가 특수한 키 시퀀스로 다루는 경우가 있어 VK 방식으로 보냅니다.
+            VirtualKeyCode.VK_PAUSE or VirtualKeyCode.VK_SNAPSHOT)
+        {
+            return true;
+        }
+
+        ushort rawVk = (ushort)vk;
+        return rawVk is
+            // 볼륨·미디어·브라우저 키는 키보드 위치보다 시스템 명령 의미가 중요해 기존 VK 방식으로 보냅니다.
+            0xAD or 0xAE or 0xAF or
+            0xA6 or 0xA7 or 0xA8 or 0xA9 or 0xAA or 0xAB or 0xAC or
+            0xB0 or 0xB1 or 0xB2 or 0xB3 or
+            0xB4 or 0xB5 or 0xB6 or 0xB7;
+    }
+
+    private static bool IsExtendedScanCodeKey(VirtualKeyCode vk) => vk is
+        VirtualKeyCode.VK_RCONTROL or VirtualKeyCode.VK_RMENU or
+        VirtualKeyCode.VK_INSERT or VirtualKeyCode.VK_DELETE or
+        VirtualKeyCode.VK_HOME or VirtualKeyCode.VK_END or
+        VirtualKeyCode.VK_PRIOR or VirtualKeyCode.VK_NEXT or
+        VirtualKeyCode.VK_LEFT or VirtualKeyCode.VK_UP or
+        VirtualKeyCode.VK_RIGHT or VirtualKeyCode.VK_DOWN or
+        VirtualKeyCode.VK_LWIN or VirtualKeyCode.VK_RWIN;
+
     private static Win32.INPUT MakeUnicodeKeyDown(char ch) => new()
     {
         Type = Win32.INPUT_KEYBOARD,
@@ -534,5 +601,11 @@ public class InputService
     {
         Type = Win32.INPUT_KEYBOARD,
         U = new() { Ki = new() { WVk = vk, DwFlags = Win32.KEYEVENTF_KEYUP, DwExtraInfo = InputExtraInfoTag } }
+    };
+
+    private static Win32.INPUT MakeScanCodeKey(ushort scanCode, uint flags) => new()
+    {
+        Type = Win32.INPUT_KEYBOARD,
+        U = new() { Ki = new() { WVk = 0, WScan = scanCode, DwFlags = flags, DwExtraInfo = InputExtraInfoTag } }
     };
 }
