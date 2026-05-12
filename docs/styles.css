@@ -771,11 +771,26 @@ textarea.text-input {
   background: rgba(0, 0, 0, 0.05);
 }
 
+.playlist-thumb img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.playlist-item:hover .playlist-thumb img {
+  transform: scale(1.1);
+}
+
 .play-hint {
+  position: relative;
+  z-index: 2;
   font-size: 2.5rem;
-  color: var(--accent-strong);
-  opacity: 0.8;
-  filter: drop-shadow(0 4px 12px var(--accent-glow));
+  color: #ffffff;
+  opacity: 0.9;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5));
 }
 
 .playlist-info h4 {
