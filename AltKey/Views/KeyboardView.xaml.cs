@@ -22,6 +22,8 @@ namespace AltKey.Views;
 public partial class KeyboardView : System.Windows.Controls.UserControl
 {
     private bool _isCollapsed = false;
+    private KeyboardWindowPlacement.VerticalAnchor _verticalAnchor = KeyboardWindowPlacement.VerticalAnchor.Freeform;
+    private double _verticalAnchorGap;
 
     public bool IsCollapsed => _isCollapsed;
     private bool _autoCompleteBarAdded = false;
@@ -48,6 +50,7 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
 
             ApplySuggestionBarHeight();
             ApplyScale();
+            RefreshVerticalAnchor(window);
 
             window.SizeChanged += OnWindowSizeChanged;
 
@@ -128,6 +131,7 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
     // 상단 드래그 핸들이나 버튼들이 위치한 헤더의 높이입니다.
     private const double HeaderHeight = 28.0;
     private const double SuggestionChipHeightRatio = 0.62;
+    private const double EdgeDockMargin = 8.0;
 
     // 사용자가 설정할 수 있는 창 크기 배율의 최소/최대 범위(%)입니다.
     private const int    MinScale     = 60;
@@ -203,11 +207,13 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
         scale = Math.Clamp(scale, MinScale, MaxScale);
 
         var (baseW, baseH) = ComputeBaseSize();
-
-        window.Width  = baseW * scale / 100.0;
-        window.Height = _isCollapsed
+        double targetWidth = baseW * scale / 100.0;
+        double targetHeight = _isCollapsed
             ? CollapsedWindowHeight
             : baseH * scale / 100.0;
+
+        window.Width = targetWidth;
+        ApplyWindowHeight(window, targetHeight);
     }
 
     /// <summary>
@@ -279,6 +285,7 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
         _isDragHandlePressed = false;
         dragHandle.ReleaseMouseCapture();
         window.DragMove();
+        RefreshVerticalAnchor(window);
     }
 
     /// <summary>
@@ -331,7 +338,7 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
 
         if (!_isCollapsed)
         {
-            AnimateWindowHeight(window, CollapsedWindowHeight);
+            ApplyWindowHeight(window, CollapsedWindowHeight, animate: true);
             if (FindName("CollapseIcon") is TextBlock collapseIcon)
                 collapseIcon.Text = "▼";
             _isCollapsed = true;
@@ -374,10 +381,91 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
     }
 
     /// <summary>
+    /// 위치 애니메이션을 중단하고 현재 Top 값을 고정합니다.
+    /// 높이와 위치를 함께 움직일 때 두 속성이 같은 시작 시점을 보도록 맞춥니다.
+    /// </summary>
+    private static void CaptureAndClearTopAnimation(Window window)
+    {
+        var current = window.Top;
+        window.BeginAnimation(Window.TopProperty, null);
+        window.Top = current;
+    }
+
+    /// <summary>
+    /// 현재 창이 상단에 더 붙어 있는지, 하단에 더 붙어 있는지 기억합니다.
+    /// 높이가 바뀐 뒤에도 같은 가장자리 기준으로 다시 배치하려고 사용합니다.
+    /// </summary>
+    private void RefreshVerticalAnchor(Window window)
+    {
+        double currentHeight = GetCurrentWindowHeight(window);
+        var workArea = SystemParameters.WorkArea;
+        _verticalAnchor = KeyboardWindowPlacement.DetectVerticalAnchor(
+            window.Top,
+            currentHeight,
+            workArea);
+
+        // 화면 끝에 도킹된 상태로 판단됐을 때만 해당 간격을 저장합니다.
+        // 이렇게 해야 아래쪽에 붙인 뒤 접기/펼치기나 추천 바 높이 변화가 있어도 같은 여백을 유지합니다.
+        _verticalAnchorGap = _verticalAnchor switch
+        {
+            KeyboardWindowPlacement.VerticalAnchor.Bottom => Math.Max(0, workArea.Bottom - (window.Top + currentHeight)),
+            KeyboardWindowPlacement.VerticalAnchor.Top => Math.Max(0, window.Top - workArea.Top),
+            _ => 0
+        };
+    }
+
+    /// <summary>
+    /// 애니메이션 직전처럼 ActualHeight가 아직 갱신되지 않은 시점에도 사용할 현재 창 높이를 안전하게 읽습니다.
+    /// </summary>
+    private static double GetCurrentWindowHeight(Window window)
+    {
+        return window.ActualHeight > 0
+            ? window.ActualHeight
+            : window.Height;
+    }
+
+    /// <summary>
+    /// 창 높이를 바꾸기 전에 현재 세로 기준점(상단/하단)에 맞춰 Top 좌표를 함께 보정합니다.
+    /// </summary>
+    private void ApplyWindowHeight(Window window, double targetHeight, bool animate = false)
+    {
+        double currentHeight = GetCurrentWindowHeight(window);
+        double targetTop = KeyboardWindowPlacement.ComputeAnchoredTop(
+            window.Top,
+            currentHeight,
+            targetHeight,
+            SystemParameters.WorkArea,
+            _verticalAnchor,
+            GetAnchorGapOverride());
+
+        if (animate)
+        {
+            AnimateWindowHeight(window, targetTop, targetHeight);
+            return;
+        }
+
+        CaptureAndClearHeightAnimation(window);
+        window.Top = targetTop;
+        window.Height = targetHeight;
+    }
+
+    /// <summary>
+    /// 도킹 상태일 때는 마지막으로 맞춰 둔 여백을 그대로 쓰고, 자유 위치는 현재 좌표를 유지합니다.
+    /// </summary>
+    private double? GetAnchorGapOverride()
+    {
+        return _verticalAnchor switch
+        {
+            KeyboardWindowPlacement.VerticalAnchor.Top or KeyboardWindowPlacement.VerticalAnchor.Bottom => _verticalAnchorGap,
+            _ => null
+        };
+    }
+
+    /// <summary>
     /// 창의 높이를 부드럽게 변화시키는 애니메이션 효과를 줍니다.
     /// L2: 애니메이션 최소화 모드 ON이거나 OS 설정(ClientAreaAnimation)이 꺼져 있으면 즉시 변경합니다.
     /// </summary>
-    private void AnimateWindowHeight(Window window, double targetHeight)
+    private void AnimateWindowHeight(Window window, double targetTop, double targetHeight)
     {
         // OS 설정 + 앱 설정 중 하나라도 애니메이션 최소화를 요구하면 즉시 적용
         bool reduceMotion = !SystemParameters.ClientAreaAnimation
@@ -385,25 +473,43 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
 
         if (reduceMotion)
         {
+            CaptureAndClearTopAnimation(window);
             CaptureAndClearHeightAnimation(window);
+            window.Top = targetTop;
             window.Height = targetHeight;
             return;
         }
 
+        CaptureAndClearTopAnimation(window);
         CaptureAndClearHeightAnimation(window);
 
+        var topFrom = window.Top;
         var from = window.Height;
-        var anim = new DoubleAnimation(from, targetHeight, TimeSpan.FromMilliseconds(150))
+        var easing = new CubicEase { EasingMode = EasingMode.EaseOut };
+        var duration = TimeSpan.FromMilliseconds(150);
+
+        var topAnim = new DoubleAnimation(topFrom, targetTop, duration)
         {
-            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
+            EasingFunction = easing,
             FillBehavior = FillBehavior.Stop
         };
-        anim.Completed += (_, _) =>
+
+        var heightAnim = new DoubleAnimation(from, targetHeight, duration)
         {
+            EasingFunction = easing,
+            FillBehavior = FillBehavior.Stop
+        };
+
+        heightAnim.Completed += (_, _) =>
+        {
+            window.BeginAnimation(Window.TopProperty, null);
             window.BeginAnimation(Window.HeightProperty, null);
+            window.Top = targetTop;
             window.Height = targetHeight;
         };
-        window.BeginAnimation(Window.HeightProperty, anim);
+
+        window.BeginAnimation(Window.TopProperty, topAnim);
+        window.BeginAnimation(Window.HeightProperty, heightAnim);
     }
 
     // ── 화면 가장자리 이동 기능 ─────────────────────────────────────────────
@@ -422,14 +528,20 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
         if (window is null) return;
 
         var screen = System.Windows.SystemParameters.WorkArea;
-        const double margin = 8.0;
-
         switch (direction)
         {
-            case "Left":  window.Left = screen.Left + margin; break;
-            case "Right": window.Left = screen.Right - window.Width - margin; break;
-            case "Up":    window.Top  = screen.Top  + margin; break;
-            case "Down":  window.Top  = screen.Bottom - window.Height - margin; break;
+            case "Left":  window.Left = screen.Left + EdgeDockMargin; break;
+            case "Right": window.Left = screen.Right - window.Width - EdgeDockMargin; break;
+            case "Up":
+                _verticalAnchor = KeyboardWindowPlacement.VerticalAnchor.Top;
+                _verticalAnchorGap = EdgeDockMargin;
+                window.Top = screen.Top + EdgeDockMargin;
+                break;
+            case "Down":
+                _verticalAnchor = KeyboardWindowPlacement.VerticalAnchor.Bottom;
+                _verticalAnchorGap = EdgeDockMargin;
+                window.Top = screen.Bottom - window.Height - EdgeDockMargin;
+                break;
         }
     }
 
