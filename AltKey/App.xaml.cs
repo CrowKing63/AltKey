@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.IO;
+using System.Threading;
 using System.Windows;
 using Microsoft.Extensions.DependencyInjection;
 using AltKey.Services;
@@ -26,6 +27,12 @@ public partial class App : System.Windows.Application
     // 단일 인스턴스 제한용 Mutex (설치형·무설치형 모두 공통)
     private static Mutex? _instanceMutex;
 
+    // 이미 실행 중인 AltKey 창을 다시 보여 달라는 신호를 주고받는 이벤트입니다.
+    private static EventWaitHandle? _restoreWindowEvent;
+
+    // 앱이 살아 있는 동안 복원 이벤트 감시를 유지하는 등록 핸들입니다.
+    private static RegisteredWaitHandle? _restoreWindowWaitHandle;
+
     protected override void OnStartup(StartupEventArgs e)
     {
         // 단일 인스턴스 제한: 이미 실행 중이면 즉시 종료
@@ -33,11 +40,18 @@ public partial class App : System.Windows.Application
         _instanceMutex = new Mutex(initiallyOwned: true, name: mutexName, out bool createdNew);
         if (!createdNew)
         {
+            SignalExistingInstanceToRestore();
             _instanceMutex.Dispose();
             _instanceMutex = null;
             Shutdown();
             return;
         }
+
+        // 작업표시줄 고정 아이콘으로 다시 실행했을 때 기존 AltKey를 복원시키는 신호 채널입니다.
+        _restoreWindowEvent = new EventWaitHandle(
+            initialState: false,
+            mode: EventResetMode.AutoReset,
+            name: "AltKey_RestoreWindow_Event");
         // T-6.7: 전역 미처리 예외 핸들러 (동일 타입 에러는 한 번만 팝업)
         // [참고] 클립보드 관련 COMException(0x800401D0~0x800401D3)은 0.5초마다 평시 체크되므로 로그/메시지를 남기지 않음
         static bool IsClipboardComError(System.Runtime.InteropServices.COMException ex)
@@ -170,6 +184,8 @@ public partial class App : System.Windows.Application
             var window = Services.GetRequiredService<MainWindow>();
             window.Show();
 
+            RegisterRestoreWindowHandler();
+
             // AltKey.Tools에서 보내는 최소 재로드 알림 수신을 시작합니다.
             _ = Services.GetRequiredService<ToolsReloadSignalService>();
 
@@ -232,6 +248,11 @@ public partial class App : System.Windows.Application
         // 서비스 정리
         if (Services is IDisposable d) d.Dispose();
 
+        _restoreWindowWaitHandle?.Unregister(null);
+        _restoreWindowWaitHandle = null;
+        _restoreWindowEvent?.Dispose();
+        _restoreWindowEvent = null;
+
         // 단일 인스턴스 Mutex 해제
         _instanceMutex?.ReleaseMutex();
         _instanceMutex?.Dispose();
@@ -279,5 +300,46 @@ public partial class App : System.Windows.Application
                 $"[{DateTime.Now:u}] {ex}\n\n");
         }
         catch { /* 로그 쓰기 실패 — 무시 */ }
+    }
+
+    /// <summary>
+    /// 이미 실행 중인 AltKey가 있다면 창을 다시 보여 달라는 신호만 보내고 새 인스턴스는 종료합니다.
+    /// </summary>
+    private static void SignalExistingInstanceToRestore()
+    {
+        try
+        {
+            using var restoreEvent = EventWaitHandle.OpenExisting("AltKey_RestoreWindow_Event");
+            restoreEvent.Set();
+        }
+        catch (WaitHandleCannotBeOpenedException)
+        {
+            // 기존 인스턴스가 아직 복원 이벤트를 만들기 전이면 조용히 종료합니다.
+        }
+    }
+
+    /// <summary>
+    /// 다른 실행 요청이 들어오면 기존 AltKey 창을 트레이에서 다시 보이도록 연결합니다.
+    /// </summary>
+    private void RegisterRestoreWindowHandler()
+    {
+        if (_restoreWindowEvent is null)
+            return;
+
+        _restoreWindowWaitHandle = ThreadPool.RegisterWaitForSingleObject(
+            _restoreWindowEvent,
+            static (_, _) =>
+            {
+                Current.Dispatcher.Invoke(() =>
+                {
+                    if (Services.GetService<TrayService>() is { } trayService)
+                    {
+                        trayService.ShowWindowFromExternalActivation();
+                    }
+                });
+            },
+            state: null,
+            millisecondsTimeOutInterval: Timeout.Infinite,
+            executeOnlyOnce: false);
     }
 }

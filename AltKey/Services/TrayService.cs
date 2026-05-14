@@ -179,6 +179,28 @@ public class TrayService : IDisposable
 
     // ── 풍선 알림 ────────────────────────────────────────────────────────────
 
+    /// <summary>
+    /// 작업표시줄 고정 아이콘이나 시작 메뉴에서 다시 실행했을 때 기존 AltKey 창을 다시 보이게 합니다.
+    /// </summary>
+    public void ShowWindowFromExternalActivation()
+    {
+        Application.Current.Dispatcher.Invoke(() =>
+        {
+            if (_mainWindow is null)
+                return;
+
+            if (_mainWindow.WindowState == WindowState.Minimized)
+            {
+                _mainWindow.WindowState = WindowState.Normal;
+            }
+
+            if (!_mainWindow.IsVisible)
+            {
+                _mainWindow.Show();
+            }
+        });
+    }
+
     public void ShowBalloon(string message)
     {
         _notifyIcon.ShowBalloonTip(3000, "AltKey", message, ToolTipIcon.Info);
