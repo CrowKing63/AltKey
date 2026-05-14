@@ -51,7 +51,8 @@ public class KeySlotVm(KeySlot slot, AutoCompleteService autoComplete) : Observa
     private bool _isA11yFocused;
     private FunctionLayerState _functionLayerState;
     private string? _autoCompleteComposeStateLabel;
-    private bool _showUpperCase;
+    private bool _showShiftLabels;
+    private bool _isCapsLockOn;
     public bool IsSticky { get => _isSticky; set => SetProperty(ref _isSticky, value); }
     public bool IsLocked { get => _isLocked; set => SetProperty(ref _isLocked, value); }
     public bool IsA11yFocused { get => _isA11yFocused; set => SetProperty(ref _isA11yFocused, value); }
@@ -83,20 +84,20 @@ public class KeySlotVm(KeySlot slot, AutoCompleteService autoComplete) : Observa
     /// <summary>
     /// 현재 입력 모드(한글/영어)와 상태(Shift 여부)에 따라 버튼에 표시할 글자를 결정합니다.
     /// </summary>
-    public string GetLabel(bool upperCase, InputSubmode submode)
+    public string GetLabel(InputSubmode submode)
     {
         if (IsKoreanSubmodeToggle)
             return _autoCompleteComposeStateLabel ?? "가";
 
         if (submode == InputSubmode.QuietEnglish && Slot.EnglishLabel is { Length: > 0 } eng)
         {
-            string baseLabel = upperCase
+            string baseLabel = ShouldUppercaseEnglishLabel()
                 ? (Slot.EnglishShiftLabel ?? eng.ToUpperInvariant())
                 : eng;
             return baseLabel;
         }
 
-        return upperCase && Slot.ShiftLabel is { Length: > 0 } s
+        return _showShiftLabels && Slot.ShiftLabel is { Length: > 0 } s
             ? s
             : Slot.Label;
     }
@@ -109,8 +110,8 @@ public class KeySlotVm(KeySlot slot, AutoCompleteService autoComplete) : Observa
 
     public void RefreshDisplay()
     {
-        DisplayLabel = GetLabel(_showUpperCase, _activeSubmode);
-        SubLabelText = GetSubLabel(_showUpperCase);
+        DisplayLabel = GetLabel(_activeSubmode);
+        SubLabelText = GetSubLabel();
         ApplyFunctionLayerDisplay();
         IsDimmed = GetIsDimmed(_activeSubmode);
         OnPropertyChanged(nameof(DisplayLabel));
@@ -128,11 +129,11 @@ public class KeySlotVm(KeySlot slot, AutoCompleteService autoComplete) : Observa
 
         if (_activeSubmode == InputSubmode.QuietEnglish && Slot.FunctionEnglishLabel is { Length: > 0 } fnEnglish)
         {
-            DisplayLabel = _showUpperCase
+            DisplayLabel = ShouldUppercaseEnglishLabel()
                 ? (Slot.FunctionEnglishShiftLabel ?? fnEnglish.ToUpperInvariant())
                 : fnEnglish;
         }
-        else if (_showUpperCase && Slot.FunctionShiftLabel is { Length: > 0 } fnShift)
+        else if (_showShiftLabels && Slot.FunctionShiftLabel is { Length: > 0 } fnShift)
         {
             DisplayLabel = fnShift;
         }
@@ -143,25 +144,26 @@ public class KeySlotVm(KeySlot slot, AutoCompleteService autoComplete) : Observa
 
         if (_activeSubmode == InputSubmode.HangulJamo && Slot.FunctionEnglishLabel is { Length: > 0 } fnSubEnglish)
         {
-            SubLabelText = _showUpperCase
+            SubLabelText = ShouldUppercaseEnglishLabel()
                 ? (Slot.FunctionEnglishShiftLabel ?? fnSubEnglish.ToUpperInvariant())
                 : fnSubEnglish;
         }
         else if (_activeSubmode == InputSubmode.QuietEnglish && Slot.FunctionLabel is { Length: > 0 } fnSubLabel)
         {
-            SubLabelText = _showUpperCase && Slot.FunctionShiftLabel is { Length: > 0 } fnSubShift
+            SubLabelText = _showShiftLabels && Slot.FunctionShiftLabel is { Length: > 0 } fnSubShift
                 ? fnSubShift
                 : fnSubLabel;
         }
     }
 
-    public void SetShowUpperCase(bool value)
+    public void SetModifierDisplayState(bool showShiftLabels, bool isCapsLockOn)
     {
-        if (_showUpperCase != value)
-        {
-            _showUpperCase = value;
-            RefreshDisplay();
-        }
+        if (_showShiftLabels == showShiftLabels && _isCapsLockOn == isCapsLockOn)
+            return;
+
+        _showShiftLabels = showShiftLabels;
+        _isCapsLockOn = isCapsLockOn;
+        RefreshDisplay();
     }
 
     public void SetComposeStateLabel(string? label)
@@ -185,7 +187,7 @@ public class KeySlotVm(KeySlot slot, AutoCompleteService autoComplete) : Observa
         RefreshDisplay();
     }
 
-    public string GetSubLabel(bool upperCase)
+    public string GetSubLabel()
     {
         if (IsKoreanSubmodeToggle)
             return "";
@@ -194,18 +196,41 @@ public class KeySlotVm(KeySlot slot, AutoCompleteService autoComplete) : Observa
         {
             if (_activeSubmode == InputSubmode.HangulJamo)
             {
-                return upperCase
+                return ShouldUppercaseEnglishLabel()
                     ? (Slot.EnglishShiftLabel ?? eng.ToUpperInvariant())
                     : eng;
             }
             else if (_activeSubmode == InputSubmode.QuietEnglish)
             {
-                return upperCase && Slot.ShiftLabel is { Length: > 0 } s
+                return _showShiftLabels && Slot.ShiftLabel is { Length: > 0 } s
                     ? s
                     : Slot.Label;
             }
         }
         return "";
+    }
+
+    // 기존 호출부 호환을 위해 남겨 두는 래퍼입니다.
+    public string GetSubLabel(bool _) => GetSubLabel();
+
+    /// <summary>
+    /// Caps Lock은 실제 영문자 키에만 적용하고, 숫자·기호는 Shift일 때만 치환 라벨을 보여줍니다.
+    /// </summary>
+    private bool ShouldUppercaseEnglishLabel()
+    {
+        return _showShiftLabels || (_isCapsLockOn && HasAlphabeticEnglishLabel());
+    }
+
+    /// <summary>
+    /// 이 키가 Caps Lock으로 대소문자가 바뀌는 영문자 키인지 확인합니다.
+    /// </summary>
+    private bool HasAlphabeticEnglishLabel()
+    {
+        string? label = Slot.EnglishLabel;
+        if (string.IsNullOrWhiteSpace(label) || label.Length != 1)
+            return false;
+
+        return char.IsLetter(label[0]) && label[0] < 128;
     }
 
     // ── Accessibility ────────────────────────────────────────────────────────
@@ -241,13 +266,13 @@ public class KeySlotVm(KeySlot slot, AutoCompleteService autoComplete) : Observa
         var submode = _activeSubmode;
         if (submode == InputSubmode.HangulJamo)
         {
-            string label = _showUpperCase && Slot.ShiftLabel is { } s ? s : Slot.Label;
+            string label = _showShiftLabels && Slot.ShiftLabel is { } s ? s : Slot.Label;
             string? jamoName = JamoNameResolver.ResolveKorean(label);
             if (jamoName is not null) return jamoName;
         }
         else
         {
-            string? letter = _showUpperCase
+            string? letter = ShouldUppercaseEnglishLabel()
                 ? (Slot.EnglishShiftLabel ?? Slot.EnglishLabel?.ToUpperInvariant())
                 : Slot.EnglishLabel;
             if (letter is not null) return $"{letter} 키";
@@ -1146,6 +1171,12 @@ public partial class KeyboardViewModel : ObservableObject
             _inputService.LockedKeys.Contains(VirtualKeyCode.VK_LSHIFT) ||
             _inputService.IsCapsLockOn;
 
+        bool showShiftLabels =
+            _inputService.StickyKeys.Contains(VirtualKeyCode.VK_SHIFT) ||
+            _inputService.LockedKeys.Contains(VirtualKeyCode.VK_SHIFT) ||
+            _inputService.StickyKeys.Contains(VirtualKeyCode.VK_LSHIFT) ||
+            _inputService.LockedKeys.Contains(VirtualKeyCode.VK_LSHIFT);
+
         foreach (var col in Columns)
         foreach (var row in col.Rows)
         foreach (var slotVm in row.Keys)
@@ -1162,7 +1193,7 @@ public partial class KeyboardViewModel : ObservableObject
             }
 
             slotVm.SetFunctionLayerState(_inputService.FunctionLayerState);
-            slotVm.SetShowUpperCase(ShowUpperCase);
+            slotVm.SetModifierDisplayState(showShiftLabels, _inputService.IsCapsLockOn);
         }
     }
 
