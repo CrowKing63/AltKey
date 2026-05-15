@@ -421,4 +421,54 @@ public class InputServiceTests
         Assert.Equal(args, svc.LastStartedProcess.Arguments);
         Assert.True(svc.LastStartedProcess.UseShellExecute);
     }
+
+    [Fact]
+    public void HandleAction_task_manager_combo_uses_direct_launch_instead_of_sendinput()
+    {
+        var svc = new TrackingInputService();
+
+        svc.HandleAction(new SendComboAction([
+            nameof(VirtualKeyCode.VK_CONTROL),
+            nameof(VirtualKeyCode.VK_SHIFT),
+            nameof(VirtualKeyCode.VK_ESCAPE)
+        ]));
+
+        Assert.NotNull(svc.LastStartedProcess);
+        Assert.Equal("taskmgr.exe", svc.LastStartedProcess!.FileName);
+        Assert.Empty(svc.KeyDowns);
+        Assert.Empty(svc.KeyUps);
+    }
+
+    [Fact]
+    public void HandleAction_system_shortcut_releases_transient_modifiers_after_direct_launch()
+    {
+        var svc = new TrackingInputService();
+        svc.ToggleModifier(VirtualKeyCode.VK_CONTROL);
+
+        svc.HandleAction(new SendComboAction([
+            nameof(VirtualKeyCode.VK_CONTROL),
+            nameof(VirtualKeyCode.VK_SHIFT),
+            nameof(VirtualKeyCode.VK_ESCAPE)
+        ]));
+
+        Assert.Empty(svc.StickyKeys);
+        Assert.Contains(VirtualKeyCode.VK_CONTROL, svc.KeyUps);
+    }
+
+    [Fact]
+    public void HandleAction_non_system_combo_keeps_existing_sendinput_path()
+    {
+        var svc = new TrackingInputService();
+
+        svc.HandleAction(new SendComboAction([
+            nameof(VirtualKeyCode.VK_LWIN),
+            nameof(VirtualKeyCode.VK_E)
+        ]));
+
+        Assert.Null(svc.LastStartedProcess);
+        Assert.Contains(VirtualKeyCode.VK_LWIN, svc.KeyDowns);
+        Assert.Contains(VirtualKeyCode.VK_E, svc.KeyDowns);
+        Assert.Contains(VirtualKeyCode.VK_E, svc.KeyUps);
+        Assert.Contains(VirtualKeyCode.VK_LWIN, svc.KeyUps);
+    }
 }

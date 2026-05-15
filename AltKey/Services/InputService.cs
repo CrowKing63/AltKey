@@ -19,6 +19,17 @@ public enum InputMode
 
 public class InputService
 {
+    // 권한 문제로 자주 막히는 Windows 시스템 단축키는 조합키 주입 대신 직접 실행으로 우회합니다.
+    // 키 순서는 사용자가 누른 순서와 무관하게 같은 조합으로 인식되도록 정규화 문자열로 관리합니다.
+    private static readonly Dictionary<string, SystemShortcutCommand> SystemShortcutCommands = new()
+    {
+        [NormalizeShortcutKey([
+            VirtualKeyCode.VK_CONTROL,
+            VirtualKeyCode.VK_SHIFT,
+            VirtualKeyCode.VK_ESCAPE
+        ])] = SystemShortcutCommand.TaskManager,
+    };
+
     private static readonly uint OwnProcessId = (uint)Environment.ProcessId;
     private static readonly IntPtr InputExtraInfoTag =
         unchecked((IntPtr)(long)Win32.INPUT_EXTRAINFO_ALTKEY);
@@ -42,6 +53,11 @@ public class InputService
     private readonly HashSet<VirtualKeyCode> _heldKeys = [];
     private FunctionLayerState _functionLayerState;
     private VirtualKeyCode? _armedHeldKey;
+
+    private enum SystemShortcutCommand
+    {
+        TaskManager
+    }
 
     public InputMode Mode { get; private set; }
     public bool IsElevated => _isElevated;
@@ -167,6 +183,26 @@ public class InputService
     public virtual void SendKeyUp(VirtualKeyCode vk)
     {
         DispatchInput([MakeSendKeyUp(vk)]);
+    }
+
+    /// <summary>
+    /// 권한 경계 때문에 조합키 주입이 불안정한 시스템 단축키를 직접 실행으로 대체합니다.
+    /// 사용자는 같은 단축키를 누르지만, 내부에서는 더 안정적인 시스템 진입점을 사용합니다.
+    /// </summary>
+    protected virtual bool TryHandleSystemShortcut(IReadOnlyList<VirtualKeyCode> keys)
+    {
+        if (!SystemShortcutCommands.TryGetValue(NormalizeShortcutKey(keys), out var command))
+            return false;
+
+        switch (command)
+        {
+            case SystemShortcutCommand.TaskManager:
+                StartProcess(CreateRunAppProcessStartInfo("taskmgr.exe", ""));
+                return true;
+
+            default:
+                return false;
+        }
     }
 
     /// <summary>
@@ -345,7 +381,14 @@ public class InputService
                     .Where(v => v.HasValue)
                     .Select(v => v!.Value)
                     .ToList();
-                SendCombo(vkList);
+                if (TryHandleSystemShortcut(vkList))
+                {
+                    ReleaseTransientModifiers("SystemShortcut");
+                }
+                else
+                {
+                    SendCombo(vkList);
+                }
                 break;
 
             case ToggleStickyAction { Vk: var vkStr2 }:
@@ -511,6 +554,26 @@ public class InputService
     }
 
     private static bool IsHighRiskModifier(VirtualKeyCode vk) => HighRiskModifiers.Contains(vk);
+
+    /// <summary>
+    /// 좌우 구분 modifier를 대표 키로 묶고, 정렬된 문자열로 바꿔 조합 순서 차이를 없앱니다.
+    /// 나중에 시스템 단축키를 더 추가할 때도 이 규칙만 따르면 같은 테이블을 재사용할 수 있습니다.
+    /// </summary>
+    private static string NormalizeShortcutKey(IReadOnlyList<VirtualKeyCode> keys)
+        => string.Join("+", keys
+            .Select(NormalizeShortcutKeyPart)
+            .Distinct()
+            .OrderBy(vk => (int)vk)
+            .Select(vk => vk.ToString()));
+
+    private static VirtualKeyCode NormalizeShortcutKeyPart(VirtualKeyCode vk) => vk switch
+    {
+        VirtualKeyCode.VK_LCONTROL or VirtualKeyCode.VK_RCONTROL => VirtualKeyCode.VK_CONTROL,
+        VirtualKeyCode.VK_LSHIFT or VirtualKeyCode.VK_RSHIFT => VirtualKeyCode.VK_SHIFT,
+        VirtualKeyCode.VK_LMENU or VirtualKeyCode.VK_RMENU => VirtualKeyCode.VK_MENU,
+        VirtualKeyCode.VK_RWIN => VirtualKeyCode.VK_LWIN,
+        _ => vk
+    };
 
     private Win32.INPUT MakeSendKeyDown(VirtualKeyCode vk)
         => TryMakeScanCodeInput(vk, keyUp: false, out var input)

@@ -16,11 +16,31 @@ public class KeyboardViewModelTests
             new SendKeyAction("VK_F1"), "F1", null, "f1", null));
 
         slotVm.ActiveSubmode = InputSubmode.HangulJamo;
-        slotVm.SetShowUpperCase(false);
+        slotVm.SetModifierDisplayState(showShiftLabels: false, isCapsLockOn: false);
         slotVm.SetFunctionLayerState(FunctionLayerState.OneShot);
 
         Assert.Equal("F1", slotVm.DisplayLabel);
         Assert.Equal("f1", slotVm.SubLabelText);
+    }
+
+    [Fact]
+    public void KeySlotVm_caps_lock_uppercases_only_alphabetic_english_label()
+    {
+        var alphabetSlot = CreateSlotVm(new KeySlot(
+            "ㅁ", null, new SendKeyAction("VK_A"), 1.0, 1.0, "", 0.0,
+            "a", null));
+        var symbolSlot = CreateSlotVm(new KeySlot(
+            "1", "!", new SendKeyAction("VK_1"), 1.0, 1.0, "", 0.0,
+            "1", "!"));
+
+        alphabetSlot.ActiveSubmode = InputSubmode.QuietEnglish;
+        symbolSlot.ActiveSubmode = InputSubmode.QuietEnglish;
+
+        alphabetSlot.SetModifierDisplayState(showShiftLabels: false, isCapsLockOn: true);
+        symbolSlot.SetModifierDisplayState(showShiftLabels: false, isCapsLockOn: true);
+
+        Assert.Equal("A", alphabetSlot.DisplayLabel);
+        Assert.Equal("1", symbolSlot.DisplayLabel);
     }
 
     [Fact]
