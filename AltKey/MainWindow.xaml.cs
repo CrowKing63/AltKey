@@ -7,6 +7,7 @@ using System.Windows.Media.Animation;
 using System.Windows.Threading;
 using AltKey.Services;
 using AltKey.ViewModels;
+using AltKey.Views;
 
 namespace AltKey;
 
@@ -104,7 +105,7 @@ public partial class MainWindow : Window
         _hotkeyService.HotkeyPressed += () => _trayService.ToggleVisibility();
     }
 
-    // Esc 키로 닫기 → 트레이로
+    // Esc 키도 제목 표시줄 닫기와 같은 확인 절차를 거쳐 트레이 숨김으로 이어집니다.
     protected override void OnKeyDown(System.Windows.Input.KeyEventArgs e)
     {
         if (e.Key == System.Windows.Input.Key.Escape)
@@ -115,35 +116,66 @@ public partial class MainWindow : Window
     // T-1.6 / T-5.6: 창 닫기 처리
     protected override void OnClosing(CancelEventArgs e)
     {
+        if (!IsShuttingDown)
+        {
+            if (_configService.Current.AskBeforeHideToTray)
+            {
+                var confirmWindow = new CloseToTrayConfirmWindow
+                {
+                    Owner = this
+                };
+
+                var shouldHideToTray = confirmWindow.ShowDialog() == true;
+                if (!shouldHideToTray)
+                {
+                    e.Cancel = true;
+                    return;
+                }
+
+                // "다시 묻지 않기"는 실제로 숨기기를 확정했을 때만 저장해 실수로 옵션이 바뀌지 않게 합니다.
+                if (confirmWindow.DontAskAgain)
+                {
+                    _configService.Update(c => c.AskBeforeHideToTray = false, nameof(Models.AppConfig.AskBeforeHideToTray));
+                }
+            }
+
+            e.Cancel = true;
+            HideToTray();
+            return;
+        }
+
         _inputService.ReleaseAllHeldKeys("MainWindow.OnClosing");
         _inputService.ReleaseAllModifiers("MainWindow.OnClosing");
 
-        if (!IsShuttingDown)
+        if (!ResetPending)
         {
-            // 트레이로 숨기기
-            e.Cancel = true;
-            Hide();
-
-            // 첫 번째 숨김 시 풍선 알림 (한 번만)
-            if (!_trayNotified)
+            _configService.Update(c =>
             {
-                _trayService.ShowBalloon("AltKey가 트레이에서 실행 중입니다.");
-                _trayNotified = true;
-            }
-        }
-        else
-        {
-            if (!ResetPending)
-            {
-                _configService.Update(c =>
-                {
-                    c.Window.Left   = Left;
-                    c.Window.Top    = Top;
-                });
-            }
+                c.Window.Left   = Left;
+                c.Window.Top    = Top;
+            });
         }
 
         base.OnClosing(e);
+    }
+
+    /// <summary>
+    /// 창을 실제로 트레이로 숨기는 공통 경로입니다.
+    /// 닫기 버튼, Esc, 이후 다른 닫기 요청도 모두 같은 안전 정리 절차를 타게 합니다.
+    /// </summary>
+    private void HideToTray()
+    {
+        ModifierSafety.PrepareForWindowHide(_inputService, "MainWindow.HideToTray");
+        Hide();
+
+        // 첫 번째 숨김 시에만 풍선 알림을 보여 줘 복귀 경로를 한 번 알려 줍니다.
+        if (_trayNotified)
+        {
+            return;
+        }
+
+        _trayService.ShowBalloon("AltKey가 트레이에서 실행 중입니다.");
+        _trayNotified = true;
     }
 
     // T-1.6: 창 위치 복원 (화면 경계 밖이면 중앙 하단으로 초기화)

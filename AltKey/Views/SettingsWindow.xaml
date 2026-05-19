@@ -175,7 +175,7 @@
                         <StackPanel Margin="8,10,8,10">
                             <TextBlock Text="기본 상단바 버튼" Style="{StaticResource SectionTitleStyle}"/>
                             <TextBlock Text="기본 버튼의 표시 여부, 좌우 위치, 순서를 조정합니다." Foreground="{DynamicResource SettingsFgSub}" FontSize="11"/>
-                            <TextBlock Text="최소화, 접기, 닫기 버튼은 항상 우측 끝에 고정되며, 화면 맨 오른쪽부터는 닫기 → 접기 → 최소화 순서로 보입니다." Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,2"/>
+                            <TextBlock Text="접기와 닫기 버튼은 항상 우측 끝에 고정되며, 화면 맨 오른쪽부터는 닫기 → 접기 순서로 보입니다." Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,2"/>
                             <TextBlock Text="상단바의 버튼 없는 빈 칸과 가운데 드래그 핸들은 더블 클릭으로 접기/펼치기를 지원하며, 더블 클릭 시간은 윈도우 설정을 따릅니다." Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,8"/>
                             <ItemsControl ItemsSource="{Binding BuiltInHeaderButtons}">
                                 <ItemsControl.ItemTemplate>
@@ -342,11 +342,24 @@
                                       KeyboardNavigation.TabIndex="31"
                                       AutomationProperties.Name="자동 실행"/>
 
+                            <TextBlock Text="닫기/숨김" Style="{StaticResource SectionTitleStyle}"/>
+                            <CheckBox Content="닫기 확인 다시 묻지 않기"
+                                      Foreground="{DynamicResource SettingsFg}"
+                                      IsChecked="{Binding SkipCloseConfirm}"
+                                      Margin="0,0,0,4"
+                                      KeyboardNavigation.TabIndex="32"
+                                      AutomationProperties.Name="닫기 확인 다시 묻지 않기"/>
+                            <TextBlock Text="체크하면 닫기 버튼이나 Esc를 눌렀을 때 확인 창 없이 바로 트레이로 숨깁니다. 확인 창의 '앞으로 다시 묻지 않기', 트레이 메뉴와 같은 기준으로 즉시 연동됩니다."
+                                       Foreground="{DynamicResource SettingsFgSub}"
+                                       FontSize="11"
+                                       TextWrapping="Wrap"
+                                       Margin="16,0,0,16"/>
+
                             <TextBlock Text="키 반복 입력" Style="{StaticResource SectionTitleStyle}"/>
                             <CheckBox Content="키 반복 입력 사용"
                                       Foreground="{DynamicResource SettingsFg}"
                                       IsChecked="{Binding KeyRepeatEnabled}"
-                                      Margin="0,0,0,4" KeyboardNavigation.TabIndex="32"/>
+                                      Margin="0,0,0,4" KeyboardNavigation.TabIndex="33"/>
                             <TextBlock Text="반복은 SendKey 기반 키에만 적용됩니다. 유니코드 입력 모드에서는 조합 충돌 방지를 위해 문자 키 반복이 제한되며, 방향키·백스페이스 같은 비문자 키만 반복됩니다."
                                        Foreground="{DynamicResource SettingsFgSub}"
                                        FontSize="11"
@@ -355,12 +368,12 @@
                             <TextBlock Text="초기 지연" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="16,0,0,4"/>
                             <ctrl:NumericAdjuster Value="{Binding KeyRepeatDelayMs}" Minimum="100" Maximum="1000" Step="50" DecimalPlaces="0"
                                                   IsEnabled="{Binding KeyRepeatEnabled}"
-                                                  Margin="16,0,0,8" KeyboardNavigation.TabIndex="33"/>
+                                                  Margin="16,0,0,8" KeyboardNavigation.TabIndex="34"/>
 
                             <TextBlock Text="반복 간격" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="16,0,0,4"/>
                             <ctrl:NumericAdjuster Value="{Binding KeyRepeatIntervalMs}" Minimum="20" Maximum="200" Step="10" DecimalPlaces="0"
                                                   IsEnabled="{Binding KeyRepeatEnabled}"
-                                                  Margin="16,0,0,16" KeyboardNavigation.TabIndex="34"/>
+                                                  Margin="16,0,0,16" KeyboardNavigation.TabIndex="35"/>
 
                             <Separator Background="{DynamicResource SettingsHighlight}" Margin="0,0,0,16"/>
 
@@ -368,11 +381,11 @@
                             <CheckBox Content="체류 클릭(Dwell Click)"
                                       Foreground="{DynamicResource SettingsFg}"
                                       IsChecked="{Binding DwellEnabled}"
-                                      Margin="0,0,0,8" KeyboardNavigation.TabIndex="35"/>
+                                      Margin="0,0,0,8" KeyboardNavigation.TabIndex="36"/>
                             <TextBlock Text="체류 시간" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="16,0,0,4"/>
                             <ctrl:NumericAdjuster Value="{Binding DwellTimeMs}" Minimum="200" Maximum="3000" Step="100" DecimalPlaces="0"
                                                   IsEnabled="{Binding DwellEnabled}"
-                                                  Margin="16,0,0,16" KeyboardNavigation.TabIndex="36"/>
+                                                  Margin="16,0,0,16" KeyboardNavigation.TabIndex="37"/>
 
                             <Separator Background="{DynamicResource SettingsHighlight}" Margin="0,0,0,16"/>
 
@@ -380,13 +393,13 @@
                             <CheckBox Content="키 클릭 사운드"
                                       Foreground="{DynamicResource SettingsFg}"
                                       IsChecked="{Binding SoundEnabled}"
-                                      Margin="0,0,0,8" KeyboardNavigation.TabIndex="37"/>
+                                      Margin="0,0,0,8" KeyboardNavigation.TabIndex="38"/>
                             <StackPanel Orientation="Horizontal" Margin="16,0,0,16" Visibility="{Binding SoundEnabled, Converter={StaticResource BoolToVis}}">
                                 <TextBlock Text="사운드 파일:" VerticalAlignment="Center" Margin="0,0,6,0" Foreground="{DynamicResource SettingsFgSub}"/>
                                 <TextBlock VerticalAlignment="Center" Opacity="0.7" MaxWidth="220" Foreground="{DynamicResource SettingsFg}" TextTrimming="CharacterEllipsis" Text="{Binding SoundFilePath}"/>
-                                <Button Content="찾아보기" Command="{Binding BrowseSoundFileCommand}" Margin="8,0,0,0" Padding="8,4" Height="32" KeyboardNavigation.TabIndex="38"
+                                <Button Content="찾아보기" Command="{Binding BrowseSoundFileCommand}" Margin="8,0,0,0" Padding="8,4" Height="32" KeyboardNavigation.TabIndex="39"
                                         Style="{StaticResource FluentSecondaryButtonStyle}"/>
-                                <Button Content="초기화" Command="{Binding ResetSoundFileCommand}" Margin="4,0,0,0" Padding="8,4" Height="32" KeyboardNavigation.TabIndex="39"
+                                <Button Content="초기화" Command="{Binding ResetSoundFileCommand}" Margin="4,0,0,0" Padding="8,4" Height="32" KeyboardNavigation.TabIndex="40"
                                         Style="{StaticResource FluentSecondaryButtonStyle}"/>
                             </StackPanel>
                         </StackPanel>

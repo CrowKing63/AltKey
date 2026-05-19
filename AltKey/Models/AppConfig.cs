@@ -84,6 +84,10 @@ public class AppConfig
     // 기본 소리 외에 사용하고 싶은 효과음 파일(.wav)의 경로입니다. 비어있으면 기본음이 나옵니다.
     public string? SoundFilePath    { get; set; } = null;
 
+    // 닫기 버튼이나 Esc로 키보드 창을 숨길 때, 정말 트레이로 숨길지 한 번 더 확인할지 여부입니다.
+    // true면 확인 창을 먼저 보여 주고, false면 바로 트레이로 숨깁니다.
+    public bool AskBeforeHideToTray { get; set; } = true;
+
     // 이전에 복사했던 텍스트 목록(클립보드 히스토리) 창을 보여줄지 여부입니다.
     public bool ClipboardPanelEnabled { get; set; } = false;
 

@@ -17,18 +17,21 @@ public class TrayService : IDisposable
     private readonly MainViewModel _mainViewModel;
     private readonly UpdateService _updateService;
     private readonly InputService _inputService;
+    private readonly ConfigService _configService;
 
     private NotifyIcon _notifyIcon = null!;
     private Window?    _mainWindow;
 
-    public TrayService(LayoutService layoutService, MainViewModel mainViewModel, UpdateService updateService, InputService inputService)
+    public TrayService(LayoutService layoutService, MainViewModel mainViewModel, UpdateService updateService, InputService inputService, ConfigService configService)
     {
         _layoutService = layoutService;
         _mainViewModel = mainViewModel;
         _updateService = updateService;
         _inputService = inputService;
+        _configService = configService;
 
         _layoutService.LayoutsChanged += OnLayoutsChanged;
+        _configService.ConfigChanged += OnConfigChanged;
     }
 
     private void OnLayoutsChanged()
@@ -37,6 +40,19 @@ public class TrayService : IDisposable
         {
             var menu = BuildContextMenu();
             _notifyIcon.ContextMenuStrip = menu;
+        }
+    }
+
+    private void OnConfigChanged(string? propertyName)
+    {
+        if (_notifyIcon is null)
+        {
+            return;
+        }
+
+        if (propertyName is null or nameof(Models.AppConfig.AskBeforeHideToTray))
+        {
+            _notifyIcon.ContextMenuStrip = BuildContextMenu();
         }
     }
 
@@ -84,6 +100,15 @@ public class TrayService : IDisposable
 
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("보이기/숨기기", null, (_, _) => ToggleVisibility());
+
+        // 닫기 확인을 숨길지 여부를 트레이에서 바로 바꿔, 실수로 "다시 묻지 않기"를 켠 뒤에도 복구할 수 있게 합니다.
+        var skipCloseConfirmItem = new ToolStripMenuItem("닫기 확인 다시 묻지 않기")
+        {
+            Checked = !_configService.Current.AskBeforeHideToTray,
+            CheckOnClick = false
+        };
+        skipCloseConfirmItem.Click += (_, _) => ToggleCloseConfirmPreference();
+        menu.Items.Add(skipCloseConfirmItem);
 
         // T-5.11: 레이아웃 서브메뉴
         var layoutMenu = new ToolStripMenuItem("레이아웃");
@@ -204,6 +229,18 @@ public class TrayService : IDisposable
     public void ShowBalloon(string message)
     {
         _notifyIcon.ShowBalloonTip(3000, "AltKey", message, ToolTipIcon.Info);
+    }
+
+    /// <summary>
+    /// 트레이 메뉴에서 닫기 확인 생략 여부를 바로 뒤집습니다.
+    /// 체크됨 = 다시 묻지 않기, 체크 해제 = 다시 묻기 규칙으로 맞춰 사용자가 상태를 쉽게 읽게 합니다.
+    /// </summary>
+    private void ToggleCloseConfirmPreference()
+    {
+        var nextAskBeforeHideToTray = !_configService.Current.AskBeforeHideToTray;
+        _configService.Update(
+            c => c.AskBeforeHideToTray = nextAskBeforeHideToTray,
+            nameof(Models.AppConfig.AskBeforeHideToTray));
     }
 
     public void Dispose() => _notifyIcon?.Dispose();

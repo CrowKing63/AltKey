@@ -56,6 +56,7 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty] private string selectedLayout = "";
     [ObservableProperty] private string globalHotkey   = "Ctrl+Alt+K";
     [ObservableProperty] private int    windowScale    = 100;
+    [ObservableProperty] private bool   skipCloseConfirm = false;
 
     // T-8.1: 자동 실행
     [ObservableProperty] private bool runOnStartup;
@@ -248,6 +249,7 @@ public partial class SettingsViewModel : ObservableObject
     private void OnConfigChanged(string? propertyName)
     {
         if (propertyName is not nameof(AppConfig.AiDefaultPrompt)
+            and not nameof(AppConfig.AskBeforeHideToTray)
             and not nameof(AppConfig.Profiles)
             and not nameof(AppConfig.HeaderButtons))
         {
@@ -305,6 +307,7 @@ public partial class SettingsViewModel : ObservableObject
             SelectedLayout = c.DefaultLayout;
             GlobalHotkey   = c.GlobalHotkey;
             WindowScale    = c.Window.Scale;
+            SkipCloseConfirm = !c.AskBeforeHideToTray;
 
             // T-8.1: 자동 실행
             RunOnStartup = _startupService.IsEnabled;
@@ -466,6 +469,12 @@ public partial class SettingsViewModel : ObservableObject
     {
         if (_isLoading) return;
         _configService.Update(c => c.DwellTimeMs = value);
+    }
+
+    partial void OnSkipCloseConfirmChanged(bool value)
+    {
+        if (_isLoading) return;
+        _configService.Update(c => c.AskBeforeHideToTray = !value, nameof(AppConfig.AskBeforeHideToTray));
     }
 
     partial void OnSelectedLayoutChanged(string value)

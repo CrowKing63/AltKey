@@ -309,17 +309,9 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
         _isDragHandlePressed = false;
     }
 
-    private void MinimizeButton_Click(object sender, RoutedEventArgs e)
-    {
-        if (Window.GetWindow(this) is { } window)
-            window.WindowState = WindowState.Minimized;
-    }
-
     private void CloseButton_Click(object sender, RoutedEventArgs e)
     {
-        var inputService = App.Services.GetRequiredService<InputService>();
-        ModifierSafety.PrepareForWindowHide(inputService, "KeyboardView.CloseButton");
-        Window.GetWindow(this)?.Hide();
+        Window.GetWindow(this)?.Close();
     }
 
     /// <summary>

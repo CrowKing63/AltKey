@@ -319,15 +319,7 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
 
-                    <!-- 고정 버튼: 화면 맨 오른쪽부터 닫기 → 접기 → 최소화 순서로 보이도록 배치합니다. -->
-                    <Button x:Name="MinimizeButton" Width="32" Height="28"
-                            Style="{StaticResource HeaderBarButtonStyle}" Foreground="{DynamicResource TitleFg}"
-                            BorderThickness="0" Cursor="Hand" Focusable="False"
-                            Click="MinimizeButton_Click"
-                            ToolTip="최소화"
-                            AutomationProperties.Name="최소화">
-                        <TextBlock Text="&#x25AC;" FontSize="12"/>
-                    </Button>
+                    <!-- 고정 버튼: 화면 맨 오른쪽에는 닫기와 접기만 남겨 실수로 창이 사라질 위험을 줄입니다. -->
                     <Button x:Name="CollapseButton" Width="32" Height="28"
                             Style="{StaticResource HeaderBarButtonStyle}" Foreground="{DynamicResource TitleFg}"
                             BorderThickness="0" Cursor="Hand" Focusable="False"
@@ -339,7 +331,7 @@
                     <Button x:Name="CloseButton" Width="32" Height="28"
                             Style="{StaticResource HeaderCloseButtonStyle}"
                             Click="CloseButton_Click"
-                            ToolTip="닫기 (트레이로 숨김)"
+                            ToolTip="닫기 (트레이 숨김 확인)"
                             AutomationProperties.Name="닫기">
                         <TextBlock Text="&#x2715;" FontSize="14"/>
                     </Button>
