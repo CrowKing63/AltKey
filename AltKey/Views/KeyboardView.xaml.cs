@@ -217,6 +217,27 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
     }
 
     /// <summary>
+    /// 앱은 다음 실행 때 항상 펼친 상태로 시작하므로, 종료 시에는 "다음에 펼친 창이 와야 할 Top"을 저장해야 합니다.
+    /// 아래쪽에 접어 둔 상태만 하단 여백 기준으로 펼친 위치로 환산하고, 나머지는 현재 상단바 위치를 그대로 씁니다.
+    /// </summary>
+    public double GetPersistedTopForExpandedLaunch()
+    {
+        if (Window.GetWindow(this) is not { } window)
+            return 0;
+
+        double currentHeight = GetCurrentWindowHeight(window);
+        double expandedHeight = GetExpandedWindowHeight();
+        return KeyboardWindowPlacement.ComputePersistedTopForExpandedLaunch(
+            window.Top,
+            currentHeight,
+            expandedHeight,
+            SystemParameters.WorkArea,
+            _verticalAnchor,
+            _isCollapsed,
+            GetAnchorGapOverride());
+    }
+
+    /// <summary>
     /// 추천 바 높이는 칩 높이와 상하 여백을 합쳐 계산해, 창 배율과 큰 텍스트 모드 모두에서 같은 비례를 유지합니다.
     /// 축소 배율에서도 칩이 같이 줄어들도록 기본 하한은 본문 계산과 같은 기준으로 맞춥니다.
     /// </summary>
@@ -226,6 +247,18 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
         double fontAwareChipHeight = scaledFontSize + 10.0;
         double chipHeight = Math.Max(fontAwareChipHeight, keyUnit * SuggestionChipHeightRatio);
         return chipHeight + 6.0;
+    }
+
+    /// <summary>
+    /// 현재 설정과 레이아웃을 기준으로, 키보드가 펼쳐졌을 때 가져야 할 실제 창 높이를 계산합니다.
+    /// 접힌 상태 저장 좌표를 다음 실행용 펼친 좌표로 바꿀 때 사용합니다.
+    /// </summary>
+    private double GetExpandedWindowHeight()
+    {
+        var scale = _configService?.Current.Window.Scale ?? 100;
+        scale = Math.Clamp(scale, MinScale, MaxScale);
+        var (_, baseH) = ComputeBaseSize();
+        return baseH * scale / 100.0;
     }
 
     /// <summary>

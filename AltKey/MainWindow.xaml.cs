@@ -149,10 +149,11 @@ public partial class MainWindow : Window
 
         if (!ResetPending)
         {
+            double persistedTop = KeyboardViewControl?.GetPersistedTopForExpandedLaunch() ?? Top;
             _configService.Update(c =>
             {
                 c.Window.Left   = Left;
-                c.Window.Top    = Top;
+                c.Window.Top    = persistedTop;
             });
         }
 

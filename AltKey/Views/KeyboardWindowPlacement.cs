@@ -60,4 +60,29 @@ internal static class KeyboardWindowPlacement
         double maxTop = Math.Max(workArea.Top, workArea.Bottom - newHeight);
         return Math.Clamp(nextTop, workArea.Top, maxTop);
     }
+
+    /// <summary>
+    /// 다음 실행은 항상 펼친 상태로 시작할 때 저장해야 할 Top 좌표를 계산합니다.
+    /// 하단 도킹 상태의 접힌 창만 펼친 높이 기준으로 환산하고, 나머지는 현재 Top을 그대로 저장합니다.
+    /// </summary>
+    internal static double ComputePersistedTopForExpandedLaunch(
+        double currentTop,
+        double currentHeight,
+        double expandedHeight,
+        Rect workArea,
+        VerticalAnchor anchor,
+        bool isCollapsed,
+        double? anchorGapOverride = null)
+    {
+        if (!isCollapsed || anchor != VerticalAnchor.Bottom)
+            return currentTop;
+
+        return ComputeAnchoredTop(
+            currentTop,
+            currentHeight,
+            expandedHeight,
+            workArea,
+            anchor,
+            anchorGapOverride);
+    }
 }

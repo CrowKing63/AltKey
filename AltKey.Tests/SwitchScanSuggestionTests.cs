@@ -57,7 +57,13 @@ public class SwitchScanSuggestionTests
         public string CurrentWord { get; private set; } = "";
 
         public event Action<IReadOnlyList<string>>? SuggestionsChanged;
-        public event Action<InputSubmode>? SubmodeChanged;
+
+        // 이 테스트는 서브모드 변경 경로를 검증하지 않으므로, 인터페이스 계약만 만족하는 빈 이벤트 구현을 둡니다.
+        public event Action<InputSubmode>? SubmodeChanged
+        {
+            add { }
+            remove { }
+        }
 
         public bool HandleKey(KeySlot slot, KeyContext ctx) => false;
         public (int backspaceCount, string fullWord) AcceptSuggestion(string suggestion) => (0, suggestion);

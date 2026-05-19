@@ -219,9 +219,9 @@ public class WordFrequencyStoreTests : IDisposable
         Assert.True(store.Contains("바나나"));
 
         var all = store.GetAllWords();
-        Assert.Equal(1, all.Count);
-        Assert.Equal("바나나", all[0].Word);
-        Assert.Equal(3, all[0].Frequency);
+        var banana = Assert.Single(all);
+        Assert.Equal("바나나", banana.Word);
+        Assert.Equal(3, banana.Frequency);
 
         store.SetFrequency("바나나", 10);
         var updated = store.GetAllWords();

@@ -111,4 +111,34 @@ public class KeyboardWindowPlacementTests
 
         Assert.Equal(KeyboardWindowPlacement.VerticalAnchor.Freeform, anchor);
     }
+
+    [Fact]
+    public void ComputePersistedTopForExpandedLaunch_uses_expanded_bottom_anchor_position_when_collapsed_at_bottom()
+    {
+        double persistedTop = KeyboardWindowPlacement.ComputePersistedTopForExpandedLaunch(
+            currentTop: 1044,
+            currentHeight: 28,
+            expandedHeight: 320,
+            workArea: WorkArea,
+            anchor: KeyboardWindowPlacement.VerticalAnchor.Bottom,
+            isCollapsed: true,
+            anchorGapOverride: 8);
+
+        Assert.Equal(752, persistedTop, precision: 6);
+    }
+
+    [Fact]
+    public void ComputePersistedTopForExpandedLaunch_keeps_current_top_when_not_bottom_docked()
+    {
+        double persistedTop = KeyboardWindowPlacement.ComputePersistedTopForExpandedLaunch(
+            currentTop: 620,
+            currentHeight: 28,
+            expandedHeight: 320,
+            workArea: WorkArea,
+            anchor: KeyboardWindowPlacement.VerticalAnchor.Freeform,
+            isCollapsed: true,
+            anchorGapOverride: null);
+
+        Assert.Equal(620, persistedTop, precision: 6);
+    }
 }
