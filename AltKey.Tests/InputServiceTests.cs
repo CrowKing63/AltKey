@@ -11,6 +11,7 @@ public class InputServiceTests
     {
         public List<VirtualKeyCode> KeyDowns { get; } = [];
         public List<VirtualKeyCode> KeyUps { get; } = [];
+        public List<VirtualKeyCode> KeyPresses { get; } = [];
         public List<string> ReleaseAllReasons { get; } = [];
         public List<string> ReleaseHighRiskReasons { get; } = [];
         public List<string> ReleaseHeldReasons { get; } = [];
@@ -19,6 +20,8 @@ public class InputServiceTests
         public override void SendKeyDown(VirtualKeyCode vk) => KeyDowns.Add(vk);
 
         public override void SendKeyUp(VirtualKeyCode vk) => KeyUps.Add(vk);
+
+        public override void SendKeyPress(VirtualKeyCode vk) => KeyPresses.Add(vk);
 
         public override void ReleaseAllModifiers(string reason = "manual")
         {
@@ -269,6 +272,50 @@ public class InputServiceTests
         var svc = new TrackingInputService();
         svc.TrySetMode(InputMode.VirtualKey);
         Assert.Equal(InputMode.VirtualKey, svc.Mode);
+    }
+
+    [Fact]
+    public void TrySetMode_clears_transient_input_state_but_keeps_locked_states()
+    {
+        var svc = new TrackingInputService();
+        int resetRequestCount = 0;
+        svc.InputModeGestureResetRequested += () => resetRequestCount++;
+
+        svc.BeginHeldKey(VirtualKeyCode.VK_W);
+        svc.ArmHeldKeyGesture(VirtualKeyCode.VK_D);
+        svc.TrackedOnScreenLength = 2;
+        svc.ToggleModifier(VirtualKeyCode.VK_SHIFT);
+        svc.ToggleModifier(VirtualKeyCode.VK_SHIFT);
+        svc.ToggleModifier(VirtualKeyCode.VK_CONTROL);
+        svc.ToggleFunctionLayer();
+        svc.ToggleFunctionLayer();
+
+        svc.TrySetMode(InputMode.VirtualKey);
+        svc.HandleAction(new SendKeyAction(nameof(VirtualKeyCode.VK_D)));
+
+        Assert.Equal(InputMode.VirtualKey, svc.Mode);
+        Assert.Equal(1, resetRequestCount);
+        Assert.Empty(svc.HeldKeys);
+        Assert.Equal(0, svc.TrackedOnScreenLength);
+        Assert.Contains(VirtualKeyCode.VK_W, svc.KeyUps);
+        Assert.Contains(VirtualKeyCode.VK_CONTROL, svc.KeyUps);
+        Assert.DoesNotContain(VirtualKeyCode.VK_D, svc.HeldKeys);
+        Assert.Contains(VirtualKeyCode.VK_D, svc.KeyPresses);
+        Assert.True(svc.StickyKeys.Contains(VirtualKeyCode.VK_SHIFT));
+        Assert.True(svc.LockedKeys.Contains(VirtualKeyCode.VK_SHIFT));
+        Assert.False(svc.StickyKeys.Contains(VirtualKeyCode.VK_CONTROL));
+        Assert.Equal(FunctionLayerState.Locked, svc.FunctionLayerState);
+    }
+
+    [Fact]
+    public void TrySetMode_clears_one_shot_function_layer()
+    {
+        var svc = new TrackingInputService();
+
+        svc.ToggleFunctionLayer();
+        svc.TrySetMode(InputMode.VirtualKey);
+
+        Assert.Equal(FunctionLayerState.Inactive, svc.FunctionLayerState);
     }
 
     [Fact]

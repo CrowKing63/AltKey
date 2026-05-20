@@ -70,6 +70,7 @@ public class InputService
     public IReadOnlySet<VirtualKeyCode> HeldKeys => _heldKeys;
 
     public event Action<InputMode>? ModeChanged;
+    public event Action? InputModeGestureResetRequested;
     public event Action? StickyStateChanged;
     public event Action? ElevatedAppDetected;
     public event Action<KeyAction>? SpecialActionRequested;
@@ -99,7 +100,9 @@ public class InputService
             return true;
 
         Mode = target;
+        ResetTransientInputStateForModeChange();
         ModeChanged?.Invoke(Mode);
+        InputModeGestureResetRequested?.Invoke();
         return true;
     }
 
@@ -144,6 +147,23 @@ public class InputService
 
         _functionLayerState = FunctionLayerState.Inactive;
         StickyStateChanged?.Invoke();
+    }
+
+    /// <summary>
+    /// 입력 모드가 바뀌면 문자 조합 방식과 물리 키 홀드 방식이 함께 바뀝니다.
+    /// 진행 중인 임시 입력만 정리하고, 사용자가 잠근 modifier/Fn 상태는 유지합니다.
+    /// </summary>
+    private void ResetTransientInputStateForModeChange()
+    {
+        ReleaseAllHeldKeys("mode-change");
+        ReleaseTransientModifiers("mode-change");
+        ResetTrackedLength();
+
+        if (_functionLayerState == FunctionLayerState.OneShot)
+        {
+            _functionLayerState = FunctionLayerState.Inactive;
+            StickyStateChanged?.Invoke();
+        }
     }
 
     /// <summary>

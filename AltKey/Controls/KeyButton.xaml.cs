@@ -295,6 +295,13 @@ public class KeyButton : System.Windows.Controls.Button
     private VirtualKeyCode? _primedHeldKey;
     private VirtualKeyCode? _activeHeldKey;
     private bool _suppressNextClick;
+    private InputService? _inputModeResetInputService;
+
+    public KeyButton()
+    {
+        Loaded += OnLoaded;
+        Unloaded += OnUnloaded;
+    }
 
     internal static string DescribeRepeatPolicyForTests(AltKey.Services.InputMode inputMode, KeyAction? action)
         => ClassifyRepeatPolicy(inputMode, action).ToString();
@@ -310,6 +317,31 @@ public class KeyButton : System.Windows.Controls.Button
     }
 
     internal void SuppressNextClickForTests() => _suppressNextClick = true;
+
+    internal void ResetTransientGestureStateForTests() => ResetTransientGestureState("test");
+
+    private void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        if (_inputModeResetInputService is not null)
+            return;
+
+        _inputModeResetInputService = App.Services?.GetService<InputService>();
+        if (_inputModeResetInputService is not null)
+            _inputModeResetInputService.InputModeGestureResetRequested += OnInputModeGestureResetRequested;
+    }
+
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        if (_inputModeResetInputService is not null)
+            _inputModeResetInputService.InputModeGestureResetRequested -= OnInputModeGestureResetRequested;
+
+        _inputModeResetInputService = null;
+    }
+
+    private void OnInputModeGestureResetRequested()
+    {
+        ResetTransientGestureState("input-mode-change");
+    }
 
     protected override void OnMouseEnter(System.Windows.Input.MouseEventArgs e)
     {
@@ -593,6 +625,17 @@ public class KeyButton : System.Windows.Controls.Button
             _repeatTimer.Stop();
         }
         _repeatTimer = null;
+    }
+
+    /// <summary>
+    /// 자동완성 ON/OFF처럼 입력 방식이 바뀌는 순간에는 이전 버튼 제스처를 버립니다.
+    /// 특히 반복 입력의 중복 방지 플래그가 다음 일반 클릭을 먹지 않도록 여기서 정리합니다.
+    /// </summary>
+    private void ResetTransientGestureState(string reason)
+    {
+        _suppressNextClick = false;
+        CancelRepeat();
+        ReleaseHeldKey(reason);
     }
 
     private bool CanStartRepeat()

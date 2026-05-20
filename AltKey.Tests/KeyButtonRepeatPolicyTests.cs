@@ -92,6 +92,41 @@ public class KeyButtonRepeatPolicyTests
             throw captured;
     }
 
+    [Fact]
+    public void Input_mode_reset_clears_suppressed_click()
+    {
+        Exception? captured = null;
+
+        var thread = new Thread(() =>
+        {
+            try
+            {
+                int executionCount = 0;
+                var button = new TestKeyButton
+                {
+                    Command = new RelayCommand(() => executionCount++)
+                };
+
+                button.SuppressNextClickForTests();
+                button.ResetTransientGestureStateForTests();
+                button.TriggerClick();
+
+                Assert.Equal(1, executionCount);
+            }
+            catch (Exception ex)
+            {
+                captured = ex;
+            }
+        });
+
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
+        thread.Join();
+
+        if (captured is not null)
+            throw captured;
+    }
+
     private sealed class TestKeyButton : KeyButton
     {
         public void TriggerClick() => base.OnClick();
