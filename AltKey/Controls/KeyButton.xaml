@@ -81,14 +81,24 @@
                                            Visibility="Collapsed"
                                            IsHitTestVisible="False"
                                            AutomationProperties.Name=""/>
+                                <!-- Fn 상태도 Sticky 키처럼 우하단 표기로 맞춰 한 번 적용/고정 상태를 바로 구분합니다. -->
                                 <TextBlock x:Name="FunctionBadge"
                                            Text="Fn"
                                            FontSize="8"
                                            FontWeight="Bold"
-                                           HorizontalAlignment="Left"
+                                           HorizontalAlignment="Right"
                                            VerticalAlignment="Bottom"
-                                           Margin="4,0,0,2"
+                                           Margin="0,0,4,2"
                                            Foreground="{DynamicResource KeyFgAccent}"
+                                           Visibility="Collapsed"
+                                           IsHitTestVisible="False"
+                                           AutomationProperties.Name=""/>
+                                <TextBlock x:Name="FunctionLockIcon"
+                                           Text="🔒"
+                                           FontSize="9"
+                                           HorizontalAlignment="Right"
+                                           VerticalAlignment="Bottom"
+                                           Margin="0,0,4,2"
                                            Visibility="Collapsed"
                                            IsHitTestVisible="False"
                                            AutomationProperties.Name=""/>
@@ -304,6 +314,8 @@
                             <Setter TargetName="FunctionDashBorder" Property="Visibility"
                                     Value="Visible"/>
                             <Setter TargetName="FunctionBadge" Property="Visibility"
+                                    Value="Collapsed"/>
+                            <Setter TargetName="FunctionLockIcon" Property="Visibility"
                                     Value="Visible"/>
                         </MultiTrigger>
 
