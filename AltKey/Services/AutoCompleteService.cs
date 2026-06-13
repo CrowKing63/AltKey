@@ -70,15 +70,16 @@ public sealed class AutoCompleteService
     /// </summary>
     public string AcceptBigramSuggestion(string suggestion)
     {
-        // 내부 상태 정리
-        _module.OnSeparator();
-
-        // 바이그램 학습
+        // 바이그램 학습 (_module.OnSeparator 전에 먼저 실행)
         var bigramStore = GetActiveBigramStore();
         if (_lastCommittedWord is { Length: > 0 })
             bigramStore.Record(_lastCommittedWord, suggestion);
 
         _lastCommittedWord = suggestion;
+        _module.NotifyWordCommitted(suggestion); // 엔진 내부 _lastCommittedWord 동기화
+
+        // 내부 상태 정리 (public OnSeparator 경유 시 _lastCommittedWord 덮어쓰기 방지)
+        FlushEngineState();
 
         // 수락된 단어를 새 prev로 연속 바이그램 조회
         var nexts = bigramStore.GetNexts(suggestion, "");
@@ -97,8 +98,26 @@ public sealed class AutoCompleteService
         return " " + suggestion;
     }
 
+    /// <summary>
     /// 공백이나 엔터처럼 단어를 끝내는 키가 눌렸을 때 호출됩니다.
-    public void OnSeparator() => _module.OnSeparator();
+    /// 수동 입력 단어를 bigram에 기록합니다.
+    /// </summary>
+    public void OnSeparator()
+    {
+        // OnSeparator 내부에서 CurrentWord가 초기화될 수 있으므로 먼저 캡처
+        string current = _module.CurrentWord;
+
+        if (_lastCommittedWord is { Length: > 0 } && current.Length > 0)
+            GetActiveBigramStore().Record(_lastCommittedWord, current);
+
+        if (current.Length > 0)
+            _lastCommittedWord = current;
+
+        _module.OnSeparator();
+    }
+
+    /// 엔진 상태만 정리하고 _lastCommittedWord는 변경하지 않습니다.
+    private void FlushEngineState() => _module.OnSeparator();
 
     /// 레이아웃이 바뀌거나 리셋이 필요할 때 호출합니다.
     public void ResetState()

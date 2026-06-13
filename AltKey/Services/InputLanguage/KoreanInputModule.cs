@@ -264,6 +264,15 @@ public sealed class KoreanInputModule : IInputLanguageModule
     }
 
     /// <summary>
+    /// 외부(AutoCompleteService)에서 단어가 확정되었음을 알립니다.
+    /// 엔진 내부의 _lastCommittedWord를 갱신하여 bigram 컨텍스트를 동기화합니다.
+    /// </summary>
+    public void NotifyWordCommitted(string word)
+    {
+        _lastCommittedWord = word;
+    }
+
+    /// <summary>
     /// 단어 구분자(공백)가 눌렸을 때 호출됩니다. bigram 문맥을 유지합니다.
     /// </summary>
     public void OnSeparator() => FinalizeComposition(keepContextForBigram: true);

@@ -67,6 +67,7 @@ public class SwitchScanSuggestionTests
 
         public bool HandleKey(KeySlot slot, KeyContext ctx) => false;
         public (int backspaceCount, string fullWord) AcceptSuggestion(string suggestion) => (0, suggestion);
+        public void NotifyWordCommitted(string word) { }
         public void ToggleSubmode() { }
         public void OnSeparator() { }
         public void Reset() { }

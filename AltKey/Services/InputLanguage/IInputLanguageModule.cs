@@ -34,6 +34,10 @@ public interface IInputLanguageModule
     /// 반환값: (BackspaceCount, FullWord) — 호출자가 이 값으로 SendAtomicReplace 또는 BS+Unicode 전송.
     (int backspaceCount, string fullWord) AcceptSuggestion(string suggestion);
 
+    /// 외부(AutoCompleteService)에서 단어가 확정되었음을 엔진에 알립니다.
+    /// 엔진 내부의 lastCommittedWord를 갱신하여 bigram 컨텍스트를 동기화합니다.
+    void NotifyWordCommitted(string word);
+
     /// "가/A" 토글 버튼이 호출. 이전 조합 상태는 플러시하고 Submode 반전.
     void ToggleSubmode();
 
