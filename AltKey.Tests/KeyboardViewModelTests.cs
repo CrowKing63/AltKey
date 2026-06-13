@@ -1,6 +1,7 @@
 using AltKey.Models;
 using AltKey.Services;
 using AltKey.Services.InputLanguage;
+using AltKey.Tests.InputLanguage;
 using AltKey.ViewModels;
 
 namespace AltKey.Tests;
@@ -75,7 +76,7 @@ public class KeyboardViewModelTests
 
     private static KeySlotVm CreateSlotVm(KeySlot slot)
     {
-        var autoComplete = new AutoCompleteService(new FakeInputLanguageModule());
+        var autoComplete = new AutoCompleteService(new FakeInputLanguageModule(), new KoreanDictionaryTestable(), new EnglishDictionaryTestable());
         var vm = new KeySlotVm(slot, autoComplete);
         vm.RefreshDisplay();
         return vm;

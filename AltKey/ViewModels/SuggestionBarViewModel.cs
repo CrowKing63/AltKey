@@ -17,6 +17,8 @@ public partial class SuggestionBarViewModel : ObservableObject
     private readonly KoreanDictionary    _koDict;
     private readonly EnglishDictionary   _enDict;
 
+    private SuggestionMode _currentMode = SuggestionMode.Normal; // 현재 표시 중인 제안 모드
+
     [ObservableProperty]
     private ObservableCollection<string> suggestions = [];
 
@@ -71,8 +73,9 @@ public partial class SuggestionBarViewModel : ObservableObject
             SetVisibleFromConfig();
     }
 
-    private void OnSuggestionsChanged(IReadOnlyList<string> newSuggestions)
+    private void OnSuggestionsChanged(IReadOnlyList<string> newSuggestions, SuggestionMode mode)
     {
+        _currentMode = mode;
         string captured = _autoComplete.CurrentWord;
         void Apply()
         {
@@ -140,18 +143,29 @@ public partial class SuggestionBarViewModel : ObservableObject
     [RelayCommand]
     private void AcceptSuggestion(string suggestion)
     {
-        var (bsCount, fullWord) = _autoComplete.AcceptSuggestion(suggestion);
-        if (_inputService.Mode == InputMode.Unicode)
+        if (_currentMode == SuggestionMode.Bigram)
         {
-            _inputService.SendAtomicReplace(bsCount, fullWord);
+            // 바이그램 모드: 유니코드 모드에서만 처리, 그 외는 무시
+            if (_inputService.Mode != InputMode.Unicode) return;
+            var insertion = _autoComplete.AcceptBigramSuggestion(suggestion);
+            _inputService.SendUnicode(insertion);
             _inputService.ResetTrackedLength();
         }
         else
         {
-            for (int i = 0; i < bsCount; i++)
-                _inputService.SendKeyPress(VirtualKeyCode.VK_BACK);
-            if (fullWord.Length > 0)
-                _inputService.SendUnicode(fullWord);
+            var (bsCount, fullWord) = _autoComplete.AcceptSuggestion(suggestion);
+            if (_inputService.Mode == InputMode.Unicode)
+            {
+                _inputService.SendAtomicReplace(bsCount, fullWord);
+                _inputService.ResetTrackedLength();
+            }
+            else
+            {
+                for (int i = 0; i < bsCount; i++)
+                    _inputService.SendKeyPress(VirtualKeyCode.VK_BACK);
+                if (fullWord.Length > 0)
+                    _inputService.SendUnicode(fullWord);
+            }
         }
     }
 
