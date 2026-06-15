@@ -12,9 +12,9 @@ public class SwitchScanSuggestionTests
     public void SuggestionBar_scan_targets_include_current_word_and_suggestions()
     {
         var module = new FakeInputLanguageModule();
-        var autoComplete = new AutoCompleteService(module, new KoreanDictionaryTestable(), new EnglishDictionaryTestable());
         var config = new ConfigService();
         config.Current.AutoCompleteEnabled = true;
+        var autoComplete = new AutoCompleteService(module, new KoreanDictionaryTestable(), new EnglishDictionaryTestable(), config);
         var vm = new SuggestionBarViewModel(
             autoComplete,
             new FakeInputService(),
@@ -36,7 +36,7 @@ public class SwitchScanSuggestionTests
         var module = new FakeInputLanguageModule();
         var config = new ConfigService();
         config.Current.AutoCompleteEnabled = false;
-        var autoComplete = new AutoCompleteService(module, new KoreanDictionaryTestable(), new EnglishDictionaryTestable());
+        var autoComplete = new AutoCompleteService(module, new KoreanDictionaryTestable(), new EnglishDictionaryTestable(), config);
         var vm = new SuggestionBarViewModel(
             autoComplete,
             new FakeInputService(),

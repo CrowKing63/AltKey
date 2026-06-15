@@ -17,7 +17,7 @@ public class AutoCompleteServiceBigramTests
         var config = new ConfigService();
         config.Current.AutoCompleteEnabled = enabled;
         var module = new KoreanInputModule(input, koDict, enDict, config);
-        var service = new AutoCompleteService(module, koDict, enDict);
+        var service = new AutoCompleteService(module, koDict, enDict, config);
         return (service, module, koDict, enDict);
     }
 

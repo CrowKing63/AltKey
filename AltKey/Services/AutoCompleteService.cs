@@ -12,14 +12,16 @@ public sealed class AutoCompleteService
     private readonly IInputLanguageModule _module; // 한글/영어 등 실제 입력 엔진
     private readonly KoreanDictionary _koDict; // 한글 사전 (bigram 저장소 접근용)
     private readonly EnglishDictionary _enDict; // 영어 사전 (bigram 저장소 접근용)
+    private readonly ConfigService _config; // 설정 서비스 (AutoCompleteEnabled 확인용)
 
     private string? _lastCommittedWord; // 직전에 수락된 단어 (bigram 문맥용)
 
-    public AutoCompleteService(IInputLanguageModule module, KoreanDictionary koDict, EnglishDictionary enDict)
+    public AutoCompleteService(IInputLanguageModule module, KoreanDictionary koDict, EnglishDictionary enDict, ConfigService config)
     {
         _module = module;
         _koDict = koDict;
         _enDict = enDict;
+        _config = config;
         // 엔진에서 추천 단어가 바뀌면 UI에도 알림을 보냅니다. (기본 일반 모드)
         _module.SuggestionsChanged += list => SuggestionsChanged?.Invoke(list, SuggestionMode.Normal);
         _module.SubmodeChanged += OnSubmodeChanged;
@@ -50,7 +52,7 @@ public sealed class AutoCompleteService
     public (int backspaceCount, string fullWord) AcceptSuggestion(string suggestion)
     {
         var result = _module.AcceptSuggestion(suggestion);
-        _lastCommittedWord = result.fullWord;
+        _lastCommittedWord = ContainsRawJamo(result.fullWord) ? null : result.fullWord;
 
         // 수락된 단어를 기준으로 바이그램 추천을 즉시 조회
         var bigramStore = GetActiveBigramStore();
@@ -70,6 +72,13 @@ public sealed class AutoCompleteService
     /// </summary>
     public string AcceptBigramSuggestion(string suggestion)
     {
+        // 자모 나열 방어: Record와 _lastCommittedWord 갱신을 건너뜀
+        if (ContainsRawJamo(suggestion))
+        {
+            FlushEngineState();
+            return " " + suggestion;
+        }
+
         // 바이그램 학습 (_module.OnSeparator 전에 먼저 실행)
         var bigramStore = GetActiveBigramStore();
         if (_lastCommittedWord is { Length: > 0 })
@@ -107,10 +116,15 @@ public sealed class AutoCompleteService
         // OnSeparator 내부에서 CurrentWord가 초기화될 수 있으므로 먼저 캡처
         string current = _module.CurrentWord;
 
-        if (_lastCommittedWord is { Length: > 0 } && current.Length > 0)
+        bool autoCompleteEnabled = _config.Current.AutoCompleteEnabled;
+        bool isValidWord = current.Length > 0 && !ContainsRawJamo(current);
+
+        // 자동완성이 켜져 있고, 유효한 단어이며, 이전 단어가 있으면 bigram 기록
+        if (autoCompleteEnabled && _lastCommittedWord is { Length: > 0 } && isValidWord)
             GetActiveBigramStore().Record(_lastCommittedWord, current);
 
-        if (current.Length > 0)
+        // _lastCommittedWord 갱신은 AutoCompleteEnabled와 무관하게 isValidWord 기준
+        if (isValidWord)
             _lastCommittedWord = current;
 
         _module.OnSeparator();
@@ -137,6 +151,12 @@ public sealed class AutoCompleteService
 
     public InputSubmode ActiveSubmode => _module.ActiveSubmode;
     public string ComposeStateLabel => _module.ComposeStateLabel;
+
+    /// 자모 단독 문자(U+3131-U+314E: ㄱ-ㅎ, U+3161-U+3175: ㅏ-ㅣ)가 하나라도 포함되어 있으면 true를 반환합니다.
+    /// bigram 기록과 _lastCommittedWord 오염을 방어합니다.
+    private static bool ContainsRawJamo(string word) =>
+        word.Any(c => c is (>= '\u3131' and <= '\u314E')
+                        or (>= '\u3161' and <= '\u3175'));
 
     /// 현재 서브모드에 맞는 bigram 저장소를 반환합니다.
     private BigramFrequencyStore GetActiveBigramStore() =>
