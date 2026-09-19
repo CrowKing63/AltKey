@@ -57,6 +57,10 @@ public partial class MainWindow : Window
         _inputService  = inputService;
         _configService.ConfigChanged += OnConfigChanged;
 
+        // T-1.7: 자동 페이딩 타이머 — 생성자에서 먼저 만들어두면
+        // Show() 중 IsVisibleChanged가 OnSourceInitialized보다 앞서 떠도 null이 아니어서 NRE를 피한다.
+        SetupFadeTimer();
+
         // T-5.5: 트레이 초기화
         _trayService.Initialize(this);
 
@@ -66,6 +70,25 @@ public partial class MainWindow : Window
             PlayOpenAnimation();
         };
 
+        // 창이 실제로 보일 때만 유휴 카운트를 돌립니다.
+        // Hide()/Show()는 WindowState를 바꾸지 않으므로, 가시성 변화로 추적합니다.
+        // 처음 표시될 때도 IsVisible이 false→true로 바뀌어 카운트가 시작됩니다.
+        IsVisibleChanged += (_, _) =>
+        {
+            if (_fadeTimer is null) return; // Show() 중 타이머가 아직 없으면 건너뜀
+            if (IsVisible)
+            {
+                _isIdleOpacityApplied = false;
+                ApplyOpacityForCurrentState(animated: false);
+                StartIdleTimerIfNeeded();
+            }
+            else
+            {
+                _fadeTimer.Stop();
+            }
+        };
+
+        // 최소화에서 복원될 때 투명도를 현재 규칙으로 다시 그립니다.
         StateChanged += (_, _) =>
         {
             if (WindowState == WindowState.Normal)
@@ -92,8 +115,9 @@ public partial class MainWindow : Window
         // T-1.6: 창 위치/크기 복원
         RestoreWindowPosition();
 
-        // T-1.7: 자동 페이딩 타이머
-        SetupFadeTimer();
+        // T-1.7: 자동 페이딩 — 타이머는 생성자에서 이미 만들어졌으므로
+        // 여기서 Interval만 갱신(설정값 기준)하고 초기 투명도를 그린다.
+        _fadeTimer.Interval = TimeSpan.FromMilliseconds(_configService.Current.FadeDelayMs);
         ApplyOpacityForCurrentState(animated: false);
 
         MouseEnter += MainWindow_MouseEnter;
@@ -222,6 +246,22 @@ public partial class MainWindow : Window
             Interval = TimeSpan.FromMilliseconds(_configService.Current.FadeDelayMs)
         };
         _fadeTimer.Tick += FadeTimer_Tick;
+    }
+
+    /// <summary>
+    /// 유휴 기능이 켜져 있으면 타이머를 (재)시작합니다.
+    /// 창이 처음 표시되거나 트레이에서 다시 보일 때 '보이기 시작한 시점'부터 카운트를 시작하게 하는 공통 경로입니다.
+    /// </summary>
+    private void StartIdleTimerIfNeeded()
+    {
+        if (!WindowOpacityProfile.ShouldStartIdleTimer(_configService.Current))
+        {
+            _fadeTimer.Stop();
+            return;
+        }
+
+        _fadeTimer.Stop();
+        _fadeTimer.Start();
     }
 
     private void MainWindow_MouseEnter(object? sender, System.Windows.Input.MouseEventArgs e)
