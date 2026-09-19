@@ -35,6 +35,10 @@ public partial class ClipboardViewModel : ObservableObject
         _inputService = inputService;
         _clipboardService.HistoryChanged += RefreshItems;
         _clipboardService.FavoritesChanged += RefreshItems;
+
+        // 서비스 생성 시점에 Load()가 이미 파일에서 히스토리를 채웠으므로,
+        // 초기 목록을 한 번만 표시합니다. 이 없으면 앱 첫 실행 후 패널 열면 빈 상태로 보입니다.
+        RefreshItems();
     }
 
     // ── 탭 전환 ───────────────────────────────────────────────────────────
