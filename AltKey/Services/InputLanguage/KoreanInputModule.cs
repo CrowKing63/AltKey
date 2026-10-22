@@ -86,8 +86,6 @@ public sealed class KoreanInputModule : IInputLanguageModule
 
         if (jamo is null)
         {
-            // 자모가 아닌 키(숫자·기호 등)는 현재 조합을 확정한다.
-            FinalizeComposition();
             return false;
         }
 
@@ -145,11 +143,7 @@ public sealed class KoreanInputModule : IInputLanguageModule
 
         if (ch != '\0')
         {
-            // 알파벳만 단어 추적에 포함하고, 숫자·기호는 현재 단어를 확정 후 전송한다.
-            if (char.IsLetter(ch))
-                TrackEnglishKey(ch);
-            else
-                FinalizeComposition();
+            TrackEnglishKey(ch);
             _input.SendUnicode(ch.ToString());
             return true;
         }
@@ -158,10 +152,9 @@ public sealed class KoreanInputModule : IInputLanguageModule
 
     private static char GetEnglishCharFromSlot(KeySlot slot, bool showUpperCase)
     {
-        // Shift 중이면 EnglishShiftLabel → ShiftLabel 순서로, 아닐 때면 EnglishLabel → Label 순서로 폴백한다.
-        string? label = showUpperCase
-            ? (slot.EnglishShiftLabel is { Length: > 0 } ? slot.EnglishShiftLabel : slot.ShiftLabel)
-            : (slot.EnglishLabel is { Length: > 0 } ? slot.EnglishLabel : slot.Label);
+        string? label = showUpperCase && slot.EnglishShiftLabel is { Length: > 0 }
+            ? slot.EnglishShiftLabel
+            : slot.EnglishLabel ?? slot.Label;
 
         if (label is { Length: 1 } && label[0] < 128)
             return showUpperCase ? char.ToUpperInvariant(label[0]) : label[0];

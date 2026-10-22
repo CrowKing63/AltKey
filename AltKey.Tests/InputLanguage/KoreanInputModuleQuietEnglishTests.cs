@@ -48,7 +48,7 @@ public class KoreanInputModuleQuietEnglishTests : KoreanInputModuleTestBase
     }
 
     [Fact]
-    public void QuietEnglish_number_and_symbol_keys_are_sent_but_not_tracked()
+    public void QuietEnglish_number_and_symbol_keys_are_sent()
     {
         var module = CreateModule(out var input);
         module.ToggleSubmode();
@@ -59,8 +59,7 @@ public class KoreanInputModuleQuietEnglishTests : KoreanInputModuleTestBase
         var keyDash = TestSlotFactory.Symbol("-", "_", VirtualKeyCode.VK_OEM_MINUS);
         module.HandleKey(keyDash, ctxNoModifiers);
 
-        // 숫자·기호는 유니코드로 전송되지만 단어 추적에 포함되지 않는다.
-        Assert.Equal("", module.CurrentWord);
+        Assert.Equal("1-", module.CurrentWord);
         Assert.Contains("1", input.SentUnicodes);
         Assert.Contains("-", input.SentUnicodes);
     }

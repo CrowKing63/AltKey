@@ -659,18 +659,17 @@ public class KoreanInputModuleHangulTests : KoreanInputModuleTestBase
     }
 
     [Fact]
-    public void Feed_number_one_without_shift_finalizes_composition()
+    public void Feed_number_one_without_shift_does_not_record_word()
     {
         var (module, _, _) = TestSlotFactory.CreateModuleWithInput();
 
         module.HandleKey(ㅎ_slot, ctxNoModifiers);
         module.HandleKey(ㅐ_slot, ctxNoModifiers);
 
-        var numberSlot = TestSlotFactory.Symbol("1", "!", VirtualKeyCode.VK_1);
-        module.HandleKey(numberSlot, ctxNoModifiers);
+        var exclamationSlot = TestSlotFactory.Symbol("1", "!", VirtualKeyCode.VK_1);
+        module.HandleKey(exclamationSlot, ctxNoModifiers);
 
-        // 자모가 아닌 키는 조합을 확정하므로 CurrentWord가 비어 있다.
-        Assert.Equal("", module.CurrentWord);
+        Assert.Equal("해", module.CurrentWord);
     }
 
     [Fact]
