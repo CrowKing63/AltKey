@@ -340,7 +340,7 @@
               "shift_label": null,
               "action": {
                 "type": "SendKey",
-                "vk": "VK_ESCAPE"
+                "vk": "VK_TAB"
               },
               "width": 1.6,
               "height": 1,
