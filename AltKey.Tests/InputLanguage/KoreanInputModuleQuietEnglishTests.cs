@@ -48,7 +48,7 @@ public class KoreanInputModuleQuietEnglishTests : KoreanInputModuleTestBase
     }
 
     [Fact]
-    public void QuietEnglish_number_and_symbol_keys_are_sent()
+    public void QuietEnglish_number_and_symbol_keys_are_sent_but_not_tracked()
     {
         var module = CreateModule(out var input);
         module.ToggleSubmode();
@@ -59,9 +59,29 @@ public class KoreanInputModuleQuietEnglishTests : KoreanInputModuleTestBase
         var keyDash = TestSlotFactory.Symbol("-", "_", VirtualKeyCode.VK_OEM_MINUS);
         module.HandleKey(keyDash, ctxNoModifiers);
 
-        Assert.Equal("1-", module.CurrentWord);
+        // 숫자·기호는 유니코드로 전송되지만 단어 추적에 포함되지 않는다.
+        Assert.Equal("", module.CurrentWord);
         Assert.Contains("1", input.SentUnicodes);
         Assert.Contains("-", input.SentUnicodes);
+    }
+
+    [Fact]
+    public void QuietEnglish_ShiftDigit_SendsShiftLabel()
+    {
+        var module = CreateModule(out var input);
+        module.ToggleSubmode();
+
+        // "1" 입력 후 Shift+5 → "%"가 전송되어야 하고(1.1.7 영어 버그),
+        // 숫자는 단어 추적에 포함되지 않아야 한다.
+        var key1 = TestSlotFactory.Number("1", "%", VirtualKeyCode.VK_1);
+        module.HandleKey(key1, ctxNoModifiers);
+
+        var key5 = TestSlotFactory.Number("5", "%", VirtualKeyCode.VK_5);
+        module.HandleKey(key5, ctxShiftOnly);
+
+        Assert.Contains("%", input.SentUnicodes);
+        Assert.DoesNotContain("5", input.SentUnicodes);
+        Assert.Equal("", module.CurrentWord);
     }
 
     [Fact]

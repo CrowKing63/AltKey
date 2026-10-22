@@ -659,17 +659,18 @@ public class KoreanInputModuleHangulTests : KoreanInputModuleTestBase
     }
 
     [Fact]
-    public void Feed_number_one_without_shift_does_not_record_word()
+    public void Feed_number_one_without_shift_finalizes_composition()
     {
         var (module, _, _) = TestSlotFactory.CreateModuleWithInput();
 
         module.HandleKey(ㅎ_slot, ctxNoModifiers);
         module.HandleKey(ㅐ_slot, ctxNoModifiers);
 
-        var exclamationSlot = TestSlotFactory.Symbol("1", "!", VirtualKeyCode.VK_1);
-        module.HandleKey(exclamationSlot, ctxNoModifiers);
+        var numberSlot = TestSlotFactory.Symbol("1", "!", VirtualKeyCode.VK_1);
+        module.HandleKey(numberSlot, ctxNoModifiers);
 
-        Assert.Equal("해", module.CurrentWord);
+        // 자모가 아닌 키는 조합을 확정하므로 CurrentWord가 비어 있다.
+        Assert.Equal("", module.CurrentWord);
     }
 
     [Fact]
@@ -768,5 +769,59 @@ public class KoreanInputModuleHangulTests : KoreanInputModuleTestBase
         module.HandleKey(periodSlot, ctxNoModifiers);
 
         Assert.True(captured == null || !captured.Contains("다라"));
+    }
+
+    /// <summary>
+    /// 1.1.7 회귀 방지: Shift 버튼(ToggleSticky) 탭은 조합을 확정하지 않아야 한다.
+    /// "가" 입력 후 Shift 탭, 그다음 Shift+ㅅ(→ㅆ)이 쌍받침으로 붙어서 "갔"이 되어야 한다.
+    /// </summary>
+    [Fact]
+    public void HangulMode_ShiftButton_Tap_DoesNotFinalizeComposition()
+    {
+        var (module, input, _) = TestSlotFactory.CreateModuleWithInput();
+
+        module.HandleKey(ㄱ_slot, ctxNoModifiers);
+        module.HandleKey(ㅏ_slot, ctxNoModifiers);
+        Assert.Equal("가", module.CurrentWord);
+
+        // Shift 버튼 탭 — 조합 상태와 추적 길이를 건드리면 안 된다.
+        var shiftSlot = new KeySlot(
+            Label: "Shift",
+            ShiftLabel: null,
+            Action: new ToggleStickyAction(VirtualKeyCode.VK_SHIFT.ToString()));
+        module.HandleKey(shiftSlot, CtxFromInput(input));
+
+        Assert.Equal("가", module.CurrentWord);
+        Assert.Equal(1, input.TrackedOnScreenLength);
+
+        // Shift+ㅅ(→ㅆ): "가"에 쌍받침이 붙어 "갔" — 백스페이스 1회 기준으로 교체.
+        module.HandleKey(ㅅ_with_shift_ㅆ_slot, ctxShiftOnly);
+
+        Assert.Equal("갔", module.CurrentWord);
+        // (prevLen=1, next="갔") — "가" 한 글자를 지우고 "갔"으로 교체한 기록이 있어야 한다.
+        Assert.Contains((1, "갔"), input.AtomicReplaces);
+    }
+
+    /// <summary>
+    /// 1.1.7 회귀 방지: 자동완성 ON 상태에서 조합 중 Shift를 탭하면
+    /// 완성되지 않은 음절("가")이 사전에 기록되어서는 안 된다.
+    /// </summary>
+    [Fact]
+    public void HangulMode_ShiftTap_DoesNotRecordWord_WhenAutoCompleteOn()
+    {
+        var (module, input, koDict) = TestSlotFactory.CreateModuleWithInput(autoCompleteEnabled: true);
+
+        module.HandleKey(ㄱ_slot, ctxNoModifiers);
+        module.HandleKey(ㅏ_slot, ctxNoModifiers);
+
+        var shiftSlot = new KeySlot(
+            Label: "Shift",
+            ShiftLabel: null,
+            Action: new ToggleStickyAction(VirtualKeyCode.VK_SHIFT.ToString()));
+        module.HandleKey(shiftSlot, CtxFromInput(input));
+
+        // 조합은 확정되지 않았으므로 사전에 새 단어가 없어야 한다.
+        Assert.Equal(0, koDict.UserWordCount);
+        Assert.Equal("가", module.CurrentWord);
     }
 }

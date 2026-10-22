@@ -86,6 +86,11 @@ public sealed class KoreanInputModule : IInputLanguageModule
 
         if (jamo is null)
         {
+            // 실제로 화면에 텍스트를 보내는 키(숫자·기호 등 SendKey)에만 조합을 확정한다.
+            // ToggleSticky(Shift/Ctrl/Win/Alt), ToggleKoreanSubmode 등은 텍스트를 만들지 않으므로
+            // 조합 상태를 건드리지 않는다. (쌍받침 회귀 방지)
+            if (slot.Action is SendKeyAction && ctx.InputMode == InputMode.Unicode)
+                FinalizeComposition();
             return false;
         }
 
@@ -143,7 +148,11 @@ public sealed class KoreanInputModule : IInputLanguageModule
 
         if (ch != '\0')
         {
-            TrackEnglishKey(ch);
+            // 알파벳만 단어 추적에 포함하고, 숫자·기호는 현재 단어를 확정 후 전송한다.
+            if (char.IsLetter(ch))
+                TrackEnglishKey(ch);
+            else
+                FinalizeComposition();
             _input.SendUnicode(ch.ToString());
             return true;
         }
@@ -152,9 +161,10 @@ public sealed class KoreanInputModule : IInputLanguageModule
 
     private static char GetEnglishCharFromSlot(KeySlot slot, bool showUpperCase)
     {
-        string? label = showUpperCase && slot.EnglishShiftLabel is { Length: > 0 }
-            ? slot.EnglishShiftLabel
-            : slot.EnglishLabel ?? slot.Label;
+        // Shift 중이면 EnglishShiftLabel → ShiftLabel 순서로, 아닐 때면 EnglishLabel → Label 순서로 폴백한다.
+        string? label = showUpperCase
+            ? (slot.EnglishShiftLabel is { Length: > 0 } ? slot.EnglishShiftLabel : slot.ShiftLabel)
+            : (slot.EnglishLabel is { Length: > 0 } ? slot.EnglishLabel : slot.Label);
 
         if (label is { Length: 1 } && label[0] < 128)
             return showUpperCase ? char.ToUpperInvariant(label[0]) : label[0];
