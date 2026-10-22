@@ -59,10 +59,10 @@ Source: "{#BuildDir}\{#AppExeName}"; DestDir: "{app}"; Flags: ignoreversion
 ; 편집 도구 앱: 메인 앱과 분리된 접근성 편집 도구를 Tools 하위 폴더에 함께 설치
 Source: "{#BuildDir}\Tools\*"; DestDir: "{app}\Tools"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; 레이아웃: PathResolver 설치 모드 경로(%AppData%\AltKey\layouts\)에 설치
-; overwrite — Basic/Basic Plus는 프리셋이라 업그레이드마다 갱신한다.
+; Basic/Basic Plus는 프리셋이라 업그레이드마다 갱신한다 (Inno의 기본 동작이 덮어쓰기).
 ; (앱側에서 프리셋은 덮어쓰기/삭제 불가로 보호되므로 사용자 데이터 손실 없음)
 ; 사용자 레이아웃(My 등)은 소스 디렉터리에 없어 영향을 받지 않음
-Source: "..\AltKey\layouts\*"; DestDir: "{userappdata}\AltKey\layouts"; Flags: ignoreversion recursesubdirs createallsubdirs overwrite
+Source: "..\AltKey\layouts\*"; DestDir: "{userappdata}\AltKey\layouts"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; 에셋 (아이콘, 이모지, 사운드) — exe 옆에 위치
 Source: "..\AltKey\Assets\*"; DestDir: "{app}\Assets"; Flags: ignoreversion recursesubdirs createallsubdirs
 
