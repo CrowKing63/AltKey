@@ -220,11 +220,16 @@ public class InputServiceTests
         Assert.Equal(Win32.KEYEVENTF_UNICODE, unicodeInputs[0].U.Ki.DwFlags);
         Assert.Equal(Win32.KEYEVENTF_UNICODE | Win32.KEYEVENTF_KEYUP, unicodeInputs[1].U.Ki.DwFlags);
 
-        var replaceInputs = svc.Dispatches[1];
-        Assert.Equal((ushort)VirtualKeyCode.VK_BACK, replaceInputs[0].U.Ki.WVk);
-        Assert.Equal(0, replaceInputs[0].U.Ki.WScan);
-        Assert.Equal(0, replaceInputs[2].U.Ki.WVk);
-        Assert.Equal(Win32.KEYEVENTF_UNICODE, replaceInputs[2].U.Ki.DwFlags);
+        // [DEBUG-열렬] 백스페이스 배치가 Unicode 배치와 분리되어 먼저 나간다.
+        var backspaceInputs = svc.Dispatches[1];
+        Assert.Equal(2, backspaceInputs.Length);
+        Assert.Equal((ushort)VirtualKeyCode.VK_BACK, backspaceInputs[0].U.Ki.WVk);
+        Assert.Equal(0, backspaceInputs[0].U.Ki.WScan);
+        Assert.True((backspaceInputs[1].U.Ki.DwFlags & Win32.KEYEVENTF_KEYUP) != 0);
+
+        var replaceCharInputs = svc.Dispatches[2];
+        Assert.Equal(0, replaceCharInputs[0].U.Ki.WVk);
+        Assert.Equal(Win32.KEYEVENTF_UNICODE, replaceCharInputs[0].U.Ki.DwFlags);
     }
 
     [Fact]

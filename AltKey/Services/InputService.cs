@@ -485,25 +485,48 @@ public class InputService
 
     public virtual void SendAtomicReplace(int prevLen, string newOutput)
     {
-        var inputs = new List<Win32.INPUT>();
-        for (int i = 0; i < prevLen; i++)
+        // 백스페이스 배치와 새 유니코드 문자 배치를 분리해 보낸다.
+        // 두 배치가 0지연으로 붙어 가면 일부 앱(메모장 EDIT 컨트롤 등)이 메시지 처리
+        // 타이밍에 따라 이벤트 하나를 간혹 분실한다("열렬 → 열열렬" 중복 버그).
+        // 물리적 타이핑 순서(백스페이스 처리 완료 → 새 문자)와 일치시키도록 배치를
+        // 분리하고, 사이에 짧은 간격을 두어 앱이 백스페이스(undo 커밋 포함)를 완전히
+        // 처리한 뒤 문자를 받게 한다.
+        if (prevLen > 0)
         {
-            inputs.Add(MakeKeyDown((ushort)VirtualKeyCode.VK_BACK));
-            inputs.Add(MakeKeyUp((ushort)VirtualKeyCode.VK_BACK));
+            var backspaces = new List<Win32.INPUT>();
+            for (int i = 0; i < prevLen; i++)
+            {
+                backspaces.Add(MakeKeyDown((ushort)VirtualKeyCode.VK_BACK));
+                backspaces.Add(MakeKeyUp((ushort)VirtualKeyCode.VK_BACK));
+            }
+            DispatchInput(backspaces.ToArray());
+
+            // 앱 메시지 루프가 백스페이스를 한 주기 이상 처리할 시간을 준다.
+            Thread.Sleep(BackspaceSettleDelayMs);
         }
 
-        foreach (var ch in newOutput)
+        // 2. 새 조합 글자 입력 — Unicode, 백스페이스가 완전히 처리된 뒤의 별도 배치.
+        if (newOutput.Length > 0)
         {
-            inputs.Add(MakeUnicodeKeyDown(ch));
-            inputs.Add(MakeUnicodeKeyUp(ch));
+            var chars = new List<Win32.INPUT>();
+            foreach (var ch in newOutput)
+            {
+                chars.Add(MakeUnicodeKeyDown(ch));
+                chars.Add(MakeUnicodeKeyUp(ch));
+            }
+            DispatchInput(chars.ToArray());
         }
-
-        if (inputs.Count > 0)
-            DispatchInput(inputs.ToArray());
 
         TrackedOnScreenLength = newOutput.Length;
         ReleaseTransientModifiers("SendAtomicReplace");
     }
+
+    /// <summary>
+    /// 백스페이스 배치와 새 문자 배치 사이의 간격(ms). 앱이 백스페이스를 완전히
+    /// 처리(undo 커밋 포함)한 뒤 문자를 받도록 하는 값. 스위치 스캔 타이핑
+    /// (키 간 1~2초)에서는 체감이 없다.
+    /// </summary>
+    internal const int BackspaceSettleDelayMs = 25;
 
     private static bool CheckElevated()
     {
