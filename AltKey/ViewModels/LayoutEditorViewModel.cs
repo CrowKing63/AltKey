@@ -179,11 +179,13 @@ public partial class LayoutEditorViewModel : ObservableObject
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsExistingLayout))]
     [NotifyPropertyChangedFor(nameof(CanDeleteLayout))]
+    [NotifyPropertyChangedFor(nameof(IsEditingBuiltin))]
     private string currentFileName = "";
 
     partial void OnCurrentFileNameChanged(string value)
     {
         OnPropertyChanged(nameof(IsEditingCurrentLayout));
+        OnPropertyChanged(nameof(IsEditingBuiltin));
         HandleWorkingCopyMutated();
     }
 
@@ -193,10 +195,19 @@ public partial class LayoutEditorViewModel : ObservableObject
     public bool IsExistingLayout => !string.IsNullOrEmpty(CurrentFileName)
         && _layoutRepository.GetAvailableLayouts().Contains(CurrentFileName);
 
-    /// 기본 레이아웃이 아닐 때만 삭제 가능
+    /// 기본 레이아웃이 아닐 때만 삭제 가능 (프리셋은 삭제 불가)
     public bool CanDeleteLayout => IsExistingLayout
         && !string.Equals(CurrentFileName, _layoutRepository.DefaultLayoutName,
-            StringComparison.OrdinalIgnoreCase);
+            StringComparison.OrdinalIgnoreCase)
+        && !_layoutRepository.IsBuiltin(CurrentFileName);
+
+    /// <summary>
+    /// 현재 편집 중인 파일이 기본 제공(프리셋) 레이아웃인지 표시합니다.
+    /// 프리셋은 덮어쓰기/삭제가 불가하며, 수정하려면 새 이름으로 저장해야 합니다.
+    /// </summary>
+    public bool IsEditingBuiltin =>
+        !string.IsNullOrWhiteSpace(CurrentFileName)
+        && _layoutRepository.IsBuiltin(CurrentFileName);
 
     /// <summary>
     /// 메인 키보드가 현재 기본으로 읽는 레이아웃 이름입니다.
@@ -314,6 +325,7 @@ public partial class LayoutEditorViewModel : ObservableObject
             SelectedLayoutToLoad = AvailableLayouts[0];
         OnPropertyChanged(nameof(IsExistingLayout));
         OnPropertyChanged(nameof(CanDeleteLayout));
+        OnPropertyChanged(nameof(IsEditingBuiltin));
     }
 
     private void RefreshCurrentActiveLayoutInfo()
@@ -726,6 +738,12 @@ public partial class LayoutEditorViewModel : ObservableObject
             return;
         }
 
+        if (IsEditingBuiltin)
+        {
+            StatusMessage = "프리셋 레이아웃은 덮어쓸 수 없습니다. 새 이름을 입력한 뒤 '다른 이름으로 저장'을 눌러 주세요.";
+            return;
+        }
+
         FlushPendingCheckpoint();
 
         try
@@ -758,6 +776,12 @@ public partial class LayoutEditorViewModel : ObservableObject
         if (string.IsNullOrWhiteSpace(CurrentFileName))
         {
             StatusMessage = "파일명을 입력하세요";
+            return;
+        }
+
+        if (_layoutRepository.IsBuiltin(CurrentFileName))
+        {
+            StatusMessage = "'Basic', 'Basic Plus'는 프리셋 이름이라 사용할 수 없습니다. 다른 이름을 입력하세요.";
             return;
         }
 

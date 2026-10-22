@@ -21,6 +21,8 @@ public sealed class LayoutRepository : ILayoutRepository
 
     public string DefaultLayoutName => _configService.Current.DefaultLayout;
 
+    public bool IsBuiltin(string name) => LayoutService.IsBuiltin(name);
+
     public IReadOnlyList<string> GetAvailableLayouts() => _layoutService.GetAvailableLayouts();
 
     public LayoutConfig? TryLoad(string name, Action<Exception>? onError = null) =>

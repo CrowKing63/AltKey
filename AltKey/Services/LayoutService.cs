@@ -10,6 +10,19 @@ namespace AltKey.Services;
 /// </summary>
 public class LayoutService
 {
+    /// <summary>
+    /// [역할] 기본 제공(프리셋) 레이아웃 이름 목록입니다.
+    /// [기능] 프리셋은 사용자가 덮어쓰기/삭제할 수 없으며, 설치기가 업그레이드마다 갱신하는 대상입니다.
+    /// </summary>
+    public static readonly HashSet<string> BuiltinNames = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Basic",
+        "Basic Plus"
+    };
+
+    /// <summary>레이아웃 이름이 프리셋(Basic/Basic Plus)인지 판정합니다.</summary>
+    public static bool IsBuiltin(string name) => BuiltinNames.Contains(name);
+
     private readonly string _layoutsDir; // 레이아웃 파일들이 저장된 폴더 경로입니다.
     private readonly Dictionary<string, LayoutConfig> _cache = []; // 한 번 읽어온 레이아웃을 빠르게 다시 쓰기 위해 저장해두는 공간(캐시)입니다.
 
@@ -17,7 +30,7 @@ public class LayoutService
 
     public LayoutService() : this(PathResolver.LayoutsDir) { }
 
-    protected LayoutService(string layoutsDir)
+    public LayoutService(string layoutsDir)
     {
         _layoutsDir = layoutsDir;
         Directory.CreateDirectory(_layoutsDir);
@@ -88,9 +101,11 @@ public class LayoutService
         LayoutsChanged?.Invoke();
     }
 
-    /// <summary>레이아웃 파일 삭제</summary>
+    /// <summary>레이아웃 파일 삭제 — 프리셋(Basic/Basic Plus)은 거부합니다.</summary>
     public bool Delete(string name)
     {
+        if (IsBuiltin(name)) return false;
+
         var path = Path.Combine(_layoutsDir, name + ".json");
         if (!File.Exists(path)) return false;
         File.Delete(path);

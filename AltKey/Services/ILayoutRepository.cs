@@ -12,6 +12,9 @@ public interface ILayoutRepository
 
     string DefaultLayoutName { get; }
 
+    /// <summary>레이아웃 이름이 기본 제공(프리셋) 레이아웃인지 판정합니다.</summary>
+    bool IsBuiltin(string name);
+
     IReadOnlyList<string> GetAvailableLayouts();
 
     LayoutConfig? TryLoad(string name, Action<Exception>? onError = null);

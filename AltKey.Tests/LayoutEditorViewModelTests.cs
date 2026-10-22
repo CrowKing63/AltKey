@@ -189,6 +189,81 @@ public class LayoutEditorViewModelTests
         });
     }
 
+    // ── 프리셋(Basic/Basic Plus) 보호 ────────────────────────────────────────
+
+    [Fact]
+    public void Save_on_builtin_layout_is_rejected()
+    {
+        RunSta(() =>
+        {
+            var repo = new FakeLayoutRepository();
+            repo.Seed("Basic", CreateTwoColumnLayout());
+
+            var vm = new LayoutEditorViewModel(repo, new ConfigService());
+            vm.LoadLayout("Basic");
+
+            Assert.True(vm.IsEditingBuiltin);
+            vm.SaveCommand.Execute(null);
+
+            Assert.Null(repo.LastSavedConfig);
+        });
+    }
+
+    [Fact]
+    public void SaveAs_with_builtin_name_is_rejected()
+    {
+        RunSta(() =>
+        {
+            var repo = new FakeLayoutRepository();
+            repo.Seed("Basic", CreateTwoColumnLayout());
+
+            var vm = new LayoutEditorViewModel(repo, new ConfigService());
+            vm.LoadLayout("Basic");
+
+            // 이름 그대로(Basic) 다른이름저장 시도 → 거부
+            vm.SaveAsCommand.Execute(null);
+
+            Assert.Null(repo.LastSavedConfig);
+        });
+    }
+
+    [Fact]
+    public void SaveAs_with_new_name_saves_copy_and_keeps_original()
+    {
+        RunSta(() =>
+        {
+            var repo = new FakeLayoutRepository();
+            repo.Seed("Basic", CreateTwoColumnLayout());
+
+            var vm = new LayoutEditorViewModel(repo, new ConfigService());
+            vm.LoadLayout("Basic");
+            vm.CurrentFileName = "My Basic";
+
+            vm.SaveAsCommand.Execute(null);
+
+            Assert.NotNull(repo.LastSavedConfig);
+            Assert.Contains("My Basic", repo.GetAvailableLayouts());
+            // 원본 프리셋은 그대로 유지
+            Assert.NotNull(repo.TryLoad("Basic"));
+        });
+    }
+
+    [Fact]
+    public void CanDeleteLayout_is_false_for_builtin()
+    {
+        RunSta(() =>
+        {
+            var repo = new FakeLayoutRepository();
+            repo.Seed("Basic", CreateTwoColumnLayout());
+
+            var vm = new LayoutEditorViewModel(repo, new ConfigService());
+            vm.LoadLayout("Basic");
+
+            Assert.True(vm.IsEditingBuiltin);
+            Assert.False(vm.CanDeleteLayout);
+        });
+    }
+
     private static LayoutConfig CreateTwoColumnLayout(double firstRowHeight = EditableKeySlotVm.DefaultHeightRatio) =>
         new("shared-row", null,
         [
@@ -237,6 +312,8 @@ public class LayoutEditorViewModelTests
         public event Action? LayoutsChanged;
 
         public string DefaultLayoutName => "Basic";
+
+        public bool IsBuiltin(string name) => LayoutService.IsBuiltin(name);
 
         public LayoutConfig? LastSavedConfig { get; private set; }
 
