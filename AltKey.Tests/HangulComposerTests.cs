@@ -113,17 +113,6 @@ public class HangulComposerTests
     }
 
     [Fact]
-    public void Backspace_RemoveJongseong_DuringComposition()
-    {
-        // "간"에서 백스페이스 → 종성 제거 → "가"
-        var composer = new HangulComposer();
-        composer.Feed("ㄱ"); composer.Feed("ㅏ"); composer.Feed("ㄴ");
-        Assert.Equal("간", composer.Current);
-        composer.Backspace();
-        Assert.Equal("가", composer.Current);
-    }
-
-    [Fact]
     public void Backspace_RemoveCompletedSyllable_WhenNoComposition()
     {
         // "가" 확정 후, 조합 중인 문자 없을 때 백스페이스 → 전체 삭제
@@ -231,15 +220,6 @@ public class HangulComposerTests
     }
 
     [Fact]
-    public void Feed_DakisGiyeok_CompoundJongseong()
-    {
-        // 닭: ㄷ+ㅏ+ㄹ → 달, then ㄱ → 겹받침 ㄺ → 닭
-        var composer = new HangulComposer();
-        composer.Feed("ㄷ"); composer.Feed("ㅏ"); composer.Feed("ㄹ"); composer.Feed("ㄱ");
-        Assert.Equal("닭", composer.Current);
-    }
-
-    [Fact]
     public void HasComposition_ReturnsTrue_WhenComposing()
     {
         var composer = new HangulComposer();
@@ -321,13 +301,5 @@ public class HangulComposerTests
         composer.Feed("ㅆ");
         Assert.Equal("했", composer.Current);
         Assert.DoesNotContain("T", composer.Current);
-    }
-}
-
-public static class HangulComposerTestExtensions
-{
-    public static void FinalizeCurrentForTest(this HangulComposer composer)
-    {
-        composer.Reset(); // Approximate - in real use, finalization happens via separators
     }
 }

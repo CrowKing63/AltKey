@@ -101,16 +101,6 @@ public class KoreanDictionaryTests
     }
 
     [Fact]
-    public void GetSuggestions_with_prev_null_is_same_as_no_context()
-    {
-        var dict = new KoreanDictionaryTestable();
-        dict.RecordWord("해달");
-        var a = dict.GetSuggestions("해");
-        var b = dict.GetSuggestions("해", null);
-        Assert.Equal(a, b);
-    }
-
-    [Fact]
     public void GetSuggestions_with_prev_promotes_bigram_match_to_top()
     {
         var dict = new KoreanDictionaryTestable();

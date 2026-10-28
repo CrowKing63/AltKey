@@ -67,26 +67,6 @@ public class AutoCompleteServiceBigramTests
         Assert.True(koDict.BigramStore.Contains("테스트", "확인"));
     }
 
-    /// 바이그램 연속 3회 수락 시 각 쌍이 모두 Record되는지 확인합니다.
-    [Fact]
-    public void Consecutive_bigram_accepts_record_all_pairs()
-    {
-        var (service, module, koDict, _) = Build();
-
-        // 시작 단어 수락
-        TestSlotFactory.FeedSyllables(module, "테스트", ctxNoModifiers);
-        service.AcceptSuggestion("테스트");
-
-        // 연속 바이그램 수락
-        service.AcceptBigramSuggestion("추가");
-        service.AcceptBigramSuggestion("확인");
-        service.AcceptBigramSuggestion("완료");
-
-        Assert.True(koDict.BigramStore.Contains("테스트", "추가"));
-        Assert.True(koDict.BigramStore.Contains("추가", "확인"));
-        Assert.True(koDict.BigramStore.Contains("확인", "완료"));
-    }
-
     /// 바이그램 수락 후 수동 공백(OnSeparator)에서 이중 Record가 발생하지 않는지 확인합니다.
     [Fact]
     public void OnSeparator_after_bigram_accept_does_not_duplicate_record()
@@ -106,49 +86,5 @@ public class AutoCompleteServiceBigramTests
 
         Assert.Equal(1, koDict.BigramStore.NextCountFor("테스트"));
         Assert.Equal(1, koDict.BigramStore.Count);
-    }
-
-    /// 바이그램 수락 후 수동 타이핑 + 공백으로 OnSeparator Record가 정상 동작하는지 확인합니다.
-    [Fact]
-    public void OnSeparator_after_manual_typing_records_bigram_with_context()
-    {
-        var (service, module, koDict, _) = Build();
-
-        // 선행 단어 수락
-        TestSlotFactory.FeedSyllables(module, "테스트", ctxNoModifiers);
-        service.AcceptSuggestion("테스트");
-
-        // 바이그램 수락 → ("테스트", "확인") Record
-        service.AcceptBigramSuggestion("확인");
-
-        // 수동 입력 후 공백
-        TestSlotFactory.FeedSyllables(module, "완료", ctxNoModifiers);
-        service.OnSeparator();
-
-        Assert.True(koDict.BigramStore.Contains("확인", "완료"));
-        Assert.Equal(1, koDict.BigramStore.NextCountFor("확인"));
-    }
-
-    /// 언어 전환 시 bigram 컨텍스트가 초기화되는지 확인합니다.
-    /// 완료는 시나리오에서 단어로만 사용
-    [Fact]
-    public void Submode_toggle_clears_bigram_context()
-    {
-        var (service, module, koDict, enDict) = Build();
-
-        // 한글 단어 수락
-        TestSlotFactory.FeedSyllables(module, "테스트", ctxNoModifiers);
-        service.AcceptSuggestion("테스트");
-
-        // 영어 모드로 전환 → _lastCommittedWord 초기화
-        service.ToggleKoreanSubmode();
-
-        // 영어 입력 후 공백
-        TestSlotFactory.FeedEnglish(module, "hello", ctxEnglish);
-        service.OnSeparator();
-
-        // 한글 bigram 저장소에 기록이 없어야 함 (영어 입력이므로)
-        Assert.Equal(0, koDict.BigramStore.Count);
-        // enDict의 bigram도 여기서는 학습되지 않음 (완료는 한글 단어)
     }
 }

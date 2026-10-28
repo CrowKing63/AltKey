@@ -1,7 +1,9 @@
 using AltKey.Models;
+using AltKey.Platform;
 using AltKey.Services;
 using AltKey.Services.InputLanguage;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 
 namespace AltKey.Tests.InputLanguage;
 
@@ -214,5 +216,64 @@ internal static class TestSlotFactory
             var slot = English(ch.ToString(), null, vk);
             module.HandleKey(slot, ctx);
         }
+    }
+
+    /// <summary>
+    /// 키 입력과 프로세스 실행을 추적하는 테스트용 InputService.
+    /// (KeyDown/KeyUp/KeyPress, modifier/HeldKey 해제 이유, StartProcess 결과를 관찰한다.)
+    /// </summary>
+    public sealed class TrackingInputService : InputService
+    {
+        public List<VirtualKeyCode> KeyDowns { get; } = [];
+        public List<VirtualKeyCode> KeyUps { get; } = [];
+        public List<VirtualKeyCode> KeyPresses { get; } = [];
+        public List<string> ReleaseAllReasons { get; } = [];
+        public List<string> ReleaseHighRiskReasons { get; } = [];
+        public List<string> ReleaseHeldReasons { get; } = [];
+        public ProcessStartInfo? LastStartedProcess { get; private set; }
+
+        public override void SendKeyDown(VirtualKeyCode vk) => KeyDowns.Add(vk);
+
+        public override void SendKeyUp(VirtualKeyCode vk) => KeyUps.Add(vk);
+
+        public override void SendKeyPress(VirtualKeyCode vk) => KeyPresses.Add(vk);
+
+        public override void ReleaseAllModifiers(string reason = "manual")
+        {
+            ReleaseAllReasons.Add(reason);
+            base.ReleaseAllModifiers(reason);
+        }
+
+        public override void ReleaseHighRiskModifiers(string reason)
+        {
+            ReleaseHighRiskReasons.Add(reason);
+            base.ReleaseHighRiskModifiers(reason);
+        }
+
+        public override void ReleaseAllHeldKeys(string reason = "manual")
+        {
+            ReleaseHeldReasons.Add(reason);
+            base.ReleaseAllHeldKeys(reason);
+        }
+
+        protected override void StartProcess(ProcessStartInfo psi)
+        {
+            LastStartedProcess = psi;
+        }
+    }
+
+    /// <summary>
+    /// DispatchInput으로 전송된 INPUT 배치를 관찰하는 테스트용 InputService.
+    /// </summary>
+    public sealed class CapturingInputService : InputService
+    {
+        public List<Win32.INPUT[]> Dispatches { get; } = [];
+
+        internal override void DispatchInput(Win32.INPUT[] inputs)
+        {
+            Dispatches.Add(inputs.ToArray());
+        }
+
+        public Win32.INPUT[] LastDispatch => Dispatches.Last();
     }
 }

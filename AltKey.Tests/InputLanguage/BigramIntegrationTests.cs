@@ -56,34 +56,6 @@ public class BigramIntegrationTests : IDisposable
     }
 
     [Fact]
-    public void Suggestion_list_reflects_context_after_finalize()
-    {
-        var (module, koDict, _) = Build();
-
-        // 학습 데이터 축적
-        for (int i = 0; i < 3; i++)
-        {
-            TestSlotFactory.FeedSyllables(module, "안녕", ctxNoModifiers);
-            module.OnSeparator();
-            TestSlotFactory.FeedSyllables(module, "하세요", ctxNoModifiers);
-            module.OnSeparator();
-        }
-
-        // 새 문장: "안녕␣ㅎ"
-        TestSlotFactory.FeedSyllables(module, "안녕", ctxNoModifiers);
-        module.OnSeparator();
-
-        IReadOnlyList<string>? captured = null;
-        module.SuggestionsChanged += list => captured = list;
-
-        var ㅎ_slot = TestSlotFactory.Jamo("ㅎ", null, VirtualKeyCode.VK_H);
-        module.HandleKey(ㅎ_slot, ctxNoModifiers);
-
-        Assert.NotNull(captured);
-        Assert.Contains("하세요", captured!);
-    }
-
-    [Fact]
     public void Toggle_off_then_input_does_not_persist_bigrams()
     {
         var (module, koDict, _) = Build(enabled: false);

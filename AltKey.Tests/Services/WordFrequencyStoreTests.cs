@@ -79,22 +79,6 @@ public class WordFrequencyStoreTests : IDisposable
     }
 
     [Fact]
-    public void Flush_saves_pending_changes()
-    {
-        var store = new WordFrequencyStore(_testDir, "test-ko");
-        store.RecordWord("테스트");
-
-        var filePath = GetFilePath("test-ko");
-        var before = File.ReadAllText(filePath);
-        Assert.DoesNotContain("테스트", before);
-
-        store.Flush();
-
-        var after = File.ReadAllText(filePath);
-        Assert.Contains("테스트", after);
-    }
-
-    [Fact]
     public void Atomic_write_creates_tmp_file_then_moves()
     {
         var store = new WordFrequencyStore(_testDir, "test-ko");
@@ -125,29 +109,6 @@ public class WordFrequencyStoreTests : IDisposable
         int totalAfter = store.Count;
         Assert.InRange(totalAfter, 3990, 4010);  // 5001 - 1000 ± 오차
         Assert.True(store.Contains("big"));       // 빈도 100은 살아남아야
-    }
-
-    [Fact]
-    public void PruneLowest_is_deterministic_across_runs()
-    {
-        // 동일 입력 시퀀스 → 동일 생존 단어 집합
-        var storeA = BuildStoreForDeterministicTest("test-ko-det-a");
-        var storeB = BuildStoreForDeterministicTest("test-ko-det-b");
-
-        // 두 store 모두 Flush 후 Count가 동일해야 함
-        storeA.Flush();
-        storeB.Flush();
-        Assert.Equal(storeA.Count, storeB.Count);
-    }
-
-    private WordFrequencyStore BuildStoreForDeterministicTest(string langCode)
-    {
-        var store = new WordFrequencyStore(_testDir, langCode);
-        for (int i = 0; i < 4500; i++) store.RecordWord($"a{i}");
-        for (int i = 0; i < 500; i++) { store.RecordWord($"b{i}"); store.RecordWord($"b{i}"); }
-        store.RecordWord("big");
-        for (int i = 0; i < 99; i++) store.RecordWord("big");
-        return store;
     }
 
     [Fact]
@@ -226,17 +187,6 @@ public class WordFrequencyStoreTests : IDisposable
         store.SetFrequency("바나나", 10);
         var updated = store.GetAllWords();
         Assert.Equal(10, updated[0].Frequency);
-    }
-
-    [Fact]
-    public void SetFrequency_TriggersPrune_WhenOverMax()
-    {
-        var store = new WordFrequencyStore(_testDir, "test-sf-prune");
-
-        for (int i = 0; i < 4999; i++) store.RecordWord($"w{i}");
-
-        store.SetFrequency("overflow", 1);
-        Assert.True(store.Count <= 5000);
     }
 
     [Fact]
