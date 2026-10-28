@@ -66,6 +66,13 @@
                                     <TextBlock Text="사용자 가이드" Foreground="{DynamicResource SettingsFg}" TextDecorations="Underline"/>
                                 </Hyperlink>
                             </TextBlock>
+                            <!-- 후원: Ko-fi 단일 채널. 매뉴얼 링크와 같은 외부 링크 방식으로 열려 스토어 정책상 문제없음(순수 후원). -->
+                            <TextBlock Text=" | " FontSize="11" Foreground="{DynamicResource SettingsFgSub}" Margin="0,4"/>
+                            <TextBlock>
+                                <Hyperlink NavigateUri="https://ko-fi.com/crowking63" RequestNavigate="Hyperlink_RequestNavigate">
+                                    <TextBlock Text="후원하기" Foreground="{DynamicResource SettingsFg}" TextDecorations="Underline"/>
+                                </Hyperlink>
+                            </TextBlock>
                         </StackPanel>
                     </StackPanel>
                 </Border>
