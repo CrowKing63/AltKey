@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  AltKey MSIX 패키지 매니페스트 (전통 데스크톱 WPF 앱을 패키징)
+  - EntryPoint="Windows.FullTrustApplication": Win32/WPF 데스크톱 앱이 MSIX 안에서 full-trust로 실행되도록 하는 핵심 속성.
+  - Publisher는 서명 인증서 Subject(CN=CrowKing63)와 일치해야 한다.
+  - capability 없음: SendInput/키보드 훅 등 표준 Win32 입력 API는 스토어 capability가 불필요하고, 인터넷도 미사용. (스토어 심사상 가장 제한적 = 안전)
+-->
+<Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+         xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+         xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities">
+  <Identity Name="CrowKing63.AltKey" Version="1.1.12.0" Publisher="CN=CrowKing63" ProcessorArchitecture="x64" />
+
+  <Properties>
+    <DisplayName>AltKey</DisplayName>
+    <PublisherDisplayName>CrowKing63</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+    <Description>한국어 접근성 가상 키보드 (Korean accessibility virtual keyboard)</Description>
+  </Properties>
+
+  <Resources>
+    <Resource Language="ko-KR" />
+  </Resources>
+
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.17763.0" MaxVersionTested="10.0.26100.0" />
+  </Dependencies>
+
+  <Capabilities>
+    <rescap:Capability Name="runFullTrust" />
+  </Capabilities>
+
+  <Applications>
+    <Application Id="AltKey" Executable="AltKey.exe" EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements
+        DisplayName="AltKey"
+        Description="한국어 접근성 가상 키보드"
+        Square150x150Logo="Assets\Square150x150Logo.png"
+        Square44x44Logo="Assets\Square44x44Logo.png"
+        BackgroundColor="#2B2B2B" />
+    </Application>
+  </Applications>
+</Package>

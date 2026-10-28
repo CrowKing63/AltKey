@@ -80,3 +80,67 @@ jobs:
           overwrite: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # MSIX(마이크로소프트 스토어) 패키지 — 독립 잡으로 격리해 팩킹 실패가
+  # 포터블·인스톨러 릴리스를 깨지 않게 한다. needs: release 로 기존 릴리스가
+  # 먼저 생성된 뒤에 같은 릴리스에 .msix만 추가한다(경쟁 조건 없음).
+  msix:
+    needs: release
+    runs-on: windows-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore dependencies
+        run: |
+          dotnet restore AltKey/AltKey.csproj
+          dotnet restore AltKey.Tools/AltKey.Tools.csproj
+
+      # IncludeNativeLibrariesForSelfExtract=true 로 네이티브 DLL을 exe에 번들링해
+      # 스테이징에 별도 _cor3.dll 없이 단일 AltKey.exe만 들어가게 한다.
+      - name: Publish portable single-file
+        run: >
+          dotnet publish AltKey/AltKey.csproj
+          -c Release
+          -r win-x64
+          --self-contained true
+          -p:PublishSingleFile=true
+          -p:PublishReadyToRun=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
+          -p:EnableCompressionInSingleFile=true
+          -o dist/publish
+
+      - name: Publish tools app
+        run: >
+          dotnet publish AltKey.Tools/AltKey.Tools.csproj
+          -c Release
+          -r win-x64
+          --self-contained true
+          -p:PublishSingleFile=true
+          -p:PublishReadyToRun=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
+          -p:EnableCompressionInSingleFile=true
+          -o dist/publish/Tools
+
+      # 스테이징 조립 + MakeAppx 팩킹. 서명 없이 만든다(스토어 제출용, MS가 재서명).
+      - name: Package MSIX
+        run: >
+          powershell -ExecutionPolicy Bypass
+          -File scripts/package-msix.ps1
+          -Version ${{ github.ref_name }}
+          -BuildDir dist/publish
+
+      - name: Upload MSIX to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/AltKey-*.msix
+          fail_on_unmatched_files: true
+          overwrite: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
