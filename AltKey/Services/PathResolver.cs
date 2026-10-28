@@ -13,6 +13,17 @@ public static class PathResolver
         File.Exists(Path.Combine(_exeDir, "config.json"));
 
     /// <summary>
+    /// MSIX(Microsoft Store) 설치판 감지. 스토어 앱은 C:\Program Files\WindowsApps\ 아래에 설치되므로
+    /// 실행 파일 경로에 \WindowsApps\이 있으면 스토어 설치판으로 판정한다.
+    /// [업데이트] 스토어 설치판은 Microsoft Store가 자동으로 업데이트하므로 GitHub 자동 업데이트를 생략한다.
+    /// </summary>
+    public static bool IsMsix => IsMsixPath(_exeDir);
+
+    /// <summary>[테스트] 실행 파일 경로가 스토어(WindowsApps) 아래에 있는지 판정한다.</summary>
+    internal static bool IsMsixPath(string exeDir) =>
+        exeDir.Contains(@"\WindowsApps\", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
     /// 메인 앱이 도구 앱을 열 때 같은 데이터 폴더를 명시적으로 공유해야 할 경우 사용합니다.
     /// 개발 환경의 분리된 bin 폴더뿐 아니라, 실행 주체와 관계없이 동일한 설정/레이아웃을 보장하는 공용 진입점입니다.
     /// </summary>

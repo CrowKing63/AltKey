@@ -148,6 +148,13 @@ public class TrayService : IDisposable
     {
         try
         {
+            // [업데이트] 스토어(MSIX) 설치판은 Microsoft Store가 자동으로 업데이트하므로 GitHub 확인을 생략한다.
+            if (PathResolver.IsMsix)
+            {
+                _notifyIcon.ShowBalloonTip(3000, "AltKey", "스토어 버전은 자동으로 업데이트됩니다.", ToolTipIcon.Info);
+                return;
+            }
+
             var (hasUpdate, version, url, installerUrl) = await _updateService.CheckAsync();
 
             if (string.IsNullOrEmpty(version))

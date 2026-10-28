@@ -1372,6 +1372,14 @@ public partial class SettingsViewModel : ObservableObject
 
         try
         {
+            // [업데이트] 스토어(MSIX) 설치판은 Microsoft Store가 자동으로 업데이트하므로 GitHub 확인을 생략한다.
+            if (PathResolver.IsMsix)
+            {
+                UpdateStatusMessage = "스토어 버전은 자동으로 업데이트됩니다.";
+                ShowUpdateMessage("스토어 버전은 Microsoft Store에서 자동으로 업데이트됩니다.");
+                return;
+            }
+
             var (hasUpdate, version, url, installerUrl) = await _updateService.CheckAsync();
 
             if (string.IsNullOrEmpty(version))
