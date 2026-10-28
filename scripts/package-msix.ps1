@@ -49,9 +49,11 @@ Copy-Item (Join-Path $root "AltKey/Assets/Sounds/click.wav") $soundsOut -Force
 # MSIX Identity Version은 항상 4부(X.Y.Z.W)여야 하므로, 태그 버전이 3부면 .0을 붙인다.
 $msixVersion = $Version
 if ((($msixVersion -split '\.').Count) -eq 3) { $msixVersion = "$msixVersion.0" }
+# ' Version=' 앞에 공백을 맞춰 Identity의 Version 속성만 치환한다.
+# (MinVersion/MaxVersion/MaxTestVersion은 "Version" 바로 앞에 공백이 없어 제외됨)
 $manifestSrc = Join-Path $root "msix/AppxManifest.xml"
 $manifestText = [System.IO.File]::ReadAllText($manifestSrc, [System.Text.Encoding]::UTF8)
-$manifestText = $manifestText -replace 'Version="\d+\.\d+\.\d+\.\d+"', "Version=`"$msixVersion`""
+$manifestText = [regex]::Replace($manifestText, ' Version="\d+\.\d+\.\d+\.\d+"', (' Version="' + $msixVersion + '"'))
 [System.IO.File]::WriteAllText((Join-Path $staging "AppxManifest.xml"), $manifestText, [System.Text.Encoding]::UTF8)
 
 # 7. MakeAppx 위치 탐색 — Windows SDK App Certification Kit
