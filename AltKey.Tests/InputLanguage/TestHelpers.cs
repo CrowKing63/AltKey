@@ -18,10 +18,13 @@ public sealed class FakeInputService : InputService
 
     public override void SendUnicode(string text) => SentUnicodes.Add(text);
 
-    public override void SendAtomicReplace(int prevLen, string next)
+    public override void SendAtomicReplace(int prevLen, string next) =>
+        SendAtomicReplace(prevLen, next, next.Length);
+
+    public override void SendAtomicReplace(int prevLen, string next, int fullNewLength)
     {
         AtomicReplaces.Add((prevLen, next));
-        TrackedOnScreenLength = next.Length;
+        TrackedOnScreenLength = fullNewLength;
     }
 
     public override void SendKeyPress(VirtualKeyCode vk) => KeyPresses.Add(vk);

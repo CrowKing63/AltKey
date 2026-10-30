@@ -97,12 +97,16 @@ public sealed class KoreanInputModule : IInputLanguageModule
         // 한글 조합기에 글자를 넣고 화면에 반영합니다.
         if (ctx.InputMode == InputMode.Unicode)
         {
-            int prevLen = ctx.TrackedOnScreenLength;
             _compositionCancelled = false;
             _wordAlreadyCommitted = false;
+            // Feed 전의 현재 조합 텍스트(== 화면)를 붙잡아 둔다.
+            // 한글 조합에서는 한 타포마다 바뀌는 것이 항상 꼬리 1~2자뿐이므로,
+            // 공통 접두사 아래만 지우고 새 꼬리만 다시 쓴다 (suffix-only rewrite).
+            string oldOutput = _composer.Current;
             _composer.Feed(jamo);
             string newOutput = _composer.Current;
-            _input.SendAtomicReplace(prevLen, newOutput); // 화면의 이전 글자를 지우고 새 조합 글자를 씀
+            int prefix = CommonPrefixLength(oldOutput, newOutput);
+            _input.SendAtomicReplace(oldOutput.Length - prefix, newOutput.Substring(prefix), newOutput.Length);
             SuggestionsChanged?.Invoke(_koDict.GetSuggestions(newOutput, _suggestionContext));
             return true;
         }
@@ -186,10 +190,14 @@ public sealed class KoreanInputModule : IInputLanguageModule
 
         if (ctx.InputMode == InputMode.Unicode && ctx.TrackedOnScreenLength > 0)
         {
-            int prevLen = ctx.TrackedOnScreenLength;
+            // Backspace 전의 현재 조합 텍스트를 붙잡아 둔다.
+            // 삭제 후 새 텍스트는 항상 옛 텍스트의 접두사이므로,
+            // 지워진 꼬리 만큼만 백스페이스하고 전체를 다시 쓰지 않는다 (suffix-only rewrite).
+            string oldOutput = _composer.Current;
             _composer.Backspace();
             string newOutput = _composer.Current;
-            _input.SendAtomicReplace(prevLen, newOutput);
+            int prefix = CommonPrefixLength(oldOutput, newOutput);
+            _input.SendAtomicReplace(oldOutput.Length - prefix, newOutput.Substring(prefix), newOutput.Length);
             SuggestionsChanged?.Invoke(_koDict.GetSuggestions(newOutput, _suggestionContext));
             return true;
         }
@@ -217,17 +225,28 @@ public sealed class KoreanInputModule : IInputLanguageModule
     /// 추천 단어 중 하나를 선택했을 때의 처리입니다.
     /// </summary>
     /// <param name="suggestion">사용자가 선택한 단어</param>
-    /// <returns>지워야 할 글자 수와 입력할 전체 단어</returns>
-    public (int backspaceCount, string fullWord) AcceptSuggestion(string suggestion)
+    /// <returns>지워야 할 글자 수, 입력할 전체 단어, 현재 조합과 공유하는 접두사 길이</returns>
+    public (int backspaceCount, string fullWord, int prefixLength) AcceptSuggestion(string suggestion)
     {
         int bsCount;
+        int prefixLength = 0;
         bool learningEnabled = _config.Current.AutoCompleteEnabled;
 
         if (_submode == InputSubmode.HangulJamo)
         {
-            bsCount = _input.Mode == InputMode.Unicode
-                ? _composer.Current.Length
-                : _composer.CompletedLength + _composer.CompositionDepth;
+            // Unicode 모드에서 현재 조합 텍스트는 화면에 있는 글자다.
+            // 제안어와 다른 꼬리 부분만 지우고 새 꼬리만 쓰게 한다 (suffix-only rewrite).
+            string oldOutput = _composer.Current;
+            if (_input.Mode == InputMode.Unicode)
+            {
+                prefixLength = CommonPrefixLength(oldOutput, suggestion);
+                bsCount = oldOutput.Length - prefixLength;
+            }
+            else
+            {
+                // VirtualKey 모드: OS IME가 조합을 처리하므로 전체를 지우고 전체 단어 전송.
+                bsCount = _composer.CompletedLength + _composer.CompositionDepth;
+            }
             if (learningEnabled)
             {
                 _koDict.RecordWord(suggestion); // 사용자가 선택한 단어를 학습함
@@ -238,7 +257,18 @@ public sealed class KoreanInputModule : IInputLanguageModule
         }
         else
         {
-            bsCount = _englishPrefix.Length;
+            // QuietEnglish에서도 누적 중인 prefix가 화면에 있는 글자다. 같은 suffix 규칙 적용.
+            string oldOutput = _englishPrefix;
+            if (_input.Mode == InputMode.Unicode)
+            {
+                prefixLength = CommonPrefixLength(oldOutput, suggestion);
+                bsCount = oldOutput.Length - prefixLength;
+            }
+            else
+            {
+                // VirtualKey 모드: 전체를 지우고 전체 단어 전송.
+                bsCount = _englishPrefix.Length;
+            }
             if (learningEnabled)
             {
                 _enDict.RecordWord(suggestion);
@@ -252,7 +282,7 @@ public sealed class KoreanInputModule : IInputLanguageModule
         _suggestionContext = null;
 
         SuggestionsChanged?.Invoke(Array.Empty<string>());
-        return (bsCount, suggestion);
+        return (bsCount, suggestion, prefixLength);
     }
 
     /// <summary>
@@ -428,6 +458,19 @@ public sealed class KoreanInputModule : IInputLanguageModule
         if (IsHangulJamo(slot.Label))
             return slot.Label;
         return null;
+    }
+
+    /// <summary>
+    /// 두 문자열의 공통 접두사 길이를 반환한다.
+    /// 조합 텍스트 재작성 시 바뀌지 않은 앞부분을 남기고 꼬리만 지우게 한다
+    /// (suffix-only rewrite, docs/auto-complet/TASK-09-suffix-only-rewrite.md).
+    /// </summary>
+    private static int CommonPrefixLength(string a, string b)
+    {
+        int n = Math.Min(a.Length, b.Length);
+        int i = 0;
+        while (i < n && a[i] == b[i]) i++;
+        return i;
     }
 
     /// 한글 자모 또는 완성형 한글인지 확인합니다.

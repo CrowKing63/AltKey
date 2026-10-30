@@ -91,7 +91,7 @@ public class KeyboardViewModelTests
         public event Action<IReadOnlyList<string>>? SuggestionsChanged { add { } remove { } }
         public event Action<InputSubmode>? SubmodeChanged { add { } remove { } }
         public bool HandleKey(KeySlot slot, KeyContext ctx) => false;
-        public (int backspaceCount, string fullWord) AcceptSuggestion(string suggestion) => (0, suggestion);
+        public (int backspaceCount, string fullWord, int prefixLength) AcceptSuggestion(string suggestion) => (0, suggestion, 0);
         public void NotifyWordCommitted(string word) { }
         public void ToggleSubmode() { }
         public void OnSeparator() { }

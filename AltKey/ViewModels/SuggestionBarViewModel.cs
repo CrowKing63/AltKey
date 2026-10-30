@@ -153,14 +153,17 @@ public partial class SuggestionBarViewModel : ObservableObject
         }
         else
         {
-            var (bsCount, fullWord) = _autoComplete.AcceptSuggestion(suggestion);
+            var (bsCount, fullWord, prefixLength) = _autoComplete.AcceptSuggestion(suggestion);
             if (_inputService.Mode == InputMode.Unicode)
             {
-                _inputService.SendAtomicReplace(bsCount, fullWord);
+                // 현재 조합과 다른 꼬리 부분만 전송한다 (suffix-only rewrite).
+                string textToType = fullWord.Substring(prefixLength);
+                _inputService.SendAtomicReplace(bsCount, textToType, fullWord.Length);
                 _inputService.ResetTrackedLength();
             }
             else
             {
+                // VirtualKey 모드: OS IME가 조합을 처리하므로 전체를 지우고 전체 단어를 전송한다.
                 for (int i = 0; i < bsCount; i++)
                     _inputService.SendKeyPress(VirtualKeyCode.VK_BACK);
                 if (fullWord.Length > 0)

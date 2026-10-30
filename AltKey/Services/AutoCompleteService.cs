@@ -49,7 +49,7 @@ public sealed class AutoCompleteService
     /// 추천 목록에서 특정 단어를 선택(수락)했을 때 호출됩니다.
     /// 수락 후 즉시 바이그램 추천을 조회하여 표시합니다.
     /// </summary>
-    public (int backspaceCount, string fullWord) AcceptSuggestion(string suggestion)
+    public (int backspaceCount, string fullWord, int prefixLength) AcceptSuggestion(string suggestion)
     {
         var result = _module.AcceptSuggestion(suggestion);
         _lastCommittedWord = ContainsRawJamo(result.fullWord) ? null : result.fullWord;

@@ -102,10 +102,12 @@ public class KoreanInputModuleQuietEnglishTests : KoreanInputModuleTestBase
         module.HandleKey(oSlot, ctxNoModifiers);
         Assert.Equal("hello", module.CurrentWord);
 
-        var (bs, word) = module.AcceptSuggestion("help");
+        var (bs, word, prefix) = module.AcceptSuggestion("help");
 
-        Assert.Equal(5, bs);
+        // "hello"와 "help"의 공통 접두사는 "hel"(3자) — 지울 것은 2자, 쓸 것은 "p".
+        Assert.Equal(2, bs);
         Assert.Equal("help", word);
+        Assert.Equal(3, prefix);
         Assert.Equal("", module.CurrentWord);
     }
 

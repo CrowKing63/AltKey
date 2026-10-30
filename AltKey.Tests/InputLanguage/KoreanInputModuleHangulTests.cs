@@ -1,6 +1,7 @@
 using AltKey.Models;
 using AltKey.Services;
 using AltKey.Services.InputLanguage;
+using System.Linq;
 
 namespace AltKey.Tests.InputLanguage;
 
@@ -250,5 +251,33 @@ public class KoreanInputModuleHangulTests : KoreanInputModuleTestBase
         // 조합은 확정되지 않았으므로 사전에 새 단어가 없어야 한다.
         Assert.Equal(0, koDict.UserWordCount);
         Assert.Equal("가", module.CurrentWord);
+    }
+
+    /// <summary>
+    /// 자모 탭마다 바뀌는 것은 꼬리 1~2자뿐이므로, 공통 접두사 아래만 지우고 새 꼬리만 쓴다
+    /// (suffix-only rewrite, docs/auto-complet/TASK-09-suffix-only-rewrite.md).
+    /// "안녕" 입력 시 백스페이스 총합은 4회(기존 전체 재작성 방식이면 15회).
+    /// </summary>
+    [Fact]
+    public void Jamo_taps_rewrite_only_the_changed_suffix()
+    {
+        var (module, input, _) = TestSlotFactory.CreateModuleWithInput();
+
+        module.HandleKey(ㅇ_slot, CtxFromInput(input));
+        module.HandleKey(ㅏ_slot, CtxFromInput(input));
+        module.HandleKey(ㄴ_slot, CtxFromInput(input));
+        module.HandleKey(ㄴ_slot, CtxFromInput(input));
+        module.HandleKey(ㅕ_slot, CtxFromInput(input));
+        module.HandleKey(ㅇ_slot, CtxFromInput(input));
+
+        Assert.Equal("안녕", module.CurrentWord);
+
+        // 각 탭의 (백스페이스 개수, 전송 문자) — 접두사 이하만 지우고 꼬리만 씀.
+        // FakeInputService.AtomicReplaces는 ConcurrentBag이라 삽입 반대순서(LIFO)로 열거된다.
+        Assert.Equal(
+            [(1, "\uB155"), (1, "\uB140"), (0, "\u3134"), (1, "\uC548"), (1, "\uC544"), (0, "\u3147")],
+            input.AtomicReplaces.Select(r => (r.prevLen, r.next)).ToArray());
+        // 백스페이스 총합 4회(기존 전체 재작성 방식이면 15회).
+        Assert.Equal(4, input.AtomicReplaces.Sum(r => r.prevLen));
     }
 }

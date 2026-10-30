@@ -483,7 +483,16 @@ public class InputService
         ReleaseTransientModifiers("SendUnicode");
     }
 
-    public virtual void SendAtomicReplace(int prevLen, string newOutput)
+    public virtual void SendAtomicReplace(int prevLen, string newOutput) =>
+        SendAtomicReplace(prevLen, newOutput, newOutput.Length);
+
+    /// <summary>
+    /// 지우고 다시 쓰는 원자적 교체 (suffix-only rewrite 버전).
+    /// prevLen: 보낼 백스페이스 개수, newText: 전송할 새 꼬리만, fullNewLength: 작업 후 화면 전체 길이.
+    /// 추적 길이는 화면의 "전체" 길이어야 한다 — CommitCurrentWord 같은 경로가
+    /// 이 값 기준으로 화면을 지우기 때문이다 (docs/auto-complet/TASK-09-suffix-only-rewrite.md).
+    /// </summary>
+    public virtual void SendAtomicReplace(int prevLen, string newText, int fullNewLength)
     {
         // 백스페이스 배치와 새 유니코드 문자 배치를 분리해 보낸다.
         // 두 배치가 0지연으로 붙어 가면 일부 앱(메모장 EDIT 컨트롤 등)이 메시지 처리
@@ -506,10 +515,10 @@ public class InputService
         }
 
         // 2. 새 조합 글자 입력 — Unicode, 백스페이스가 완전히 처리된 뒤의 별도 배치.
-        if (newOutput.Length > 0)
+        if (newText.Length > 0)
         {
             var chars = new List<Win32.INPUT>();
-            foreach (var ch in newOutput)
+            foreach (var ch in newText)
             {
                 chars.Add(MakeUnicodeKeyDown(ch));
                 chars.Add(MakeUnicodeKeyUp(ch));
@@ -517,7 +526,7 @@ public class InputService
             DispatchInput(chars.ToArray());
         }
 
-        TrackedOnScreenLength = newOutput.Length;
+        TrackedOnScreenLength = fullNewLength;
         ReleaseTransientModifiers("SendAtomicReplace");
     }
 

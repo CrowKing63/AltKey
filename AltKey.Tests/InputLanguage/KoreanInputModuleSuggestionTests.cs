@@ -17,10 +17,12 @@ public class KoreanInputModuleSuggestionTests : KoreanInputModuleTestBase
         module.HandleKey(ㅎ_slot, ctxNoModifiers);
         module.HandleKey(ㅐ_slot, ctxNoModifiers);
 
-        var (bs, word) = module.AcceptSuggestion("해달");
+        var (bs, word, prefix) = module.AcceptSuggestion("해달");
 
-        Assert.Equal(1, bs);
+        // "해"와 "해달"의 공통 접두사는 1자 — 지울 것은 0자, 쓸 것은 "달".
+        Assert.Equal(0, bs);
         Assert.Equal("해달", word);
+        Assert.Equal(1, prefix);
     }
 
     [Fact]
@@ -32,10 +34,12 @@ public class KoreanInputModuleSuggestionTests : KoreanInputModuleTestBase
         module.HandleKey(ㅎ_slot, ctxNoModifiers);
         module.HandleKey(ㅐ_slot, ctxNoModifiers);
 
-        var (bs, word) = module.AcceptSuggestion("해달");
+        var (bs, word, prefix) = module.AcceptSuggestion("해달");
 
+        // VirtualKey 모드에서는 접두사 최적화가 적용되지 않는다 (OS IME가 조합).
         Assert.Equal(2, bs);
         Assert.Equal("해달", word);
+        Assert.Equal(0, prefix);
     }
 
     [Fact]
@@ -46,8 +50,8 @@ public class KoreanInputModuleSuggestionTests : KoreanInputModuleTestBase
         module.HandleKey(ㅎ_slot, ctxNoModifiers);
         module.HandleKey(ㅐ_slot, ctxNoModifiers);
 
-        var (bs, word) = module.AcceptSuggestion("해달");
-        input.SendAtomicReplace(bs, word);
+        var (bs, word, prefix) = module.AcceptSuggestion("해달");
+        input.SendAtomicReplace(bs, word.Substring(prefix));
         input.ResetTrackedLength();
 
         module.HandleKey(ㅎ_slot, ctxNoModifiers);
@@ -55,6 +59,27 @@ public class KoreanInputModuleSuggestionTests : KoreanInputModuleTestBase
         var last = input.AtomicReplaces.Last();
         Assert.Equal(0, last.prevLen);
         Assert.Equal("ㅎ", last.next);
+    }
+
+    /// <summary>
+    /// 현재 조합과 제안어에 공통 접두사가 전혀 없는 경우: 전체를 지우고 전체 단어를 쓴다
+    /// (suffix-only rewrite의 퇴화 케이스, docs/auto-complet/TASK-09-suffix-only-rewrite.md).
+    /// </summary>
+    [Fact]
+    public void AcceptSuggestion_with_no_common_prefix_erases_all_and_types_full_word()
+    {
+        var module = CreateModule(out _);
+
+        module.HandleKey(ㄴ_slot, ctxNoModifiers);
+        module.HandleKey(ㅏ_slot, ctxNoModifiers);
+        Assert.Equal("나", module.CurrentWord);
+
+        var (bs, word, prefix) = module.AcceptSuggestion("하다");
+
+        // "나"와 "하다"는 공통 접두사 0 — 1자 지우고 "하다" 전체 전송.
+        Assert.Equal(1, bs);
+        Assert.Equal("하다", word);
+        Assert.Equal(0, prefix);
     }
 
     [Fact]
@@ -317,9 +342,9 @@ public class KoreanInputModuleSuggestionTests : KoreanInputModuleTestBase
 
         Assert.Equal("친척", module.CurrentWord);
 
-        // AcceptSuggestion("친척")
-        var (bs, word) = module.AcceptSuggestion("친척");
-        input.SendAtomicReplace(bs, word);
+        // AcceptSuggestion("친척") — 이미 "친척"이 화면에 있으므로 지울 것도 쓸 것도 없음.
+        var (bs, word, prefix) = module.AcceptSuggestion("친척");
+        input.SendAtomicReplace(bs, word.Substring(prefix));
         input.ResetTrackedLength();
 
         Assert.Equal("", module.CurrentWord);

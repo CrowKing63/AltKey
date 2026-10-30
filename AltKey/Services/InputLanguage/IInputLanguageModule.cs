@@ -31,8 +31,11 @@ public interface IInputLanguageModule
     bool HandleKey(KeySlot slot, KeyContext ctx);
 
     /// 자동완성 제안 수락.
-    /// 반환값: (BackspaceCount, FullWord) — 호출자가 이 값으로 SendAtomicReplace 또는 BS+Unicode 전송.
-    (int backspaceCount, string fullWord) AcceptSuggestion(string suggestion);
+    /// 반환값: (백스페이스 개수, 전체 단어, 접두사 길이) — 화면에서 지울 글자 수, 최종 텍스트,
+    /// 현재 조합과 전체 단어가 공유하는 앞부분 길이.
+    /// Unicode 모드 호출자는 백스페이스 개수만큼 지운 뒤 전체 단어[접두사 길이..] (꼬리만)을 전송한다.
+    /// VirtualKey 모드 호출자는 VK_BACK × 백스페이스 개수 + 전체 단어 전송을 유지한다.
+    (int backspaceCount, string fullWord, int prefixLength) AcceptSuggestion(string suggestion);
 
     /// 외부(AutoCompleteService)에서 단어가 확정되었음을 엔진에 알립니다.
     /// 엔진 내부의 lastCommittedWord를 갱신하여 bigram 컨텍스트를 동기화합니다.
