@@ -36,10 +36,13 @@ Copy-Item (Join-Path $layoutsSrc "*.json") (Join-Path $staging "layouts") -Force
 # 실행 파일 옆에 config.json이 있으면 포터블 모드로 오인해 읽기 전용 설치 디렉터리에
 # 쓰려 앱 시작이 실패한다. (PathResolver.IsPortable이 스토어 판을 제외하는 것도 이중 방어)
 
-# 5. Assets — MSIX 로고(msix/Assets) + 앱 공용 에셋(emoji.json, Sounds/click.wav)
+# 5. Assets — MSIX 로고(msix/Assets) + 앱 공용 에셋(icon.ico, emoji.json, Sounds/click.wav)
 $assetsOut = Join-Path $staging "Assets"
 New-Item -ItemType Directory -Force $assetsOut | Out-Null
 Copy-Item (Join-Path $root "msix/Assets/*.png") $assetsOut -Force
+# 앱 아이콘(icon.ico) — TrayService가 BaseDirectory\Assets\icon.ico에서 트레이 아이콘을 로드하므로
+# 패키지에 반드시 포함해야 한다. 빠지면 SystemIcons.Application(기본 아이콘)으로 폴백한다.
+Copy-Item (Join-Path $root "AltKey/Assets/icon.ico") $assetsOut -Force
 Copy-Item (Join-Path $root "AltKey/Assets/emoji.json") $assetsOut -Force
 $soundsOut = Join-Path $assetsOut "Sounds"
 New-Item -ItemType Directory -Force $soundsOut | Out-Null
