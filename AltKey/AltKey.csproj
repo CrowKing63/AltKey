@@ -22,9 +22,10 @@
   </ItemGroup>
   
   <ItemGroup>
-    <Content Include="config.json" Condition="Exists('config.json')">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+    <!-- config.json은 출력 폴더로 복사하지 않는다.
+         exe 옆에 config.json이 있으면 포터블 모드로 오인하는데,
+         MSIX(스토어) 패키지에 포함되면 읽기 전용 설치 디렉터리에 쓰려 시작이 실패한다.
+         포트레블 ZIP용 config.json은 scripts/package-portable.ps1이 직접 생성한다. -->
     <Content Include="layouts\*.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
