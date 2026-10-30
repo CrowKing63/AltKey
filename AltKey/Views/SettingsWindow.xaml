@@ -347,7 +347,16 @@
                                       IsChecked="{Binding RunOnStartup}"
                                       Margin="0,0,0,16"
                                       KeyboardNavigation.TabIndex="31"
-                                      AutomationProperties.Name="자동 실행"/>
+                                      AutomationProperties.Name="자동 실행"
+                                      Visibility="{Binding IsPackagedStartup, Converter={StaticResource InvBoolToVis}}"/>
+
+                            <!-- 스토어(MSIX) 버전 안내: 매니페스트의 시작 프로그램 등록이 자동 실행을 관리하므로
+                                 앱 내 체크박스는 숨기고 Windows 설정을 안내합니다. -->
+                            <TextBlock Text="스토어 버전에서는 Windows 설정 &gt; 앱 &gt; 시작 프로그램에서 AltKey를 켜거나 꺼야 합니다."
+                                       Foreground="{DynamicResource SettingsFgSub}" FontSize="11" TextWrapping="Wrap"
+                                       Margin="0,0,0,16"
+                                       Visibility="{Binding IsPackagedStartup, Converter={StaticResource BoolToVis}}"
+                                       AutomationProperties.Name="스토어 버전 시작 프로그램 안내"/>
 
                             <TextBlock Text="닫기/숨김" Style="{StaticResource SectionTitleStyle}"/>
                             <CheckBox Content="닫기 확인 다시 묻지 않기"

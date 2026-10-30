@@ -61,6 +61,13 @@ public partial class SettingsViewModel : ObservableObject
     // T-8.1: 자동 실행
     [ObservableProperty] private bool runOnStartup;
 
+    /// <summary>
+    /// 스토어(MSIX) 버전에서는 자동 실행이 매니페스트의 시작 프로그램 등록으로
+    /// 관리되므로, 앱 내 체크박스 대신 Windows 설정(설정 > 앱 > 시작 프로그램)을
+    /// 안내하기 위해 true를 반환합니다.
+    /// </summary>
+    public bool IsPackagedStartup => StartupService.IsPackaged;
+
     // T-8.2: 키 클릭 사운드
     [ObservableProperty] private bool soundEnabled;
     [ObservableProperty] private string soundFilePath = "";
@@ -508,8 +515,14 @@ public partial class SettingsViewModel : ObservableObject
     partial void OnRunOnStartupChanged(bool value)
     {
         if (_isLoading) return;
-        if (value) _startupService.Enable();
-        else        _startupService.Disable();
+        // 스토어(MSIX) 버전: WindowsApps 폴더 안 실행 파일은 로그인 시 실행이 차단되어
+        // 레지스트리 Run 키 등록이 조용히 실패한다. 자동 실행은 매니페스트의
+        // 시작 프로그램 등록(설정 > 앱 > 시작 프로그램)이 담당하므로 여기서만 건너뛴다.
+        if (!StartupService.IsPackaged)
+        {
+            if (value) _startupService.Enable();
+            else        _startupService.Disable();
+        }
         _configService.Update(c => c.RunOnStartup = value);
     }
 

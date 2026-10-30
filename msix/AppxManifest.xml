@@ -37,6 +37,13 @@
         Square150x150Logo="Assets\Square150x150Logo.png"
         Square44x44Logo="Assets\Square44x44Logo.png"
         BackgroundColor="#2B2B2B" />
+      <!-- 시작 프로그램 등록: 스토어(MSIX) 앱은 레지스트리 Run 키를 쓸 수 없다.
+           WindowsApps 폴더 안 파일은 로그인 시(권한 없는 사용자) 실행이 차단되어
+           자동 실행이 조용히 실패한다. windows.startupTask 확장으로 등록하면
+           작업 관리자/설정 > 앱 > 시작 프로그램에 표시되어 사용자가 켜고 끌 수 있다. -->
+      <uap:Extension Category="windows.startupTask">
+        <uap:StartupTask TaskType="logon" DisplayName="AltKey" />
+      </uap:Extension>
     </Application>
   </Applications>
 </Package>

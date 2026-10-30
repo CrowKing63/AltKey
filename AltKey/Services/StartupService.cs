@@ -12,6 +12,21 @@ public class StartupService
     private const string RegPath = @"Software\Microsoft\Windows\CurrentVersion\Run"; // 자동 실행 정보가 저장되는 레지스트리 경로입니다.
     private const string AppName = "AltKey";
 
+    /// <summary>
+    /// [기능] 스토어(MSIX) 패키지로 실행 중인지 판별합니다.
+    /// 스토어 앱은 실행 파일이 WindowsApps 폴더 안에 설치되며, 그 안의 파일을
+    /// 로그인 시 직접 실행하는 것은 윈도우가 차단합니다. 그래서 스토어 버전은
+    /// 레지스트리 Run 키 대신 매니페스트의 시작 프로그램 등록을 사용해야 합니다.
+    /// </summary>
+    public static bool IsPackaged
+    {
+        get
+        {
+            // 실행 파일 경로에 WindowsApps가 포함되면 스토어(MSIX) 설치로 간주합니다.
+            return Environment.ProcessPath?.Contains("WindowsApps", StringComparison.OrdinalIgnoreCase) == true;
+        }
+    }
+
     public bool IsEnabled
     {
         get
