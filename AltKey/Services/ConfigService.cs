@@ -239,6 +239,8 @@ public class ConfigService
     /// <summary>
     /// 현재 설정을 config.json에 저장합니다.
     /// 잠깐 파일 사용 충돌이 나면 몇 번 재시도해, 외부 도구와 함께 써도 저장 성공률을 높입니다.
+    /// [배포] 읽기 전용 경로(예: 스토어 설치 디렉터리)에서 쓰기 거부(UnauthorizedAccessException)가 나도
+    /// 앱 시작을 중단시키지 않고 조용히 포기합니다 — 설정 저장은 치명적이지 않으므로.
     /// </summary>
     public void Save()
     {
@@ -255,6 +257,12 @@ public class ConfigService
             catch (IOException) when (i < maxRetries - 1)
             {
                 Thread.Sleep(300);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                // 읽기 전용 경로 — 재시도할 의미가 없으므로 바로 포기하고 로그만 남깁니다.
+                System.Diagnostics.Debug.WriteLine($"[AltKey] Config save denied: {ex.Message}");
+                return;
             }
         }
     }

@@ -31,8 +31,10 @@ $layoutsSrc = Join-Path $root "AltKey/layouts"
 New-Item -ItemType Directory -Force (Join-Path $staging "layouts") | Out-Null
 Copy-Item (Join-Path $layoutsSrc "*.json") (Join-Path $staging "layouts") -Force
 
-# 4. config.json — tracked 기본 설정
-Copy-Item (Join-Path $root "AltKey/config.json") (Join-Path $staging "config.json") -Force
+# 4. config.json은 패키지에 포함하지 않는다.
+# [배포] 스토어 설치판은 %AppData%\AltKey에 자체 config.json을 만들어 사용하며,
+# 실행 파일 옆에 config.json이 있으면 포터블 모드로 오인해 읽기 전용 설치 디렉터리에
+# 쓰려 앱 시작이 실패한다. (PathResolver.IsPortable이 스토어 판을 제외하는 것도 이중 방어)
 
 # 5. Assets — MSIX 로고(msix/Assets) + 앱 공용 에셋(emoji.json, Sounds/click.wav)
 $assetsOut = Join-Path $staging "Assets"

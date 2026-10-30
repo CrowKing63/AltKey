@@ -30,10 +30,31 @@ public class LayoutService
 
     public LayoutService() : this(PathResolver.LayoutsDir) { }
 
-    public LayoutService(string layoutsDir)
+    /// <param name="layoutsDir">레이아웃 파일 저장 폴더</param>
+    /// <param name="builtinSourceDir">내장 레이아웃(Basic/Basic Plus) 소스 폴더. 기본은 실행 파일 옆 layouts 폴더.</param>
+    public LayoutService(string layoutsDir, string? builtinSourceDir = null)
     {
         _layoutsDir = layoutsDir;
         Directory.CreateDirectory(_layoutsDir);
+        SeedBuiltinLayouts(builtinSourceDir ?? Path.Combine(PathResolver.ExeDir, "layouts"));
+    }
+
+    /// <summary>
+    /// [역할] 내장 레이아웃(Basic/Basic Plus)이 데이터 폴더에 없으면 소스 폴더에서 복사해 시드합니다.
+    /// [배포] MSIX 스토어 설치판은 설치기가 없으므로, 앱 시작 시 패키지에 번들된 layouts 폴더에서 채웁니다.
+    /// [보안] 이미 있는 파일(사용자가 수정한 프리셋 포함)은 덮어쓰지 않습니다.
+    /// </summary>
+    private void SeedBuiltinLayouts(string sourceDir)
+    {
+        if (!Directory.Exists(sourceDir)) return;
+
+        foreach (var name in BuiltinNames)
+        {
+            var target = Path.Combine(_layoutsDir, name + ".json");
+            var source = Path.Combine(sourceDir, name + ".json");
+            if (!File.Exists(target) && File.Exists(source))
+                File.Copy(source, target);
+        }
     }
 
     public IReadOnlyList<string> GetAvailableLayouts()

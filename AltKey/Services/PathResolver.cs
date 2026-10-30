@@ -8,9 +8,19 @@ public static class PathResolver
         Path.GetDirectoryName(Environment.ProcessPath ?? "") ?? "";
     private static string? _overrideDataDir;
 
-    /// <summary>exe 옆에 config.json이 있으면 포터블 모드</summary>
-    public static bool IsPortable =>
-        File.Exists(Path.Combine(_exeDir, "config.json"));
+    /// <summary>실행 파일이 있는 폴더 경로입니다. (레이아웃 시드 등 앱 자원 탐색에 사용)</summary>
+    public static string ExeDir => _exeDir;
+
+    /// <summary>
+    /// exe 옆에 config.json이 있으면 포터블 모드.
+    /// [배포] 스토어(MSIX) 설치판은 항상 %AppData% 기반 데이터 폴더를 사용하므로,
+    /// 패키지에 번들된 config.json 때문에 포터블 모드로 오인하는 것을 막는다.
+    /// </summary>
+    public static bool IsPortable => IsPortablePath(_exeDir);
+
+    /// <summary>[테스트] exe 경로 기준으로 포터블 모드 판정 (스토어 설치판 제외).</summary>
+    internal static bool IsPortablePath(string exeDir) =>
+        !IsMsixPath(exeDir) && File.Exists(Path.Combine(exeDir, "config.json"));
 
     /// <summary>
     /// MSIX(Microsoft Store) 설치판 감지. 스토어 앱은 C:\Program Files\WindowsApps\ 아래에 설치되므로

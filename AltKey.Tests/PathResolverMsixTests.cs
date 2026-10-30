@@ -44,4 +44,51 @@ public class PathResolverMsixTests
         var path = @"C:\Users\uitaek\MyWindowsAppsBackup";
         Assert.False(PathResolver.IsMsixPath(path));
     }
+
+    [Fact]
+    public void IsPortablePath_store_like_path_with_config_json_returns_false()
+    {
+        // 스토어 설치판은 config.json이 exe 옆에 있어도 포터블 모드가 아니다.
+        // (테스트 머신에는 실제 WindowsApps 경로를 만들 수 없어, 경로 형태만 흉내낸다.)
+        var dir = Path.Combine(Path.GetTempPath(), "WindowsApps", "altkey-tests-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(dir);
+        File.WriteAllText(Path.Combine(dir, "config.json"), "{}");
+        try
+        {
+            Assert.True(PathResolver.IsMsixPath(dir));
+            Assert.False(PathResolver.IsPortablePath(dir));
+        }
+        finally { Directory.Delete(dir, recursive: true); }
+    }
+
+    [Fact]
+    public void IsPortablePath_regular_path_with_config_json_returns_true()
+    {
+        var dir = CreateTempDirWithConfig();
+        try
+        {
+            Assert.True(PathResolver.IsPortablePath(dir));
+        }
+        finally { Directory.Delete(dir, recursive: true); }
+    }
+
+    [Fact]
+    public void IsPortablePath_regular_path_without_config_json_returns_false()
+    {
+        var dir = Path.Combine(Path.GetTempPath(), "altkey-portable-tests-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(dir);
+        try
+        {
+            Assert.False(PathResolver.IsPortablePath(dir));
+        }
+        finally { Directory.Delete(dir, recursive: true); }
+    }
+
+    private static string CreateTempDirWithConfig()
+    {
+        var dir = Path.Combine(Path.GetTempPath(), "altkey-portable-tests-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(dir);
+        File.WriteAllText(Path.Combine(dir, "config.json"), "{}");
+        return dir;
+    }
 }
