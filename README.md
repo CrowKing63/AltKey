@@ -12,6 +12,7 @@ Windows 환경에서 한국어 입력을 최적화하여 지원하는 경량 화
 [![License](https://img.shields.io/github/license/CrowKing63/AltKey?style=flat-square)](LICENSE)
 [![.NET](https://img.shields.io/badge/.NET-8.0-512BD4?style=flat-square)](https://dotnet.microsoft.com)
 [![Platform](https://img.shields.io/badge/Platform-Windows%2010%2B-0078D4?style=flat-square)](https://www.microsoft.com/windows)
+[![Microsoft Store](https://img.shields.io/badge/Microsoft%20Store-Get%20it%20Free-0078D4?style=flat-square)](https://apps.microsoft.com/detail/9mztz1c990d7)
 
 [설치](#설치) · [기능](#기능) · [최근 반영](#최근-반영) · [커스터마이징](#커스터마이징) · [매뉴얼](https://github.com/CrowKing63/AltKey/wiki)
 
@@ -102,6 +103,11 @@ AltKey는 마우스, 터치, 외부 스위치만으로도 물리 키보드를 �
 ---
 
 ## 설치
+
+### Microsoft Store (가장 간편)
+
+1. [Microsoft Store](https://apps.microsoft.com/detail/9mztz1c990d7)에서 **AltKey**를 검색해 설치합니다
+2. 이후 업데이트는 Microsoft Store가 자동으로 처리하므로 수동 관리가 필요 없습니다
 
 ### 설치 프로그램 (권장)
 
