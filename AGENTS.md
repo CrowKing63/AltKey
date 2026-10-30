@@ -16,6 +16,7 @@
 
 ## 2. 자동완성·한글 입력 보호
 - 자동완성/한글 조합 관련 코드를 수정하기 전에 `docs/auto-complet/CORE-LOGIC-PROTECTION.md`의 **§2 "절대 건드리지 말 것"** 목록만 먼저 확인한다. 이 문서가 해당 영역의 권위 있는 지침이다.
+- 한글 음절의 유니코드 코드포인트를 **수동 계산하지 않는다.** 항상 `tools/hangul/hangul_calc.py`를 실행하여 ground truth를 확보한다 (스킬: `hangul-composition-calc`).
 
 ## 3. 제품 범위
 - 이 프로젝트는 **한국어 사용자 전용** 가상 키보드다.
