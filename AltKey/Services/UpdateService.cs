@@ -14,6 +14,11 @@ public class UpdateService
 
     public async Task<(bool HasUpdate, string Version, string Url, string InstallerUrl)> CheckAsync()
     {
+        // [업데이트] 스토어(MSIX) 설치판은 Microsoft Store가 자동으로 업데이트하므로 GitHub 확인을 하지 않는다.
+        // 이 단일 쉐크포인트에서 막아 두므로, 어떤 호출 경로(시작·트레이·설정)에서도 스토어판이 GitHub를 조회하지 못한다.
+        if (PathResolver.IsMsix)
+            return (false, string.Empty, string.Empty, string.Empty);
+
         try
         {
             using var client = new HttpClient();

@@ -195,6 +195,10 @@ public partial class App : System.Windows.Application
             // T-9.5: 백그라운드 업데이트 확인 (창 표시 후 비동기 실행)
             _ = Task.Run(async () =>
             {
+                // [업데이트] 스토어(MSIX) 설치판은 Microsoft Store가 자동으로 업데이트하므로 GitHub 확인을 생략한다.
+                if (PathResolver.IsMsix)
+                    return;
+
                 var updateSvc = Services.GetRequiredService<UpdateService>();
                 var (hasUpdate, version, url, installerUrl) = await updateSvc.CheckAsync();
                 if (hasUpdate)
