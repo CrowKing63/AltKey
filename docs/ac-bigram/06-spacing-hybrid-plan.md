@@ -62,10 +62,30 @@ return " " + suggestion;
 | 시점 | 코드 위치 | 신호 |
 |---|---|---|
 | 단어 commit (`FinalizeComposition` / `CommitCurrentWord`) | `KoreanInputModule` | W가 조사 P로 끝나고 `W[..^P.Length] == lastCommittedWord`이면 → **(prev, P) attached +1** |
-| 단어 commit (공백 이후 독립 토큰) | 위 동일 | W가 정적 조사 목록에 있고 `W == lastCommittedWord 직후 토큰`이면 → **(prev, W) separated +1** |
-| bigram 제안 수락 (`AcceptBigramSuggestion`) | `AutoCompleteService` | **최강 신호**: 공백 없이 삽입하면 attached +1, 공백과 함께면 separated +1 (사용자의 명시적 선택) |
+| 단어 commit (공백 이후 독립 토큰) | 위 동일 | W가 정적 조사 목록에 있고 `W == lastCommittedWord 직후 토큰`이며 **마지막 커밋 이후 실제 공백이 개입한 경우** → **(prev, W) separated +1** |
 
 commit 시 매칭은 규칙 보조(rule-assisted)다: "학생이"라는 토큰에서 "학생"+"이"를 분리하는 것은 정적 목록 없이는 불가능하므로,列表가 학습의 *트리거* 역할을 한다.
+
+**제안 수락(`AcceptBigramSuggestion`)은 증거 수집 포인트에 포함하지 않는다.** 두 가지 이유:
+
+1. **순환 강화 방지**: 수락 시 삽입되는 공백 여부는 이미 결정 규칙의 출력이다. 거기서 기록하면 시스템이 내린 결정을 "사용자의 선택"으로 다시 세게 되어, 한 쌍이 임계값을 넘으면 오탐이 자기 강화로 영구 잠긴다.
+2. **중복**: 수락된 단어는 정상 커밋 경로로 지나가므로, 위 commit 신호가 이미 같은 사건을 포착한다(수락 "이" → W='이' + lastCommittedWord='학생' → separated +1).
+
+부수 이점: `AutoCompleteService`에 attach 스토어 의존성이 추가되지 않아 자동완성 핵심 경로 침범 면적이 최소화된다. 학습 속도는 commit 빈도에만 의존하게 되므로, minSamples 튜닝(§6)에서 실사용 데이터로 조정한다.
+
+참고: `lastCommittedWord` 추적 상태는 이미 존재한다(`KoreanInputModule._lastCommittedWord`, 커밋 시 갱신). 신규 상태 추가 불필요.
+
+### 3.3.1 커밋 유닛 병합 (공백 없는 수락 경로)
+
+마지막 커밋 이후 **구분자(공백) 없이** 토큰이 커밋되면(공백 없는 제안 수락 등), 새 단어가 아니라 **앞 단어에 합쳐진 단일 커밋 유닛**으로 취급한다:
+
+- "이"를 공백 없이 수락 → 커밋 유닛 = "학생이" → `lastCommittedWord = "학생이"`
+- 다음 bigram 쌍은 `("학생이", X)` — 수동 입력("학생이" 직접 입력)과 동일한 형태가 된다.
+
+이에는 `KoreanInputModule`에 작은 상태 하나, **`_separatorSinceCommit`**(`OnSeparator`에서 공백일 때 세팅, 커밋 시 consume)이 필요하다. 이 단일 판정이 두 문제를 동시에 푼다:
+
+1. **신호 뒤집기 방지**: 공백 없는 수락은 separated 신호를 더 이상 찍지 않는다(공백 개입 없음). attached 결정을 separated 증거로 강화해 결정이 진동(oscillation)하던 경로가 사라진다.
+2. **컨텍스트 키 불일치 해소**: 수동 입력과 제안 수락이 같은 bigram 키(`학생이→X`)를 만들어 학습 데이터가 `이→X` / `학생이→X`로 쪼개지지 않는다.
 
 ### 3.4 수락 시 결정 규칙
 
@@ -92,6 +112,7 @@ else
 | "감사해" 같은 동사 어미 오탐 → "감사 해"가 붙여져 "감사해"로 저장 | 어미 충돌 조사는 높은 임계값 + separated 증거만으로도 공백 복귀 (attached > separated 조건) |
 | 고유명사+조사 ("박서준이") | prev가 학습 단어인지 여부와 무관하게 매칭 — 명사성 판정 없음. 오탐 시 separated 신호로 자纠正 |
 | 기존 bigram 파일에 자모 혼입 데이터 (과거 OnSeparator 우회 버그 유래) | attach 스토어는 신규 파일이라 영향 없음. bigram 스토어 청소는 별도 작업 |
+| 수락 경로 신호 뒤집기 → 결정 진동 / bigram 키 불일치 (`이→X` vs `학생이→X`) | `_separatorSinceCommit` 판정으로 해소 (§3.3.1) — 공백 없는 수락은 앞 단어에 병합되어 separated로 세지지 않고, 컨텍스트도 `학생이`가 된다 |
 | JSON 파싱 실패 (손상 파일) | `BigramFrequencyStore.Load()` 패턴 재사용 — catch 시 빈 dict |
 
 ## 5. 테스트 계획
@@ -103,6 +124,7 @@ else
    - "학생" commit → "이" 독립 토큰 commit → separated 증거 확인
    - "학생이" 단일 토큰 commit ×3 → attached 증거 확인
    - `AcceptBigramSuggestion("이")` → attached 임계값 도달 시 반환값에 공백 없음 assert
+   - 공백 없는 수락 → `lastCommittedWord == "학생이"`이고 separated 기록 없음 (커밋 유닛 병합, §3.3.1)
 
 ## 6. 미결 사항 (다음 세션에서 결정)
 
@@ -116,7 +138,7 @@ else
 
 | 파일 | 역할 |
 |---|---|
-| `AltKey/Services/AutoCompleteService.cs` | `AcceptBigramSuggestion` 반환값 분기, 증거 기록 |
+| `AltKey/Services/AutoCompleteService.cs` | `AcceptBigramSuggestion` 반환값 분기 (증거 기록 없음) |
 | `AltKey/Services/InputLanguage/KoreanInputModule.cs` | commit 시 매칭·증거 수집 |
 | `AltKey/Services/BigramAttachStore.cs` (신규) | attach 카운터 저장소 |
 | `AltKey/Services/SpacingRules.cs` (신규) | 정적 조사 목록 + 임계값 |
