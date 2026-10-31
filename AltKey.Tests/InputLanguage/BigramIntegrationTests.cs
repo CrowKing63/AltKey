@@ -53,6 +53,11 @@ public class BigramIntegrationTests : IDisposable
         // 두번째 인스턴스로 재시작 시뮬레이션
         var koBigram2 = new BigramFrequencyStore(_tempDir, "ko");
         Assert.True(koBigram2.Contains("안녕", "하세요"));
+
+        // 빈도가 정확히 1 — 이중 기록이 없어야 함
+        var nexts = koBigram2.GetNexts("안녕", "");
+        Assert.Single(nexts);
+        Assert.Equal(1, nexts[0].Count);
     }
 
     [Fact]

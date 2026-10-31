@@ -313,6 +313,11 @@ public sealed class KoreanInputModule : IInputLanguageModule
     }
 
     /// <summary>
+    /// 직전에 확정된 단어 (bigram 문맥). AutoCompleteService가 prev로 읽는 유일한 경로.
+    /// </summary>
+    public string? LastCommittedWord => _lastCommittedWord;
+
+    /// <summary>
     /// 단어 구분자(공백)가 눌렸을 때 호출됩니다. bigram 문맥을 유지합니다.
     /// </summary>
     public void OnSeparator() => FinalizeComposition(keepContextForBigram: true);
@@ -334,6 +339,8 @@ public sealed class KoreanInputModule : IInputLanguageModule
 
     /// <summary>
     /// 현재 입력 중인 단어를 확정하고 학습 엔진에 기록합니다.
+    /// "의도적 확정" 경로(스캔 바 등)이므로 bigram 체인에 참여하지 않습니다 —
+    /// _lastCommittedWord를 리셋해 다음 단어가 이 단어와 쌍을 이루지 않게 합니다.
     /// </summary>
     public void CommitCurrentWord()
     {
@@ -341,29 +348,20 @@ public sealed class KoreanInputModule : IInputLanguageModule
 
         bool learningEnabled = _config.Current.AutoCompleteEnabled;
 
+        // unigram 학습만 — 이전 단어와의 bigram 쌍은 기록하지 않음.
         if (_submode == InputSubmode.HangulJamo && _composer.Current.Length > 0)
         {
-            var word = _composer.Current;
             if (learningEnabled)
-            {
-                _koDict.RecordWord(word);
-                if (_lastCommittedWord is { Length: > 0 })
-                    _koDict.RecordBigram(_lastCommittedWord, word);
-            }
-            _lastCommittedWord = word;
+                _koDict.RecordWord(_composer.Current);
         }
         else if (_submode == InputSubmode.QuietEnglish && _englishPrefix.Length >= 2)
         {
-            var word = _englishPrefix;
             if (learningEnabled)
-            {
-                _enDict.RecordWord(word);
-                if (_lastCommittedWord is { Length: > 0 })
-                    _enDict.RecordBigram(_lastCommittedWord, word);
-            }
-            _lastCommittedWord = word;
+                _enDict.RecordWord(_englishPrefix);
         }
 
+        // 의도적 확정은 bigram 체인을 끊음 — 다음 단어가 이 단어와 짝을 이루지 않음.
+        _lastCommittedWord = null;
         _wordAlreadyCommitted = true;
         _suggestionContext = null;
         _composer.Reset();

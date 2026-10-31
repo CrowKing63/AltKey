@@ -41,6 +41,9 @@ public interface IInputLanguageModule
     /// 엔진 내부의 lastCommittedWord를 갱신하여 bigram 컨텍스트를 동기화합니다.
     void NotifyWordCommitted(string word);
 
+    /// 직전에 확정된 단어 (bigram 문맥). 모듈이 유일한 소유자 — 서비스는 복제하지 않는다.
+    string? LastCommittedWord { get; }
+
     /// "가/A" 토글 버튼이 호출. 이전 조합 상태는 플러시하고 Submode 반전.
     void ToggleSubmode();
 

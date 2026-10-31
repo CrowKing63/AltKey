@@ -10,11 +10,9 @@ namespace AltKey.Services;
 public sealed class AutoCompleteService
 {
     private readonly IInputLanguageModule _module; // 한글/영어 등 실제 입력 엔진
-    private readonly KoreanDictionary _koDict; // 한글 사전 (bigram 저장소 접근용)
-    private readonly EnglishDictionary _enDict; // 영어 사전 (bigram 저장소 접근용)
+    private readonly KoreanDictionary _koDict; // 한글 사전 (기록·제안 경로)
+    private readonly EnglishDictionary _enDict; // 영어 사전 (기록·제안 경로)
     private readonly ConfigService _config; // 설정 서비스 (AutoCompleteEnabled 확인용)
-
-    private string? _lastCommittedWord; // 직전에 수락된 단어 (bigram 문맥용)
 
     public AutoCompleteService(IInputLanguageModule module, KoreanDictionary koDict, EnglishDictionary enDict, ConfigService config)
     {
@@ -52,7 +50,7 @@ public sealed class AutoCompleteService
     public (int backspaceCount, string fullWord, int prefixLength) AcceptSuggestion(string suggestion)
     {
         var result = _module.AcceptSuggestion(suggestion);
-        _lastCommittedWord = ContainsRawJamo(result.fullWord) ? null : result.fullWord;
+        // bigram 문맥(_lastCommittedWord)은 모듈이 소유 — 여기서 복제하지 않는다.
 
         // 수락된 단어를 기준으로 바이그램 추천을 즉시 조회
         var bigramStore = GetActiveBigramStore();
@@ -72,26 +70,25 @@ public sealed class AutoCompleteService
     /// </summary>
     public string AcceptBigramSuggestion(string suggestion)
     {
-        // 자모 나열 방어: Record와 _lastCommittedWord 갱신을 건너뜀
+        // 자모 나열 방어: 기록과 문맥 갱신을 건너뜀
         if (ContainsRawJamo(suggestion))
         {
             FlushEngineState();
             return " " + suggestion;
         }
 
-        // 바이그램 학습 (_module.OnSeparator 전에 먼저 실행)
-        var bigramStore = GetActiveBigramStore();
-        if (_lastCommittedWord is { Length: > 0 })
-            bigramStore.Record(_lastCommittedWord, suggestion);
+        // 학습은 사전의 단일 경로를 거친다 (적격성 필터 + AutoCompleteEnabled 게이트).
+        // BigramFrequencyStore에 직접 Record하는 우회 경로는 금지 — CORE-LOGIC-PROTECTION.md §3.
+        if (_config.Current.AutoCompleteEnabled)
+            RecordThroughDictionary(suggestion);
 
-        _lastCommittedWord = suggestion;
-        _module.NotifyWordCommitted(suggestion); // 엔진 내부 _lastCommittedWord 동기화
+        _module.NotifyWordCommitted(suggestion); // 엔진 내부 _lastCommittedWord 갱신
 
         // 내부 상태 정리 (public OnSeparator 경유 시 _lastCommittedWord 덮어쓰기 방지)
         FlushEngineState();
 
         // 수락된 단어를 새 prev로 연속 바이그램 조회
-        var nexts = bigramStore.GetNexts(suggestion, "");
+        var nexts = GetActiveBigramStore().GetNexts(suggestion, "");
         if (nexts.Count > 0)
         {
             var bigramSuggestions = nexts.Select(n => n.Next).ToList();
@@ -109,36 +106,16 @@ public sealed class AutoCompleteService
 
     /// <summary>
     /// 공백이나 엔터처럼 단어를 끝내는 키가 눌렸을 때 호출됩니다.
-    /// 수동 입력 단어를 bigram에 기록합니다.
+    /// bigram 기록은 KoreanInputModule.FinalizeComposition이 사전 경유로 단일 처리한다.
+    /// (여기서 직접 Record하면 빈도가 2배로 세진다 — CORE-LOGIC-PROTECTION.md §3.)
     /// </summary>
-    public void OnSeparator()
-    {
-        // OnSeparator 내부에서 CurrentWord가 초기화될 수 있으므로 먼저 캡처
-        string current = _module.CurrentWord;
-
-        bool autoCompleteEnabled = _config.Current.AutoCompleteEnabled;
-        bool isValidWord = current.Length > 0 && !ContainsRawJamo(current);
-
-        // 자동완성이 켜져 있고, 유효한 단어이며, 이전 단어가 있으면 bigram 기록
-        if (autoCompleteEnabled && _lastCommittedWord is { Length: > 0 } && isValidWord)
-            GetActiveBigramStore().Record(_lastCommittedWord, current);
-
-        // _lastCommittedWord 갱신은 AutoCompleteEnabled와 무관하게 isValidWord 기준
-        if (isValidWord)
-            _lastCommittedWord = current;
-
-        _module.OnSeparator();
-    }
+    public void OnSeparator() => _module.OnSeparator();
 
     /// 엔진 상태만 정리하고 _lastCommittedWord는 변경하지 않습니다.
     private void FlushEngineState() => _module.OnSeparator();
 
     /// 레이아웃이 바뀌거나 리셋이 필요할 때 호출합니다.
-    public void ResetState()
-    {
-        _lastCommittedWord = null;
-        _module.Reset();
-    }
+    public void ResetState() => _module.Reset();
 
     /// "가/A" 버튼을 눌러 한글/영어 입력 모드를 전환합니다.
     public void ToggleKoreanSubmode() => _module.ToggleSubmode();
@@ -164,10 +141,30 @@ public sealed class AutoCompleteService
             ? _koDict.BigramStore
             : _enDict.BigramStore;
 
-    private void OnSubmodeChanged(InputSubmode _)
+    /// <summary>
+    /// 활성 사전 경유로 단어 + bigram 쌍을 기록한다 (적격성 필터가 사전 내부에 있다).
+    /// prev는 모듈이 소유한 _lastCommittedWord에서 읽는다.
+    /// </summary>
+    private void RecordThroughDictionary(string word)
     {
-        // 언어 전환 시 bigram 문맥 초기화
-        _lastCommittedWord = null;
-        SubmodeChanged?.Invoke(_);
+        var prev = _module.LastCommittedWord;
+        if (_module.ActiveSubmode == InputSubmode.QuietEnglish)
+        {
+            _enDict.RecordWord(word);
+            if (prev is { Length: > 0 })
+                _enDict.RecordBigram(prev, word);
+        }
+        else
+        {
+            _koDict.RecordWord(word);
+            if (prev is { Length: > 0 })
+                _koDict.RecordBigram(prev, word);
+        }
+    }
+
+    private void OnSubmodeChanged(InputSubmode submode)
+    {
+        // 언어 전환 시 bigram 문맥 초기화는 ToggleSubmode → FinalizeComposition이 처리한다.
+        SubmodeChanged?.Invoke(submode);
     }
 }

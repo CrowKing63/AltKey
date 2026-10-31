@@ -87,4 +87,57 @@ public class AutoCompleteServiceBigramTests
         Assert.Equal(1, koDict.BigramStore.NextCountFor("테스트"));
         Assert.Equal(1, koDict.BigramStore.Count);
     }
+
+    /// 두 단어 연속 입력 시 bigram 빈도가 정확히 1인지를 확인합니다.
+    /// (과거 AutoCompleteService.OnSeparator의 직접 Record 경로가 빈도를 2배로 세던 버그 방지)
+    [Fact]
+    public void OnSeparator_records_bigram_frequency_exactly_once()
+    {
+        var (service, module, koDict, _) = Build();
+
+        TestSlotFactory.FeedSyllables(module, "안녕", ctxNoModifiers);
+        service.OnSeparator(); // "안녕" 확정 — prev 없음 → 쌍 기록 없음
+
+        TestSlotFactory.FeedSyllables(module, "하세요", ctxNoModifiers);
+        service.OnSeparator(); // "하세요" 확정 — prev "안녕" → 정확히 1회 Record
+
+        var nexts = koDict.BigramStore.GetNexts("안녕", "");
+        Assert.Single(nexts);
+        Assert.Equal(1, nexts[0].Count);
+    }
+
+    /// 바이그램 수락 시 단어 빈도와 bigram 쌍이 사전 경유로 기록되는지 확인합니다.
+    [Fact]
+    public void AcceptBigramSuggestion_records_word_and_pair()
+    {
+        var (service, module, koDict, _) = Build();
+
+        TestSlotFactory.FeedSyllables(module, "테스트", ctxNoModifiers);
+        service.AcceptSuggestion("테스트");
+
+        service.AcceptBigramSuggestion("확인");
+
+        Assert.True(koDict.UserStore.Contains("확인")); // 수락 자체가 단어 빈도 기록
+        var nexts = koDict.BigramStore.GetNexts("테스트", "");
+        Assert.Single(nexts);
+        Assert.Equal(1, nexts[0].Count);
+    }
+
+    /// 자동완성 OFF 상태에서는 바이그램 수락이 아무것도 기록하지 않는지 확인합니다.
+    [Fact]
+    public void AcceptBigramSuggestion_with_learning_off_records_nothing()
+    {
+        var (service, module, koDict, _) = Build(enabled: false);
+
+        TestSlotFactory.FeedSyllables(module, "테스트", ctxNoModifiers);
+        service.AcceptSuggestion("테스트"); // 설정 OFF → 단어 미기록
+        koDict.BigramStore.Record("테스트", "확인"); // 직접 선행 학습 (빈도 1)
+
+        service.AcceptBigramSuggestion("확인");
+
+        Assert.Equal(0, koDict.UserWordCount);
+        var nexts = koDict.BigramStore.GetNexts("테스트", "");
+        Assert.Single(nexts);
+        Assert.Equal(1, nexts[0].Count); // 수락으로 추가 기록이 없어야 함
+    }
 }

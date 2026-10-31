@@ -46,6 +46,8 @@ public class EnglishDictionary
     /// 영어 단어를 사용자 빈도 저장소에 기록 (최소 2자, 소문자 정규화)
     public void RecordWord(string word)
     {
+        if (string.IsNullOrWhiteSpace(word)) return;
+        word = word.Trim();
         if (word.Length < 2) return;
         _userStore.RecordWord(word.ToLowerInvariant());
     }

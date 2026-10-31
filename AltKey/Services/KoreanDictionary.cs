@@ -100,23 +100,16 @@ public class KoreanDictionary
         return result;
     }
 
-    /// 한국어 단어를 사용자 빈도 저장소에 기록 (완성 음절 2개 이상만 학습)
+    /// 한국어 단어를 사용자 빈도 저장소에 기록 (완성 음절 1개 이상 + 독립 자모 없음)
     public void RecordWord(string word)
     {
         if (string.IsNullOrWhiteSpace(word)) return;
 
         word = word.Trim();
 
-        // 완성 한글 음절만 센다 (자모 단독 U+3131~U+3163 은 제외).
-        int syllableCount = 0;
-        foreach (var ch in word)
-        {
-            if (ch >= '\uAC00' && ch <= '\uD7A3')
-                syllableCount++;
-        }
-
-        // 최소 2음절 이상일 때만 학습.
-        if (syllableCount < 2) return;
+        // 학습 적격성: 완성 한글 음절(U+AC00~D7A3)을 세고, 독립 자모가 섞이면 거부.
+        // "ㄱ가" 같은 미완성 조합은 사전에 혼입시키면 안 된다.
+        if (!IsLearnableKoreanWord(word)) return;
 
         _userStore.RecordWord(word);
     }
@@ -136,15 +129,27 @@ public class KoreanDictionary
         _bigramStore.Record(prevWord.Trim(), nextWord.Trim());
     }
 
-    private static bool IsBigramEligible(string w)
+    /// bigram 적격성 판단. RecordBigram 내부에서 양쪽 피연산자에 동일 필터를 재적용한다.
+    private static bool IsBigramEligible(string w) =>
+        !string.IsNullOrWhiteSpace(w) && IsLearnableKoreanWord(w.Trim());
+
+    /// 학습 적격성: 완성된 한글 음절(U+AC00~D7A3)이 1개 이상이고 독립 자모가 하나도 없어야 한다.
+    private static bool IsLearnableKoreanWord(string word)
     {
-        if (string.IsNullOrWhiteSpace(w)) return false;
-        w = w.Trim();
-        int syllables = 0;
-        foreach (var ch in w)
-            if (ch >= '\uAC00' && ch <= '\uD7A3') syllables++;
-        return syllables >= 2;
+        int syllableCount = 0;
+        foreach (var ch in word)
+        {
+            if (ch >= '\uAC00' && ch <= '\uD7A3')
+                syllableCount++;
+            else if (IsRawJamo(ch))
+                return false; // 독립 자모가 섞인 미완성 조합 — 학습 건너뜀
+        }
+        return syllableCount >= 1;
     }
+
+    /// 독립 자모 문자 판단 (초성 U+3131~314E, 중/종성 U+3161~3175).
+    private static bool IsRawJamo(char ch) =>
+        (ch >= '\u3131' && ch <= '\u314E') || (ch >= '\u3161' && ch <= '\u3175');
 
     /// 이전 확정 단어(prevWord)가 있을 때의 문맥 반영 제안.
     /// prevWord가 null·빈 문자열이면 기존 GetSuggestions와 동일 결과.

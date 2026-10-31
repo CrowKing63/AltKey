@@ -65,11 +65,11 @@ AltKey는 Windows 가상 키보드다. 한국어를 입력할 때 OS IME에 VK �
 | `KoreanDictionary` / `EnglishDictionary`의 제안 병합 규칙 | 반환 개수·중복 제거·랭킹을 바꿔도 안전. 단, 내장 사전을 수정하려면 `.txt` 리소스를 바꾸거나 사용자 학습 우선순위 규칙은 건드리지 말 것. |
 | `WordFrequencyStore`의 저장 빈도·프루닝 경계치 | 성능·사전 품질 관점 개선은 허용. 현재는 1초 디바운스 + 원자적 쓰기(`tmp + File.Move`) + `LastSaveError` 노출이 적용됨(TASK-05 해결). 단, `UnsafeRelaxedJsonEscaping`은 유지. |
 | `KoreanInputModule`의 **영어 prefix 대소문자 정규화** | 현재 영문은 내부적으로 소문자로 저장. 학습 키 대소문자 규칙을 바꾸는 건 허용하되 `RecordWord(word.ToLowerInvariant())` 현재 계약을 지킬 것. |
-| 단일 자모 학습 방지 같은 품질 필터 | 현재는 `KoreanDictionary.RecordWord`가 완성 한글 음절 2개 미만이면 저장 skip(TASK-03 해결). 기준을 더 강화하는 것은 허용. |
+| 단일 자모 학습 방지 같은 품질 필터 | `KoreanDictionary.RecordWord`·`IsBigramEligible`는 **완성 음절 1개 이상 + 독립 자모 없음** 기준(사용자 결정으로 2음절에서 완화, 자모 혼입 거부 추가). "ㄱ가" 같은 미완성 조합이 사전에 들어가는 것은 여전히 금지. |
 | 제안 수락(`AcceptSuggestion`) 이후의 `TrackedOnScreenLength` 처리 | 해결 완료 — `SuggestionBarViewModel.AcceptSuggestion`이 Unicode 모드에서 `SendAtomicReplace` 후 `ResetTrackedLength()`를 호출한다(TASK-01 해결). 회귀 방지 테스트 `AcceptSuggestion_then_new_jamo_preserves_accepted_word_on_screen` 유지. |
 | `IsImeKorean()` / IMM32 호출 경로 | 이미 제거됨(TASK-02 해결). 관련 P/Invoke도 동반 삭제. 재도입 금지. |
 | UI 라벨·ARIA·제안 바 표시 규칙 | `KeySlotVm.RefreshDisplay` 계열은 자유롭게 수정 가능. 단, `ToggleKoreanSubmode` 액션 라벨 "가/A"는 접근성 announcement와 동기화되어야 한다. |
-| bigram 기록 호출부(`KoreanInputModule.FinalizeComposition`·`AcceptSuggestion`) | 단, 기존 unigram `RecordWord` 호출 규율(2음절 이상 등)은 유지. `RecordBigram`은 `KoreanDictionary`/`EnglishDictionary` 내부에서 양쪽 피연산자에 동일 필터를 재적용한다. |
+| bigram 기록 호출부(`KoreanInputModule.FinalizeComposition`·`AcceptSuggestion`) | **런타임 bigram 기록은 사전 경유 단일 경로** — `KoreanDictionary.RecordBigram`/`EnglishDictionary.RecordBigram`만 사용. `BigramFrequencyStore.Record`에 직접 접근하는 우회 경로는 금지(과거 `AutoCompleteService.OnSeparator` 직접 Record가 빈도를 2배로 세던 버그). `_lastCommittedWord`는 모듈이 유일한 소유자 — 서비스는 `IInputLanguageModule.LastCommittedWord`로만 읽는다. |
 
 ---
 

@@ -13,14 +13,20 @@ public class KoreanDictionaryTests
     }
 
     [Fact]
-    public void RecordWord_rejects_single_syllable()
+    public void RecordWord_accepts_single_syllable()
     {
         var dict = new KoreanDictionaryTestable();
         dict.RecordWord("해");
-        // 사용자 학습으로 "해"가 저장되지 않았으므로 제안에 "해" 단독이 올라오면 안 됨.
-        // (내장 사전에 "해달" 등이 있을 수 있으므로 전체가 비었는지는 확인하지 않음)
-        var sugg = dict.GetSuggestions("해");
-        Assert.DoesNotContain("해", sugg);
+        // 1음절 단어도 사용자 학습으로 저장된다.
+        Assert.True(dict.UserStore.Contains("해"));
+    }
+
+    [Fact]
+    public void RecordWord_rejects_word_containing_raw_jamo()
+    {
+        var dict = new KoreanDictionaryTestable();
+        // "가"는 1음절이지만 독립 자모가 섞인 미완성 조합이므로 거부.
+        dict.RecordWord("ㄱ가");
         Assert.Equal(0, dict.UserWordCount);
     }
 
@@ -124,12 +130,21 @@ public class KoreanDictionaryTests
     }
 
     [Fact]
-    public void RecordBigram_skips_when_either_side_is_single_syllable()
+    public void RecordBigram_rejects_jamo_only_or_raw_jamo_sides()
+    {
+        var dict = new KoreanDictionaryTestable();
+        // "ㄱ"는 음절이 없고, "ㄱ가"는 독립 자모가 섞였으므로 둘 다 거부.
+        dict.RecordBigram("ㄱ", "안녕");
+        dict.RecordBigram("안녕", "ㄱ가");
+        Assert.Equal(0, dict.BigramStore.Count);
+    }
+
+    [Fact]
+    public void RecordBigram_accepts_single_syllable_pair()
     {
         var dict = new KoreanDictionaryTestable();
         dict.RecordBigram("가", "하세요");
-        dict.RecordBigram("안녕", "해");
-        Assert.Equal(0, dict.BigramStore.Count);
+        Assert.True(dict.BigramStore.Contains("가", "하세요"));
     }
 
     [Fact]

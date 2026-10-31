@@ -67,6 +67,8 @@ public class SwitchScanSuggestionTests
 
         public bool HandleKey(KeySlot slot, KeyContext ctx) => false;
         public (int backspaceCount, string fullWord, int prefixLength) AcceptSuggestion(string suggestion) => (0, suggestion, 0);
+        // 이 페이크는 단어 확정 경로를 검증하지 않으므로 항상 null을 반환합니다.
+        public string? LastCommittedWord => null;
         public void NotifyWordCommitted(string word) { }
         public void ToggleSubmode() { }
         public void OnSeparator() { }
