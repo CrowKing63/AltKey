@@ -8,7 +8,7 @@
 ; [CI] release.yml에서 자동 실행 (BuildDir은 CI 퍼블리시 경로와 동일)
 
 #define AppName    "AltKey"
-#define AppVersion "1.2.1"
+#define AppVersion "1.3.0"
 #define AppPublisher "CrowKing63"
 #define AppURL     "https://github.com/CrowKing63/altkey"
 #define AppExeName "AltKey.exe"
