@@ -1038,7 +1038,9 @@ public partial class SettingsViewModel : ObservableObject
         if (item is null || item.Kind != HeaderButtonKind.Custom)
             return;
 
-        LaunchTools("header-shortcut", $"--header-button-id \"{item.Id}\"");
+        // 쉘 따옴표를 붙이지 않습니다: 이 인자 문자열은 IPC 메시지에 그대로 내장되는데,
+        // 버튼 ID(custom-{guid})는 특수 문자가 없어 따옴표가 필요 없습니다.
+        LaunchTools("header-shortcut", $"--header-button-id {item.Id}");
     }
 
     [RelayCommand]
@@ -1204,6 +1206,18 @@ public partial class SettingsViewModel : ObservableObject
     /// </summary>
     private static void LaunchTools(string? toolName, string? extraArguments = null)
     {
+        // 상주 Tools 프로세스에 먼저 요청해 창이 즉시 열리게 합니다.
+        // 상주 프로세스가 없으면(연결 실패) 아래 기존 직접 실행 경로로 폴백합니다.
+        var ipcMessage = string.IsNullOrWhiteSpace(toolName)
+            ? "open hub"
+            : string.IsNullOrWhiteSpace(extraArguments)
+                ? $"open {toolName}"
+                : $"open {toolName} {extraArguments.Trim()}";
+        if (ToolsIpc.TrySend(ipcMessage))
+        {
+            return;
+        }
+
         var toolsExePath = PathResolver.ToolsExePath;
         if (!File.Exists(toolsExePath))
         {

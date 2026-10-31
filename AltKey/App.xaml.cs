@@ -184,6 +184,9 @@ public partial class App : System.Windows.Application
             var window = Services.GetRequiredService<MainWindow>();
             window.Show();
 
+            // 상주 Tools 프로세스: 백그라운드로 띄워 설정에서 편집기 창이 즉시 열리게 합니다.
+            _ = Task.Run(() => TryLaunchResidentTools());
+
             RegisterRestoreWindowHandler();
 
             // AltKey.Tools에서 보내는 최소 재로드 알림 수신을 시작합니다.
@@ -234,6 +237,9 @@ public partial class App : System.Windows.Application
 
     protected override void OnExit(ExitEventArgs e)
     {
+        // 상주 Tools 프로세스에 종료를 요청합니다. 실패해도 워치독이 메인 앱 종료로 자동 정리합니다.
+        ToolsIpc.TrySend("exit", timeoutMs: 300);
+
         try
         {
             if (Services.GetService<InputService>() is { } inputService)
@@ -263,6 +269,41 @@ public partial class App : System.Windows.Application
         _instanceMutex = null;
 
         base.OnExit(e);
+    }
+
+    /// <summary>
+    /// AltKey.Tools 상주 프로세스를 백그라운드로 띄웁니다.
+    /// 실패(파일 누락 등)하면 조용히 무시합니다 — 설정 버튼이 직접 실행으로 폴백합니다.
+    /// </summary>
+    private static void TryLaunchResidentTools()
+    {
+        try
+        {
+            var exePath = PathResolver.ToolsExePath;
+            if (!File.Exists(exePath))
+            {
+                return;
+            }
+
+            // --main-pid: Tools 워치독이 메인 앱 종료 시 함께 종료되는 데 사용합니다.
+            var arguments = $"--resident --main-pid {Environment.ProcessId}";
+            // 포터블 모드에선 데이터 폴더가 exe 디렉터리이므로 명시 전달해 config/layouts를 공유합니다.
+            if (PathResolver.IsPortable)
+            {
+                arguments += $" --data-dir \"{PathResolver.DataDir}\"";
+            }
+
+            Process.Start(new ProcessStartInfo(exePath)
+            {
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                Arguments = arguments,
+            });
+        }
+        catch
+        {
+            // Tools 띄우기 실패는 메인 앱을 막지 않습니다 — 설정 버튼이 직접 실행으로 폴백합니다.
+        }
     }
 
     // L1: 큰 텍스트 모드

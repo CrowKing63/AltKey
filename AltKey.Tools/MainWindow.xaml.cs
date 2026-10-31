@@ -1,8 +1,6 @@
 ﻿using System.Windows;
 using System.Windows.Input;
-using AltKey.ViewModels;
 using AltKey.Views;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace AltKey.Tools;
 
@@ -12,12 +10,6 @@ namespace AltKey.Tools;
 /// </summary>
 public partial class MainWindow : Window
 {
-    private LayoutEditorWindow? _layoutEditorWindow;
-    private UserDictionaryEditorWindow? _userDictionaryEditorWindow;
-    private ProfileMappingEditorWindow? _profileMappingEditorWindow;
-    private AiPromptEditorWindow? _aiPromptEditorWindow;
-    private HeaderShortcutEditorWindow? _headerShortcutEditorWindow;
-
     public MainWindow()
     {
         InitializeComponent();
@@ -27,104 +19,6 @@ public partial class MainWindow : Window
 
         // 접근성: 키보드만으로도 언제든 창을 닫을 수 있도록 Esc를 통일 동작으로 제공합니다.
         PreviewKeyDown += OnPreviewKeyDown;
-    }
-
-    /// <summary>
-    /// 시작 인자에서 도구 이름을 읽어, 메인 앱에서 특정 편집기로 바로 열 수 있게 합니다.
-    /// 지원 값: "layout", "dictionary", "profile", "ai-prompt", "header-shortcut"
-    /// </summary>
-    public void ApplyStartupArguments(string[] args)
-    {
-        if (args is null || args.Length == 0)
-        {
-            return;
-        }
-
-        var toolName = GetToolArgument(args);
-        if (string.IsNullOrWhiteSpace(toolName))
-        {
-            return;
-        }
-
-        Loaded += (_, _) =>
-        {
-            var headerButtonId = GetArgumentValue(args, "--header-button-id");
-            var createNewHeaderButton = string.Equals(GetArgumentValue(args, "--header-button-mode"), "create", StringComparison.OrdinalIgnoreCase);
-
-            if (string.Equals(toolName, "layout", StringComparison.OrdinalIgnoreCase))
-            {
-                OpenLayoutEditorWindow(attachOwner: false);
-                // 접근성: 특정 편집기 바로가기로 진입한 경우 중간 허브 창을 닫아 불필요한 포커스 이동을 없앱니다.
-                Close();
-                return;
-            }
-
-            if (string.Equals(toolName, "dictionary", StringComparison.OrdinalIgnoreCase))
-            {
-                OpenUserDictionaryEditorWindow(attachOwner: false);
-                Close();
-                return;
-            }
-
-            if (string.Equals(toolName, "profile", StringComparison.OrdinalIgnoreCase))
-            {
-                OpenProfileMappingEditorWindow(attachOwner: false);
-                Close();
-                return;
-            }
-
-            if (string.Equals(toolName, "ai-prompt", StringComparison.OrdinalIgnoreCase))
-            {
-                OpenAiPromptEditorWindow(attachOwner: false);
-                Close();
-                return;
-            }
-
-            if (string.Equals(toolName, "header-shortcut", StringComparison.OrdinalIgnoreCase))
-            {
-                OpenHeaderShortcutEditorWindow(attachOwner: false, headerButtonId, createNewHeaderButton);
-                Close();
-            }
-        };
-    }
-
-    /// <summary>
-    /// "--tool layout" 형태의 인자를 파싱합니다.
-    /// </summary>
-    private static string? GetToolArgument(string[] args)
-    {
-        for (var i = 0; i < args.Length; i++)
-        {
-            if (!string.Equals(args[i], "--tool", StringComparison.OrdinalIgnoreCase))
-            {
-                continue;
-            }
-
-            if (i + 1 < args.Length)
-            {
-                return args[i + 1];
-            }
-        }
-
-        return null;
-    }
-
-    private static string? GetArgumentValue(string[] args, string optionName)
-    {
-        for (var i = 0; i < args.Length; i++)
-        {
-            if (!string.Equals(args[i], optionName, StringComparison.OrdinalIgnoreCase))
-            {
-                continue;
-            }
-
-            if (i + 1 < args.Length)
-            {
-                return args[i + 1];
-            }
-        }
-
-        return null;
     }
 
     /// <summary>
@@ -142,20 +36,10 @@ public partial class MainWindow : Window
     /// </summary>
     private void OpenLayoutEditorWindow(bool attachOwner)
     {
-        if (_layoutEditorWindow is { IsLoaded: true })
-        {
-            _layoutEditorWindow.Activate();
-            return;
-        }
-
-        var vm = App.Services.GetRequiredService<LayoutEditorViewModel>();
-        _layoutEditorWindow = new LayoutEditorWindow(vm);
-        if (attachOwner)
-        {
-            _layoutEditorWindow.Owner = this;
-        }
-        _layoutEditorWindow.Closed += (_, _) => _layoutEditorWindow = null;
-        _layoutEditorWindow.Show();
+        // 프로세스 전체에서 같은 창을 재사용해 포커스 이동을 예측 가능하게 유지합니다.
+        var window = ToolWindowRegistry.GetOrCreate("layout", null, attachOwner ? this : null);
+        window.Show();
+        window.Activate();
     }
 
     /// <summary>
@@ -173,20 +57,9 @@ public partial class MainWindow : Window
     /// </summary>
     private void OpenUserDictionaryEditorWindow(bool attachOwner)
     {
-        if (_userDictionaryEditorWindow is { IsLoaded: true })
-        {
-            _userDictionaryEditorWindow.Activate();
-            return;
-        }
-
-        var vm = App.Services.GetRequiredService<UserDictionaryEditorViewModel>();
-        _userDictionaryEditorWindow = new UserDictionaryEditorWindow(vm);
-        if (attachOwner)
-        {
-            _userDictionaryEditorWindow.Owner = this;
-        }
-        _userDictionaryEditorWindow.Closed += (_, _) => _userDictionaryEditorWindow = null;
-        _userDictionaryEditorWindow.Show();
+        var window = ToolWindowRegistry.GetOrCreate("dictionary", null, attachOwner ? this : null);
+        window.Show();
+        window.Activate();
     }
 
     /// <summary>
@@ -204,19 +77,9 @@ public partial class MainWindow : Window
     /// </summary>
     private void OpenProfileMappingEditorWindow(bool attachOwner)
     {
-        if (_profileMappingEditorWindow is { IsLoaded: true })
-        {
-            _profileMappingEditorWindow.Activate();
-            return;
-        }
-
-        _profileMappingEditorWindow = new ProfileMappingEditorWindow();
-        if (attachOwner)
-        {
-            _profileMappingEditorWindow.Owner = this;
-        }
-        _profileMappingEditorWindow.Closed += (_, _) => _profileMappingEditorWindow = null;
-        _profileMappingEditorWindow.Show();
+        var window = ToolWindowRegistry.GetOrCreate("profile", null, attachOwner ? this : null);
+        window.Show();
+        window.Activate();
     }
 
     /// <summary>
@@ -234,19 +97,9 @@ public partial class MainWindow : Window
     /// </summary>
     private void OpenAiPromptEditorWindow(bool attachOwner)
     {
-        if (_aiPromptEditorWindow is { IsLoaded: true })
-        {
-            _aiPromptEditorWindow.Activate();
-            return;
-        }
-
-        _aiPromptEditorWindow = new AiPromptEditorWindow();
-        if (attachOwner)
-        {
-            _aiPromptEditorWindow.Owner = this;
-        }
-        _aiPromptEditorWindow.Closed += (_, _) => _aiPromptEditorWindow = null;
-        _aiPromptEditorWindow.Show();
+        var window = ToolWindowRegistry.GetOrCreate("ai-prompt", null, attachOwner ? this : null);
+        window.Show();
+        window.Activate();
     }
 
     /// <summary>
@@ -260,20 +113,26 @@ public partial class MainWindow : Window
 
     private void OpenHeaderShortcutEditorWindow(bool attachOwner, string? headerButtonId, bool createNew)
     {
-        if (_headerShortcutEditorWindow is { IsLoaded: true })
+        var extraArgs = BuildHeaderShortcutExtraArgs(headerButtonId, createNew);
+        var window = ToolWindowRegistry.GetOrCreate("header-shortcut", extraArgs, attachOwner ? this : null);
+        window.Show();
+        window.Activate();
+    }
+
+    /// <summary>
+    /// 상단바 단축키 편집기용 추가 인자 문자열을 조립합니다.
+    /// </summary>
+    private static string? BuildHeaderShortcutExtraArgs(string? headerButtonId, bool createNew)
+    {
+        if (headerButtonId is null && !createNew)
         {
-            _headerShortcutEditorWindow.Activate();
-            return;
+            return null;
         }
 
-        _headerShortcutEditorWindow = new HeaderShortcutEditorWindow(headerButtonId, createNew);
-        if (attachOwner)
-        {
-            _headerShortcutEditorWindow.Owner = this;
-        }
-
-        _headerShortcutEditorWindow.Closed += (_, _) => _headerShortcutEditorWindow = null;
-        _headerShortcutEditorWindow.Show();
+        var parts = new List<string>();
+        if (headerButtonId is not null) parts.Add($"--header-button-id {headerButtonId}");
+        if (createNew) parts.Add("--header-button-mode create");
+        return string.Join(" ", parts);
     }
 
     /// <summary>
