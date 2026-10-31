@@ -80,6 +80,8 @@ public partial class App : Application
 
             Services = services.BuildServiceProvider();
             ApplyInitialTheme();
+            // [접근성] 메인 앱의 "글자 크기(%)" 설정으로 편집기 텍스트도 같은 비율로 시작합니다.
+            ApplyScaledFontSizes();
 
             // 상주 모드: 창을 띄우지 않고 메인 앱의 IPC 명령만 기다립니다.
             // 프로세스 수명을 메인 앱에 묶어 모든 창이 닫혀도 종료되지 않습니다.
@@ -248,6 +250,16 @@ public partial class App : Application
                 Shutdown();
                 break;
 
+            // [접근성] 메인 앱이 글자 크기 슬라이더 변경을 실시간 전달해,
+            // 이미 열린 편집기 창 텍스트도 슬라이더와 함께 바뀝니다.
+            case "font-scale":
+                if (int.TryParse(payload, out var fontScalePercent))
+                {
+                    ApplyScaledFontSizes(fontScalePercent);
+                }
+
+                break;
+
             case "open" when string.Equals(payload, "hub", StringComparison.OrdinalIgnoreCase):
                 ShowHubWindow();
                 break;
@@ -338,6 +350,30 @@ public partial class App : Application
         var configService = Services.GetRequiredService<ConfigService>();
         var themeService = Services.GetRequiredService<ThemeService>();
         themeService.Apply(configService.Current.Theme);
+    }
+
+    /// <summary>
+    /// [접근성] 메인 앱의 "글자 크기(%)" 설정값으로 공용 배율 리소스(Generic.xaml)를 채웁니다.
+    /// 시작 시에는 저장된 값, 상주 모드에서는 IPC font-scale 명령으로 갱신됩니다.
+    /// </summary>
+    private static void ApplyScaledFontSizes(int? scalePercent = null)
+    {
+        var configService = Services.GetRequiredService<ConfigService>();
+        var percent = scalePercent ?? configService.Current.KeyFontScalePercent;
+        // 메인 앱과 동일한 클램프 범위(80~220)를 유지해 두 앱 간 배율이 어긋나지 않습니다.
+        percent = Math.Clamp(percent, 80, 220);
+
+        var app = Application.Current;
+        if (app is null)
+        {
+            return;
+        }
+
+        app.Resources["ScaledSettingsSubFontSize"] = 11.0 * percent / 100.0;
+        app.Resources["ScaledSettingsBaseFontSize"] = 12.0 * percent / 100.0;
+        app.Resources["ScaledSettingsBodyLargeFontSize"] = 14.0 * percent / 100.0;
+        app.Resources["ScaledSettingsHeadingFontSize"] = 16.0 * percent / 100.0;
+        app.Resources["ScaledToolTitleFontSize"] = 22.0 * percent / 100.0;
     }
 
     /// <summary>

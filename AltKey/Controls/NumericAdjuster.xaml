@@ -4,9 +4,9 @@
     <UserControl.Resources>
         <!-- 접근성: 내부 버튼/입력칸도 같은 상태 규칙을 써서 테마 변경 시 대비가 무너지지 않게 한다. -->
         <Style x:Key="AdjustButtonStyle" TargetType="Button">
+            <!-- [접근성] 고정 높이를 없애 글자 크기 배율에 맞춰 자라도록 합니다. -->
             <Setter Property="Width" Value="28"/>
-            <Setter Property="Height" Value="26"/>
-            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontSize" Value="{DynamicResource ScaledSettingsHeadingFontSize}"/>
             <Setter Property="FontWeight" Value="Bold"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
             <Setter Property="BorderThickness" Value="1"/>
@@ -24,7 +24,7 @@
             <Setter Property="TextAlignment" Value="Center"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
-            <Setter Property="Height" Value="26"/>
+            <!-- [접근성] 고정 높이를 없애 글자 크기 배율에 맞춰 자라도록 합니다. -->
             <Setter Property="Margin" Value="2,0"/>
             <Setter Property="Padding" Value="4,0"/>
             <Setter Property="Background" Value="{Binding TextBoxBackground, RelativeSource={RelativeSource AncestorType=UserControl}}"/>

@@ -33,7 +33,7 @@
             </Grid.RowDefinitions>
 
             <TextBlock Grid.Row="0"
-                       FontSize="22"
+                       FontSize="{DynamicResource ScaledToolTitleFontSize}"
                        FontWeight="SemiBold"
                        Margin="0,0,0,8"
                        Text="프로필 매핑 편집 검토"
@@ -55,7 +55,7 @@
                 <Border Grid.Row="0" Style="{StaticResource ReviewSectionCardStyle}">
                     <StackPanel>
                         <TextBlock Text="1. 현재 구성 요약"
-                                   FontSize="15"
+                                   FontSize="{DynamicResource ScaledSettingsHeadingFontSize}"
                                    FontWeight="SemiBold"
                                    AutomationProperties.Name="요약 섹션 제목"/>
                         <TextBlock Margin="0,6,0,2"
@@ -79,7 +79,7 @@
                         <TextBlock Grid.Row="0"
                                    Margin="0,0,0,8"
                                    Text="2. 매핑 목록"
-                                   FontSize="15"
+                                   FontSize="{DynamicResource ScaledSettingsHeadingFontSize}"
                                    FontWeight="SemiBold"
                                    AutomationProperties.Name="매핑 목록 섹션 제목"/>
 
@@ -111,7 +111,7 @@
                         CornerRadius="8">
                     <StackPanel>
                         <TextBlock Text="3. 판단 결과"
-                                   FontSize="15"
+                                   FontSize="{DynamicResource ScaledSettingsHeadingFontSize}"
                                    FontWeight="SemiBold"
                                    Margin="0,0,0,4"
                                    AutomationProperties.Name="판단 결과 섹션 제목"/>

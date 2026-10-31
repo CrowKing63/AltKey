@@ -10,6 +10,7 @@
         MinWidth="500" MinHeight="400"
         WindowStartupLocation="Manual"
         Background="{DynamicResource SettingsBg}"
+        FontSize="{DynamicResource ScaledSettingsBaseFontSize}"
         d:DataContext="{d:DesignInstance vm:SettingsViewModel}">
     <Window.Resources>
         <!-- 접근성: 이 창에서만 Fluent 스타일을 적용해 포커스와 탐색 흐름을 시각적으로 일관되게 유지한다. -->
@@ -25,12 +26,12 @@
             <Border Style="{StaticResource FluentCardBorderStyle}" Margin="0,0,0,12">
                 <StackPanel>
                     <TextBlock Text="포커스 가시화 상세 설정"
-                               FontSize="16"
+                               FontSize="{DynamicResource ScaledSettingsHeadingFontSize}"
                                FontWeight="SemiBold"
                                Foreground="{DynamicResource SettingsFg}"
                                Margin="0,0,0,6"/>
                     <TextBlock Text="키보드 탐색 동작과 포커스 공지를 조정합니다."
-                               FontSize="11"
+                               FontSize="{DynamicResource ScaledSettingsSubFontSize}"
                                Foreground="{DynamicResource SettingsFgSub}"/>
                 </StackPanel>
             </Border>
@@ -38,34 +39,34 @@
             <Border Style="{StaticResource FluentCardBorderStyle}" Margin="0,0,0,12">
                 <StackPanel>
                     <TextBlock TextWrapping="Wrap"
-                               FontSize="11"
+                               FontSize="{DynamicResource ScaledSettingsSubFontSize}"
                                Foreground="{DynamicResource SettingsFgSub}"
                                Margin="0,0,0,4"
                                Text="키보드로 화면 요소를 탐색하고 현재 위치를 안내하는 보조기능 설정입니다."/>
                     <TextBlock TextWrapping="Wrap"
-                               FontSize="11"
+                               FontSize="{DynamicResource ScaledSettingsSubFontSize}"
                                Foreground="{DynamicResource SettingsFgSub}"
                                Margin="0,0,0,12"
                                Text="Tab, Shift+Tab, Enter, Space 입력으로 동작합니다."/>
 
-                    <TextBlock Text="탐색 범위" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
+                    <TextBlock Text="탐색 범위" Foreground="{DynamicResource SettingsFgSub}" FontSize="{DynamicResource ScaledSettingsSubFontSize}" Margin="0,0,0,4"/>
                     <ComboBox ItemsSource="{Binding KeyboardA11yNavigationScopes}"
                               SelectedItem="{Binding KeyboardA11yNavigationScope}"
                               Margin="0,0,0,8"/>
 
-                    <TextBlock Text="탐색 종료 키 (VK_이름)" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
+                    <TextBlock Text="탐색 종료 키 (VK_이름)" Foreground="{DynamicResource SettingsFgSub}" FontSize="{DynamicResource ScaledSettingsSubFontSize}" Margin="0,0,0,4"/>
                     <TextBox Text="{Binding KeyboardA11yExitKey, UpdateSourceTrigger=PropertyChanged}"
                              Margin="0,0,0,12"/>
 
-                    <TextBlock Text="LiveRegion 공지" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
+                    <TextBlock Text="LiveRegion 공지" Foreground="{DynamicResource SettingsFgSub}" FontSize="{DynamicResource ScaledSettingsSubFontSize}" Margin="0,0,0,4"/>
                     <CheckBox Content="포커스 이동 시 현재 포커스 공지"
                               Foreground="{DynamicResource SettingsFg}"
                               IsChecked="{Binding KeyboardA11yAnnounceFocus}"/>
                 </StackPanel>
             </Border>
 
+            <!-- [접근성] 고정 높이를 없애 글자 크기 배율에 맞춰 자라도록 합니다. -->
             <Button Content="닫기"
-                    Height="34"
                     HorizontalAlignment="Right"
                     Width="110"
                     Click="CloseButton_Click"

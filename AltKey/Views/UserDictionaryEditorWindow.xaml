@@ -10,6 +10,7 @@
         MinWidth="600" MinHeight="450"
         WindowStartupLocation="Manual"
         Background="{DynamicResource SettingsBg}"
+        FontSize="{DynamicResource ScaledSettingsBaseFontSize}"
         d:DataContext="{d:DesignInstance vm:UserDictionaryEditorViewModel}">
 
     <Window.Resources>
@@ -39,10 +40,10 @@
             <Grid>
                 <TextBlock Text="사용자 단어 편집기"
                            Foreground="{DynamicResource SettingsFg}"
-                           FontSize="14" FontWeight="SemiBold"
+                           FontSize="{DynamicResource ScaledSettingsBodyLargeFontSize}" FontWeight="SemiBold"
                            VerticalAlignment="Center"/>
                 <Button HorizontalAlignment="Right"
-                        Content="✕" FontSize="14"
+                        Content="✕" FontSize="{DynamicResource ScaledSettingsBodyLargeFontSize}"
                         Background="Transparent" Foreground="{DynamicResource SettingsFgSub}"
                         BorderThickness="0" Cursor="Hand" Padding="8,2"
                         Click="CloseButton_Click"
@@ -99,24 +100,25 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
-                    <!-- 접근성: 한 줄로 유지하되 폭이 부족하면 자동 줄바꿈되어 입력 요소가 사라지지 않도록 합니다. -->
-                    <WrapPanel Grid.Column="0" VerticalAlignment="Center" ItemHeight="28">
+                    <!-- 접근성: 한 줄로 유지하되 폭이 부족하면 자동 줄바꿈되어 입력 요소가 사라지지 않도록 합니다.
+                         [접근성] ItemHeight를 없애 입력 필드 높이가 글자 크기 배율에 맞춰 자라도록 합니다. -->
+                    <WrapPanel Grid.Column="0" VerticalAlignment="Center">
                         <TextBlock Text="검색:" Foreground="{DynamicResource SettingsFgSub}"
                                    VerticalAlignment="Center" Margin="0,0,6,0"/>
                         <TextBox Text="{Binding SearchQuery, UpdateSourceTrigger=PropertyChanged, Delay=150}"
                                  Style="{StaticResource InputBox}"
-                                 Width="190" Height="26" Margin="0,0,10,0"
+                                 Width="190" Margin="0,0,10,0"
                                  AutomationProperties.Name="단어 검색 입력"/>
                         <TextBlock Text="추가:" Foreground="{DynamicResource SettingsFgSub}"
                                    VerticalAlignment="Center" Margin="0,0,6,0"/>
                         <TextBox Text="{Binding NewWord, UpdateSourceTrigger=PropertyChanged}"
                                  Style="{StaticResource InputBox}"
-                                 Width="150" Height="26" Margin="0,0,4,0"
+                                 Width="150" Margin="0,0,4,0"
                                  ToolTip="추가할 단어 입력"
                                  AutomationProperties.Name="추가 단어 입력"/>
                         <TextBox Text="{Binding NewWordFrequency, UpdateSourceTrigger=PropertyChanged}"
                                  Style="{StaticResource InputBox}"
-                                 Width="70" Height="26" Margin="0,0,4,0"
+                                 Width="70" Margin="0,0,4,0"
                                  ToolTip="추가 단어 빈도"
                                  AutomationProperties.Name="추가 단어 빈도 입력"/>
                         <Button Content="+ 추가"
@@ -155,7 +157,7 @@
                       BorderBrush="{DynamicResource SettingsHighlight}"
                       SelectionMode="Extended"
                       SelectionUnit="FullRow"
-                      FontSize="12"
+                      FontSize="{DynamicResource ScaledSettingsBaseFontSize}"
                       Margin="0,0,0,8">
                 <DataGrid.Columns>
                     <DataGridCheckBoxColumn Header="✓"
@@ -187,7 +189,7 @@
                                         Foreground="{DynamicResource SettingsFgHint}"
                                         BorderThickness="0"
                                         Cursor="Hand"
-                                        FontSize="11"
+                                        FontSize="{DynamicResource ScaledSettingsSubFontSize}"
                                         ToolTip="이 단어 제거"/>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
@@ -226,21 +228,21 @@
                                VerticalAlignment="Center" Margin="0,0,6,0"/>
                     <TextBox Text="{Binding NewBigramPrev, UpdateSourceTrigger=PropertyChanged}"
                              Style="{StaticResource InputBox}"
-                             Width="140" Height="26" Margin="0,0,8,0"
+                             Width="140" Margin="0,0,8,0"
                              ToolTip="바이그램 이전 단어"
                              AutomationProperties.Name="바이그램 이전 단어 입력"/>
                     <TextBlock Text="다음" Foreground="{DynamicResource SettingsFgSub}"
                                VerticalAlignment="Center" Margin="0,0,6,0"/>
                     <TextBox Text="{Binding NewBigramNext, UpdateSourceTrigger=PropertyChanged}"
                              Style="{StaticResource InputBox}"
-                             Width="140" Height="26" Margin="0,0,8,0"
+                             Width="140" Margin="0,0,8,0"
                              ToolTip="바이그램 다음 단어"
                              AutomationProperties.Name="바이그램 다음 단어 입력"/>
                     <TextBlock Text="빈도" Foreground="{DynamicResource SettingsFgSub}"
                                VerticalAlignment="Center" Margin="0,0,6,0"/>
                     <TextBox Text="{Binding NewBigramCount, UpdateSourceTrigger=PropertyChanged}"
                              Style="{StaticResource InputBox}"
-                             Width="70" Height="26" Margin="0,0,8,0"
+                             Width="70" Margin="0,0,8,0"
                              ToolTip="바이그램 빈도"
                              AutomationProperties.Name="바이그램 빈도 입력"/>
                     <Button Content="+ 추가"
@@ -267,7 +269,7 @@
                       BorderBrush="{DynamicResource SettingsHighlight}"
                       SelectionMode="Single"
                       SelectionUnit="FullRow"
-                      FontSize="12"
+                      FontSize="{DynamicResource ScaledSettingsBaseFontSize}"
                       Margin="0,0,0,8">
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="이전 단어" Binding="{Binding Prev}" Width="*"/>
@@ -310,7 +312,7 @@
                 </Grid.ColumnDefinitions>
                 <TextBlock Grid.Column="0"
                            Text="{Binding StatusText}"
-                           Foreground="{DynamicResource SettingsFgSub}" FontSize="11"
+                           Foreground="{DynamicResource SettingsFgSub}" FontSize="{DynamicResource ScaledSettingsSubFontSize}"
                            VerticalAlignment="Center"/>
                 <Button Grid.Column="1"
                         Content="닫기"

@@ -81,9 +81,10 @@
         <Setter Property="Padding" Value="0,4,0,0"/>
     </Style>
 
+    <!-- [접근성] 고정 RowHeight/ColumnHeaderHeight를 없애 글자 크기 배율이 커져도
+         행 높이가 자동으로 자라도록 합니다(글자 잘림 방지). -->
     <Style x:Key="FluentDataGridStyle" TargetType="DataGrid" BasedOn="{StaticResource {x:Type DataGrid}}">
-        <Setter Property="RowHeight" Value="32"/>
-        <Setter Property="ColumnHeaderHeight" Value="34"/>
+        <Setter Property="FontSize" Value="{DynamicResource ScaledSettingsBaseFontSize}"/>
     </Style>
 
     <Style x:Key="FluentCardBorderStyle" TargetType="Border">
@@ -132,9 +133,10 @@
         <Setter Property="Padding" Value="6,4"/>
     </Style>
 
+    <!-- [접근성] 설정 창·편집기의 작은 라벨은 공용 배율 리소스를 써서 "글자 크기(%)" 슬라이더에 함께 커집니다. -->
     <Style x:Key="FluentLabelTextStyle" TargetType="TextBlock">
         <Setter Property="Foreground" Value="{DynamicResource SettingsFg}"/>
-        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="FontSize" Value="{DynamicResource ScaledSettingsSubFontSize}"/>
         <Setter Property="Margin" Value="0,0,0,3"/>
     </Style>
 </ResourceDictionary>

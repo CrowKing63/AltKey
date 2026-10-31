@@ -9,6 +9,7 @@
         Height="560"
         MinWidth="620"
         MinHeight="500"
+        FontSize="{DynamicResource ScaledSettingsBaseFontSize}"
         WindowStartupLocation="CenterScreen">
     <Window.Resources>
         <!-- 도구 허브 창에서만 버튼 여백을 확장해 카드형 선택 구조의 가독성을 높입니다. -->
@@ -33,7 +34,7 @@
 
             <TextBlock Grid.Row="0"
                        Margin="0,0,0,8"
-                       FontSize="24"
+                       FontSize="{DynamicResource ScaledToolTitleFontSize}"
                        FontWeight="SemiBold"
                        Text="AltKey 편집 도구"
                        AutomationProperties.Name="도구 창 제목" />
@@ -49,7 +50,7 @@
                     KeyboardNavigation.TabNavigation="Continue">
                 <StackPanel>
                     <TextBlock Margin="0,0,0,10"
-                               FontSize="16"
+                               FontSize="{DynamicResource ScaledSettingsHeadingFontSize}"
                                FontWeight="SemiBold"
                                Text="도구 선택"
                                AutomationProperties.Name="도구 선택 섹션 제목" />

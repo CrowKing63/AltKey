@@ -18,6 +18,14 @@
 <sys:Double x:Key="KeyFontSize">13</sys:Double>
 <sys:Double x:Key="ScaledKeyFontSize">13</sys:Double>
 <sys:Double x:Key="ScaledSubLabelFontSize">8</sys:Double>
+<!-- [접근성] 설정 창/편집기 텍스트도 "글자 크기(%)" 슬라이더와 함께 배율됩니다.
+     값은 100% 기준 기본 크기이며, App.xaml.cs의 UpdateScaledFontSize()가 실제 배율을 넣습니다.
+     Tools 프로세스는 같은 Generic.xaml을 공유해 동일한 키를 사용합니다. -->
+<sys:Double x:Key="ScaledSettingsSubFontSize">11</sys:Double>
+<sys:Double x:Key="ScaledSettingsBaseFontSize">12</sys:Double>
+<sys:Double x:Key="ScaledSettingsBodyLargeFontSize">14</sys:Double>
+<sys:Double x:Key="ScaledSettingsHeadingFontSize">16</sys:Double>
+<sys:Double x:Key="ScaledToolTitleFontSize">22</sys:Double>
 <sys:Double x:Key="KeyFontSizeSmall">10</sys:Double>
 
     <!-- ── 애니메이션 시간 ────────────────────────────────────────────────── -->

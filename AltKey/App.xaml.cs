@@ -330,7 +330,21 @@ public partial class App : System.Windows.Application
         {
             currentApp.Resources["ScaledKeyFontSize"] = scaled;
             currentApp.Resources["ScaledSubLabelFontSize"] = 8.0 * scalePercent / 100.0;
+
+            // [접근성] 설정 창/편집기 텍스트도 같은 비율로 배율되므로 한 슬라이더로 전체가 조절됩니다.
+            // Generic.xaml의 기본값(100% 기준)을 여기서 실제 배율 값으로 덮어씁니다.
+            currentApp.Resources["ScaledSettingsSubFontSize"] = 11.0 * scalePercent / 100.0;
+            currentApp.Resources["ScaledSettingsBaseFontSize"] = 12.0 * scalePercent / 100.0;
+            currentApp.Resources["ScaledSettingsBodyLargeFontSize"] = 14.0 * scalePercent / 100.0;
+            currentApp.Resources["ScaledSettingsHeadingFontSize"] = 16.0 * scalePercent / 100.0;
+            currentApp.Resources["ScaledToolTitleFontSize"] = 22.0 * scalePercent / 100.0;
         }
+
+        // [접근성] 상주하는 AltKey.Tools 프로세스에도 같은 배율을 알립니다.
+        // 배경 스레드로 보내 UI가 연결 대기(최대 수백 ms)에 막히지 않도록 합니다.
+        // 듣는 프로세스가 없으면 조용히 실패해 폴백(창 재시작 시 설정값 적용)으로 충분합니다.
+        var percent = scalePercent;
+        _ = Task.Run(() => ToolsIpc.TrySend($"font-scale {percent}"));
     }
 
     // T-6.7: 파일 로깅

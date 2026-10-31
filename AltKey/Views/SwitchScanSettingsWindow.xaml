@@ -11,6 +11,7 @@
         MinWidth="600" MinHeight="700"
         WindowStartupLocation="Manual"
         Background="{DynamicResource SettingsBg}"
+        FontSize="{DynamicResource ScaledSettingsBaseFontSize}"
         d:DataContext="{d:DesignInstance vm:SettingsViewModel}">
     <Window.Resources>
         <!-- 접근성: 이 창에서만 Fluent 스타일을 적용해 컨트롤 간격/포커스 표현을 통일한다. -->
@@ -28,20 +29,20 @@
                 <Border Style="{StaticResource FluentCardBorderStyle}" Margin="0,0,0,12">
                     <StackPanel>
                         <TextBlock Text="스위치 스캔 상세 설정"
-                                   FontSize="16"
+                                   FontSize="{DynamicResource ScaledSettingsHeadingFontSize}"
                                    FontWeight="SemiBold"
                                    Foreground="{DynamicResource SettingsFg}"
                                    Margin="0,0,0,6"/>
                         <TextBlock Text="스위치 입력 위치와 스캔 방식을 사용 환경에 맞게 조정합니다."
-                                   FontSize="11"
+                                   FontSize="{DynamicResource ScaledSettingsSubFontSize}"
                                    Foreground="{DynamicResource SettingsFgSub}"/>
                     </StackPanel>
                 </Border>
 
                 <Border Style="{StaticResource FluentCardBorderStyle}" Margin="0,0,0,12">
                     <StackPanel>
-                        <TextBlock Text="스캔 동작" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,6"/>
-                        <TextBlock Text="스캔 간격 (밀리초)" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
+                        <TextBlock Text="스캔 동작" Foreground="{DynamicResource SettingsFgSub}" FontSize="{DynamicResource ScaledSettingsSubFontSize}" Margin="0,0,0,6"/>
+                        <TextBlock Text="스캔 간격 (밀리초)" Foreground="{DynamicResource SettingsFgSub}" FontSize="{DynamicResource ScaledSettingsSubFontSize}" Margin="0,0,0,4"/>
                         <ctrl:NumericAdjuster Value="{Binding SwitchScanIntervalMs}"
                                               Minimum="200" Maximum="3000" Step="100" DecimalPlaces="0"
                                               IsEnabled="{Binding SwitchScanEnabled}"
@@ -56,24 +57,24 @@
                                   IsChecked="{Binding SwitchScanTwoSwitch}"
                                   IsEnabled="{Binding SwitchScanEnabled}"
                                   Margin="0,0,0,8"/>
-                        <TextBlock Text="스캔 방식" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
+                        <TextBlock Text="스캔 방식" Foreground="{DynamicResource SettingsFgSub}" FontSize="{DynamicResource ScaledSettingsSubFontSize}" Margin="0,0,0,4"/>
                         <ComboBox ItemsSource="{Binding SwitchScanModes}"
                                   SelectedItem="{Binding SwitchScanMode}"
                                   IsEnabled="{Binding SwitchScanEnabled}"
                                   Margin="0,0,0,8"/>
-                        <TextBlock Text="초기 대기 시간 (밀리초)" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
+                        <TextBlock Text="초기 대기 시간 (밀리초)" Foreground="{DynamicResource SettingsFgSub}" FontSize="{DynamicResource ScaledSettingsSubFontSize}" Margin="0,0,0,4"/>
                         <ctrl:NumericAdjuster Value="{Binding SwitchScanInitialDelayMs}" Minimum="0" Maximum="5000" Step="100" DecimalPlaces="0"
                                               IsEnabled="{Binding SwitchScanEnabled}"
                                               ButtonBackground="{DynamicResource SettingsHighlight}" ButtonForeground="{DynamicResource SettingsFg}"
                                               TextBoxBackground="{DynamicResource SettingsHighlight}" TextBoxForeground="{DynamicResource SettingsFg}"
                                               TextBoxBorderBrush="{DynamicResource SettingsBorder}" Margin="0,0,0,8"/>
-                        <TextBlock Text="선택 후 멈춤 시간 (밀리초)" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
+                        <TextBlock Text="선택 후 멈춤 시간 (밀리초)" Foreground="{DynamicResource SettingsFgSub}" FontSize="{DynamicResource ScaledSettingsSubFontSize}" Margin="0,0,0,4"/>
                         <ctrl:NumericAdjuster Value="{Binding SwitchScanSelectPauseMs}" Minimum="0" Maximum="5000" Step="100" DecimalPlaces="0"
                                               IsEnabled="{Binding SwitchScanEnabled}"
                                               ButtonBackground="{DynamicResource SettingsHighlight}" ButtonForeground="{DynamicResource SettingsFg}"
                                               TextBoxBackground="{DynamicResource SettingsHighlight}" TextBoxForeground="{DynamicResource SettingsFg}"
                                               TextBoxBorderBrush="{DynamicResource SettingsBorder}" Margin="0,0,0,8"/>
-                        <TextBlock Text="멈춤 전 최대 회전 수 (0=무제한)" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
+                        <TextBlock Text="멈춤 전 최대 회전 수 (0=무제한)" Foreground="{DynamicResource SettingsFgSub}" FontSize="{DynamicResource ScaledSettingsSubFontSize}" Margin="0,0,0,4"/>
                         <ctrl:NumericAdjuster Value="{Binding SwitchScanCyclesBeforePause}" Minimum="0" Maximum="20" Step="1" DecimalPlaces="0"
                                               IsEnabled="{Binding SwitchScanEnabled}"
                                               ButtonBackground="{DynamicResource SettingsHighlight}" ButtonForeground="{DynamicResource SettingsFg}"
@@ -89,7 +90,7 @@
                                   IsChecked="{Binding SwitchScanIncludeSuggestions}"
                                   IsEnabled="{Binding SwitchScanEnabled}"
                                   Margin="0,0,0,8"/>
-                        <TextBlock Text="제안 스캔 우선순위" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,4"/>
+                        <TextBlock Text="제안 스캔 우선순위" Foreground="{DynamicResource SettingsFgSub}" FontSize="{DynamicResource ScaledSettingsSubFontSize}" Margin="0,0,0,4"/>
                         <ComboBox ItemsSource="{Binding SwitchScanSuggestionPriorities}"
                                   SelectedItem="{Binding SwitchScanSuggestionPriority}"
                                   IsEnabled="{Binding SwitchScanEnabled}"/>
@@ -98,21 +99,21 @@
 
                 <Border Style="{StaticResource FluentCardBorderStyle}" Margin="0,0,0,12">
                     <StackPanel>
-                        <TextBlock Text="스위치 키 매핑 (VK_이름)" Foreground="{DynamicResource SettingsFgSub}" FontSize="11" Margin="0,0,0,6"/>
+                        <TextBlock Text="스위치 키 매핑 (VK_이름)" Foreground="{DynamicResource SettingsFgSub}" FontSize="{DynamicResource ScaledSettingsSubFontSize}" Margin="0,0,0,6"/>
                         <TextBox Text="{Binding SwitchScanNextKey, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding SwitchScanEnabled}" Margin="0,0,0,4"/>
                         <TextBox Text="{Binding SwitchScanSelectKey, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding SwitchScanEnabled}" Margin="0,0,0,4"/>
                         <TextBox Text="{Binding SwitchScanSecondarySelectKey, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding SwitchScanEnabled}" Margin="0,0,0,4"/>
                         <TextBox Text="{Binding SwitchScanPreviousKey, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding SwitchScanEnabled}" Margin="0,0,0,4"/>
                         <TextBox Text="{Binding SwitchScanPauseKey, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding SwitchScanEnabled}" Margin="0,0,0,6"/>
                         <TextBlock TextWrapping="Wrap"
-                                   FontSize="11"
+                                   FontSize="{DynamicResource ScaledSettingsSubFontSize}"
                                    Foreground="{DynamicResource SettingsFgSub}"
                                    Text="입력 순서: 다음, 선택, 보조 선택, 이전, 일시정지. 예: VK_TAB / VK_RETURN / VK_SPACE"/>
                     </StackPanel>
                 </Border>
 
+                <!-- [접근성] 고정 높이를 없애 글자 크기 배율에 맞춰 자라도록 합니다. -->
                 <Button Content="닫기"
-                        Height="34"
                         HorizontalAlignment="Right"
                         Width="110"
                         Click="CloseButton_Click"

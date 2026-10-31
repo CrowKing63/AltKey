@@ -9,10 +9,11 @@
         xmlns:ctrl="clr-namespace:AltKey.Controls"
         mc:Ignorable="d"
         Title="레이아웃 편집기"
-        Width="1200" Height="750"
+        Width="1400" Height="850"
         MinWidth="700" MinHeight="450"
-        WindowStartupLocation="Manual"
+        WindowStartupLocation="CenterScreen"
         Background="{DynamicResource SettingsBg}"
+        FontSize="{DynamicResource ScaledSettingsBaseFontSize}"
         d:DataContext="{d:DesignInstance vm:LayoutEditorViewModel}">
     <Window.InputBindings>
         <!-- 접근성/편집 효율: 키 단위 저장 버튼을 줄인 대신, 일반 편집기처럼 Ctrl+Z 되돌리기를 바로 제공합니다. -->
@@ -92,7 +93,7 @@
                                VerticalAlignment="Center" Margin="0,0,6,0"/>
                     <ComboBox ItemsSource="{Binding AvailableLayouts}"
                               SelectedItem="{Binding SelectedLayoutToLoad}"
-                              Width="160" Height="26" Margin="0,0,4,0"/>
+                              Width="160" Margin="0,0,4,0"/>
                     <Button Content="불러오기"
                             Command="{Binding LoadSelectedCommand}"
                             Style="{StaticResource DarkBtn}"/>
@@ -111,7 +112,7 @@
                         BorderBrush="{DynamicResource SettingsBorder}"
                         BorderThickness="1">
                     <TextBlock Foreground="{DynamicResource SettingsFgSub}"
-                               FontSize="11">
+                               FontSize="{DynamicResource ScaledSettingsSubFontSize}">
                         <Run Text="현재 메인 키보드 레이아웃: "/>
                         <Run Text="{Binding CurrentActiveLayoutName, Mode=OneWay}" FontWeight="SemiBold"/>
                     </TextBlock>
@@ -131,7 +132,7 @@
                         <TextBlock Text="파일명:" Foreground="{DynamicResource SettingsFgSub}"
                                    VerticalAlignment="Center" Margin="0,0,6,0"/>
                         <TextBox Text="{Binding CurrentFileName, UpdateSourceTrigger=PropertyChanged}"
-                                 Width="160" Height="26"
+                                 Width="160"
                                  Style="{StaticResource InputBox}" Padding="6,2"/>
                     </StackPanel>
 
@@ -139,7 +140,7 @@
                         <TextBlock Text="표시 이름:" Foreground="{DynamicResource SettingsFgSub}"
                                    VerticalAlignment="Center" Margin="0,0,6,0"/>
                         <TextBox Text="{Binding LayoutName, UpdateSourceTrigger=PropertyChanged}"
-                                 Width="200" Height="26"
+                                 Width="200"
                                  Style="{StaticResource InputBox}" Padding="6,2"/>
                     </StackPanel>
 
@@ -153,7 +154,7 @@
                         </TextBlock>
                         <!-- 프리셋 레이아웃 안내: 덮어쓰기/삭제 불가, 새 이름으로 저장 유도 -->
                         <TextBlock Foreground="{DynamicResource ElevatedWarningFg}"
-                                   FontSize="10"
+                                   FontSize="{DynamicResource ScaledSettingsSubFontSize}"
                                    TextWrapping="Wrap"
                                    Visibility="{Binding IsEditingBuiltin,
                                        Converter={StaticResource BoolToVis}}">
@@ -163,11 +164,11 @@
                                         Converter={StaticResource InvBoolToVis}}">
                             <TextBlock Text="저장 후 바로 메인 키보드에 반영되는 대상입니다."
                                        Foreground="{DynamicResource AdminOkFg}"
-                                       FontSize="10"
+                                       FontSize="{DynamicResource ScaledSettingsSubFontSize}"
                                        Visibility="{Binding IsEditingCurrentLayout,
                                            Converter={StaticResource BoolToVis}}"/>
                             <TextBlock Foreground="{DynamicResource ElevatedWarningFg}"
-                                       FontSize="10"
+                                       FontSize="{DynamicResource ScaledSettingsSubFontSize}"
                                        Visibility="{Binding IsEditingCurrentLayout,
                                            Converter={StaticResource InvBoolToVis}}">
                                 <Run Text="메인 키보드는 현재 '"/>
@@ -248,24 +249,24 @@
                                         <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
                                             <TextBlock Text="열" Foreground="{DynamicResource SettingsFgSub}"
                                                        VerticalAlignment="Center" Margin="0,0,6,0"/>
-                                            <TextBlock Text="간격:" Foreground="{DynamicResource SettingsFgHint}" FontSize="10"
+                                            <TextBlock Text="간격:" Foreground="{DynamicResource SettingsFgHint}" FontSize="{DynamicResource ScaledSettingsSubFontSize}"
                                                        VerticalAlignment="Center" Margin="0,0,4,0"/>
                                             <ctrl:NumericAdjuster
                                                 Value="{Binding Gap}"
                                                 Minimum="0.0" Maximum="3.0" Step="0.1" DecimalPlaces="1"
-                                                Width="110" Height="22"/>
+                                                Width="110"/>
                                             <Button Content="행 추가"
                                                     Command="{Binding DataContext.AddRowCommand,
                                                         RelativeSource={RelativeSource AncestorType=Window}}"
                                                     CommandParameter="{Binding}"
-                                                    Style="{StaticResource DarkBtn}" FontSize="10"
+                                                    Style="{StaticResource DarkBtn}" FontSize="{DynamicResource ScaledSettingsSubFontSize}"
                                                     Margin="6,0,0,0"/>
                                             <Button Content="열 삭제"
                                                     Command="{Binding DataContext.RequestRemoveColumnCommand,
                                                         RelativeSource={RelativeSource AncestorType=Window}}"
                                                     CommandParameter="{Binding}"
                                                     Style="{StaticResource DangerBtn}" Padding="6,3"
-                                                    Margin="4,0" FontSize="10" Cursor="Hand"/>
+                                                    Margin="4,0" FontSize="{DynamicResource ScaledSettingsSubFontSize}" Cursor="Hand"/>
                                         </StackPanel>
 
                                         <!-- 행 목록 -->
@@ -278,35 +279,35 @@
                                                             <!-- 행 헤더 -->
                                                             <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
                                                                 <TextBlock Text="높이:" Foreground="{DynamicResource SettingsFgHint}"
-                                                                           FontSize="10" VerticalAlignment="Center"
+                                                                           FontSize="{DynamicResource ScaledSettingsSubFontSize}" VerticalAlignment="Center"
                                                                            Margin="0,0,4,0"/>
                                                                 <Button Content="기본"
                                                                         Command="{Binding DataContext.SetRowDefaultHeightCommand,
                                                                             RelativeSource={RelativeSource AncestorType=Window}}"
                                                                         CommandParameter="{Binding}"
-                                                                        Style="{StaticResource DarkBtn}" FontSize="9"
+                                                                        Style="{StaticResource DarkBtn}" FontSize="{DynamicResource ScaledSettingsSubFontSize}"
                                                                         Padding="4,2"/>
                                                                 <Button Content="낮음"
                                                                         Command="{Binding DataContext.SetRowCompactHeightCommand,
                                                                             RelativeSource={RelativeSource AncestorType=Window}}"
                                                                         CommandParameter="{Binding}"
-                                                                        Style="{StaticResource DarkBtn}" FontSize="9"
+                                                                        Style="{StaticResource DarkBtn}" FontSize="{DynamicResource ScaledSettingsSubFontSize}"
                                                                         Padding="4,2" Margin="2,0,6,0"/>
                                                                 <TextBlock Text="{Binding HeightPresetLabel}"
                                                                            Foreground="{DynamicResource SettingsFgSub}"
-                                                                           FontSize="10" VerticalAlignment="Center"
+                                                                           FontSize="{DynamicResource ScaledSettingsSubFontSize}" VerticalAlignment="Center"
                                                                            Margin="0,0,8,0"/>
                                                                 <Button Content="+ 키"
                                                                         Command="{Binding DataContext.AddKeyToRowCommand,
                                                                             RelativeSource={RelativeSource AncestorType=Window}}"
                                                                         CommandParameter="{Binding}"
-                                                                        Style="{StaticResource DarkBtn}" FontSize="9"/>
+                                                                        Style="{StaticResource DarkBtn}" FontSize="{DynamicResource ScaledSettingsSubFontSize}"/>
                                                                 <Button Content="행 삭제"
                                                                         Command="{Binding DataContext.RemoveRowCommand,
                                                                             RelativeSource={RelativeSource AncestorType=Window}}"
                                                                         CommandParameter="{Binding}"
                                                                         Style="{StaticResource DangerBtn}" Padding="4,2"
-                                                                        Margin="2,0" FontSize="9" Cursor="Hand"/>
+                                                                        Margin="2,0" FontSize="{DynamicResource ScaledSettingsSubFontSize}" Cursor="Hand"/>
                                                             </StackPanel>
 
                                                             <!-- 키 버튼 목록 -->
@@ -408,7 +409,7 @@
 
                         <!-- 안내 (키 미선택 시) -->
                         <TextBlock Text="왼쪽 키를 클릭해&#10;속성을 편집하세요."
-                                   Foreground="{DynamicResource SettingsFgHint}" FontSize="12"
+                                   Foreground="{DynamicResource SettingsFgHint}" FontSize="{DynamicResource ScaledSettingsBaseFontSize}"
                                    TextWrapping="Wrap"
                                    Visibility="{Binding HasSelectedKey,
                                        Converter={StaticResource InvBoolToVis}}"/>
@@ -421,11 +422,11 @@
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
                                 <Button Content="◀ 왼쪽으로"
                                         Command="{Binding MoveKeyLeftCommand}"
-                                        Style="{StaticResource DarkBtn}" FontSize="10"
+                                        Style="{StaticResource DarkBtn}" FontSize="{DynamicResource ScaledSettingsSubFontSize}"
                                         IsEnabled="{Binding CanMoveKeyLeft}"/>
                                 <Button Content="오른쪽으로 ▶"
                                         Command="{Binding MoveKeyRightCommand}"
-                                        Style="{StaticResource DarkBtn}" FontSize="10"
+                                        Style="{StaticResource DarkBtn}" FontSize="{DynamicResource ScaledSettingsSubFontSize}"
                                         IsEnabled="{Binding CanMoveKeyRight}"/>
                             </StackPanel>
 
@@ -475,7 +476,7 @@
 
                             <TextBlock Text="Fn 키 자체에는 Fn 전용 액션과 라벨을 지정하지 않습니다."
                                        Foreground="{DynamicResource SettingsFgHint}"
-                                       FontSize="10"
+                                       FontSize="{DynamicResource ScaledSettingsSubFontSize}"
                                        Margin="0,-2,0,8"
                                        TextWrapping="Wrap"
                                        Visibility="{Binding SelectedKey.CanEditFunctionOverrides,
@@ -529,7 +530,7 @@
         <!-- ── 하단 상태바 ── -->
         <Border Grid.Row="2" Style="{StaticResource FluentCardBorderStyle}" Padding="12,5">
             <TextBlock Text="{Binding StatusMessage}"
-                       Foreground="{DynamicResource SettingsFgHint}" FontSize="11"/>
+                       Foreground="{DynamicResource SettingsFgHint}" FontSize="{DynamicResource ScaledSettingsSubFontSize}"/>
         </Border>
 
         <!-- ── 열 삭제 확인 오버레이 ── -->
@@ -544,9 +545,9 @@
                     BorderBrush="{DynamicResource SettingsBorder}" BorderThickness="1">
                 <StackPanel>
                     <TextBlock Text="열 삭제 확인" Foreground="{DynamicResource SettingsFg}"
-                               FontSize="14" FontWeight="SemiBold" Margin="0,0,0,12"/>
+                               FontSize="{DynamicResource ScaledSettingsBodyLargeFontSize}" FontWeight="SemiBold" Margin="0,0,0,12"/>
                     <TextBlock Text="이 열에 행과 버튼이 있습니다. 어떻게 처리할까요?"
-                               Foreground="{DynamicResource SettingsFgSub}" FontSize="12"
+                               Foreground="{DynamicResource SettingsFgSub}" FontSize="{DynamicResource ScaledSettingsBaseFontSize}"
                                TextWrapping="Wrap" Margin="0,0,0,16"/>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                         <Button Content="취소"
@@ -577,9 +578,9 @@
                     BorderBrush="{DynamicResource SettingsBorder}" BorderThickness="1">
                 <StackPanel>
                     <TextBlock Text="레이아웃 삭제 확인" Foreground="{DynamicResource SettingsFg}"
-                               FontSize="14" FontWeight="SemiBold" Margin="0,0,0,12"/>
+                               FontSize="{DynamicResource ScaledSettingsBodyLargeFontSize}" FontWeight="SemiBold" Margin="0,0,0,12"/>
                     <TextBlock Text="정말로 이 레이아웃을 삭제하시겠습니까?"
-                               Foreground="{DynamicResource SettingsFgSub}" FontSize="12"
+                               Foreground="{DynamicResource SettingsFgSub}" FontSize="{DynamicResource ScaledSettingsBaseFontSize}"
                                TextWrapping="Wrap" Margin="0,0,0,16"/>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                         <Button Content="취소"
