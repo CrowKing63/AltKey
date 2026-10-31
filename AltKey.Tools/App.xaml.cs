@@ -1,5 +1,6 @@
-using System.Diagnostics;
+using System.IO;
 using System.IO.Pipes;
+using System.Runtime.InteropServices;
 using System.Windows;
 using AltKey.Services;
 using AltKey.ViewModels;
@@ -19,6 +20,10 @@ public partial class App : Application
 
     // 상주 모드에서 메인 앱 종료 감시(워치독)에 사용하는 타이머입니다.
     private DispatcherTimer? _watchdogTimer;
+
+    // 메인 앱 프로세스에 대한 OpenProcess 핸들입니다.
+    // PID 폴링 대신 핸들로 확인하면, 같은 PID를 다시 사용한 새 프로세스와 혼동하지 않습니다.
+    private IntPtr _mainAppHandle;
 
     // 단일 인스턴스 뮤텍스는 프로세스 수명 동안 소유해야 합니다.
     // OnStartup 스코프에서 using var로 만들면 시작이 끝나자마자 소유가 풀려
@@ -145,15 +150,17 @@ public partial class App : Application
         }
 
         // 기존 프로세스가 아직 시작 중(IPC 경청 전)일 수 있으므로 몇 번 재시도해 레이스를 커버합니다.
+        // 이 루프는 창 없이 기다리는 두 번째 인스턴스의 시작 스레드에서 돌으므로,
+        // 최대 대기 시간을 짧게(약 3초) 두어 폴백 UI 띄우기까지의 멈춤이 길지 않게 합니다.
         // 모두 실패하면 그 프로세스는 손상된 것으로 간주하고 호출부가 정상 시작으로 폴백합니다.
-        for (var attempt = 0; attempt < 6; attempt++)
+        for (var attempt = 0; attempt < 4; attempt++)
         {
-            if (ToolsIpc.TrySend(message, timeoutMs: 500))
+            if (ToolsIpc.TrySend(message, timeoutMs: 400))
             {
                 return true;
             }
 
-            Thread.Sleep(500);
+            Thread.Sleep(300);
         }
 
         return false;
@@ -209,9 +216,10 @@ public partial class App : Application
 
                     Dispatcher.Invoke(() => HandleIpcMessage(line));
                 }
-                catch
+                catch (Exception ex) when (!(Dispatcher.HasShutdownStarted || Dispatcher.HasShutdownFinished))
                 {
-                    // 종료 중이거나 일시적인 파이프 오류 — 다시 시도합니다.
+                    // 종료 중 예외는 정상 경로이므로, 종료 전의 진짜 오류만 로그로 남깁니다.
+                    LogIpcError(ex);
                 }
                 finally
                 {
@@ -229,7 +237,24 @@ public partial class App : Application
     }
 
     /// <summary>
-    /// IPC 명령을 처리합니다.
+    /// IPC 서버 루프의 예외를 데이터 폴더의 tools-ipc.log에 남깁니다.
+    /// 메인 앱의 altkey-error.log와 같은 파일 로깅 방식으로, IPC 문제 진단에 사용합니다.
+    /// </summary>
+    private static void LogIpcError(Exception ex)
+    {
+        try
+        {
+            File.AppendAllText(
+                Path.Combine(PathResolver.DataDir, "tools-ipc.log"),
+                $"[{DateTime.Now:u}] {ex}\n\n");
+        }
+        catch
+        {
+            // 로그 쓰기 실패는 무시합니다.
+        }
+    }
+
+    /// <summary>
     /// 형식: "open {도구명} [추가 인자]" / "open hub" / "exit"
     /// </summary>
     private void HandleIpcMessage(string line)
@@ -315,32 +340,44 @@ public partial class App : Application
             return;
         }
 
+        // PROCESS_QUERY_LIMITED_INFORMATION(0x1000): 종료 코드만 읽을 권한이면 충분합니다.
+        _mainAppHandle = OpenProcess(0x1000, inheritHandle: false, pid);
+        if (_mainAppHandle == IntPtr.Zero)
+        {
+            // 핸들 열기 실패 — 메인 앱이 이미 종료된 것입니다.
+            Shutdown();
+            return;
+        }
+
         _watchdogTimer = new DispatcherTimer(DispatcherPriority.Background)
         {
             Interval = TimeSpan.FromSeconds(10),
         };
-        _watchdogTimer.Tick += (_, _) => CheckMainAppAlive(pid);
+        _watchdogTimer.Tick += (_, _) => CheckMainAppAlive();
         _watchdogTimer.Start();
     }
 
-    private void CheckMainAppAlive(int pid)
+    private void CheckMainAppAlive()
     {
-        var alive = false;
-        try
-        {
-            alive = !Process.GetProcessById(pid).HasExited;
-        }
-        catch (ArgumentException)
-        {
-            // 프로세스 ID가 더 이상 존재하지 않음 — 메인 앱이 종료된 것입니다.
-            alive = false;
-        }
-
-        if (!alive)
+        // GetExitCodeProcess가 STILL_ACTIVE(255)를 반환하면 아직 실행 중입니다.
+        // 프로세스가 종료돼도 핸들은 유효한데, PID는 새 프로세스에 재사용될 수 있어
+        // PID로만 확인하면 죽은 메인 앱을 살아 있는 것으로 오인할 수 있습니다.
+        if (GetExitCodeProcess(_mainAppHandle, out var exitCode) && exitCode != 255)
         {
             Shutdown();
         }
     }
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern IntPtr OpenProcess(uint dwDesiredAccess, [MarshalAs(UnmanagedType.Bool)] bool inheritHandle, int dwProcessId);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool GetExitCodeProcess(IntPtr hProcess, out uint lpExitCode);
+
+    [DllImport("kernel32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool CloseHandle(IntPtr hObject);
 
     /// <summary>
     /// 도구 앱 시작 시 메인 앱과 같은 사용자 테마를 즉시 적용해 창 간 시각적 괴리와 명도 대비 차이를 줄입니다.
@@ -441,6 +478,13 @@ public partial class App : Application
 
         _watchdogTimer?.Stop();
         _watchdogTimer = null;
+
+        // 메인 앱 감시용 프로세스 핸들 정리
+        if (_mainAppHandle != IntPtr.Zero)
+        {
+            CloseHandle(_mainAppHandle);
+            _mainAppHandle = IntPtr.Zero;
+        }
 
         // 단일 인스턴스 뮤텍스 해제 — 다음 Tools 프로세스가 새로 시작할 수 있게 합니다.
         _instanceMutex?.Dispose();

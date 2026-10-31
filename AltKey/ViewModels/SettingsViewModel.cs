@@ -1038,8 +1038,23 @@ public partial class SettingsViewModel : ObservableObject
         if (item is null || item.Kind != HeaderButtonKind.Custom)
             return;
 
-        // 쉘 따옴표를 붙이지 않습니다: 이 인자 문자열은 IPC 메시지에 그대로 내장되는데,
-        // 버튼 ID(custom-{guid})는 특수 문자가 없어 따옴표가 필요 없습니다.
+        // 이 값은 프로세스 인자와 IPC 메시지에 그대로 내장되므로 공백이 없어야 안전합니다.
+        // 앱이 생성하는 커스텀 ID는 custom-{guid} 형식이라 항상 안전하지만,
+        // 설정 파일을 손으로 고쳐 공백이 들어간 ID라면 인자/IPC 파싱이 깨지므로 그 경우만 실행을 건너뜁니다.
+        var hasWhitespace = false;
+        foreach (var c in item.Id)
+        {
+            if (char.IsWhiteSpace(c))
+            {
+                hasWhitespace = true;
+                break;
+            }
+        }
+        if (hasWhitespace)
+        {
+            return;
+        }
+
         LaunchTools("header-shortcut", $"--header-button-id {item.Id}");
     }
 
