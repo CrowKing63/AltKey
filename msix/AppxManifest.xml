@@ -7,7 +7,9 @@
 -->
 <Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
          xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
-         xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities">
+         xmlns:uap5="http://schemas.microsoft.com/appx/manifest/uap/windows10/5"
+         xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+         IgnorableNamespaces="uap uap5">
   <Identity Name="CrowKing63.AltKey" Version="1.3.0.0" Publisher="CN=4359A7FD-BCFE-4383-BAF1-A1E18C9DE98A" ProcessorArchitecture="x64" />
 
   <Properties>
@@ -31,20 +33,25 @@
 
   <Applications>
     <Application Id="AltKey" Executable="AltKey.exe" EntryPoint="Windows.FullTrustApplication">
-      <!-- 시작 프로그램 등록: 스토어(MSIX) 앱은 레지스트리 Run 키를 쓸 수 없다.
-           WindowsApps 폴더 안 파일은 로그인 시(권한 없는 사용자) 실행이 차단되어
-           자동 실행이 조용히 실패한다. windows.startupTask 확장으로 등록하면
-           작업 관리자/설정 > 앱 > 시작 프로그램에 표시되어 사용자가 켜고 끌 수 있다.
-           (Appx 스키마: <Application> 자식 중 uap:Extension은 uap:VisualElements보다 앞에 와야 한다) -->
-      <uap:Extension Category="windows.startupTask">
-        <uap:StartupTask TaskType="logon" DisplayName="AltKey" />
-      </uap:Extension>
       <uap:VisualElements
         DisplayName="AltKey"
         Description="한국어 접근성 가상 키보드"
         Square150x150Logo="Assets\Square150x150Logo.png"
         Square44x44Logo="Assets\Square44x44Logo.png"
         BackgroundColor="#2B2B2B" />
+      <!-- 시작 프로그램 등록: 스토어(MSIX) 앱은 레지스트리 Run 키를 쓸 수 없다.
+           WindowsApps 폴더 안 파일은 로그인 시(권한 없는 사용자) 실행이 차단되어
+           자동 실행이 조용히 실패한다. windows.startupTask 확장으로 등록하면
+           작업 관리자/설정 > 앱 > 시작 프로그램에 표시되어 사용자가 켜고 끌 수 있다.
+           (Appx 스키마: <Application> 자식은 VisualElements → Extensions 순서여야 하고,
+            확장은 <Extensions> 래퍼 안에 uap5:Extension으로 선언한다. 데스크톱 앱은
+            Extension에 Executable·EntryPoint를, StartupTask에 TaskId·Enabled를 준다.
+            Enabled=true면 로그인 시 자동 시작되며 사용자는 설정에서 끌 수 있다.) -->
+      <Extensions>
+        <uap5:Extension Category="windows.startupTask" Executable="AltKey.exe" EntryPoint="Windows.FullTrustApplication">
+          <uap5:StartupTask TaskId="AltKey" Enabled="true" DisplayName="AltKey" />
+        </uap5:Extension>
+      </Extensions>
     </Application>
   </Applications>
 </Package>
