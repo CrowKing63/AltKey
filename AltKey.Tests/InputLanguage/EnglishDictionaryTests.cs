@@ -7,12 +7,13 @@ public class EnglishDictionaryTests
     [Fact]
     public void TryRemoveUserWord_Normalizes_To_LowerCase()
     {
+        // 내장 사전에 없는 단어로 사용자 저장소 기록·제거를 검증한다.
         var dict = new EnglishDictionaryTestable();
-        dict.RecordWord("Hello");
-        Assert.Contains("hello", dict.GetSuggestions("he"));
+        dict.RecordWord("Hellox");
+        Assert.Contains("hellox", dict.GetSuggestions("he"));
 
-        Assert.True(dict.TryRemoveUserWord("HELLO"));
-        Assert.DoesNotContain("hello", dict.GetSuggestions("he"));
+        Assert.True(dict.TryRemoveUserWord("HELLOX"));
+        Assert.DoesNotContain("hellox", dict.GetSuggestions("he"));
     }
 
     [Fact]
