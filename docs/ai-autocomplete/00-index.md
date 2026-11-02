@@ -25,6 +25,7 @@
 
 | # | 파일 | 제목 | 의존 |
 |---|---|---|---|
+| **0** | `09-model-viability.md` | **모델 적합성 PoC 게이트 (laya-ko)** | — |
 | 1 | `01-config-model.md` | 설정 모델 확장 (AppConfig + ConfigService) | — |
 | 2 | `02-model-store-download.md` | 모델 저장/다운로드 인프라 (manifest, SHA-256) | — |
 | 3 | `03-reranker-core.md` | LayaReranker 추론 코어 (ONNX Runtime + 인터페이스) | — |
@@ -33,6 +34,8 @@
 | 6 | `06-settings-ui.md` | 설정 UI (SettingsWindow + SettingsViewModel + 다운로드 트리거) | 1,2 |
 | 7 | `07-cache.md` | 문맥별 AI 결과 메모리 캐시 | 5 |
 | 8 | `08-perf-fallback-testing.md` | 성능·타임아웃·에러 처리 + 통합 테스트 | 3,4,5,7 |
+
+> **게이트**: 0번(PoC)이 통과해야 1~8번을 시작한다. PoC 실패면 1~8번 미시행(기존 자동완성 유지, 모델 재선정). 근거는 `09-model-viability.md`.
 
 ## 전제 및 범위 밖(향후) 항목
 기획서에 있었지만 **1차 구현에서 제외**한 것:

@@ -5,18 +5,20 @@
 
 ## 배경 (레포 기준)
 - 후보 흐름: `KoreanInputModule`(또는 module)의 `SuggestionsChanged` → `AutoCompleteService.SuggestionsChanged` → `SuggestionBarViewModel.OnSuggestionsChanged`.
-- `AutoCompleteService`가 module의 `SuggestionsChanged`를 구독해 재방출한다(생성자 line 26). **여기가 AI 끼워 넣기 지점.**
+- `AutoCompleteService`가 module의 `SuggestionsChanged`를 구독해 재방출한다(생성자 line 24). **여기가 AI 끼워 넣기 지점.**
 - `KoreanDictionary.GetSuggestions(prefix, prevWord, count)`가 baseList + prevWord 문맥을 만든다. AI 입력에 쓸 `prevWord`(문맥)는 module의 `_suggestionContext`/`_lastCommittedWord`에 있다.
 - `SuggestionMode`(Normal/Bigram)가 있다. AI 후보 표시를 위해 **새 enum 값**(예: `AiReranked`)을 추가할지, 아니면 Normal로 둔 채 순서만 바꾸는지를 결정한다(아래 "결정").
 
 ## 결정 (1차 구현)
 - **AI 후보 표시 방식**: 1차는 `AiPriority`(앞에 배치)만 사용 — `SuggestionMode`에 새 값을 추가하지 않고 **Normal 모도의 순서만 바꾼다**. 정렬 방식 선택(`AiBoost`)은 v2. (별도 ★표시 UI는 향후.)
 - AI off(`AiAutoCompleteEnabled=false`)면 이 통합 코드는 **무조건 no-op** → 기존 동작과 byte-identical.
-- **AI 입력 문맥**: 1차는 `AutoCompleteService._lastCommittedWord`(기존 자체 필드, 직전 1단어)를 prevWord로 사용 — 인터페이스 변경 불필요. 다단어(3~5) 이력은 향후 `AutoCompleteService` 내부에 N개 이력을 추가해 확장(인터페이스가 아니라 서비스 자체에서). 토큰 한도 초과 시 앞쪽부터 버림.
+- **AI 입력 문맥**: 1차는 **모듈이 소유한** `_module.LastCommittedWord`(`KoreanInputModule`, 직전 1단어)를 prevWord로 사용 — `AutoCompleteService`에 이 필드가 없으므로(코드 주석: "bigram 문맥(_lastCommittedWord)은 모듈이 소유 — 여기서 복제하지 않는다") 모듈에서 읽는다. 다단어(3~5) 이력은 향후 확장. 토큰 한도 초과 시 앞쪽부터 버림.
+- **서브모드 게이트**: `ActiveSubmode == HangulJamo`일 때만 rerank. QuietEnglish(영어) 모드면 영어 후보를 한국어 모델에 넘기지 않는다 → baseList 그대로.
+- **모드 스코프**: AI 후크는 **Normal 모드(prefix) 후보만** 보고 Bigram 경로는 거치지 않음(`AcceptSuggestion`/`AcceptBigramSuggestion`이 Bigram 모드로 직접 방출). v1에서 AI는 bigram 결과엔 손을 대지 못한다 — 의도.
 
 ## 작업
-1. `LayaReranker`(3번) + `ModelStore`(2번) + `ConfigService`를 `AutoCompleteService`에 주입(생성자 4개 → 7개). `App.xaml.cs` DI 등록(104~150행)에 신규 싱글턴을 추가하고, `AltKey.Tests`의 관련 모킹도 함께 갱신.
-2. `AutoCompleteService.OnModuleSuggestions(IReadOnlyList<string> baseList, SuggestionMode mode)` (module 이벤트 핸들러)에:
+1. `LayaReranker`(3번) + `ModelStore`(2번)를 `AutoCompleteService` 생성자에 주입(`ConfigService`는 이미 4번째 파라미터로 존재 → 4개에서 6개). RerankCache(07번)까지 주입하면 7. `App.xaml.cs` DI 등록(104~150행)에 신규 싱글턴을 추가하고, `AltKey.Tests`의 관련 모킹도 함께 갱신.
+2. **후크 지점**: `OnModuleSuggestions(...)`라는 메서드가 **없음**. 현재는 생성자에서 인라인 람다로 구독: `_module.SuggestionsChanged += list => SuggestionsChanged?.Invoke(list, SuggestionMode.Normal);`(`AutoCompleteService.cs:24`). 이 람다를 async 핸들러로 교체해 아래 로직을 넣는다:
    - `AiAutoCompleteEnabled`가 false면 → 그대로 방출하고 return.
    - true면:
      - 문맥(`prevWord`) + baseList를 `LayaReranker.RerankAsync(..., topN: AiSuggestionCount)`로 보낸다.

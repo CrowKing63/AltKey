@@ -8,7 +8,7 @@ AltKey의 기존 자동완성 기능에 소형 AI 결정 모델을 추가하여,
 
 이를 통해 기존 자동완성의 빠르고 안정적인 동작은 유지하면서, 단순 빈도와 Bigram만으로 판단하기 어려운 문맥 적합성을 보완한다.
 
-AI 모델로는 초소형 결정 모델인 Laya 계열, 특히 한국어용 `laya-ko`를 우선 검토한다.
+AI 모델 후보는 Laya 계열(특히 한국어용 laya-ko)이다. 단, 이는 **PoC 게이트(`09-model-viability.md`) 통과 전까지 확정된 의존이 아니다** — laya-ko는 문서 분류 모델이고 다운로드 ~1.23GB로 "초소형"이 아니며, 한국어 다음-단어 용도로는 미검증이다.
 
 
 ## 2. 목표
@@ -398,20 +398,24 @@ AI 자동완성은 일반적인 생성형 AI보다 훨씬 작은 지연시간을
 특히 자동완성은 사용자의 키 입력과 직접 연결되어 있으므로 정확도보다 먼저 **체감 반응성을 유지하는 것**이 중요하다.
 
 
-## 16. 모델 후보
+## 16. 모델 후보 (PoC 게이트 전까지 미확정)
 
 1차 대상(출처 확인됨):
 
 ```text
 laya-ko (2nugu/laya-ko-decision-onnx)
-약 322M parameter, mmBERT-base + 결정 헤더
-ONNX 공개(model.onnx + model.onnx.data), Apache-2.0
-CPU ~30ms/forward pass
+약 322M parameter, mmBERT-base + 결정 헤더 (비생성형)
+ONNX 공개(model.onnx 2.3MB + model.onnx.data 1.29GB + tokenizer.json 34MB), Apache-2.0
+CPU fp32 ~28~48 ms/item
 ```
 
-Laya는 텍스트 생성 모델이 아니라 결정 모델(choice 질문 → 각 옵션별 확률)이므로 "기존 후보 rerank" 용도와 구조적으로 잘 맞는다. ONNX 가중치와 입력 시그니처(`input_ids`, `attention_mask`, `marker_pos`, `marker_mask`, `qtype`)가 공개되어 있어 02·03번의 전제가 확정된다.
+Laya는 텍스트 생성 모델이 아니라 **결정/분류 모델**(choice 질문 → 각 옵션별 확률)이다. `choice` 타입으로 "기존 후보 rerank"에 구조적으로 맞을 수 있으나, **다음-단어 예측이라는 AltKey의 실제 용도로는 학습·검증된 적이 없다**(KLUE 문서 분류로 학습). 한국어 정확도도 독립 테스트에서 약한 편(eazler.com 18분류: 베이스 47~48%).
 
-추후 실제 AltKey 사용 로그가 축적되면 AltKey 전용 데이터셋을 만들어 Laya를 자동완성 후보 선택 문제에 맞게 fine-tuning하는 것도 가능하다.
+**비용**: 총 다운로드 ≈1.23GB, 상주 RAM ~1.2GB — "초소형"이 아니다. 이 비용이 키보드 앱에 지울 수 있는가는 `09-model-viability.md`의 PoC 게이트에서 판단한다.
+
+ONNX 가중치·토크나이저(`tokenizer.json`)·검증 벡터(`golden.json`)와 입력 시그니처(`input_ids`, `attention_mask`, `marker_pos`, `marker_mask`, `qtype`)가 공개되어 있어 02·03번의 전제는 확정된다.
+
+추후 실제 AltKey 사용 로그가 축적되면 AltKey 전용 데이터셋을 만들어 Laya를 자동완성 후보 선택 문제에 맞게 fine-tuning하는 것도 가능하다(repo에 학습 파이프라인 존재).
 
 
 ## 17. 최종 UX

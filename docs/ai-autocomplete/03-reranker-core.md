@@ -8,10 +8,24 @@
 - 기존 `AiService.cs`(OpenAI HTTP 클라이언트)와 **무관**. 이름 충돌 주의: 그 파일의 global type(`AiServiceException`, `ChatMessage` 등)과 겹치지 않게 `AltKey.Services.AiRerank` 서브네임스페이스에 둔다.
 - 2번의 `ModelStore`가 모델을 디스크에 준비한다. 본 단계는 "파일이 이미 있는 상태"를 전제로 한다.
 
+## ✅ 시퀀스 구성 알고리즘 (C# 포트 대상, docs/ONNX.md 확정)
+`[CLS] <type> question: <instructions> [SEP] [MASK] opt0 [MASK] opt1 ... [SEP] state [SEP]`
+1. 옵션을 라벨 순서로 렌더(choice → "key: description", 설명 없으면 "key")
+2. instructions/option/state의 문자 그대로 `<mask>`를 공백으로 치환
+3. 각 옵션을 `[MASK] + tokenize(" " + option_text)[:48]`로 토큰화(선행 공백 필수)
+4. `opt_budget = head_max_len - Σ len(option)`. 16 미만이면 모든 옵션을 `max(4, (head_max_len-16)/n_options)`으로 잘라 재계산
+5. instruction 토큰을 `max(8, opt_budget)`로 잘라
+6. 조립하고 각 옵션 마커 위치 기록
+7. 나머지 공간을 state 토큰으로 채우고 마지막 `[SEP]`
+8. 어떤 마커가 max_len에 도달/초과하면 거부(안 맞음)
+
+- budget: instructions+모든 옵션은 256 토큰 이내(옵션당 최대 48), state는 1024까지(오른쪽부터 잘림)
+- `qtype` = 0(choice). AltKey용 instruction 예: "이 문장의 다음 단어로 가장 자연스러운 것을 고르세요"
+
 ## ✅ 입력/출력 시그니처 (확인됨)
 - **ONNX 입력 텐서**: `input_ids`(int64), `attention_mask`(int64), `marker_pos`(int64), `marker_mask`(int64), `qtype`(int64). 출력: logits(옵션별 점수).
 - **마커 메커니즘**: 각 후보(옵션)에 `[MASK]` 마커를 배치하고, 그 위치(`marker_pos`)와 마스크(`marker_mask`)를 텐서로 전달. 문맥 + 모든 후보를 **한 번의 forward pass**로 넣어 옵션별 확률을 얻는다(`qtype=choice`).
-- **토크나이저**: ONNX 그래프에 **내장되지 않음**(입력이 `input_ids` 정수). C#에서 토크나이징을 수행해야 한다(BPE / `tokenizers` 라이브러리 포팅) → 본 단계의 별도 작업 항목.
+- **토크나이저**: ONNX 그래프에 내장 안 됨(입력이 `input_ids` 정수). `tokenizer.json`(34MB BPE, 256k vocab, 특수 토큰 `<bos>/<eos>/<mask>/<pad>`)이 repo에 공개 — C#으로 포트(Rust `rust/src/lib.rs`의 build_sequence가 참고 구현). **검증**: `golden.json`(13케이스)의 기대 토큰 id·마커 위치·확률로 C# 포트 정확성 확인.
 
 ## 작업
 1. `AltKey/Services/AiRerank/LayaReranker.cs` 작성:

@@ -15,6 +15,7 @@
   - **NumericAdjuster** (기존 `Controls/NumericAdjuster.xaml.cs`) — "AI 후보 수" → `AiSuggestionCount` (1~5, +/- 버튼)
   - (v2) **RadioButtons** — "후보 정렬 방식" → `AiSortMode`. 1차는 `AiPriority`만 사용(라디오 미노출).
   - **모델 상태/진행률 표시** — 다운로드 중 진행률(0~100%), 완료 후 "모델 준비됨", 실패 시 오류 문구.
+  - **다운로드 크기 경고**: ≈1.23GB(model.onnx.data 1.29GB + tokenizer.json 34MB)를 다운로드 전 명시, 사용자 동의 후 시작.
 - **다운로드 트리거**: `AiAutoCompleteEnabled`가 false→true로 바뀐 순간 `ModelStore.EnsureModelAsync("laya-ko")`를 호출한다. 모델이 이미 있으면 no-op. 진행률은 `SettingsViewModel`의 Observable 속성으로 탭에 반영.
 - **제공하지 않음**(향후): 통합 점수(`FinalScore`) 방식, 모델 선택.
 
