@@ -40,7 +40,7 @@ internal sealed class WordFrequencyStoreInMemory : WordFrequencyStore
 
     public WordFrequencyStoreInMemory() : base("test") { }
 
-    public new IReadOnlyList<string> GetSuggestions(string prefix, int count = 5)
+    public override IReadOnlyList<string> GetSuggestions(string prefix, int count = 5)
     {
         if (string.IsNullOrEmpty(prefix)) return [];
         return _freq
@@ -52,7 +52,60 @@ internal sealed class WordFrequencyStoreInMemory : WordFrequencyStore
             .ToList();
     }
 
-    public new IReadOnlyList<string> GetSuggestionsByChoseong(char choseong, int count = 5)
+    public override IReadOnlyList<string> GetSuggestionsByPrefixes(
+        IReadOnlyCollection<string> prefixes, int minimumLength, int count = 5)
+    {
+        return _freq
+            .Where(kv => kv.Key.Length > minimumLength
+                         && prefixes.Any(prefix => kv.Key.StartsWith(prefix, StringComparison.Ordinal)))
+            .OrderByDescending(kv => kv.Value)
+            .ThenBy(kv => kv.Key, StringComparer.Ordinal)
+            .Take(count)
+            .Select(kv => kv.Key)
+            .ToList();
+    }
+
+    public override IReadOnlyList<string> GetSuggestionsForContinuations(
+        IReadOnlyCollection<string> prefixes, string? codaMovedPrefix, char? codaMovedChoseong,
+        int minimumLength, int count = 5)
+    {
+        return _freq
+            .Where(kv => kv.Key.Length > minimumLength
+                         && (prefixes.Any(prefix => kv.Key.StartsWith(prefix, StringComparison.Ordinal))
+                             || (codaMovedPrefix is not null && codaMovedChoseong.HasValue
+                                 && kv.Key.Length > codaMovedPrefix.Length
+                                 && kv.Key.StartsWith(codaMovedPrefix, StringComparison.Ordinal)
+                                 && kv.Key[codaMovedPrefix.Length] >= '\uAC00'
+                                 && kv.Key[codaMovedPrefix.Length] <= '\uD7A3'
+                                 && GetChoseongChar(kv.Key[codaMovedPrefix.Length]) == codaMovedChoseong.Value)))
+            .OrderByDescending(kv => kv.Value)
+            .ThenBy(kv => kv.Key, StringComparer.Ordinal)
+            .Take(count)
+            .Select(kv => kv.Key)
+            .ToList();
+    }
+
+    public override IReadOnlyList<string> GetSuggestionsByChoseongAfterPrefix(
+        string prefix, char choseong, int minimumLength, int count = 5)
+    {
+        return _freq
+            .Where(kv => kv.Key.Length > minimumLength
+                         && kv.Key.StartsWith(prefix, StringComparison.Ordinal)
+                         && kv.Key.Length > prefix.Length
+                         && kv.Key[prefix.Length] >= '\uAC00' && kv.Key[prefix.Length] <= '\uD7A3'
+                         && GetChoseongChar(kv.Key[prefix.Length]) == choseong)
+            .OrderByDescending(kv => kv.Value)
+            .ThenBy(kv => kv.Key, StringComparer.Ordinal)
+            .Take(count)
+            .Select(kv => kv.Key)
+            .ToList();
+    }
+
+    public override bool Contains(string word) => _freq.ContainsKey(word);
+
+    public override bool RemoveWord(string word) => _freq.Remove(word);
+
+    public override IReadOnlyList<string> GetSuggestionsByChoseong(char choseong, int count = 5)
     {
         return _freq
             .Where(kv => kv.Key.Length > 0
@@ -64,6 +117,7 @@ internal sealed class WordFrequencyStoreInMemory : WordFrequencyStore
             .ToList();
     }
 
+
     private static char GetChoseongChar(char syllable)
     {
         const string ch = "ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ";
@@ -71,7 +125,7 @@ internal sealed class WordFrequencyStoreInMemory : WordFrequencyStore
         return ch[idx];
     }
 
-    public new void RecordWord(string word)
+    public override void RecordWord(string word)
     {
         if (string.IsNullOrWhiteSpace(word)) return;
         word = word.Trim();

@@ -85,6 +85,92 @@ public class KoreanDictionaryTests
     }
 
     [Fact]
+    public void GetSuggestions_includes_words_with_valid_compound_vowels_from_last_syllable()
+    {
+        var dict = new KoreanDictionaryTestable();
+        dict.RecordWord("괴물");
+        dict.RecordWord("괜찮을");
+        dict.RecordWord("고양이");
+        dict.RecordWord("구름");
+
+        var suggestions = dict.GetSuggestions("고", 10).ToList();
+
+        Assert.Contains("괴물", suggestions);
+        Assert.Contains("괜찮을", suggestions);
+        Assert.DoesNotContain("구름", suggestions);
+        Assert.True(suggestions.Count <= 10);
+        Assert.True(suggestions.IndexOf("고양이") < suggestions.IndexOf("괴물"));
+    }
+
+    [Fact]
+    public void GetSuggestions_includes_consonant_extensions_only_for_last_syllable()
+    {
+        var dict = new KoreanDictionaryTestable();
+        dict.RecordWord("가나무");
+        dict.RecordWord("가낙다");
+        dict.RecordWord("가난다");
+        dict.RecordWord("고나다");
+
+        var suggestions = dict.GetSuggestions("가나", 10);
+
+        Assert.Contains("가나무", suggestions);
+        Assert.Contains("가낙다", suggestions);
+        Assert.Contains("가난다", suggestions);
+        Assert.DoesNotContain("고나다", suggestions);
+    }
+
+    [Fact]
+    public void GetSuggestions_with_simple_coda_includes_vowel_moved_coda_continuations()
+    {
+        var dict = new KoreanDictionaryTestable();
+        dict.RecordWord("부분이");
+        dict.RecordWord("부자");
+
+        var suggestions = dict.GetSuggestions("붑", 10);
+
+        Assert.Contains("부분이", suggestions);
+        Assert.DoesNotContain("부자", suggestions);
+    }
+
+    [Fact]
+    public void GetSuggestions_with_compound_final_does_not_suggest_unrelated_final_consonants()
+    {
+        var dict = new KoreanDictionaryTestable();
+        dict.RecordWord("업무");
+        dict.RecordWord("얼굴");
+        dict.RecordWord("언제");
+
+        var suggestions = dict.GetSuggestions("얹", 10);
+
+        Assert.Contains("언제", suggestions);
+        Assert.DoesNotContain("업무", suggestions);
+        Assert.DoesNotContain("얼굴", suggestions);
+    }
+
+    [Fact]
+    public void GetSuggestions_matches_a_choseong_after_completed_syllables()
+    {
+        var dict = new KoreanDictionaryTestable();
+        dict.RecordWord("깃허브");
+        dict.RecordWord("깃가나다");
+        dict.RecordWord("빗허브");
+
+        var suggestions = dict.GetSuggestions("깃ㅎ", 10);
+
+        Assert.Contains("깃허브", suggestions);
+        Assert.DoesNotContain("깃한글", suggestions);
+        Assert.DoesNotContain("빗허브", suggestions);
+    }
+
+    [Fact]
+    public void GetSuggestions_with_zero_count_returns_no_candidates()
+    {
+        var dict = new KoreanDictionaryTestable();
+
+        Assert.Empty(dict.GetSuggestions("고", 0));
+    }
+
+    [Fact]
     public void TryRemoveUserWord_Removes_Only_From_User_Store_Not_BuiltIn()
     {
         var dict = new KoreanDictionaryTestable();

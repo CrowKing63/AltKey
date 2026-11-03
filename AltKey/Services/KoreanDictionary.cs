@@ -8,6 +8,8 @@ namespace AltKey.Services;
 public class KoreanDictionary
 {
     private static readonly string Choseong19 = "ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ";
+    private const string Jungseong21 = "ㅏㅐㅑㅒㅓㅔㅕㅖㅗㅘㅙㅚㅛㅜㅝㅞㅟㅠㅡㅢㅣ";
+    private const string Jongseong28 = "ㄱㄲㄳㄴㄵㄶㄷㄹㄺㄻㄼㄽㄾㄿㅀㅁㅂㅄㅅㅆㅇㅈㅊㅋㅌㅍㅎ";
     private const int BigramBoost = 3;
 
     private readonly WordFrequencyStore _userStore;
@@ -51,11 +53,22 @@ public class KoreanDictionary
     /// prefix로 시작하는 한국어 단어 제안 (사용자 학습 우선, 그 다음 내장 사전)
     public IReadOnlyList<string> GetSuggestions(string prefix, int count = 20)
     {
-        if (prefix.Length < 1) return [];
+        if (prefix.Length < 1 || count <= 0) return [];
 
         // 초성만 입력된 경우 (호환 자모 U+3131~U+314E, 길이 1)
         if (prefix.Length == 1 && IsCompatibleJamoChoseong(prefix[0]))
             return GetSuggestionsByChoseong(prefix[0], count);
+
+        if (prefix.Length > 1 && Choseong19.Contains(prefix[^1]))
+        {
+            var precedingPrefix = prefix[..^1];
+            return GetSuggestionsWithChoseongAfterPrefix(precedingPrefix, prefix[^1], prefix.Length, count);
+        }
+
+        var continuationPrefixes = GetContinuationPrefixes(prefix);
+        var codaMove = GetCodaMovedPrefix(prefix);
+        if (continuationPrefixes.Count > 1 || codaMove.HasValue)
+            return GetSuggestionsWithContinuations(prefix, continuationPrefixes, codaMove, count);
 
         var userSuggestions = _userStore.GetSuggestions(prefix, count);
 
@@ -64,12 +77,255 @@ public class KoreanDictionary
 
         var userSet = new HashSet<string>(userSuggestions);
         var builtInSuggestions = _builtIn
-            .Where(w => w.StartsWith(prefix) && w.Length > prefix.Length
+            .Where(w => w.StartsWith(prefix, StringComparison.Ordinal) && w.Length > prefix.Length
                         && !userSet.Contains(w))
             .Take(needed)
             .ToList();
 
         return [..userSuggestions, ..builtInSuggestions];
+    }
+
+    private IReadOnlyList<string> GetSuggestionsWithChoseongAfterPrefix(
+        string precedingPrefix, char choseong, int minimumLength, int count)
+    {
+        var userWords = _userStore.GetSuggestionsByChoseongAfterPrefix(
+            precedingPrefix, choseong, minimumLength, count);
+        var result = new List<string>(userWords);
+        var added = new HashSet<string>(userWords, StringComparer.Ordinal);
+
+        foreach (var word in _builtIn)
+        {
+            if (word.Length <= minimumLength || word.Length <= precedingPrefix.Length
+                || !word.StartsWith(precedingPrefix, StringComparison.Ordinal)) continue;
+
+            char nextSyllable = word[precedingPrefix.Length];
+            if (GetChoseong(nextSyllable) == choseong && added.Add(word))
+                result.Add(word);
+            if (result.Count >= count) break;
+        }
+        return result.Take(count).ToList();
+    }
+
+    private static char GetChoseong(char syllable)
+    {
+        if (syllable < '\uAC00' || syllable > '\uD7A3') return '\0';
+        int index = (syllable - '\uAC00') / (21 * 28);
+        return Choseong19[index];
+    }
+
+    private static (string Prefix, char Choseong)? GetCodaMovedPrefix(string prefix)
+    {
+        if (prefix.Length == 0) return null;
+        char lastSyllable = prefix[^1];
+        if (lastSyllable < '\uAC00' || lastSyllable > '\uD7A3') return null;
+
+        var map = BuildCompatibilityJamoMap();
+        var nfd = lastSyllable.ToString().Normalize(NormalizationForm.FormD);
+        if (nfd.Length != 3 || !map.TryGetValue(nfd[0], out var choseong)
+            || !map.TryGetValue(nfd[1], out var jungseong)
+            || !map.TryGetValue(nfd[2], out var jongseong)
+            || jongseong.Length != 1 || !Choseong19.Contains(jongseong[0]))
+            return null;
+
+        var openSyllable = CreateComposer(choseong, jungseong, null).Current;
+        return openSyllable.Length == 1
+            ? (prefix[..^1] + openSyllable, jongseong[0])
+            : null;
+    }
+
+    private static bool MatchesContinuation(
+        string word, IReadOnlyList<string> candidatePrefixes,
+        (string Prefix, char Choseong)? codaMove)
+    {
+        if (candidatePrefixes.Any(p => word.StartsWith(p, StringComparison.Ordinal))) return true;
+        if (codaMove is not { } move || !word.StartsWith(move.Prefix, StringComparison.Ordinal)
+            || word.Length <= move.Prefix.Length) return false;
+        return GetChoseong(word[move.Prefix.Length]) == move.Choseong;
+    }
+
+    private IReadOnlyList<string> GetSuggestionsWithContinuations(
+        string prefix, IReadOnlyList<string> candidatePrefixes,
+        (string Prefix, char Choseong)? codaMove, int count)
+    {
+        var result = new List<string>(count);
+        var added = new HashSet<string>(StringComparer.Ordinal);
+
+        int baseLimit = Math.Max(1, (count + 1) / 2);
+
+        // 정확한 사용자 후보를 기존 빈도순으로 먼저 유지합니다.
+        foreach (var word in _userStore.GetSuggestions(prefix, baseLimit))
+        {
+            if (added.Add(word)) result.Add(word);
+            if (result.Count >= count) return result;
+        }
+
+        // 정확한 내장 후보도 기존 리소스 순서로 확장 후보보다 먼저 배치합니다.
+        foreach (var word in _builtIn)
+        {
+            if (word.StartsWith(prefix, StringComparison.Ordinal)
+                && word.Length > prefix.Length && added.Add(word))
+                result.Add(word);
+            if (result.Count >= baseLimit) break;
+        }
+
+        // 확장에만 해당하는 사용자 후보는 빈도순으로 추가합니다.
+        foreach (var word in _userStore.GetSuggestionsForContinuations(
+                     candidatePrefixes, codaMove?.Prefix, codaMove?.Choseong, prefix.Length, count))
+        {
+            if (!word.StartsWith(prefix, StringComparison.Ordinal) && added.Add(word))
+                result.Add(word);
+            if (result.Count >= count) return result;
+        }
+
+        // 확장에만 해당하는 내장 후보는 기존 리소스 순서를 따릅니다.
+        foreach (var word in _builtIn)
+        {
+            if (word.Length > prefix.Length && !word.StartsWith(prefix, StringComparison.Ordinal)
+                && MatchesContinuation(word, candidatePrefixes, codaMove)
+                && added.Add(word))
+                result.Add(word);
+            if (result.Count >= count) break;
+        }
+
+        // 확장 후보가 적으면 정확 접두사 후보로 남은 자리를 채웁니다.
+        if (result.Count < count)
+        {
+            foreach (var word in _builtIn)
+            {
+                if (word.StartsWith(prefix, StringComparison.Ordinal)
+                    && word.Length > prefix.Length && added.Add(word))
+                    result.Add(word);
+                if (result.Count >= count) break;
+            }
+        }
+        return result;
+    }
+
+    /// <summary>
+    /// 마지막 입력 음절에서 조합기로 이어질 수 있는 종성·겹중성 후보를 생성합니다.
+    /// </summary>
+    private static IReadOnlyList<string> GetContinuationPrefixes(string prefix)
+    {
+        if (prefix.Length == 0) return [prefix];
+        char lastSyllable = prefix[^1];
+        if (lastSyllable < '\uAC00' || lastSyllable > '\uD7A3') return [prefix];
+
+        var map = BuildCompatibilityJamoMap();
+        var nfd = lastSyllable.ToString().Normalize(NormalizationForm.FormD);
+        if (nfd.Length < 2 || !map.TryGetValue(nfd[0], out var choseong)
+            || !map.TryGetValue(nfd[1], out var jungseong))
+            return [prefix];
+
+        string? jongseong = null;
+        if (nfd.Length > 2)
+        {
+            if (!map.TryGetValue(nfd[2], out jongseong)) return [prefix];
+            if (IsCompoundJongseong(jongseong))
+                return GetCompoundCodaVowelPrefixes(prefix[..^1], lastSyllable, choseong, jungseong);
+        }
+        var variants = new HashSet<char> { lastSyllable };
+        var initial = CreateComposer(choseong, jungseong, jongseong);
+
+        if (jongseong is null)
+        {
+            foreach (char vowel in Jungseong21)
+            {
+                var vowelComposer = CreateComposer(choseong, jungseong, null);
+                vowelComposer.Feed(vowel.ToString());
+                AddSingleSyllable(vowelComposer.Current, variants);
+                AddCompoundCodaVariants(vowelComposer.Current, variants, map);
+            }
+        }
+        AddCompoundCodaVariants(initial.Current, variants, map);
+
+        string stablePrefix = prefix[..^1];
+        var candidatePrefixes = new HashSet<string>(
+            variants.Select(syllable => stablePrefix + syllable), StringComparer.Ordinal);
+        return candidatePrefixes.ToList();
+    }
+
+    private static bool IsCompoundJongseong(string jongseong) =>
+        "ㄳㄵㄶㄺㄻㄼㄽㄾㄿㅀㅄ".Contains(jongseong, StringComparison.Ordinal);
+
+    private static IReadOnlyList<string> GetCompoundCodaVowelPrefixes(
+        string stablePrefix, char currentSyllable, string choseong, string jungseong)
+    {
+        var prefixes = new HashSet<string>(StringComparer.Ordinal) { stablePrefix + currentSyllable };
+
+        // 겹받침을 만드는 실제 자모 입력을 재현하고, 이어지는 모음을 조합기에 전달합니다.
+        foreach (char firstCoda in Choseong19)
+        foreach (char secondCoda in Choseong19)
+        {
+            var probe = CreateComposer(choseong, jungseong, null);
+            probe.Feed(firstCoda.ToString());
+            probe.Feed(secondCoda.ToString());
+            if (!probe.Current.Equals(currentSyllable.ToString(), StringComparison.Ordinal)) continue;
+
+            foreach (char vowel in Jungseong21)
+            {
+                var composer = CreateComposer(choseong, jungseong, null);
+                composer.Feed(firstCoda.ToString());
+                composer.Feed(secondCoda.ToString());
+                composer.Feed(vowel.ToString());
+                if (composer.Current.Length > 1)
+                    prefixes.Add(stablePrefix + composer.Current);
+            }
+        }
+
+        return prefixes.ToList();
+    }
+
+    private static HangulComposer CreateComposer(string choseong, string jungseong, string? jongseong)
+    {
+        var composer = new HangulComposer();
+        composer.Feed(choseong);
+        composer.Feed(jungseong);
+        if (jongseong is not null) composer.Feed(jongseong);
+        return composer;
+    }
+
+    private static void AddCompoundCodaVariants(
+        string syllable, HashSet<char> variants, IReadOnlyDictionary<char, string> map)
+    {
+        // 겹받침을 조합기가 표현하지 못해 음절+자모가 된 경우, 다른 종성 후보로 오인하지 않습니다.
+        if (syllable.Length != 1 || syllable[0] < '\uAC00' || syllable[0] > '\uD7A3') return;
+
+        var nfd = syllable.Normalize(NormalizationForm.FormD);
+        if (nfd.Length < 2 || !map.TryGetValue(nfd[0], out var cho)
+            || !map.TryGetValue(nfd[1], out var jung)) return;
+        string? jong = nfd.Length > 2 && map.TryGetValue(nfd[2], out var value) ? value : null;
+
+        foreach (char consonant in Choseong19)
+        {
+            var composer = CreateComposer(cho, jung, jong);
+            composer.Feed(consonant.ToString());
+            AddSingleSyllable(composer.Current, variants);
+        }
+    }
+
+    private static void AddSingleSyllable(string value, HashSet<char> variants)
+    {
+        if (value.Length == 1 && value[0] >= '\uAC00' && value[0] <= '\uD7A3')
+            variants.Add(value[0]);
+    }
+
+    private static Dictionary<char, string> BuildCompatibilityJamoMap()
+    {
+        var map = new Dictionary<char, string>();
+        foreach (char jamo in Choseong19 + Jungseong21 + Jongseong28)
+        {
+            string decomposed = jamo.ToString().Normalize(NormalizationForm.FormKD);
+            if (decomposed.Length == 1) map[decomposed[0]] = jamo.ToString();
+        }
+
+        // 종성의 표준 분해 문자는 초성 호환 자모와 별도이므로 조합기로 표본을 생성해 연결합니다.
+        foreach (char consonant in Choseong19)
+        {
+            var composer = CreateComposer("ㄱ", "ㅏ", consonant.ToString());
+            var decomposed = composer.Current.Normalize(NormalizationForm.FormD);
+            if (decomposed.Length == 3) map[decomposed[2]] = consonant.ToString();
+        }
+        return map;
     }
 
     private IReadOnlyList<string> GetSuggestionsByChoseong(char choseong, int count)

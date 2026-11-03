@@ -33,7 +33,7 @@ public class WordFrequencyStore
     }
 
     /// 테스트용: 단어 존재 여부
-    public bool Contains(string word)
+    public virtual bool Contains(string word)
     {
         lock (_saveLock) { return _freq.ContainsKey(word); }
     }
@@ -53,7 +53,7 @@ public class WordFrequencyStore
     }
 
     /// 단어 빈도 1 증가 (최소 길이·대소문자 정규화는 호출자 책임)
-    public void RecordWord(string word)
+    public virtual void RecordWord(string word)
     {
         if (string.IsNullOrWhiteSpace(word)) return;
         word = word.Trim();
@@ -111,7 +111,7 @@ public class WordFrequencyStore
 
     /// 단어를 사용자 사전에서 제거. 존재하지 않으면 false.
     /// 성공 시 디바운스 저장 예약.
-    public bool RemoveWord(string word)
+    public virtual bool RemoveWord(string word)
     {
         if (string.IsNullOrWhiteSpace(word)) return false;
         word = word.Trim();
@@ -125,7 +125,7 @@ public class WordFrequencyStore
     }
 
     /// prefix 로 시작하는 단어 제안 (빈도 내림차순)
-    public IReadOnlyList<string> GetSuggestions(string prefix, int count = 20)
+    public virtual IReadOnlyList<string> GetSuggestions(string prefix, int count = 20)
     {
         if (string.IsNullOrEmpty(prefix)) return [];
         lock (_saveLock)
@@ -140,8 +140,77 @@ public class WordFrequencyStore
         }
     }
 
+    /// <summary>
+    /// 여러 가능한 접두사 중 하나로 시작하는 단어를 빈도순으로 반환합니다.
+    /// </summary>
+    public virtual IReadOnlyList<string> GetSuggestionsByPrefixes(
+        IReadOnlyCollection<string> prefixes, int minimumLength, int count = 20)
+    {
+        if (prefixes.Count == 0) return [];
+        var prefixSet = new HashSet<string>(prefixes, StringComparer.Ordinal);
+        lock (_saveLock)
+        {
+            return _freq
+                .Where(kv => kv.Key.Length > minimumLength
+                             && prefixSet.Any(prefix => kv.Key.StartsWith(prefix, StringComparison.Ordinal)))
+                .OrderByDescending(kv => kv.Value)
+                .ThenBy(kv => kv.Key, StringComparer.Ordinal)
+                .Take(count)
+                .Select(kv => kv.Key)
+                .ToList();
+        }
+    }
+
+    public virtual IReadOnlyList<string> GetSuggestionsForContinuations(
+        IReadOnlyCollection<string> prefixes, string? codaMovedPrefix, char? codaMovedChoseong,
+        int minimumLength, int count = 20)
+    {
+        if (prefixes.Count == 0 && codaMovedPrefix is null) return [];
+        var prefixSet = new HashSet<string>(prefixes, StringComparer.Ordinal);
+        lock (_saveLock)
+        {
+            return _freq
+                .Where(kv => kv.Key.Length > minimumLength
+                             && (prefixSet.Any(prefix => kv.Key.StartsWith(prefix, StringComparison.Ordinal))
+                                 || (codaMovedPrefix is not null && codaMovedChoseong.HasValue
+                                     && kv.Key.Length > codaMovedPrefix.Length
+                                     && kv.Key.StartsWith(codaMovedPrefix, StringComparison.Ordinal)
+                                     && kv.Key[codaMovedPrefix.Length] >= '\uAC00'
+                                     && kv.Key[codaMovedPrefix.Length] <= '\uD7A3'
+                                     && GetChoseongChar(kv.Key[codaMovedPrefix.Length]) == codaMovedChoseong.Value)))
+                .OrderByDescending(kv => kv.Value)
+                .ThenBy(kv => kv.Key, StringComparer.Ordinal)
+                .Take(count)
+                .Select(kv => kv.Key)
+                .ToList();
+        }
+    }
+
+    /// <summary>
+    /// 완성된 앞부분 뒤에서 특정 초성으로 시작하는 음절을 가진 단어를 빈도순으로 반환합니다.
+    /// </summary>
+    public virtual IReadOnlyList<string> GetSuggestionsByChoseongAfterPrefix(
+        string prefix, char choseong, int minimumLength, int count = 20)
+    {
+        if (string.IsNullOrEmpty(prefix)) return [];
+        lock (_saveLock)
+        {
+            return _freq
+                .Where(kv => kv.Key.Length > minimumLength
+                             && kv.Key.Length > prefix.Length
+                             && kv.Key.StartsWith(prefix, StringComparison.Ordinal)
+                             && kv.Key[prefix.Length] >= '\uAC00' && kv.Key[prefix.Length] <= '\uD7A3'
+                             && GetChoseongChar(kv.Key[prefix.Length]) == choseong)
+                .OrderByDescending(kv => kv.Value)
+                .ThenBy(kv => kv.Key, StringComparer.Ordinal)
+                .Take(count)
+                .Select(kv => kv.Key)
+                .ToList();
+        }
+    }
+
     /// 초성(호환 자모)으로 시작하는 단어 제안 (첫 음절의 초성이 일치하는 단어)
-    public IReadOnlyList<string> GetSuggestionsByChoseong(char choseong, int count = 20)
+    public virtual IReadOnlyList<string> GetSuggestionsByChoseong(char choseong, int count = 20)
     {
         lock (_saveLock)
         {
