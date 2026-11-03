@@ -67,7 +67,9 @@ public class KoreanDictionary
 
         var continuationPrefixes = GetContinuationPrefixes(prefix);
         var codaMove = GetCodaMovedPrefix(prefix);
-        if (continuationPrefixes.Count > 1 || codaMove.HasValue)
+        // 첫 완성 음절은 사용자 사전의 정확히 일치하는 1음절 단어도 찾도록 통합 검색을 사용합니다.
+        if (continuationPrefixes.Count > 1 || codaMove.HasValue
+            || (prefix.Length == 1 && prefix[0] >= '\uAC00' && prefix[0] <= '\uD7A3'))
             return GetSuggestionsWithContinuations(prefix, continuationPrefixes, codaMove, count);
 
         var userSuggestions = _userStore.GetSuggestions(prefix, count);

@@ -72,6 +72,19 @@ public class KoreanDictionaryTests
     }
 
     [Fact]
+    public void GetSuggestions_includes_exact_saved_single_syllable()
+    {
+        var dict = new KoreanDictionaryTestable();
+        dict.RecordWord("가");
+
+        var initialSuggestions = dict.GetSuggestions("ㄱ", 20);
+        var completedSuggestions = dict.GetSuggestions("가", 20);
+
+        Assert.Contains("가", initialSuggestions);
+        Assert.Contains("가", completedSuggestions);
+    }
+
+    [Fact]
     public void GetSuggestions_with_complete_syllable_prefix_unchanged()
     {
         var dict = new KoreanDictionaryTestable();

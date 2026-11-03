@@ -70,7 +70,10 @@ internal sealed class WordFrequencyStoreInMemory : WordFrequencyStore
         char? codaMovedChoseong, int minimumLength, int count = 5)
     {
         return _freq
-            .Where(kv => kv.Key.Length > minimumLength
+            .Where(kv => (kv.Key.Length > minimumLength
+                          || (exactPrefix.Length == 1
+                              && exactPrefix[0] >= '\uAC00' && exactPrefix[0] <= '\uD7A3'
+                              && kv.Key == exactPrefix))
                          && (prefixes.Any(prefix => kv.Key.StartsWith(prefix, StringComparison.Ordinal))
                              || (codaMovedPrefix is not null && codaMovedChoseong.HasValue
                                  && kv.Key.Length > codaMovedPrefix.Length
