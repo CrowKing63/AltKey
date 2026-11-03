@@ -163,6 +163,25 @@ public class KoreanDictionaryTests
     }
 
     [Fact]
+    public void GetSuggestions_sorts_exact_and_expanded_user_words_by_frequency_with_exact_tie_break()
+    {
+        var dict = new KoreanDictionaryTestable();
+        dict.RecordWord("가나다");
+        dict.RecordWord("가나다");
+        dict.RecordWord("각별히");
+        dict.RecordWord("각별히");
+        dict.RecordWord("각별히");
+        dict.RecordWord("각별히");
+        dict.RecordWord("간다");
+        dict.RecordWord("간다");
+
+        var suggestions = dict.GetSuggestions("가", 20).ToList();
+
+        Assert.True(suggestions.IndexOf("각별히") < suggestions.IndexOf("가나다"));
+        Assert.True(suggestions.IndexOf("가나다") < suggestions.IndexOf("간다"));
+    }
+
+    [Fact]
     public void GetSuggestions_with_zero_count_returns_no_candidates()
     {
         var dict = new KoreanDictionaryTestable();

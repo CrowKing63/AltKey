@@ -66,8 +66,8 @@ internal sealed class WordFrequencyStoreInMemory : WordFrequencyStore
     }
 
     public override IReadOnlyList<string> GetSuggestionsForContinuations(
-        IReadOnlyCollection<string> prefixes, string? codaMovedPrefix, char? codaMovedChoseong,
-        int minimumLength, int count = 5)
+        IReadOnlyCollection<string> prefixes, string exactPrefix, string? codaMovedPrefix,
+        char? codaMovedChoseong, int minimumLength, int count = 5)
     {
         return _freq
             .Where(kv => kv.Key.Length > minimumLength
@@ -79,6 +79,7 @@ internal sealed class WordFrequencyStoreInMemory : WordFrequencyStore
                                  && kv.Key[codaMovedPrefix.Length] <= '\uD7A3'
                                  && GetChoseongChar(kv.Key[codaMovedPrefix.Length]) == codaMovedChoseong.Value)))
             .OrderByDescending(kv => kv.Value)
+            .ThenByDescending(kv => kv.Key.StartsWith(exactPrefix, StringComparison.Ordinal))
             .ThenBy(kv => kv.Key, StringComparer.Ordinal)
             .Take(count)
             .Select(kv => kv.Key)

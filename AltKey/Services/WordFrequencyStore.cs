@@ -162,8 +162,8 @@ public class WordFrequencyStore
     }
 
     public virtual IReadOnlyList<string> GetSuggestionsForContinuations(
-        IReadOnlyCollection<string> prefixes, string? codaMovedPrefix, char? codaMovedChoseong,
-        int minimumLength, int count = 20)
+        IReadOnlyCollection<string> prefixes, string exactPrefix, string? codaMovedPrefix,
+        char? codaMovedChoseong, int minimumLength, int count = 20)
     {
         if (prefixes.Count == 0 && codaMovedPrefix is null) return [];
         var prefixSet = new HashSet<string>(prefixes, StringComparer.Ordinal);
@@ -179,6 +179,7 @@ public class WordFrequencyStore
                                      && kv.Key[codaMovedPrefix.Length] <= '\uD7A3'
                                      && GetChoseongChar(kv.Key[codaMovedPrefix.Length]) == codaMovedChoseong.Value)))
                 .OrderByDescending(kv => kv.Value)
+                .ThenByDescending(kv => kv.Key.StartsWith(exactPrefix, StringComparison.Ordinal))
                 .ThenBy(kv => kv.Key, StringComparer.Ordinal)
                 .Take(count)
                 .Select(kv => kv.Key)

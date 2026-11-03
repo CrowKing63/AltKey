@@ -150,34 +150,23 @@ public class KoreanDictionary
         var result = new List<string>(count);
         var added = new HashSet<string>(StringComparer.Ordinal);
 
-        int baseLimit = Math.Max(1, (count + 1) / 2);
-
-        // 정확한 사용자 후보를 기존 빈도순으로 먼저 유지합니다.
-        foreach (var word in _userStore.GetSuggestions(prefix, baseLimit))
+        foreach (var word in _userStore.GetSuggestionsForContinuations(
+                     candidatePrefixes, prefix, codaMove?.Prefix, codaMove?.Choseong,
+                     prefix.Length, count))
         {
             if (added.Add(word)) result.Add(word);
             if (result.Count >= count) return result;
         }
 
-        // 정확한 내장 후보도 기존 리소스 순서로 확장 후보보다 먼저 배치합니다.
+        // 내장 사전은 빈도 대신 기존 리소스 순위를 사용하고, 정확 prefix를 먼저 배치합니다.
         foreach (var word in _builtIn)
         {
             if (word.StartsWith(prefix, StringComparison.Ordinal)
                 && word.Length > prefix.Length && added.Add(word))
                 result.Add(word);
-            if (result.Count >= baseLimit) break;
-        }
-
-        // 확장에만 해당하는 사용자 후보는 빈도순으로 추가합니다.
-        foreach (var word in _userStore.GetSuggestionsForContinuations(
-                     candidatePrefixes, codaMove?.Prefix, codaMove?.Choseong, prefix.Length, count))
-        {
-            if (!word.StartsWith(prefix, StringComparison.Ordinal) && added.Add(word))
-                result.Add(word);
             if (result.Count >= count) return result;
         }
 
-        // 확장에만 해당하는 내장 후보는 기존 리소스 순서를 따릅니다.
         foreach (var word in _builtIn)
         {
             if (word.Length > prefix.Length && !word.StartsWith(prefix, StringComparison.Ordinal)
@@ -185,18 +174,6 @@ public class KoreanDictionary
                 && added.Add(word))
                 result.Add(word);
             if (result.Count >= count) break;
-        }
-
-        // 확장 후보가 적으면 정확 접두사 후보로 남은 자리를 채웁니다.
-        if (result.Count < count)
-        {
-            foreach (var word in _builtIn)
-            {
-                if (word.StartsWith(prefix, StringComparison.Ordinal)
-                    && word.Length > prefix.Length && added.Add(word))
-                    result.Add(word);
-                if (result.Count >= count) break;
-            }
         }
         return result;
     }
