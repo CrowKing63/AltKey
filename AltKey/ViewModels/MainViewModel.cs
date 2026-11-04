@@ -510,6 +510,9 @@ public partial class MainViewModel : ObservableObject
 
     private CancellationTokenSource? _aiCts;
 
+    // [왜] 선택 텍스트 캡처 재시도 최대 횟수 — 첫 시도가 타이밍에 안 맞으면(느린 앱/브라우저) 내부에서 같은 순서 반복.
+    private const int CaptureMaxAttempts = 3;
+
     /// <summary>
     /// AI 텍스트 처리: Ctrl+C → API → Ctrl+V
     /// </summary>
@@ -545,21 +548,35 @@ public partial class MainViewModel : ObservableObject
         {
             // 클릭 처리가 끝난 뒤 포커스 복원 → 클립보드 백업/복사 순서
             await Task.Yield();
-            TryFocusLastExternalTarget();
-            await Task.Delay(80, ct);
 
+            // Ctrl+C 전 클립보드를 한 번만 백업해 둔다 (finally에서 원래대로 돌림).
             await WpfApp.Current.Dispatcher.InvokeAsync(() =>
                 originalClipboard = ClipboardHelper.GetTextWithRetry());
 
-            _inputService.SendCombo([VirtualKeyCode.VK_CONTROL, VirtualKeyCode.VK_C]);
-            await Task.Delay(220, ct);
-
+            // 선택 텍스트 캡처: 포커스 복원 → Ctrl+C → 읽기.
+            // [왜 재시도] 첫 시도가 타이밍에 안 맞으면(느린 앱/브라우저) 빈 값이 온다. 같은 순서를 반복하면
+            // 수동으로 두세 번 누르는 효과를 내부에서 얻는다. 첫 시도는 기존 로직과 동일해 대상 앱 동작은 그대로다.
             string? selectedText = null;
-            await WpfApp.Current.Dispatcher.InvokeAsync(() =>
-                selectedText = ClipboardHelper.GetTextWithRetry());
+            for (int attempt = 1; attempt <= CaptureMaxAttempts; attempt++)
+            {
+                TryFocusLastExternalTarget();
+                await Task.Delay(80, ct);
+
+                _inputService.SendCombo([VirtualKeyCode.VK_CONTROL, VirtualKeyCode.VK_C]);
+                await Task.Delay(220, ct);
+
+                selectedText = null;
+                await WpfApp.Current.Dispatcher.InvokeAsync(() =>
+                    selectedText = ClipboardHelper.GetTextWithRetry());
+
+                if (!string.IsNullOrWhiteSpace(selectedText))
+                    break;   // 캡처 성공
+
+                Debug.WriteLine($"[AI] 선택 텍스트 캡처 실패 (시도 {attempt}/{CaptureMaxAttempts})");
+            }
 
             if (string.IsNullOrWhiteSpace(selectedText))
-            { _liveRegion.Announce("선택된 텍스트가 없습니다"); return; }
+            { _liveRegion.Announce("선택된 텍스트를 읽을 수 없습니다. 다시 선택한 뒤 AI 버튼(번역)을 누르세요."); return; }
 
             _liveRegion.Announce("AI 처리 중...");
             var result = await _aiService.ProcessTextAsync(selectedText, prompt, ct);
