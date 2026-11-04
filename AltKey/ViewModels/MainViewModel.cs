@@ -512,6 +512,33 @@ public partial class MainViewModel : ObservableObject
 
     // [왜] 선택 텍스트 캡처 재시도 최대 횟수 — 첫 시도가 타이밍에 안 맞으면(느린 앱/브라우저) 내부에서 같은 순서 반복.
     private const int CaptureMaxAttempts = 3;
+    // [왜] UIA로 "포커스가 대상 앱 안에 잡혔는지" 확인 주기(ms) — 고정 80ms 대기를 결정적 대기 대신한다.
+    private const int FocusWaitPollDelayMs = 40;
+    // [왜] 위 주기 × 횟수 ≈ 1s. 느린 앱도 포커스 잡히도록, 무한 대기 방지.
+    private const int FocusWaitPollCount = 25;
+
+    /// <summary>
+    /// 대상 창 내부 포커스가 실제로 대상 앱 안으로 들어온 것을 UIA로 확인한다.
+    /// [왜] SetForegroundWindow만 보내고 고정 지연(80ms)을 기다리면, 느린 앱/브라우저에선 아직 내부 포커스가
+    /// 안 잡힌 상태에서 Ctrl+C가 날아가 아무것도 복사 못 한다 — 이게 랜덤 실패의 원인이다.
+    /// UIA로 "글로벌 포커스 요소가 대상 프로세스 안에 있는지"를 확인해 그 타이밍 불확실성을 제거한다.
+    /// [폴백] UIA가 안 되면(타임아웃/예외) false를 돌려 호출부에서 기존처럼 진행 — 레그레스션 방지.
+    /// </summary>
+    private async Task<bool> WaitForFocusInTargetAsync(uint targetPid, CancellationToken ct)
+    {
+        try
+        {
+            for (int i = 0; i < FocusWaitPollCount; i++)
+            {
+                var foc = System.Windows.Automation.AutomationElement.FocusedElement;
+                if (foc != null && foc.Current.ProcessId == targetPid)
+                    return true;   // 포커스가 대상 앱 안에 → Ctrl+C가 올바른 창으로 감
+                await Task.Delay(FocusWaitPollDelayMs, ct);
+            }
+        }
+        catch { /* UIA 호출 실패 → 폴백 */ }
+        return false;
+    }
 
     /// <summary>
     /// AI 텍스트 처리: Ctrl+C → API → Ctrl+V
@@ -555,12 +582,17 @@ public partial class MainViewModel : ObservableObject
 
             // 선택 텍스트 캡처: 포커스 복원 → Ctrl+C → 읽기.
             // [왜 재시도] 첫 시도가 타이밍에 안 맞으면(느린 앱/브라우저) 빈 값이 온다. 같은 순서를 반복하면
-            // 수동으로 두세 번 누르는 효과를 내부에서 얻는다. 첫 시도는 기존 로직과 동일해 대상 앱 동작은 그대로다.
+            // 수동으로 두세 번 누르는 효과를 내부에서 얻는다.
+            var target = _profileService.LastExternalForegroundHwnd;
+            Win32.GetWindowThreadProcessId(target, out var targetPid);
+
             string? selectedText = null;
             for (int attempt = 1; attempt <= CaptureMaxAttempts; attempt++)
             {
                 TryFocusLastExternalTarget();
-                await Task.Delay(80, ct);
+                // [왜] 고정 80ms 대신 UIA로 "포커스가 대상 앱에 잡혔는지" 결정적으로 확인. 안 되면 폴백으로 진행.
+                if (target != IntPtr.Zero && Win32.IsWindow(target))
+                    await WaitForFocusInTargetAsync(targetPid, ct);
 
                 _inputService.SendCombo([VirtualKeyCode.VK_CONTROL, VirtualKeyCode.VK_C]);
                 await Task.Delay(220, ct);
