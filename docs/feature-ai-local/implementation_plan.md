@@ -80,13 +80,14 @@ public enum BackendState { NotLoaded, Loading, Ready, Unloading }
 
 설정 `AiLocalDevice`: `"auto"`(기본) | `"cpu"` | `"gpu"`
 
-| 선택 | LLamaSharp 동작 | 결과 |
+| 선택 | 동작 | 결과 |
 |---|---|---|
-| `auto` | 로드 전 CUDA 존재 감지 → 있으면 GPU 레이어 all, 없으면 0 | 결정적. 매 로드마다 재감지(경량) |
+| `auto` | 로드 전 GPU 감지: NVIDIA→CUDA, AMD/Intel→Vulkan, GPU 없음→CPU(0) | 결정적. 매 로드마다 재감지(경량) |
 | `cpu` | `GpuLayerCount = 0`, CPU 백엔드만 사용 | GPU 무관 |
-| `gpu` | `GpuLayerCount = all`, CUDA 백엔드 필요 | GPU 없으면 **명확한 에러**("GPU를 찾을 못했습니다. auto로 변경하세요") — 침묵 fallback 금지 |
+| `gpu` | 가용 GPU 백엔드 중 최적(CUDA 우선, NVIDIA 없으면 Vulkan) + `GpuLayerCount = all` | 어떤 GPU도 없으면 **명확한 에러**("GPU를 찾을 못했습니다. auto로 변경하세요") — 침묵 fallback 금지 |
 
-- 백엔드 NuGet: `LLamaSharp.Backend.Cpu` + `LLamaSharp.Backend.Cuda12`(구현 시 이 머신 CUDA 버전과 패키지 호환 확인)
+- 백엔드 NuGet: `LLamaSharp.Backend.Cpu` + `LLamaSharp.Backend.Cuda12` + `LLamaSharp.Backend.Vulkan`(구현 시 CUDA 버전·Vulkan 로더 호환 확인)
+- Vulkan은 AMD 라데온이 1급 대상. Vulkan 로더(`vulkan-1.dll`)는 GPU 드라이버에 동봉되어 별도 설치 불필요. 라데온 실측 성능값은 AMD 머신 확보 시 PoC로 보완
 - 감지 실패·에러는 LiveRegion 공지 + 설정 창 유도.
 
 ## 6. 모델 관리 (ModelStore)
@@ -187,7 +188,7 @@ public enum BackendState { NotLoaded, Loading, Ready, Unloading }
 ### View / DI / 프로젝트
 - [MODIFY] `Views/SettingsWindow.xaml`: "AI 도구" 탭 확장(§9 레이아웃)
 - [MODIFY] `App.xaml.cs`: `ILlmBackend` 등록(백엔드 팩토리)
-- [MODIFY] `AltKey.csproj`: `LLamaSharp`, `LLamaSharp.Backend.Cpu`, `LLamaSharp.Backend.Cuda12` + 네이티브 DLL(`llama.dll`, `ggml*.dll`) `<None Include>` + `CopyToOutputDirectory=PreserveNewest`(자동 복사 안 됨 — 스킬 확인)
+- [MODIFY] `AltKey.csproj`: `LLamaSharp`, `LLamaSharp.Backend.Cpu`, `LLamaSharp.Backend.Cuda12`, `LLamaSharp.Backend.Vulkan` + 네이티브 DLL(`llama.dll`, `ggml*.dll`) `<None Include>` + `CopyToOutputDirectory=PreserveNewest`(자동 복사 안 됨 — 스킬 확인)
 
 ## 13. 테스트 계획
 
