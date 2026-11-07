@@ -71,6 +71,8 @@ public partial class SettingsViewModel : ObservableObject
     // T-8.2: 키 클릭 사운드
     [ObservableProperty] private bool soundEnabled;
     [ObservableProperty] private string soundFilePath = "";
+    // 키 사운드 크기(퍼센트). 100이 기본이며, 설정 화면에서 0~100 사이로 조절할 수 있습니다.
+    [ObservableProperty] private int soundVolume = 100;
 
 
 
@@ -322,6 +324,7 @@ public partial class SettingsViewModel : ObservableObject
             // T-8.2: 사운드
             SoundEnabled = c.SoundEnabled;
             SoundFilePath = c.SoundFilePath ?? "";
+            SoundVolume = c.SoundVolumePercent;
 
 
 
@@ -391,7 +394,7 @@ public partial class SettingsViewModel : ObservableObject
 
         // T-8.2: _isLoading 가드 해제 후 사운드 초기 구성 적용
         // (OnSoundEnabledChanged / OnSoundFilePathChanged 는 _isLoading=true 중 호출되므로 직접 호출)
-        _soundService.Configure(SoundEnabled, string.IsNullOrEmpty(SoundFilePath) ? null : SoundFilePath);
+        _soundService.Configure(SoundEnabled, string.IsNullOrEmpty(SoundFilePath) ? null : SoundFilePath, SoundVolume);
     }
 
     // ── 속성 변경 시 자동 저장 ───────────────────────────────────────────────
@@ -531,15 +534,22 @@ public partial class SettingsViewModel : ObservableObject
     partial void OnSoundEnabledChanged(bool value)
     {
         if (_isLoading) return;
-        _soundService.Configure(value, string.IsNullOrEmpty(SoundFilePath) ? null : SoundFilePath);
+        _soundService.Configure(value, string.IsNullOrEmpty(SoundFilePath) ? null : SoundFilePath, SoundVolume);
         _configService.Update(c => c.SoundEnabled = value);
     }
 
     partial void OnSoundFilePathChanged(string value)
     {
         if (_isLoading) return;
-        _soundService.Configure(SoundEnabled, string.IsNullOrEmpty(value) ? null : value);
+        _soundService.Configure(SoundEnabled, string.IsNullOrEmpty(value) ? null : value, SoundVolume);
         _configService.Update(c => c.SoundFilePath = string.IsNullOrEmpty(value) ? null : value);
+    }
+
+    partial void OnSoundVolumeChanged(int value)
+    {
+        if (_isLoading) return;
+        _soundService.Configure(SoundEnabled, string.IsNullOrEmpty(SoundFilePath) ? null : SoundFilePath, value);
+        _configService.Update(c => c.SoundVolumePercent = value);
     }
 
     /// <summary>
@@ -552,7 +562,7 @@ public partial class SettingsViewModel : ObservableObject
         if (dlg.ShowDialog() == true)
         {
             SoundFilePath = dlg.FileName;
-            _soundService.Configure(SoundEnabled, SoundFilePath);
+            _soundService.Configure(SoundEnabled, SoundFilePath, SoundVolume);
             _configService.Update(c => c.SoundFilePath = SoundFilePath);
         }
     }
@@ -561,7 +571,7 @@ public partial class SettingsViewModel : ObservableObject
     private void ResetSoundFile()
     {
         SoundFilePath = "";
-        _soundService.Configure(SoundEnabled, null);
+        _soundService.Configure(SoundEnabled, null, SoundVolume);
         _configService.Update(c => c.SoundFilePath = null);
     }
 

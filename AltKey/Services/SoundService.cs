@@ -13,9 +13,10 @@ public class SoundService : IDisposable
     private bool _enabled;
 
     /// <summary>
-    /// 사운드 재생 환경을 설정합니다. (켜기/끄기 및 파일 경로 지정)
+    /// 사운드 재생 환경을 설정합니다. (켜기/끄기, 파일 경로 지정, 크기 조절)
+    /// volumePercent: 0(무음)~100(전체). 기본값 100입니다.
     /// </summary>
-    public void Configure(bool enabled, string? customPath)
+    public void Configure(bool enabled, string? customPath, int volumePercent = 100)
     {
         _enabled = enabled;
 
@@ -28,7 +29,9 @@ public class SoundService : IDisposable
         var path = ResolvePath(customPath);
         if (path is null) return;
 
-        _player = new MediaPlayer { Volume = 1.0 };
+        // MediaPlayer의 Volume 범위는 0.0~1.0이므로, 퍼센트를 0~1으로 바꿉니다.
+        var volume = Math.Clamp(volumePercent, 0, 100) / 100.0;
+        _player = new MediaPlayer { Volume = volume };
         _player.Open(new Uri(path, UriKind.Absolute));
         // 재생 준비(MediaOpened)가 되면 위치를 0으로 초기화하여 즉시 재생 가능하게 합니다.
         _player.MediaOpened += (_, _) => _player.Position = TimeSpan.Zero;

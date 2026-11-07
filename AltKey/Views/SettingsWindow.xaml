@@ -424,6 +424,10 @@
                                 <Button Content="초기화" Command="{Binding ResetSoundFileCommand}" Margin="4,0,0,0" Padding="8,4" KeyboardNavigation.TabIndex="40"
                                         Style="{StaticResource FluentSecondaryButtonStyle}"/>
                             </StackPanel>
+                            <TextBlock Text="크기" Foreground="{DynamicResource SettingsFgSub}" FontSize="{DynamicResource ScaledSettingsSubFontSize}" Margin="16,0,0,4"/>
+                            <ctrl:NumericAdjuster Value="{Binding SoundVolume}" Minimum="0" Maximum="100" Step="10" DecimalPlaces="0"
+                                                IsEnabled="{Binding SoundEnabled}"
+                                                Margin="16,0,0,16" KeyboardNavigation.TabIndex="41"/>
                         </StackPanel>
                     </ScrollViewer>
                 </TabItem>
