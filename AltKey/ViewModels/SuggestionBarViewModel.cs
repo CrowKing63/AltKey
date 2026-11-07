@@ -16,6 +16,7 @@ public partial class SuggestionBarViewModel : ObservableObject
     private readonly ConfigService       _configService;
     private readonly KoreanDictionary    _koDict;
     private readonly EnglishDictionary   _enDict;
+    private readonly SoundService        _soundService;
 
     private SuggestionMode _currentMode = SuggestionMode.Normal; // 현재 표시 중인 제안 모드
 
@@ -48,13 +49,15 @@ public partial class SuggestionBarViewModel : ObservableObject
         InputService inputService,
         ConfigService configService,
         KoreanDictionary koDict,
-        EnglishDictionary enDict)
+        EnglishDictionary enDict,
+        SoundService soundService)
     {
         _autoComplete = autoComplete;
         _inputService = inputService;
         _configService = configService;
         _koDict = koDict;
         _enDict = enDict;
+        _soundService = soundService;
         _autoComplete.SuggestionsChanged += OnSuggestionsChanged;
         _configService.ConfigChanged += OnConfigChanged;
 
@@ -170,6 +173,9 @@ public partial class SuggestionBarViewModel : ObservableObject
                     _inputService.SendUnicode(fullWord);
             }
         }
+
+        // 제안 단어가 실제로 받아들여졌을 때 키 클릭과 같은 효과음을 재생합니다.
+        _soundService.Play();
     }
 
     [RelayCommand]

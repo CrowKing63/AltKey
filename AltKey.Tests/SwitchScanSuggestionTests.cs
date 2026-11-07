@@ -20,7 +20,8 @@ public class SwitchScanSuggestionTests
             new FakeInputService(),
             config,
             new KoreanDictionaryTestable(),
-            new EnglishDictionaryTestable());
+            new EnglishDictionaryTestable(),
+            new SoundService());
 
         module.SetState("해", ["해요", "해도"]);
 
@@ -42,7 +43,8 @@ public class SwitchScanSuggestionTests
             new FakeInputService(),
             config,
             new KoreanDictionaryTestable(),
-            new EnglishDictionaryTestable());
+            new EnglishDictionaryTestable(),
+            new SoundService());
 
         module.SetState("해", ["해요"]);
 
