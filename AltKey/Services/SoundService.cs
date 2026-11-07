@@ -46,6 +46,8 @@ public class SoundService : IDisposable
             return customPath;
 
         var soundsDir = Path.Combine(AppContext.BaseDirectory, "Assets", "Sounds");
+        // 기본 효과음 출처: OpenGameArt "Single Key Press Sounds" (eklee, qubodup) — CC-BY 3.0
+        // 기계식 키보드 단일 타건음을 현재 볼륨 수준에 맞춰 축소하여 포함했습니다.
         var clickPath = Path.Combine(soundsDir, "click.wav");
         if (File.Exists(clickPath)) return clickPath;
 
