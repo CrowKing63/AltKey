@@ -252,4 +252,133 @@ public class HeaderButtonConfig
             && NormalizePosition(button.Position) == normalizedPosition
             && !string.Equals(button.Id, excludingId, StringComparison.Ordinal));
     }
+
+    // ── 저장 검증 (메인 앱·독립 편집기 공용) ────────────────────────────────
+    // 아래 검증 함수는 AltKey(설정 탭)와 AltKey.Tools(상단바 단축키 편집기)가
+    // 같은 기준을 쓰도록 HeaderButtonConfig에 둡니다. UI 메시지 표시는 각 앱이 담당합니다.
+
+    /// <summary>
+    /// 전체 버튼 목록이 좌우 표시 한도를 넘지 않는지 확인합니다.
+    /// 설정 탭에서 체크박스·위치 변경 직후 현재 목록 전체를 검증하는 데 사용합니다.
+    /// </summary>
+    public static (bool valid, string? sideName) TryValidateLayout(IEnumerable<HeaderButtonConfig> buttons)
+    {
+        if (CountVisibleButtons(buttons, "Left") > MaxVisibleButtonsLeft)
+            return (false, "좌측");
+        if (CountVisibleButtons(buttons, "Right") > MaxVisibleButtonsRight)
+            return (false, "우측");
+        return (true, null);
+    }
+
+    /// <summary>
+    /// 저장하려는 버튼 하나가 커스텀 총개수·좌우 표시 한도를 넘지 않는지 확인합니다.
+    /// buttons에는 candidate가 이미 포함된 목록을 전달하고, isEditingExisting은
+    /// "candidate가 기존 항목인지"를 나타냅니다. 실패하면 sideName에 꽉 찬 쪽이 들어갑니다.
+    /// </summary>
+    public static (bool valid, string? sideName) TryValidateSave(
+        IEnumerable<HeaderButtonConfig> buttons,
+        HeaderButtonConfig candidate,
+        bool isEditingExisting)
+    {
+        // 커스텀 총개수: 저장 대상 자신을 제외하고 셉니다.
+        if (!isEditingExisting
+            && CountCustomButtons(buttons, candidate.Id) >= MaxCustomButtonCount)
+        {
+            return (false, null);
+        }
+
+        // 표시를 꺼두는 경우라면 좌우 한도와 무관합니다.
+        if (!candidate.Visible)
+            return (true, null);
+
+        var maxVisibleButtons = GetMaxVisibleButtons(candidate.Position);
+        var visibleOnSide = CountVisibleButtons(buttons, candidate.Position, candidate.Id);
+        if (visibleOnSide >= maxVisibleButtons)
+        {
+            return (false, NormalizePosition(candidate.Position) == "Left" ? "좌측" : "우측");
+        }
+
+        return (true, null);
+    }
+
+    // ── 쪽별 표시 순서 이동 (순수 함수) ────────────────────────────────────
+    // 상단바 표시 순서는 "쪽별로 필터링한 리스트 순서"이므로, 이동도 같은 쪽 안에서만
+    // 의미 있습니다. 반대쪽 버튼을 건너뛴 이동은 표시에 영향을 주지 못합니다.
+
+    /// <summary>
+    /// 지정한 버튼을 같은 쪽의 표시 순서 안에서 한 칸 이동(up=true면 앞)한 새 목록을 반환합니다.
+    /// 그쪽에 버튼이 하나뿐이면 아무것도 바꾸지 않습니다.
+    /// </summary>
+    public static List<HeaderButtonConfig> MoveWithinSide(List<HeaderButtonConfig> buttons, string id, bool up)
+    {
+        var result = new List<HeaderButtonConfig>(buttons);
+        var index = result.FindIndex(button => button.Id == id);
+        if (index < 0)
+            return result;
+
+        var step = up ? -1 : 1;
+        for (var next = index + step; next >= 0 && next < result.Count; next += step)
+        {
+            // 같은 쪽의 바로 인접 버튼을 찾아서만 위치를 바꿉니다.
+            if (NormalizePosition(result[next].Position) == NormalizePosition(result[index].Position))
+            {
+                (result[index], result[next]) = (result[next], result[index]);
+                return result;
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// 지정한 버튼을 반대쪽 표시 순서의 끝으로 옮긴 새 목록을 반환합니다.
+    /// 리스트 끝에 붙이면 그쪽 필터링 기준에서도 가장 뒤가 됩니다.
+    /// </summary>
+    public static List<HeaderButtonConfig> MoveToOtherSideEnd(List<HeaderButtonConfig> buttons, string id)
+    {
+        var result = new List<HeaderButtonConfig>(buttons);
+        var index = result.FindIndex(button => button.Id == id);
+        if (index < 0)
+            return result;
+
+        var item = result[index];
+        result.RemoveAt(index);
+        item.Position = NormalizePosition(item.Position) == "Left" ? "Right" : "Left";
+        result.Add(item);
+        return result;
+    }
+
+    // ── 편집기 대상 해석 (추가/편집 분리) ───────────────────────────────────
+
+    /// <summary>
+    /// 상단바 단축키 편집기의 편집 대상을 결정합니다.
+    /// - createNew=true: 항상 새 버튼으로 시작하며 기존 항목을 참조하지 않습니다.
+    /// - createNew=false + ID 지정: 그 커스텀 버튼을 편집합니다. 없으면 error를 반환합니다.
+    /// - createNew=false + ID 없음: 실수로 기존 버튼을 덮어쓰는 것을 막기 위해 추가로 처리합니다.
+    /// </summary>
+    public static (HeaderButtonConfig? target, bool isCreate, string? error) ResolveEditTarget(
+        IEnumerable<HeaderButtonConfig> buttons,
+        string? requestedId,
+        bool createNew)
+    {
+        if (createNew)
+        {
+            return (CreateCustomDefault(), true, null);
+        }
+
+        if (!string.IsNullOrWhiteSpace(requestedId))
+        {
+            var target = buttons.FirstOrDefault(button =>
+                button.Kind == HeaderButtonKind.Custom && button.Id == requestedId);
+            if (target is null)
+            {
+                return (null, false, $"상단바 단축키를 찾을 수 없습니다. (ID: {requestedId})");
+            }
+
+            return (target, false, null);
+        }
+
+        // ID 없이 편집 모드로 들어온 경우: 기존 항목을 고르지 않고 추가 대상으로 처리합니다.
+        return (CreateCustomDefault(), true, null);
+    }
 }

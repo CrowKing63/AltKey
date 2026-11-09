@@ -260,13 +260,12 @@ public partial class MainViewModel : ObservableObject
             SwitchLayout(_configService.Current.DefaultLayout);
             return;
         }
-        if (propertyName is "HeaderButtons" or nameof(AppConfig.AiEnabled))
+        if (propertyName == "HeaderButtons")
             RebuildHeaderButtons();
 
         OnPropertyChanged(nameof(DwellEnabled));
         OnPropertyChanged(nameof(DwellTimeMs));
         OnPropertyChanged(nameof(AutoCompleteEnabled));
-        OnPropertyChanged(nameof(AiEnabled));
         OnPropertyChanged(nameof(KeyRepeatEnabled));
         OnPropertyChanged(nameof(KeyRepeatDelayMs));
         OnPropertyChanged(nameof(KeyRepeatIntervalMs));
@@ -501,9 +500,6 @@ public partial class MainViewModel : ObservableObject
 
     // ── AI 텍스트 처리 ───────────────────────────────────────────
 
-    /// AI 텍스트 처리 기능 활성화 여부
-    public bool AiEnabled => _configService.Current.AiEnabled;
-
     /// AI 처리 진행 중 여부
     [ObservableProperty]
     private bool isAiProcessing;
@@ -688,9 +684,8 @@ public partial class MainViewModel : ObservableObject
             HeaderButtonConfig.IdOsIme => CreateBuiltInHeaderButtonVm(config, SendOsImeHangulCommand, width: 40, fontSize: 10),
             HeaderButtonConfig.IdOsk => CreateBuiltInHeaderButtonVm(config, SendOskCommand),
             HeaderButtonConfig.IdSettings => CreateBuiltInHeaderButtonVm(config, Settings.OpenSettingsCommand),
-            HeaderButtonConfig.IdAi => _configService.Current.AiEnabled
-                ? CreateBuiltInHeaderButtonVm(config, ExecuteAiCommand)
-                : null,
+            // AI ✨ 버튼은 상단바 설정의 Visible만으로 표시됩니다.
+            HeaderButtonConfig.IdAi => CreateBuiltInHeaderButtonVm(config, ExecuteAiCommand),
             _ => null
         };
     }

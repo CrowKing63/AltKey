@@ -152,7 +152,6 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty] private string currentVersion = "";
 
     // ── AI 텍스트 처리 설정 ──────────────────────────────────────────────
-    [ObservableProperty] private bool aiEnabled;
     [ObservableProperty] private string aiEndpoint = "";
     [ObservableProperty] private string aiApiKey = "";
     [ObservableProperty] private string aiModel = "";
@@ -163,11 +162,12 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private ObservableCollection<HeaderButtonConfig> headerButtons = [];
 
-    public IEnumerable<HeaderButtonConfig> BuiltInHeaderButtons =>
-        HeaderButtons.Where(button => button.Kind == HeaderButtonKind.BuiltIn);
+    // 상단바 탭은 "좌측/우측" 쪽별로 목록을 보여서 표시 순서를 직관적으로 관리합니다.
+    public IEnumerable<HeaderButtonConfig> LeftHeaderButtons =>
+        HeaderButtons.Where(button => button.Position == "Left");
 
-    public IEnumerable<HeaderButtonConfig> CustomHeaderButtons =>
-        HeaderButtons.Where(button => button.Kind == HeaderButtonKind.Custom);
+    public IEnumerable<HeaderButtonConfig> RightHeaderButtons =>
+        HeaderButtons.Where(button => button.Position == "Right");
 
     /// <summary>
     /// 설정 화면에서 현재 관리 중인 커스텀 단축키 수입니다.
@@ -364,8 +364,7 @@ public partial class SettingsViewModel : ObservableObject
              SwitchScanSuggestionPriority = c.SwitchScanSuggestionPriority;
              SwitchScanAnnounceMode = c.SwitchScanAnnounceMode;
 
-             // AI 설정
-             AiEnabled = c.AiEnabled;
+             // AI 설정 (표시는 상단바 탭의 Visible이 담당)
              AiEndpoint = c.AiEndpoint;
              AiApiKey = SecureStorage.Decrypt(c.AiApiKeyEncrypted);
              AiModel = c.AiModel;
@@ -375,6 +374,7 @@ public partial class SettingsViewModel : ObservableObject
              // 상단바 설정
              HeaderButtons = new ObservableCollection<HeaderButtonConfig>(
                  c.HeaderButtons.Select(CloneHeaderButtonConfig));
+
              RaiseHeaderButtonCollectionChanged();
 
             // T-8.5: 프로필
@@ -809,12 +809,6 @@ public partial class SettingsViewModel : ObservableObject
     }
 
     // ── AI 텍스트 처리 및 상단바 설정 저장 ────────────────────────────────
-    partial void OnAiEnabledChanged(bool value)
-    {
-        if (_isLoading) return;
-        // 속성 이름을 넘겨야 MainViewModel이 상단바 ✨ 버튼 표시를 즉시 갱신합니다.
-        _configService.Update(c => c.AiEnabled = value, nameof(AppConfig.AiEnabled));
-    }
     partial void OnAiEndpointChanged(string value) { if (_isLoading) return; _configService.Update(c => c.AiEndpoint = value); }
     partial void OnAiApiKeyChanged(string value) { if (_isLoading) return; _configService.Update(c => c.AiApiKeyEncrypted = SecureStorage.Encrypt(value)); }
     partial void OnAiModelChanged(string value) { if (_isLoading) return; _configService.Update(c => c.AiModel = value); }
@@ -915,8 +909,8 @@ public partial class SettingsViewModel : ObservableObject
 
     private void RaiseHeaderButtonCollectionChanged()
     {
-        OnPropertyChanged(nameof(BuiltInHeaderButtons));
-        OnPropertyChanged(nameof(CustomHeaderButtons));
+        OnPropertyChanged(nameof(LeftHeaderButtons));
+        OnPropertyChanged(nameof(RightHeaderButtons));
         OnPropertyChanged(nameof(CustomHeaderButtonCount));
         OnPropertyChanged(nameof(CanAddMoreCustomHeaderButtons));
         OnPropertyChanged(nameof(HeaderButtonLimitSummary));
@@ -924,22 +918,15 @@ public partial class SettingsViewModel : ObservableObject
 
     /// <summary>
     /// 저장 직전 상단바 표시 개수가 좌우 한도를 넘지 않는지 확인합니다.
+    /// 공용 검증 함수(HeaderButtonConfig.TryValidateLayout)로 기준을 통일하고,
     /// 한도를 넘으면 현재 편집값을 되돌려 중앙 이동/드래그 영역이 가려지는 배치를 즉시 막습니다.
     /// </summary>
     private bool TryValidateHeaderButtonLayout()
     {
-        var leftVisibleCount = HeaderButtonConfig.CountVisibleButtons(HeaderButtons, "Left");
-        if (leftVisibleCount > HeaderButtonConfig.MaxVisibleButtonsLeft)
+        var (valid, sideName) = HeaderButtonConfig.TryValidateLayout(HeaderButtons);
+        if (!valid && sideName is not null)
         {
-            ShowHeaderButtonSideLimitMessage("좌측", HeaderButtonConfig.MaxVisibleButtonsLeft);
-            RestoreHeaderButtonsFromConfig();
-            return false;
-        }
-
-        var rightVisibleCount = HeaderButtonConfig.CountVisibleButtons(HeaderButtons, "Right");
-        if (rightVisibleCount > HeaderButtonConfig.MaxVisibleButtonsRight)
-        {
-            ShowHeaderButtonSideLimitMessage("우측", HeaderButtonConfig.MaxVisibleButtonsRight);
+            ShowHeaderButtonSideLimitMessage(sideName, HeaderButtonConfig.GetMaxVisibleButtons(sideName));
             RestoreHeaderButtonsFromConfig();
             return false;
         }
@@ -955,6 +942,7 @@ public partial class SettingsViewModel : ObservableObject
     {
         HeaderButtons = new ObservableCollection<HeaderButtonConfig>(
             _configService.Current.HeaderButtons.Select(CloneHeaderButtonConfig));
+
         RaiseHeaderButtonCollectionChanged();
     }
 
@@ -991,35 +979,36 @@ public partial class SettingsViewModel : ObservableObject
     [RelayCommand]
     private void MoveHeaderButtonUp(HeaderButtonConfig item)
     {
-        var idx = HeaderButtons.IndexOf(item);
-        if (idx > 0)
-        {
-            HeaderButtons.Move(idx, idx - 1);
-            RaiseHeaderButtonCollectionChanged();
-            SaveHeaderButtons();
-        }
+        // 표시 순서는 쪽별로만 의미가 있으므로, 같은 쪽 안에서만 한 칸 앞당깁니다.
+        var moved = HeaderButtonConfig.MoveWithinSide(HeaderButtons.ToList(), item.Id, up: true);
+        if (moved.Select(button => button.Id).SequenceEqual(HeaderButtons.Select(button => button.Id)))
+            return; // 이동할 인접 버튼이 없으면 아무것도 바꾸지 않습니다.
+
+        HeaderButtons = new ObservableCollection<HeaderButtonConfig>(moved);
+        RaiseHeaderButtonCollectionChanged();
+        SaveHeaderButtons();
     }
 
     [RelayCommand]
     private void MoveHeaderButtonDown(HeaderButtonConfig item)
     {
-        var idx = HeaderButtons.IndexOf(item);
-        if (idx >= 0 && idx < HeaderButtons.Count - 1)
-        {
-            HeaderButtons.Move(idx, idx + 1);
-            RaiseHeaderButtonCollectionChanged();
-            SaveHeaderButtons();
-        }
+        // 표시 순서는 쪽별로만 의미가 있으므로, 같은 쪽 안에서만 한 칸 뒤로 밀어냅니다.
+        var moved = HeaderButtonConfig.MoveWithinSide(HeaderButtons.ToList(), item.Id, up: false);
+        if (moved.Select(button => button.Id).SequenceEqual(HeaderButtons.Select(button => button.Id)))
+            return; // 이동할 인접 버튼이 없으면 아무것도 바꾸지 않습니다.
+
+        HeaderButtons = new ObservableCollection<HeaderButtonConfig>(moved);
+        RaiseHeaderButtonCollectionChanged();
+        SaveHeaderButtons();
     }
     [RelayCommand]
     private void ToggleHeaderButtonPosition(HeaderButtonConfig item)
     {
         if (item is null) return;
-        item.Position = string.Equals(item.Position, "Left", StringComparison.OrdinalIgnoreCase) ? "Right" : "Left";
 
-        // HeaderButtonConfig는 ObservableObject가 아니므로 컬렉션을 재할당해 UI를 갱신합니다.
-        HeaderButtons = new ObservableCollection<HeaderButtonConfig>(
-            HeaderButtons.Select(CloneHeaderButtonConfig));
+        // 쪽을 바꾸면 반대쪽 표시 순서의 끝으로 가도록 합니다(가운데에 끼지 않음).
+        var moved = HeaderButtonConfig.MoveToOtherSideEnd(HeaderButtons.ToList(), item.Id);
+        HeaderButtons = new ObservableCollection<HeaderButtonConfig>(moved);
         RaiseHeaderButtonCollectionChanged();
 
         SaveHeaderButtons();

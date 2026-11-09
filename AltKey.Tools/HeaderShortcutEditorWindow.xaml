@@ -33,10 +33,20 @@
             </Grid.RowDefinitions>
 
             <Border Grid.Row="0" Style="{StaticResource FluentCardBorderStyle}" Margin="0,0,0,10">
-                <TextBlock FontSize="{DynamicResource ScaledToolTitleFontSize}"
-                           FontWeight="SemiBold"
-                           Text="{Binding WindowTitle}"
-                           AutomationProperties.Name="상단바 단축키 편집기 제목"/>
+                <StackPanel>
+                    <TextBlock FontSize="{DynamicResource ScaledToolTitleFontSize}"
+                               FontWeight="SemiBold"
+                               Text="{Binding WindowTitle}"
+                               AutomationProperties.Name="상단바 단축키 편집기 제목"/>
+                    <!-- 모드 상태: 추가 모드인지, 어떤 버튼을 편집 중인지가 한 줄로 보이면
+                         창 재사용으로 저장 대상이 바뀌는 혼동을 막습니다. -->
+                    <TextBlock Text="{Binding ModeStatusText}"
+                               Margin="0,4,0,0"
+                               Foreground="{DynamicResource SettingsFgSub}"
+                               FontSize="{DynamicResource ScaledSettingsSubFontSize}"
+                               TextWrapping="Wrap"
+                               AutomationProperties.Name="상단바 단축키 편집기 모드 상태"/>
+                </StackPanel>
             </Border>
 
             <Border Grid.Row="1" Style="{StaticResource FluentCardBorderStyle}" Margin="0,0,0,10">
@@ -123,6 +133,7 @@
                        
                         Margin="0,0,8,0"
                         Click="OnSave"
+                        IsEnabled="{Binding CanSave}"
                         AutomationProperties.Name="상단바 단축키 저장 버튼"/>
                 <Button Content="닫기 (Esc)"
                         Width="120"

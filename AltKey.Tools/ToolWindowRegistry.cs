@@ -14,21 +14,44 @@ internal static class ToolWindowRegistry
 {
     private static readonly Dictionary<string, Window> _open = new(StringComparer.OrdinalIgnoreCase);
 
+    // 상단바 단축키 편집기만 창마다 다른 인자(버튼 ID, 생성 모드)를 받습니다.
+    // 열린 창과 새 요청의 인자가 다르면 기존 창을 재사용해도 안 되므로,
+    // 인자를 함께 저장해 비교할 수 있게 둡니다.
+    private static readonly Dictionary<string, string?> _extraArgs = new(StringComparer.OrdinalIgnoreCase);
+
     /// <summary>
     /// 도구 이름에 해당하는 창이 열려 있으면 기존 창을, 없으면 새 창을 만들어 반환합니다.
+    /// 상단바 단축키 편집기("header-shortcut")만 예외: 인자가 바뀐 요청이면
+    /// 기존 창을 닫고 새 창으로 만들어, 추가/편집 모드가 뒤섞이지 않게 합니다.
     /// Show()/Activate() 호출은 요청한 쪽(호출부)이 책임집니다.
     /// </summary>
     public static Window GetOrCreate(string toolName, string? extraArgs = null, Window? owner = null)
     {
+        Window? toClose = null;
         lock (_open)
         {
             if (_open.TryGetValue(toolName, out var existing) && existing is { IsLoaded: true })
             {
-                return existing;
+                var argsChanged = toolName.Equals("header-shortcut", StringComparison.OrdinalIgnoreCase)
+                    && !string.Equals(_extraArgs.GetValueOrDefault(toolName), extraArgs, StringComparison.Ordinal);
+
+                if (!argsChanged)
+                {
+                    return existing;
+                }
+
+                // 레지스트리에서 먼저 제거한 뒤 창을 닫습니다.
+                // Closed 이벤트 핸들러가 다시 이 잠금을 잡으므로,
+                // 닫기 전에 항목을 지워야 재진입으로 멈추는 것을 막고,
+                // 옛 창의 늦게 온 이벤트가 새 창 항목을 지우는 것도 막습니다.
+                _open.Remove(toolName);
+                _extraArgs.Remove(toolName);
+                toClose = existing;
             }
 
             var window = CreateWindow(toolName, extraArgs, owner);
             _open[toolName] = window;
+            _extraArgs[toolName] = extraArgs;
             window.Closed += (_, _) =>
             {
                 lock (_open)
@@ -38,11 +61,15 @@ internal static class ToolWindowRegistry
                     if (_open.TryGetValue(toolName, out var current) && ReferenceEquals(current, window))
                     {
                         _open.Remove(toolName);
+                        _extraArgs.Remove(toolName);
                     }
                 }
             };
-            return window;
         }
+
+        // 잠금을 벗어난 뒤에서 창을 닫아 Closed 이벤트의 재진입 잠금을 피합니다.
+        toClose?.Close();
+        return _open[toolName];
     }
 
     /// <summary>

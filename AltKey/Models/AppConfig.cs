@@ -123,9 +123,6 @@ public class AppConfig
 
     // ── AI 텍스트 처리 설정 ──────────────────────────────────────────────
 
-    // AI 텍스트 처리 기능 활성화 여부입니다. 켜면 상단바에 ✨ 버튼이 표시됩니다.
-    public bool AiEnabled { get; set; } = false;
-
     // AI API 엔드포인트 URL입니다. (예: http://localhost:11434/v1/chat/completions)
     public string AiEndpoint { get; set; } = "";
 

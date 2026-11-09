@@ -104,11 +104,13 @@ public partial class MainWindow : Window
 
     /// <summary>
     /// 상단바 단축키 편집기를 엽니다.
-    /// 메인 앱 설정 탭에서는 특정 버튼 편집 인자를 주고, 허브에서는 일반 편집기로 진입할 수 있습니다.
+    /// 허브에서는 항상 "새 단축키 추가" 모드로 진입합니다.
+    /// 기존 항목 편집은 메인 앱 설정 탭의 각 행 "편집" 버튼이 담당해,
+    /// 창 재사용으로 저장 대상이 바뀌는 혼동을 막습니다.
     /// </summary>
     private void OnOpenHeaderShortcutEditor(object sender, RoutedEventArgs e)
     {
-        OpenHeaderShortcutEditorWindow(attachOwner: true, headerButtonId: null, createNew: false);
+        OpenHeaderShortcutEditorWindow(attachOwner: true, headerButtonId: null, createNew: true);
     }
 
     private void OpenHeaderShortcutEditorWindow(bool attachOwner, string? headerButtonId, bool createNew)

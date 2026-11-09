@@ -25,11 +25,44 @@ public partial class HeaderShortcutEditorWindow : Window, INotifyPropertyChanged
     private string _accessibleNameText = "";
     private string _selectedPosition = "Right";
     private bool _isHeaderButtonVisible = true;
+    private string _modeStatusText = "";
+    private bool _canSave = true;
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
     public ActionBuilderViewModel ActionBuilder { get; } = new();
     public IReadOnlyList<string> Positions { get; } = ["Left", "Right"];
+
+    /// <summary>
+    /// 현재 편집기 모드를 한 줄로 알려 주는 상태 문구입니다.
+    /// 추가 모드인지, 어떤 버튼을 편집 중인지가 창 제목 아래에 보이면
+    /// 창이 이미 열려 있던 상태에서 저장 결과가 달라지는 혼동을 막습니다.
+    /// </summary>
+    public string ModeStatusText
+    {
+        get => _modeStatusText;
+        set
+        {
+            if (_modeStatusText == value) return;
+            _modeStatusText = value;
+            OnPropertyChanged(nameof(ModeStatusText));
+        }
+    }
+
+    /// <summary>
+    /// 저장 버튼 사용 가능 여부입니다.
+    /// 편집 대상 ID를 찾지 못한 상태에서는 저장을 막아 기존 버튼을 덮어쓰는 것을 방지합니다.
+    /// </summary>
+    public bool CanSave
+    {
+        get => _canSave;
+        set
+        {
+            if (_canSave == value) return;
+            _canSave = value;
+            OnPropertyChanged(nameof(CanSave));
+        }
+    }
 
     public string WindowTitle
     {
@@ -115,30 +148,41 @@ public partial class HeaderShortcutEditorWindow : Window, INotifyPropertyChanged
     }
 
     /// <summary>
-    /// 편집 대상 ID가 있으면 해당 커스텀 버튼을 불러오고, 없으면 새 버튼 기본값으로 시작합니다.
+    /// HeaderButtonConfig.ResolveEditTarget로 편집 대상을 결정합니다.
+    /// 추가 모드(createNew)는 항상 새 버튼으로 시작하고, 편집 모드는 요청한 ID만 사용합니다.
+    /// ID 없이 편집 모드로 들어온 경우에도 기존 버튼을 골라 덮어쓰지 않고 추가로 처리합니다.
     /// </summary>
     private void LoadFromConfig()
     {
-        var current = _configService.Current.HeaderButtons
-            .FirstOrDefault(button => button.Kind == HeaderButtonKind.Custom && button.Id == _requestedHeaderButtonId);
+        var (target, isCreate, error) = HeaderButtonConfig.ResolveEditTarget(
+            _configService.Current.HeaderButtons,
+            _requestedHeaderButtonId,
+            _isCreateMode);
 
-        if (current is null && !_isCreateMode)
+        if (target is null || error is not null)
         {
-            current = _configService.Current.HeaderButtons
-                .FirstOrDefault(button => button.Kind == HeaderButtonKind.Custom);
+            // 편집 대상을 찾지 못한 상태: 저장을 비활성하고 이유를 보여 줍니다.
+            // 자동으로 추가 모드로 전환하지 않아서 어떤 버튼을 고치고 있는지 혼동하지 않게 합니다.
+            _isCreateMode = false;
+            CanSave = false;
+            WindowTitle = "상단바 단축키 편집기";
+            ModeStatusText = $"편집 대상을 찾을 수 없습니다 — {error}";
+            return;
         }
 
-        current ??= HeaderButtonConfig.CreateCustomDefault();
-        _isCreateMode = _isCreateMode || !_configService.Current.HeaderButtons.Any(button => button.Id == current.Id);
-
-        _editingId = current.Id;
-        WindowTitle = _isCreateMode ? "상단바 단축키 추가" : "상단바 단축키 편집기";
-        IconText = current.EffectiveIconText;
-        TooltipText = current.EffectiveTooltip;
-        AccessibleNameText = current.EffectiveAccessibleName;
-        SelectedPosition = current.Position;
-        IsHeaderButtonVisible = current.Visible;
-        ActionBuilder.LoadFromAction(current.CustomAction);
+        _isCreateMode = isCreate;
+        _editingId = target.Id;
+        CanSave = true;
+        WindowTitle = isCreate ? "상단바 단축키 추가" : "상단바 단축키 편집기";
+        ModeStatusText = isCreate
+            ? "추가 모드 — 저장하면 새 버튼이 만들어집니다."
+            : $"편집 중: {target.DisplayName}";
+        IconText = target.EffectiveIconText;
+        TooltipText = target.EffectiveTooltip;
+        AccessibleNameText = target.EffectiveAccessibleName;
+        SelectedPosition = target.Position;
+        IsHeaderButtonVisible = target.Visible;
+        ActionBuilder.LoadFromAction(target.CustomAction);
     }
 
     /// <summary>
@@ -146,6 +190,12 @@ public partial class HeaderShortcutEditorWindow : Window, INotifyPropertyChanged
     /// </summary>
     private void OnSave(object sender, RoutedEventArgs e)
     {
+        // 편집 대상을 찾지 못한 상태에서는 저장 버튼이 비활성이어야 합니다(방어용 가드).
+        if (!CanSave)
+        {
+            return;
+        }
+
         var savedButton = BuildEditedButton();
         var nextButtons = _configService.Current.HeaderButtons
             .Select(CloneHeaderButtonConfig)
@@ -169,15 +219,26 @@ public partial class HeaderShortcutEditorWindow : Window, INotifyPropertyChanged
         _configService.Update(config => config.HeaderButtons = nextButtons);
         ToolsReloadSignalService.NotifyReloadHeaderButtons();
 
+        var wasCreateMode = _isCreateMode;
         _editingId = savedButton.Id;
         _isCreateMode = false;
-        WindowTitle = "상단바 단축키 편집기";
 
         MessageBox.Show(
             "상단바 단축키를 저장했습니다.",
             "상단바 단축키 저장",
             MessageBoxButton.OK,
             MessageBoxImage.Information);
+
+        // 추가 모드에서 저장을 마치면 창을 바로 닫아 새 버튼이 상단바에 생긴 것을 즉시 확인하게 합니다.
+        // 편집 모드는 창을 열어 두어 같은 버튼을 계속 다듬을 수 있게 합니다.
+        if (wasCreateMode)
+        {
+            Close();
+            return;
+        }
+
+        WindowTitle = "상단바 단축키 편집기";
+        ModeStatusText = $"편집 중: {savedButton.DisplayName}";
     }
 
     /// <summary>
