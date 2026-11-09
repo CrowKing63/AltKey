@@ -78,7 +78,7 @@ Kanana는 laya-ko와 본질이 다른 **디코더**(다음 토큰 예측)다. �
 
 프로세스:
 1. prompt = " ".join(context_words)
-2. llama-server /v1/completions 호출 (top_k=500, max_tokens=1, temperature=0)
+2. llama-server /v1/completions 호출 (top_k=5000, max_tokens=1, temperature=0)
 3. 응답의 choices[0].logprobs.content[0].top_logprobs → {id, token, logprob} 목록
 4. 각 candidate:
    a. leading-space 토크나이징 (" " + word)
@@ -89,7 +89,7 @@ Kanana는 laya-ko와 본질이 다른 **디코더**(다음 토큰 예측)다. �
 
 **PoC에서 확인한 주의사항**:
 - 모델이 예측하는 토큰에 **선두 공백** 포함 (" 마신다" not "마신다") → 후보도 " word"로 토크나이즈해야 매칭됨
-- top-K=100이면 커버리지 부족, **500 권장** (지연 증가 미미)
+- top-K=500이면 커버리지 부족(대부분 사전 단어가 부재), **5000 권장** (118ms, 300ms 예산 내)
 - multi-word candidate은 첫 토큰만 매칭 (v1 범위)
 
 ### 3.2 아키텍처 — 사이드카 프로세스
@@ -253,7 +253,7 @@ forward pass는 **컨텍스트 변경(단어 수락) 시에만 1회**. 그 안�
 #### 왜 점프/애니메이션이 문제 없는지
 
 - **demote-only**: 승격이 없으므로 "새 단어가 갑자기 앞에 등장" 상황이 없음
-- **극단값만**: logprob < -20 (또는 top-K 부재)인 후보만 건드림 — 대부분 순서 불변
+- **극단값만**: logprob < -15인 후보만 건드림 — 대부분 순서 불변
 - **forward pass 시점 = 스캔 윈도우**: AI가 발현하는 지점은 단어 수락 직후 사용자가 후보를 **스캔하고 다음 단어를 고르는 순간**. 타이핑 중이 아님
 - **매 키스트로크 ~0ms**: 캐시 히트라 지연 없음 — "300ms마다 점프" 상황 자체가 안 생김
 - **stale 폐기**: 263ms 안에 다음 단어 수락되면 이전 결과 버림 → "단어 사라짐" 상황 없음
@@ -303,16 +303,25 @@ AltKey.Tests/Services/AiRerank/
 #### v1 승격 논리
 
 - **리스크 최소화**: 승격 없음, 극단값만 감점 → 기존 순서 깨지 않음
-- **임계값 단순화**: "top-K에 아예 없음" 또는 "logprob < 임계값(예: -20)" → 경계선 판단 불필요
+- **임계값**: logprob < -15 → 디모트 (PoC v4에서 확정)
 - **효과 즉각성**: 사전 노출로 생긴 노이즈는 바로 제거 가능
 - **fail-safe 자연스러움**: 안 밀려도 손해 없음 (기존 순서 유지)
 
-#### P6 → v1 승격 조건
+#### Gate 2 PoC 결과 (2026-11-09, v4)
 
-PoC에서 아래를 확인하면 v1에 포함:
-1. Kanana logprob이 "극단적으로 안 맞는" 쌍을 -20 이하로 구분하는지 (30케이스 샘플)
-2. 1자리 디모트가 UX 체감에 충분한지 (사용자 판단)
-3. 레이턴시: 기존 filler 스코어링과 동일 forward → 추가 비용 없음
+| 지표 | 값 |
+|---|---|
+| top-K | 5000 (118ms) |
+| threshold | -15 |
+| 테스트 케이스 | 6개 (각 8후보) |
+| 디모트율 | **6.2%** (48개 중 3개) |
+| 평균 latency | 103ms |
+
+**판정: 통과 (보조 역할로 확정)**
+- "확실히 안 맞는" 것만 1~2자리 밀기 — conservative
+- 커버리지 제한: 희소/특정 단어("기입해", "재부팅되어")는 top-5000에 부재 → score 못 받음 (건드리지 않음)
+- 영향력: 바의 ~6% 수준. **polish**이지 transform 아님
+- worst case = neutral (안 밀려도 손해 없음)
 
 #### 폐기된 문서에서 재사용할 것
 
@@ -337,7 +346,7 @@ PoC에서 아래를 확인하면 v1에 포함:
 | 문서 | 상태 |
 |---|---|
 | `09-model-viability.md` | laya-ko/Qwen 포기 결정은 **유지**. Kanana는 새 모델이므로 그 결정을 무효화하지 않음 — "laya-ko 안 됨, Qwen 안 됨"은 그대로. |
-| `10-bigram-mode-model-roles.md` | 역할 프레임(filler/demoter)과 게이트 정의는 **재사용**. PoC 게이트(0: 지연, 1: filler, 2: demoter)에서 Kanana가 게이트 0+1을 이미 통과했음. 게이트 2(demoter)은 P6에서 재검토. |
+| `10-bigram-mode-model-roles.md` | 역할 프레임(filler/demoter)과 게이트 정의는 **재사용**. PoC 게이트(0: 지연, 1: filler, 2: demoter)에서 Kanana가 **전부 통과** (Gate 2: top-K=5000, threshold -15, 디모트율 6.2%). |
 | `03~05` (ONNX reranker) | **무효** — Kanana는 ONNX가 아닌 GGUF/llama.cpp. 파일 구조·인터페이스만 참고. |
 | `07-cache.md` | 캐시 구조 **재사용**. |
 | `08-perf-fallback-testing.md` | fail-safe 패턴 **재사용**. |
@@ -348,7 +357,7 @@ PoC에서 아래를 확인하면 v1에 포함:
 2. **multi-word candidate**: "설정에서" 같은 2단어 후보는 첫 토큰만 매칭 — v1 한계, v2에서 multi-token scoring
 3. **SWA/YaRN 제거 영향**: GGUF 변환 과정에서 SWA(window 1024)·YaYN rope 제거됨. 1024토큰 이내에서는 동일, 그 이상은 미검증 — AltKey 문맥(~20~60토큰)에는 영향 없음
 4. **3B vs 1.3B**: 3B가 품질 +7pp(83% vs 76%)이나 지연 2.1배(556ms vs 263ms). v1은 1.3B, 3B는 옵션(고성능 모드)으로 향후
-5. **demoter 임계값**: "극단적으로 안 맞는"의 logprob 임계값(-20?)은 P2 PoC에서 실데이터로 확정
+5. ~~**demoter 임계값**: "극단적으로 안 맞는"의 logprob 임계값(-20?)은 P2 PoC에서 실데이터로 확정~~ → **확정: -15** (Gate 2 PoC v4, top-K=5000)
 
 ### 5.1 P0 라이선스 판정 (2026-11-09)
 
