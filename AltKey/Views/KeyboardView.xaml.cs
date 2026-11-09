@@ -342,6 +342,16 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
         _isDragHandlePressed = false;
     }
 
+    /// <summary>
+    /// 상단바 버튼(일반/토글)을 누를 때 효과음을 재생합니다.
+    /// 드래그 핸들과 빈 영역은 버튼이 아니므로 IsHeaderInteractiveElement 검사로 제외합니다.
+    /// </summary>
+    private void HeaderBar_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (!IsHeaderInteractiveElement(e.OriginalSource as DependencyObject)) return;
+        App.Services?.GetService<SoundService>()?.Play();
+    }
+
     private void CloseButton_Click(object sender, RoutedEventArgs e)
     {
         Window.GetWindow(this)?.Close();

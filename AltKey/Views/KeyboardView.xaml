@@ -137,7 +137,8 @@
             <!-- 접근성: 상단 바를 키 영역과 시각적으로 분리해 제목/이동 버튼 인지성을 높인다. -->
             <Border DockPanel.Dock="Top"
                     Background="Transparent"
-                    CornerRadius="16,16,0,0">
+                    CornerRadius="16,16,0,0"
+                    PreviewMouseLeftButtonDown="HeaderBar_PreviewMouseLeftButtonDown">
             <Grid Height="28">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
