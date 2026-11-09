@@ -506,6 +506,9 @@ public class KeyButton : System.Windows.Controls.Button
         {
             if (_activeHeldKey is { } heldVk)
             {
+                // 홀드 반복은 ExecuteKeyPress를 거치지 않아 KeyPressed의 Play()가 안 닿는 경로입니다.
+                // 매 틱마다 직접 효과음을 재생해 실제 키보드의 반복 타건음과 같은 느낌을 줍니다.
+                App.Services?.GetService<SoundService>()?.Play();
                 App.Services?.GetService<InputService>()?.PulseHeldKey(heldVk);
                 return;
             }
