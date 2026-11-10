@@ -27,6 +27,9 @@
 | [TASK-06-prune-lowest-safety.md](TASK-06-prune-lowest-safety.md) | `PruneLowest()` 대량 삭제 경계 조건 | ✅ 해결 (6594c99) |
 | [TASK-07-test-coverage-gaps.md](TASK-07-test-coverage-gaps.md) | 회귀 방지용 추가 테스트 목록 | ✅ 해결 (602afa1) |
 | [TASK-08-composer-dead-code.md](TASK-08-composer-dead-code.md) | `HangulComposer`의 호출되지 않는 private 메서드 정리 | ✅ 해결 (de40720) |
+| [TASK-09-suggestion-bar-ui.md](TASK-09-suggestion-bar-ui.md) | 제안 바 UI/UX (suggestion-bar-ui) | ✅ 해결 (2026-11-08) |
+| [TASK-10-hangul-continuation-suggestions.md](TASK-10-hangul-continuation-suggestions.md) | 한글 조합 중 이어쓰기 제안 (bigram) | ✅ 해결 (2026-11-09) |
+| [TASK-11-trailing-space-on-accept.md](TASK-11-trailing-space-on-accept.md) | 제안 수락 꼬리 공백 + 구분자 키 환원 (trailing-space-on-accept) | 계획 (2026-11-10) |
 
 ---
 
