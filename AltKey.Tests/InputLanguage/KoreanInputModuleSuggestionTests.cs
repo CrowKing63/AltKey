@@ -21,7 +21,7 @@ public class KoreanInputModuleSuggestionTests : KoreanInputModuleTestBase
 
         // "해"와 "해달"의 공통 접두사는 1자 — 지울 것은 0자, 쓸 것은 "달".
         Assert.Equal(0, bs);
-        Assert.Equal("해달", word);
+        Assert.Equal("해달 ", word);
         Assert.Equal(1, prefix);
     }
 
@@ -38,7 +38,7 @@ public class KoreanInputModuleSuggestionTests : KoreanInputModuleTestBase
 
         // VirtualKey 모드에서는 접두사 최적화가 적용되지 않는다 (OS IME가 조합).
         Assert.Equal(2, bs);
-        Assert.Equal("해달", word);
+        Assert.Equal("해달 ", word);
         Assert.Equal(0, prefix);
     }
 
@@ -78,7 +78,7 @@ public class KoreanInputModuleSuggestionTests : KoreanInputModuleTestBase
 
         // "나"와 "하다"는 공통 접두사 0 — 1자 지우고 "하다" 전체 전송.
         Assert.Equal(1, bs);
-        Assert.Equal("하다", word);
+        Assert.Equal("하다 ", word);
         Assert.Equal(0, prefix);
     }
 

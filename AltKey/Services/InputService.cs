@@ -531,6 +531,37 @@ public class InputService
     }
 
     /// <summary>
+    /// [꼬리 공백] 백스페이스 N개를 단일 SendInput 배치로 보낸다.
+    /// SendAtomicReplace과 달리 sticky modifier를 해제하지 않는다 —
+    /// 환원 후 통과하는 키(구두점 "·! 등)가 Shift를 유지해야 하기 때문이다.
+    /// TrackedOnScreenLength도 건드리지 않는다 — 환원 대상 꼬리 공백은
+    /// 추적 조합 범위가 아니므로 (수락 직후 ResetTrackedLength으로 0).
+    /// 정결 지연(settle delay)은 SendAtomicReplace와 동일 — 메모장 EDIT 컨트롤이
+    /// 단독 백스페이스 배치 뒤에 이은 다음 키를 간혹 분실하는 문제를 막는다.
+    /// </summary>
+    public virtual void SendBackspace(int count)
+    {
+        if (count <= 0) return;
+
+        var backspaces = new List<Win32.INPUT>(count * 2);
+        for (int i = 0; i < count; i++)
+        {
+            backspaces.Add(MakeKeyDown((ushort)VirtualKeyCode.VK_BACK));
+            backspaces.Add(MakeKeyUp((ushort)VirtualKeyCode.VK_BACK));
+        }
+        DispatchInput(backspaces.ToArray());
+
+        // 앱 메시지 루프가 백스페이스를 한 주기 이상 처리할 시간을 준다.
+        Thread.Sleep(BackspaceSettleDelayMs);
+    }
+
+    /// <summary>
+    /// 현재 포그라운드 창 핸들. (꼬리 공백 환원 안전장치: 수락 시점과 비교해
+    /// 포커스가 다른 앱으로 이동했는지 확인한다.)
+    /// </summary>
+    public virtual IntPtr GetForegroundHwnd() => Win32.GetForegroundWindow();
+
+    /// <summary>
     /// 백스페이스 배치와 새 문자 배치 사이의 간격(ms). 앱이 백스페이스를 완전히
     /// 처리(undo 커밋 포함)한 뒤 문자를 받도록 하는 값. 스위치 스캔 타이핑
     /// (키 간 1~2초)에서는 체감이 없다.

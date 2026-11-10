@@ -37,6 +37,14 @@ public interface IInputLanguageModule
     /// VirtualKey 모드 호출자는 VK_BACK × 백스페이스 개수 + 전체 단어 전송을 유지한다.
     (int backspaceCount, string fullWord, int prefixLength) AcceptSuggestion(string suggestion);
 
+    /// [꼬리 공백] 제안 수락 경로에서 새 단어의 꼬리 공백이 pending 상태임을 모듈에 알린다.
+    /// (AutoCompleteService가 삽입 문자열을 직접 전송하므로, 모듈이 알지 못하면
+    ///  구분자 키 환원(retract) 플래그를 세울 수 없다.)
+    void MarkTrailingSpacePending();
+
+    /// [꼬리 공백] pending 꼬리 공백 플래그만 정리한다. (공백은 실제 텍스트로 남는다.)
+    void ClearPendingTrailingSpace();
+
     /// 외부(AutoCompleteService)에서 단어가 확정되었음을 엔진에 알립니다.
     /// 엔진 내부의 lastCommittedWord를 갱신하여 bigram 컨텍스트를 동기화합니다.
     void NotifyWordCommitted(string word);

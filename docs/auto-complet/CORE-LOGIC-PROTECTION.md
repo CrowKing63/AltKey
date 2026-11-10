@@ -51,7 +51,7 @@ AltKey는 Windows 가상 키보드다. 한국어를 입력할 때 OS IME에 VK �
 | `KoreanInputModule.HandleKey`의 **조합키 판별이 `HasActiveModifiersExcludingShift` 쓰는 것** | Shift+쌍자음(ㅆ·ㄲ…)을 정상 자모 경로로 보내기 위해 도입. `HasActiveModifiers`로 바꾸면 "해+ㅆ → 해T" 회귀. |
 | `KoreanInputModule.HandleKey`에서 **`jamo == null`일 때 `FinalizeComposition` 호출하지 않는 것** | 호출하면 `TrackedOnScreenLength`가 0으로 리셋되어 이후 조합의 BS 계산이 망가진다(버그 목록 #2). |
 | `AutoCompleteService`가 **`IInputLanguageModule`에 단순 위임**만 하는 얇은 래퍼라는 사실 | 과거에는 여기에 `_isHangulMode`, `_hangul`, `OnHangulInput`/`OnKeyInput` 분기가 섞여 있었음. 다시 합치지 말 것. |
-| `KoreanInputModule` 내부에서 `InputService.SendAtomicReplace` / `SendUnicode`만 호출하는 규율 | 모듈이 `SendKeyPress`를 직접 쏘면 Unicode 모드의 TrackedOnScreenLength와 어긋난다. |
+| `KoreanInputModule` 내부에서 `InputService.SendAtomicReplace` / `SendUnicode` / `SendBackspace`(꼬리 공백 환원 전용)만 호출하는 규율 | 모듈이 `SendKeyPress`를 직접 쏘면 Unicode 모드의 TrackedOnScreenLength와 어긋난다. `SendBackspace`는 TrackedOnScreenLength·modifier를 건드리지 않는 전용 경로로, 제안 수락 꼬리 공백 환원에만 쓴다 (TASK-11). |
 | `KeyboardViewModel.IsSeparatorKey`가 SPACE/RETURN/TAB **세 개만** 보는 것 | 구두점은 모듈 내부(`KoreanInputModule.IsSeparator`)에서 별개로 처리한다. 두 곳을 합치려 하지 말 것. |
 | `qwerty-ko.json`의 "가" 버튼 슬롯 `ToggleKoreanSubmode` 액션 | VK_HANGUL이 아닌 별도 액션이다. OS IME에 VK_HANGUL을 보내는 것은 상단바 비상 버튼의 몫. |
 | 자동완성이 **기본값 OFF**라는 사실 (`AppConfig.AutoCompleteEnabled`) | 관리자 모드로 실행되는 사용자가 켜는 순간 Unicode 모드로 전환을 못 해서 기능이 깨지는 케이스를 막는다. |

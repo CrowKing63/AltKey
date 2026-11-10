@@ -15,6 +15,8 @@ public sealed class FakeInputService : InputService
     public ConcurrentBag<string> SentUnicodes { get; } = new();
     public ConcurrentBag<(int prevLen, string next)> AtomicReplaces { get; } = new();
     public List<VirtualKeyCode> KeyPresses { get; } = new();
+    // [꼬리 공백] SendBackspace로 보낸 백스페이스 개수 기록.
+    public List<int> BackspaceCounts { get; } = new();
 
     public override void SendUnicode(string text) => SentUnicodes.Add(text);
 
@@ -28,6 +30,12 @@ public sealed class FakeInputService : InputService
     }
 
     public override void SendKeyPress(VirtualKeyCode vk) => KeyPresses.Add(vk);
+
+    public override void SendBackspace(int count) => BackspaceCounts.Add(count);
+
+    // [꼬리 공백] 테스트에서 포그라운드 창을 임의로 설정할 수 있게 한다.
+    public IntPtr ForegroundHwnd { get; set; } = new(1234);
+    public override IntPtr GetForegroundHwnd() => ForegroundHwnd;
 }
 
 /// <summary>

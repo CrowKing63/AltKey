@@ -100,5 +100,7 @@ public class KeyboardViewModelTests
         public void Reset() { }
         public void CommitCurrentWord() { }
         public void CancelComposition() { }
+        public void MarkTrailingSpacePending() { }
+        public void ClearPendingTrailingSpace() { }
     }
 }

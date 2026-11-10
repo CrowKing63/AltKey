@@ -77,6 +77,8 @@ public class SwitchScanSuggestionTests
         public void Reset() { }
         public void CommitCurrentWord() { }
         public void CancelComposition() { }
+        public void MarkTrailingSpacePending() { }
+        public void ClearPendingTrailingSpace() { }
 
         public void SetState(string currentWord, IReadOnlyList<string> suggestions)
         {

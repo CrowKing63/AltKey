@@ -63,7 +63,7 @@ public class AutoCompleteServiceBigramTests
         // 바이그램 수락 → ("테스트", "확인") Record 확인
         var result = service.AcceptBigramSuggestion("확인");
 
-        Assert.Equal(" 확인", result);
+        Assert.Equal("확인 ", result);
         Assert.True(koDict.BigramStore.Contains("테스트", "확인"));
     }
 

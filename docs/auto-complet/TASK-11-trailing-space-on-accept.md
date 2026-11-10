@@ -47,16 +47,19 @@ private void RetractPendingTrailingSpace()
     _pendingTrailingSpace = false;
     // 포커스가 다른 앱으로 이동했다면 꼬리 공백이 더 이상 그 앱 커서에 없으므로 환원하지 않음.
     if (_input.GetForegroundHwnd() != _pendingTrailingSpaceTarget) return;
-    _input.SendAtomicReplace(1, string.Empty, 0); // 백스페이스 ×1, 새 문자 없음
+    _input.SendBackspace(1); // 전용 백스페이스 — modifier·tracked length 건드리지 않음
 }
 ```
 
-- **§2 규율 준수**: 모듈 입력은 `SendAtomicReplace`/`SendUnicode`만 사용 —
-  `(1, "", 0)` = "백스페이스 1개 + 빈 텍스트"의 단일 원자 배치. `SendKeyPress` 금지.
+- **§2 규율 준수**: 모듈 입력은 `SendAtomicReplace`/`SendUnicode`/`SendBackspace`(꼬리 공백
+  환원 전용)만 사용. `SendKeyPress` 금지. `SendBackspace`는 `TrackedOnScreenLength`와
+  sticky modifier를 건드리지 않는 전용 경로다 — 환원 후 통과하는 Shift 키(구두점 `"·!` 등)가
+  쉬프트를 유지해야 하기 때문에 `SendAtomicReplace`(끝에서 `ReleaseTransientModifiers` 호출)를
+  사용할 수 없었다. (수동 검증 버그 #2, §9 참조)
 - **포커스 안전장치**: 수락 후 포그라운드가 바뀌면(다른 앱 클릭 등) 그 앱에서
   의미 없는 백스페이스가 텍스트를 지우는 것을 방지한다. 플래그만 정리.
 - **TrackedOnScreenLength 정합성**: 수락 직후 이미 0으로 리셋됨
-  (`SuggestionBarViewModel`의 `ResetTrackedLength`)이고, 환원도 0으로 설정 —
+  (`SuggestionBarViewModel`의 `ResetTrackedLength`)이고, `SendBackspace`은 이 값을 건드리지 않음 —
   suffix-only rewrite 불변식과 충돌 없음.
 
 ### 3.3 훅 포인트
@@ -113,11 +116,11 @@ onseparator 경로를 트리거한 부작용이 있었다. 현재 아키텍처�
 
 | 제약 | 준수 |
 |---|---|
-| 모듈 입력은 `SendAtomicReplace`/`SendUnicode`만 | 환원은 `SendAtomicReplace(1, "", 0)` |
+| 모듈 입력은 `SendAtomicReplace`/`SendUnicode`/`SendBackspace`(꼬리 공백 환원 전용)만 | 환원은 `SendBackspace(1)` — modifier·tracked length 건드리지 않음 |
 | `IsSeparatorKey`(SPACE 전용) 불변 | 불변 — 스페이스 경로는 계속 ViewModel → `OnSeparator` |
-| `SendAtomicReplace` 단일 배치 구조 불변 | 불변 |
+| `SendAtomicReplace` 단일 배치 구조 불변 | 불변 — `SendBackspace`는 별도 신규 메서드, 기존 구조 미변경 |
 | bigram 기록 경로(`RecordWord`) 불변 | 불변 — 공백 없는 단어로 기록 |
-| suffix-only rewrite / tracked length 불변식 | 수락 후 tracked=0, 환원도 0 설정 |
+| suffix-only rewrite / tracked length 불변식 | 수락 후 tracked=0, 환원은 건드리지 않음 |
 
 ## 5. 수정 파일
 
@@ -126,7 +129,7 @@ onseparator 경로를 트리거한 부작용이 있었다. 현재 아키텍처�
 | `AltKey/Services/InputLanguage/IInputLanguageModule.cs` | `MarkTrailingSpacePending()`, `ClearPendingTrailingSpace()` 추가 |
 | `AltKey/Services/InputLanguage/KoreanInputModule.cs` | `_pendingTrailingSpace`(+target HWND), 환원, 훅 포인트, `fullWord + " "` |
 | `AltKey/Services/AutoCompleteService.cs` | bigram 반환 `" " + w` → `w + " "`, 플래그 관리 순서 |
-| `AltKey/Services/InputService.cs` | `public virtual IntPtr GetForegroundHwnd()` 추가 |
+| `AltKey/Services/InputService.cs` | `public virtual IntPtr GetForegroundHwnd()`, `SendBackspace(int)` 추가 (§9) |
 | `AltKey.Tests/InputLanguage/TestHelpers.cs` | `FakeInputService` 오버라이드 (설정 가능한 포그라운드 HWND) |
 | `AltKey.Tests/SwitchScanSuggestionTests.cs` | `FakeInputLanguageModule`에 신규 인터페이스 메서드 추가 |
 | `AltKey.Tests/InputLanguage/KoreanInputModuleSuggestionTests.cs` | 수락 어설션 갱신 (`"해달"` → `"해달 "` 등) |
@@ -172,6 +175,34 @@ onseparator 경로를 트리거한 부작용이 있었다. 현재 아키텍처�
 - 구현 방식: `AppConfig` bool 필드(기본 true) + `MainViewModel` 속성
   (기존 `AutoCompleteEnabled` 패턴) + `KeyboardView.xaml` 토글,
   `AcceptSuggestion`/`AcceptBigramSuggestion`에 분기 파라미터.
+
+## 9. 수동 검증 버그와 수정 (2026-11-10, 구현 직후)
+
+사용자 수동 검증(메모장)에서 발견한 두 버그:
+
+### 버그 #1: 단어 수락 후 스페이스 누르면 공백 두 개
+
+**원인**: `KeyboardViewModel.KeyPressed`에서 SPACE·RETURN·TAB은 `IsSeparatorKey` 분기
+(677줄)로 먼저 잡혀 `_autoComplete.OnSeparator()`만 호출하고 **`OnKey`(→`HandleKey`)에
+도달하지 않는다**. 환원 로직이 `HandleKey`의 separator 분기에만 있었으므로 스페이스 경로에서는
+환원이 절대 실행되지 않았다. (단위 테스트가 `HandleKey` 경로를 직접 호출해 검증했던 것이
+프로덕션 경로와 어긋난 케이스.)
+
+**수정**: `KoreanInputModule.OnSeparator()`에서 `FinalizeComposition` 전에
+`RetractPendingTrailingSpace()` 호출. SPACE·RETURN·TAB 모두 이 경로를 거치므로 커버됨.
+테스트: `OnSeparator_after_accept_retracts_trailing_space`(+포그라운드 변경 케이스) 추가.
+
+### 버그 #2: 수락 후 큰따옴표·소괄호 입력 시 쉬프트가 빠진 키가 입력
+
+**원인**: 구두점(`"`, `!` 등)은 `HandleKey` separator 분기로 들어가 환원이 실행됐지만,
+환원이 `SendAtomicReplace(1, "", 0)`을 거쳤고 이 메서드 끝의
+`ReleaseTransientModifiers()`(§2 하드 프리즈 — "해+ㅆ → 해ㅆ" 회귀 방지용)가
+**sticky Shift를 해제**했다. 그 뒤 키 통과(`HandleAction` → `SendKeyPress`)는 Shift 없이
+발생해 `'`(큰따옴표 대신), `1`(느낌표 대신)이 입력됐다.
+
+**수정**: `InputService.SendBackspace(int)` 신규 메서드 — 백스페이스만 단일 SendInput 배치로
+보내고 `ReleaseTransientModifiers`·`TrackedOnScreenLength`를 건드리지 않음. 환원은
+`SendBackspace(1)`로 교체. §2 규율표에 "꼬리 공백 환원 전용" 경로로 명시 추가.
 
 ## 8. 가정 / 오픈 질문
 

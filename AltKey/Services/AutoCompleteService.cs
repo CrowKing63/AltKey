@@ -53,8 +53,9 @@ public sealed class AutoCompleteService
         // bigram 문맥(_lastCommittedWord)은 모듈이 소유 — 여기서 복제하지 않는다.
 
         // 수락된 단어를 기준으로 바이그램 추천을 즉시 조회
+        // (fullWord는 꼬리 공백이 포함된 삽입 문자열이라 조회 키로는 쓸 수 없다)
         var bigramStore = GetActiveBigramStore();
-        var nexts = bigramStore.GetNexts(result.fullWord, "");
+        var nexts = bigramStore.GetNexts(suggestion, "");
         if (nexts.Count > 0)
         {
             var bigramSuggestions = nexts.Select(n => n.Next).ToList();
@@ -66,15 +67,17 @@ public sealed class AutoCompleteService
 
     /// <summary>
     /// 바이그램 추천에서 단어를 선택했을 때 호출됩니다.
-    /// 선행 공백(U+0020)을 포함한 문자열을 반환하며, 내부에서 bigram 학습과 연속 추천을 처리합니다.
+    /// 꼬리 공백(U+0020)을 포함한 문자열을 반환하며, 내부에서 bigram 학습과 연속 추천을 처리합니다.
     /// </summary>
     public string AcceptBigramSuggestion(string suggestion)
     {
         // 자모 나열 방어: 기록과 문맥 갱신을 건너뜀
         if (ContainsRawJamo(suggestion))
         {
+            // [꼬리 공백] 이전 단어의 꼬리 공백은 이제 실제 텍스트 — 플래그만 정리.
+            _module.ClearPendingTrailingSpace();
             FlushEngineState();
-            return " " + suggestion;
+            return suggestion + " ";
         }
 
         // 학습은 사전의 단일 경로를 거친다 (적격성 필터 + AutoCompleteEnabled 게이트).
@@ -84,8 +87,10 @@ public sealed class AutoCompleteService
 
         _module.NotifyWordCommitted(suggestion); // 엔진 내부 _lastCommittedWord 갱신
 
-        // 내부 상태 정리 (public OnSeparator 경유 시 _lastCommittedWord 덮어쓰기 방지)
+        // [꼬리 공백] 순서: 이전 플래그 정리 → 상태 플러시(내부 OnSeparator가 환원하지 않음) → 새 플래그 설정.
+        _module.ClearPendingTrailingSpace();
         FlushEngineState();
+        _module.MarkTrailingSpacePending();
 
         // 수락된 단어를 새 prev로 연속 바이그램 조회
         var nexts = GetActiveBigramStore().GetNexts(suggestion, "");
@@ -100,8 +105,8 @@ public sealed class AutoCompleteService
             SuggestionsChanged?.Invoke(Array.Empty<string>(), SuggestionMode.Normal);
         }
 
-        // 선행 공백을 포함한 문자열 반환 (호출자가 유니코드 출력 경로로 처리)
-        return " " + suggestion;
+        // 꼬리 공백을 포함한 문자열 반환 (호출자가 유니코드 출력 경로로 처리)
+        return suggestion + " ";
     }
 
     /// <summary>

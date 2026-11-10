@@ -20,6 +20,11 @@ public sealed class KoreanInputModule : IInputLanguageModule
     private string? _suggestionContext; // 추천의 문맥 정보
     private bool _compositionCancelled = false; // 조합이 취소되었는지 여부
     private bool _wordAlreadyCommitted = false; // 이미 단어가 저장되었는지 여부
+    // [꼬리 공백] 제안 수락으로 보낸 꼬리 공백이 아직 pending인지.
+    // true인 상태에서 구분자 키가 오면 그 공백을 백스페이스로 지우고(환원) 키를 통과시킨다.
+    private bool _pendingTrailingSpace;
+    // [꼬리 공백] 수락 시점 포그라운드 창 — 포커스가 다른 앱으로 이동하면 환원하지 않는다.
+    private IntPtr _pendingTrailingSpaceTarget;
 
     public KoreanInputModule(InputService input, KoreanDictionary koDict, EnglishDictionary enDict, ConfigService config)
     {
@@ -32,6 +37,9 @@ public sealed class KoreanInputModule : IInputLanguageModule
     public string LanguageCode => "ko";
     public InputSubmode ActiveSubmode => _submode;
     public string ComposeStateLabel => _submode == InputSubmode.HangulJamo ? "가" : "A";
+
+    /// <summary>[꼬리 공백] pending 상태 조회 (테스트·디버그용).</summary>
+    public bool HasPendingTrailingSpace => _pendingTrailingSpace;
 
     // 현재 화면에 표시되거나 조합 중인 단어를 가져옵니다.
     public string CurrentWord => _submode == InputSubmode.HangulJamo
@@ -47,6 +55,10 @@ public sealed class KoreanInputModule : IInputLanguageModule
     /// <returns>true면 이 모듈에서 입력을 완전히 처리했다는 뜻입니다.</returns>
     public bool HandleKey(KeySlot slot, KeyContext ctx)
     {
+        // [꼬리 공백] pending 상태에서 구분자·백스페이스가 아닌 키가 오면,
+        // 그 공백은 실제 텍스트로 확정된다 — 플래그만 정리한다. (두 서브모드 공통)
+        ReleasePendingTrailingSpaceOnNonSeparator(slot, ctx);
+
         // 'A'(영어) 서브모드인 경우 별도 함수에서 처리합니다.
         if (_submode == InputSubmode.QuietEnglish)
         {
@@ -75,6 +87,8 @@ public sealed class KoreanInputModule : IInputLanguageModule
             // 단어를 구분하는 키(공백)가 눌리면 현재 조합을 끝냅니다.
             if (IsSeparator(vk, ctx.ShowUpperCase))
             {
+                // [꼬리 공백] 구분자 키가 오는 순간 꼬리 공백을 지우고(환원) 그 키를 통과시킨다.
+                RetractPendingTrailingSpace();
                 bool isWordSeparator = vk is VirtualKeyCode.VK_SPACE;
                 FinalizeComposition(keepContextForBigram: isWordSeparator);
                 return false;
@@ -134,6 +148,8 @@ public sealed class KoreanInputModule : IInputLanguageModule
 
         if (IsSeparator(vk, ctx.ShowUpperCase))
         {
+            // [꼬리 공백] 구분자 키가 오는 순간 꼬리 공백을 지우고(환원) 그 키를 통과시킨다.
+            RetractPendingTrailingSpace();
             bool isWordSeparator = vk is VirtualKeyCode.VK_SPACE;
             FinalizeComposition(keepContextForBigram: isWordSeparator);
             return false;
@@ -181,6 +197,9 @@ public sealed class KoreanInputModule : IInputLanguageModule
     /// </summary>
     private bool HandleBackspace(KeyContext ctx)
     {
+        // [꼬리 공백] 백스페이스가 꼬리 공백을 지우므로 플래그만 정리한다.
+        if (_pendingTrailingSpace) _pendingTrailingSpace = false;
+
         if (_submode == InputSubmode.QuietEnglish && _englishPrefix.Length > 0)
         {
             _englishPrefix = _englishPrefix[..^1];
@@ -219,6 +238,57 @@ public sealed class KoreanInputModule : IInputLanguageModule
             _englishPrefix += ch;
             SuggestionsChanged?.Invoke(_enDict.GetSuggestions(_englishPrefix, _suggestionContext));
         }
+    }
+
+    /// <summary>
+    /// [꼬리 공백] pending 꼬리 공백 뒤에 구분자·백스페이스가 아닌 키가 오면,
+    /// 그 공백은 실제 텍스트가 된다 — 플래그만 정리한다.
+    /// 비문자 액션(ToggleSticky 등)은 화면을 바꾸지 않으므로 실제 문자 키가 올 때까지 플래그를 유지한다.
+    /// </summary>
+    private void ReleasePendingTrailingSpaceOnNonSeparator(KeySlot slot, KeyContext ctx)
+    {
+        if (!_pendingTrailingSpace) return;
+        if (slot.Action is not SendKeyAction { Vk: var vkStr }) return;
+        if (!Enum.TryParse<VirtualKeyCode>(vkStr, out var vk)) return;
+
+        bool isBackspace = vk == VirtualKeyCode.VK_BACK;
+        bool isSeparator = IsSeparator(vk, ctx.ShowUpperCase);
+        if (!isBackspace && !isSeparator)
+            _pendingTrailingSpace = false;
+    }
+
+    /// <summary>
+    /// [꼬리 공백] 제안 수락으로 붙은 꼬리 공백을 백스페이스 한 번으로 지운다.
+    /// 전용 SendBackspace를 사용 — SendAtomicReplace와 달리 sticky modifier를
+    /// 해제하지 않아 환원 후 통과하는 Shift 키(구두점 "·! 등)가 쉬프트를 유지한다.
+    /// 포그라운드가 수락 이후 바뀌었다면 그 공백은 더 이상 대상 앱 커서에 없으므로
+    /// 환원하지 않고 플래그만 정리한다 (다른 앱에서 의미 없는 백스페이스 방지).
+    /// </summary>
+    private void RetractPendingTrailingSpace()
+    {
+        if (!_pendingTrailingSpace) return;
+        _pendingTrailingSpace = false;
+
+        if (_input.GetForegroundHwnd() != _pendingTrailingSpaceTarget) return;
+        _input.SendBackspace(1);
+    }
+
+    /// <summary>
+    /// [꼬리 공백] 꼬리 공백 pending 상태로 전환한다 (제안 수락 경로에서 호출).
+    /// 그 시점의 포그라운드 창을 환원 안전장치 확인용으로 기록한다.
+    /// </summary>
+    public void MarkTrailingSpacePending()
+    {
+        _pendingTrailingSpace = true;
+        _pendingTrailingSpaceTarget = _input.GetForegroundHwnd();
+    }
+
+    /// <summary>
+    /// [꼬리 공백] pending 플래그만 정리 — 꼬리 공백은 실제 텍스트로 남는다.
+    /// </summary>
+    public void ClearPendingTrailingSpace()
+    {
+        _pendingTrailingSpace = false;
     }
 
     /// <summary>
@@ -281,8 +351,11 @@ public sealed class KoreanInputModule : IInputLanguageModule
         _lastCommittedWord = suggestion;
         _suggestionContext = null;
 
+        // [꼬리 공백] fullWord에 꼬리 공백이 포함되므로 pending 상태로 전환.
+        MarkTrailingSpacePending();
+
         SuggestionsChanged?.Invoke(Array.Empty<string>());
-        return (bsCount, suggestion, prefixLength);
+        return (bsCount, suggestion + " ", prefixLength);
     }
 
     /// <summary>
@@ -290,6 +363,9 @@ public sealed class KoreanInputModule : IInputLanguageModule
     /// </summary>
     public void ToggleSubmode()
     {
+        // [꼬리 공백] 서브모드 전환 시 pending 플래그 정리.
+        _pendingTrailingSpace = false;
+
         FinalizeComposition();
 
         _lastCommittedWord = null;
@@ -319,8 +395,14 @@ public sealed class KoreanInputModule : IInputLanguageModule
 
     /// <summary>
     /// 단어 구분자(공백)가 눌렸을 때 호출됩니다. bigram 문맥을 유지합니다.
+    /// SPACE·RETURN·TAB은 HandleKey가 아닌 이 경로를 거치므로,
+    /// [꼬리 공백] pending 상태에서도 여기서 환원해야 한다.
     /// </summary>
-    public void OnSeparator() => FinalizeComposition(keepContextForBigram: true);
+    public void OnSeparator()
+    {
+        RetractPendingTrailingSpace();
+        FinalizeComposition(keepContextForBigram: true);
+    }
 
     /// <summary>
     /// 모든 입력 상태를 초기값으로 되돌립니다.
@@ -334,6 +416,8 @@ public sealed class KoreanInputModule : IInputLanguageModule
         _suggestionContext = null;
         _compositionCancelled = false;
         _wordAlreadyCommitted = false;
+        // [꼬리 공백] 전체 리셋 시 pending 플래그 정리.
+        _pendingTrailingSpace = false;
         SuggestionsChanged?.Invoke(Array.Empty<string>());
     }
 
@@ -376,6 +460,8 @@ public sealed class KoreanInputModule : IInputLanguageModule
     public void CancelComposition()
     {
         _compositionCancelled = true;
+        // [꼬리 공백] 조합 취소 시 pending 플래그 정리.
+        _pendingTrailingSpace = false;
 
         _composer.Reset();
         _englishPrefix = "";
