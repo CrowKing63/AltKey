@@ -88,15 +88,17 @@ public enum BackendState { NotLoaded, Loading, Ready, Unloading }
 ## 6. 모델 관리 (ModelStore)
 
 ```text
-%LOCALAPPDATA%\AltKey\
-├─ engine\llama-server.exe          (엔진, ~50~150MB)
-└─ models\<modelId>.gguf            (모델)
-   └─ manifest.json
+PathResolver.DataDir 기준 (포터블/설치 자동 분기)
+├─ manifest.json                        (엔진 + 모델 둘 다 목록화)
+├─ engine\llama-server.exe              (엔진, ~50–150MB · build 12262)
+└─ models\EXAONE-4.0-1.2B-Q8_0.gguf     (모델, 1.27GB)
 ```
 
-- `manifest.json`: `{ modelId, fileName, sizeBytes, sha256, sourceUrl, version }`
+- `manifest.json`: `{ [ {component:"engine", fileName, sizeBytes, sha256, sourceUrl, version}, {component:"model", ...} ] }` — 단일 다운로드가 둘 다 설치됐는지 판단
 - 다운로드: HF resolve URL → 진행률 + 재개(resume) → 완료 후 **SHA-256 검증** (불일치 시 파일 삭제 + 에러)
-- 저장 위치는 사용자 데이터 디렉터리 — MSIX 설치 폴더는 읽기 전용이라 불가
+- 저장 위치 = `PathResolver.DataDir`(기존 layouts·config와 동일 진입점):
+  - **포터블**(exe 옆 config.json): `<exe 폴더>` → engine\·models\ 같은 폴더에 (앱과 함께 이동 — 포터블 특성상 장점)
+  - **설치판**(MSIX/MSI): `%AppData%\AltKey` → engine\·models\ 아래 (MSIX 설치 폴더는 읽기 전용이라 사용자 쓰기 위치로, PathResolver가 이미 처리)
 
 ### 6.1 모델 후보 (내부 PoC, 사용자 선택 없음)
 
