@@ -181,7 +181,7 @@ public class LocalGgufBackend : IAsyncDisposable
         {
             var response = await httpClient.SendAsync(request, timeoutCts.Token);
             if (!response.IsSuccessStatusCode)
-                throw new AiServiceException($"로컬 AI 오류 (HTTP {(int)response.StatusCode})");
+                throw new AiServiceException(await BuildLocalErrorAsync(response, ct));
 
             var json = await response.Content.ReadAsStringAsync(ct);
             var chatResponse = JsonSerializer.Deserialize<ChatCompletionResponse>(json, AiJsonOptions.Default);
@@ -198,6 +198,27 @@ public class LocalGgufBackend : IAsyncDisposable
         {
             throw new AiServiceException($"로컬 AI 서버에 연결할 수 없습니다: {ex.Message}");
         }
+    }
+
+    /// <summary>
+    /// [역할] 서버 에러 본문에서 구체적 원인을 꺼내 한국어 안내로 바꿉니다.
+    /// 컨텍스트 초과 같은 명확한 원인은 사용자에게 actionable한 문구를 줍니다.
+    /// </summary>
+    private static async Task<string> BuildLocalErrorAsync(HttpResponseMessage response, CancellationToken ct)
+    {
+        string? serverMsg = null;
+        try
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            using var doc = JsonDocument.Parse(body);
+            serverMsg = doc.RootElement.GetProperty("error").GetProperty("message").GetString();
+        }
+        catch { /* 본문이 JSON 에러 형식이 아니면 무시 */ }
+
+        // 컨텍스트 초과: 원인이 명확하니 한국어로 actionable한 안내.
+        if (serverMsg is not null && serverMsg.Contains("exceeds the available context size"))
+            return "선택한 텍스트가 너무 길어 처리할 수 없습니다. 더 짧은 단위로 나눠 다시 시도해 주세요.";
+        return serverMsg is not null ? $"로컬 AI 오류: {serverMsg}" : $"로컬 AI 오류 (HTTP {(int)response.StatusCode})";
     }
 
     public async ValueTask DisposeAsync()

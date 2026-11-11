@@ -57,6 +57,45 @@ public class LocalGgufBackendTests
         }
     }
 
+    [Fact]
+    // 컨텍스트 초과(HTTP 400) 에러를 받으면 한국어 actionable 안내가 throw되는지 확인합니다(스텁 서버).
+    public async Task SendChatCompletion_ContextOverflow_ThrowsKoreanMessage()
+    {
+        int port = SidecarProcessManager.FindFreePort(8091);
+        var listener = new HttpListener();
+        listener.Prefixes.Add($"http://127.0.0.1:{port}/");
+        listener.Start();
+
+        // 서버가 보내는 컨텍스트 초과 에러 본문 (실측 llama-server 응답 형식).
+        const string overflowBody = """{"error":{"code":400,"message":"request (15019 tokens) exceeds the available context size (8192 tokens), try increasing it","type":"exceed_context_size_error"}}""";
+
+        var serverTask = Task.Run(async () =>
+        {
+            while (listener.IsListening)
+            {
+                var ctx = await listener.GetContextAsync();
+                using var reader = new StreamReader(ctx.Request.InputStream, Encoding.UTF8);
+                await reader.ReadToEndAsync(); // 요청 본문 드레인
+                ctx.Response.StatusCode = 400;
+                ctx.Response.ContentType = "application/json";
+                var buf = Encoding.UTF8.GetBytes(overflowBody);
+                await ctx.Response.OutputStream.WriteAsync(buf);
+                ctx.Response.Close();
+            }
+        });
+
+        try
+        {
+            var ex = await Assert.ThrowsAsync<AiServiceException>(() =>
+                LocalGgufBackend.SendChatCompletionAsync($"http://127.0.0.1:{port}", "hi", "sys", CancellationToken.None));
+            Assert.Contains("너무 길어", ex.Message);
+        }
+        finally
+        {
+            listener.Stop();
+        }
+    }
+
     // ── idle 언로드 / UnloadAsync (사이드카 라이프사이클) ───────────────────────
 
     /// <summary>
