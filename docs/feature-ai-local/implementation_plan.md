@@ -1,41 +1,39 @@
-# 내장 AI (로컬 GGUF) 기능 — 구현 계획 v1
+# 내장 AI (로컬 GGUF) 기능 — 구현 계획 v2
 
 ## 1. 개요
 
-기존 **외부 API 의존** AI 텍스트 처리(✨ 버튼, `AiService`)에 **내장 로컬 모델 백엔드**를 추가한다. 별도 서버·사이드카 없이 AltKey 프로세스 안에서 GGUF 모델을 로드→추론→언로드하는 방식이다(전사 앱 패턴).
+기존 **외부 API 의존** AI 텍스트 처리(✨ 버튼, `AiService`)에 **내장 로컬 모델 백엔드**를 추가한다. **CPU 전용**으로, 기본 llama.cpp(`llama-server.exe`)을 **사이드카 프로세스로 on-demand 다운로드**해 로드→추론→언로드하는 방식이다.
 
-- 인퍼런스 엔진: **LLamaSharp**(llama.cpp .NET 바인딩, in-process)
-- v1 모델: `unsloth/gemma-4-E2B-it-qat-GGUF:UD-Q4_K_XL` (2.62 GB, 텍스트 전용)
-- 사용자 요청으로 **장치 선택(CPU/GPU/auto)을 설정화에서 고를 수 있으며 기본값은 auto**
+- 인퍼런스 엔진: **llama.cpp `llama-server.exe`(CPU prebuilt)** — 사이드카(별도 프로세스, HTTP). in-process(LLamaSharp)는 **제거**(업데이트 중단 + 키보드 앱 크래시 격리 필요).
+- 모델: **내부 PoC로 두 후보 테스트** 후 승자 1개 채택. 사용자 선택 UI 없음(단일 슬롯).
+  - `LGAI-EXAONE/EXAONE-4.0-1.2B-GGUF` (bf16)
+  - `google/gemma-4-E2B-it-qat-q4_0-gguf` (Q4_0, ~3.35GB)
 
-### PoC 통과 근거 (2026-11-04, 본머신 RTX 5070 Ti)
-
-| 항목 | GPU(auto) | CPU 전용 |
-|---|---|---|
-| 벽 시간(문장 번역) | 3초 | 4초 |
-| 생성 속도 | 170~270 t/s | ~20 t/s |
-| RAM | ~3 GB (Unsloth 공시 + 본머신 llama-server 실측 3.28GB 참조) |
-
-번역 품질: 8개 도메인 샘플(일상/비즈니스/기술/관용/슬랭크/공문/의료/혼합)에서 7/8 클린, 관용 1건 소폭 의역. `reasoning off` + 출력 가드레일 조합에서 설명·마크다운 혼입 0건 → ✨ 붙여넣기 플로우에 그대로 사용 가능.
+### 왜 사이드카 + CPU 전용인가
+- **크래시 격리**: in-process 네이티브 크래시는 키보드 앱 전체를 동반 → 치명적. 사이드카는 프로세스 죽어도 키보드는 살아남음(`docs/ai-autocomplete/11` §3.2에서 이미 이 이유로 사이드카 선택).
+- **CPU 전용**: 다른 프로젝트에서 GPU 포함 로컬 모델 실험이 여러 번 실패해 CPU 버전만 채택한 전례. `--gpu-layers 0`은 자동완성 PoC에서 이미 검증된 경로.
+- **LLamaSharp 제거**: 업데이트 중단 + in-process 크래시 리스크. 기본 llama.cpp 사이드카로 통일.
+- **엔진 on-demand 다운로드**: "다운로드 버튼 두 번(엔진+모델) → 바로 사용" UX. API 키 불필요.
 
 ## 2. 목표 / 비목표
 
 ### 목표
 - 오프라인에서도 ✨ AI 텍스트 처리 동작 (서버·API 키 불필요)
-- 장치 선택: `auto`(기본) / `cpu` / `gpu`
-- 모델 자체 관리: 다운로드 → 무결성 검증 → 저장 → 삭제
+- **CPU 전용** (GPU 없음)
+- 모델·엔진 자체 관리: on-demand 다운로드 → 무결성 검증(SHA-256) → 저장 → 삭제
 - on-demand 로드, idle 언로드 (상주 RAM 0)
 - 기존 외부 API 백엔드와의 동일 UX·동일 fail-safe
 
 ### 비목표 (v1 제외)
+- **GPU 오프로드**: CPU 전용이라 전무. (이전 v1의 auto/cpu/gpu 선택 제거)
 - **키 입력 직결 AI**: 레이아웃 키에 AiAction 할당, 자동완성 후보 재평가 — `docs/ai-autocomplete/`의 포기 결정과 충돌하지 않게 on-demand ✨만 지원
 - **스트리밍 입력**(대상 앱에 토큰 단위 타이핑): `docs/feature-ai/FUTURE-streaming-response.md` 보류 유지
-- **다중 모델 관리**: v1은 단일 모델 슬롯. manifest 구조는 확장 가능하게만 두고 UI는 1개 모델용
+- **다중 모델 관리 / 사용자 모델 선택**: v1은 단일 모델 슬롯. 두 후보는 내부 PoC로만 비교, UI에는 선택 없음
 
 ## 3. 설계 원칙
 
 1. **백엔드 추상화**: `ILlmBackend` 뒤에서 외부 API와 로컬 GGUF가 상호 교환 가능. UX(✨ 플로우)는 백엔드와 무관하게 동일.
-2. **장치 고정(pinning)**: `GpuLayerCount`를 항상 명시적으로 지정한다. 런타임 오토디텍트에 맡기면 바쁜 GPU를 잡아오는 등 비결정적 동작이 생긴다(`dotnet-local-llm` 스킬 규칙).
+2. **CPU 고정(pinning)**: 사이드카 spawn은 항상 `--gpu-layers 0`. GPU 감지·오토디텍트 전무.
 3. **on-demand 로드 / idle 언로드**: 상주 키보드 앱에 ~3GB RAM 스파이크가 남지 않도록, 미사용 시 모델이 메모리에서 빠진다.
 4. **양방향 fail-safe**: 로컬 로드·추론 실패 → 명확한 에러 + 원본 텍스트 보존. 빈 결과·크래시로 연결하지 않는다.
 5. **기존 동작 무영향**: 기본 백엔드는 `api`. 내장 모델을 안 쓰면 기존 코드 경로가 그대로다.
@@ -52,9 +50,11 @@ MainViewModel.ExecuteAiCommand
         │
         └─ "local" → LocalGgufBackend
                          │
-                    ModelStore (파일·다운로드·검증)
+                    ModelStore (엔진·모델 다운로드·검증)
                          │
-                    LLamaSharp (in-process)
+                    SidecarProcessManager (llama-server.exe spawn/kill/health)
+                         │
+                    HTTP http://127.0.0.1:<port>/v1/chat/completions
 ```
 
 ### `ILlmBackend`
@@ -71,145 +71,155 @@ public enum BackendState { NotLoaded, Loading, Ready, Unloading }
 ```
 
 - `LocalGgufBackend` 내부 상태 머신:
-  - `NotLoaded → Loading`: ✨ 클릭 시 `LoadAsync()` (진행률 노출)
+  - `NotLoaded → Loading`: ✨ 클릭 시 사이드카 spawn + 모델 로드 (진행률 노출)
   - `Ready`: 추론 가능. 마지막 추론 완료 시 idle 타이머 시작
-  - `Ready → Unloading`: idle 초과 또는 수동 언로드 → `weights.Dispose()` (네이티브 메모리 회수)
+  - `Ready → Unloading`: idle 초과 또는 수동 언로드 → 사이드카 process kill (네이티브 메모리 회수)
 - `RemoteApiBackend`: 기존 `AiService`를 래핑(상태는 항상 `Ready`).
 
-## 5. 장치 선택 정책
+## 5. 엔진 배포 (llama-server.exe, CPU prebuilt)
 
-설정 `AiLocalDevice`: `"auto"`(기본) | `"cpu"` | `"gpu"`
-
-| 선택 | 동작 | 결과 |
-|---|---|---|
-| `auto` | 로드 전 GPU 감지: NVIDIA→CUDA, AMD/Intel→Vulkan, GPU 없음→CPU(0) | 결정적. 매 로드마다 재감지(경량) |
-| `cpu` | `GpuLayerCount = 0`, CPU 백엔드만 사용 | GPU 무관 |
-| `gpu` | 가용 GPU 백엔드 중 최적(CUDA 우선, NVIDIA 없으면 Vulkan) + `GpuLayerCount = all` | 어떤 GPU도 없으면 **명확한 에러**("GPU를 찾을 못했습니다. auto로 변경하세요") — 침묵 fallback 금지 |
-
-- 백엔드 NuGet: `LLamaSharp.Backend.Cpu` + `LLamaSharp.Backend.Cuda12` + `LLamaSharp.Backend.Vulkan`(구현 시 CUDA 버전·Vulkan 로더 호환 확인)
-- Vulkan은 AMD 라데온이 1급 대상. Vulkan 로더(`vulkan-1.dll`)는 GPU 드라이버에 동봉되어 별도 설치 불필요. 라데온 실측 성능값은 AMD 머신 확보 시 PoC로 보완
-- 감지 실패·에러는 LiveRegion 공지 + 설정 창 유도.
+- **on-demand 다운로드**: 설정 창 "엔진 다운로드" 버튼 → `DownloadService`로 CPU prebuilt `llama-server.exe` 수신 → SHA-256 검증 → `DataDir/engine/llama-server.exe` 저장
+- spawn: `llama-server.exe -m <gguf> -c 8192 --port <port> --gpu-layers 0 --threads <n>`
+- 포트: 8081 기본, 충돌 시 8082~8090 스캔 (자동완성 `KananaProcessManager` 패턴 재사용)
+- 헬스체크: `/health` poll, **CPU 로드 1~3분+ 커버하도록 타임아웃 ≥120s** (자동완성 스킬 확인 — 30s는 로드 중 프로세스 죽임)
+- `Process.Start` stream redirect 금지 (llama-server 로딩 중 대량 출력 → unread buffer deadlock). `CreateNoWindow=true` + no redirect.
+- **라이선스**: llama.cpp MIT — 다운로드·재배포 허용.
 
 ## 6. 모델 관리 (ModelStore)
 
 ```text
-%LOCALAPPDATA%\AltKey\models\
-└─ gemma-4-E2B-it-qat-UD-Q4_K_XL.gguf   (2.62 GB)
-└─ manifest.json
+%LOCALAPPDATA%\AltKey\
+├─ engine\llama-server.exe          (엔진, ~50~150MB)
+└─ models\<modelId>.gguf            (모델)
+   └─ manifest.json
 ```
 
 - `manifest.json`: `{ modelId, fileName, sizeBytes, sha256, sourceUrl, version }`
-- 다운로드: HF resolve URL → 진행률 노출 + 재개(resume) 지원 → 완료 후 **SHA-256 검증** (불일치 시 파일 삭제 + 에러)
+- 다운로드: HF resolve URL → 진행률 + 재개(resume) → 완료 후 **SHA-256 검증** (불일치 시 파일 삭제 + 에러)
 - 저장 위치는 사용자 데이터 디렉터리 — MSIX 설치 폴더는 읽기 전용이라 불가
-- **라이선스**: Gemma ToU — 런타임 다운로드만 허용, 인스톨러 번들링 금지. 따라서 다운로드 플로우가 필수 경로(설계와 일치)
-- v1은 단일 모델 슬롯(`AiLocalModel` = modelId). manifest 스키마는 다중 모델 확장 여지만 두자
+
+### 6.1 모델 후보 (내부 PoC, 사용자 선택 없음)
+
+| 후보 | 출처 | 크기目安 | 비고 |
+|---|---|---|---|
+| EXAONE-4.0-1.2B (bf16) | `LGAI-EXAONE/EXAONE-4.0-1.2B-GGUF` | ~2.5~3GB | 1.07B, 한국어 특화, chat_template.jinja repo에 있음, llama.cpp ≥b5932 필요 |
+| gemma-4-E2B-it-qat (Q4_0) | `google/gemma-4-E2B-it-qat-q4_0-gguf` | ~3.35GB | QAT(≈bf16 품질), 멀티모달이라 임베딩 커서 파일 큼 |
+
+- **PoC 실측 완료** (본머신 CPU, `--gpu-layers 0`, llama-server b12262):
+
+| 지표 | EXAONE bf16 | **EXAONE Q8_0** | gemma Q4_0 |
+|---|---|---|---|
+| 파일 크기 | 2.4 GB | **1.27 GB** | 3.1 GB |
+| 로드 시간(다운로드→Ready) | 1.2 s | **1.2 s** | 3.4 s |
+| RAM(로드 후, ctx 8K) | ~3.0 GB | **~1.8 GB** | ~4–5 GB (추정) |
+| 짧은 문장 번역 벽시간 | 1.58 s | **0.85 s** | 9–16 s (thinking) |
+| 출력 | 약간 뻑뻑 | 자연스러움 | reasoning 소진 → 본문 공백 |
+
+- **결론: EXAONE-4.0-1.2B 채택** — ✨는 "누르면 바로 결과"라 **속도가 UX 결정 요인**. EXAONE이 ~6–10배 빠르고 긴 토큰 예산 없이 즉시 본문 출력. gemma E2B는 thinking 모델이라 짧은 번역에 reasoning 400+토큰(16s+)을 쓰고 본문이 비어 옴 — 이 용도엔 과잉.
+- **shipping 기본값: EXAONE-4.0-1.2B-Q8_0** — Q8_0 실측으로 bf16 대비 파일 절반(1.27GB), RAM 40% 감소(~1.8GB), 추론 더 빠름(0.85s)이고 품질은 거의 손실 없음(번역 자연스러움). Q4 계열(Q4_K_M/IQ4_XS)은 한국어 품질이 부족해 제외, **Q8_0 채택**.
+- **라이선스**: EXAONE(LG) — 배포 조건 확인 후 manifest에 기록. 런타임 다운로드만 허용, 인스톨러 번들링 금지(v1과 동일).
 
 ## 7. 로드/언로드 정책
 
 ```text
 ✨ 클릭
-  → State == NotLoaded ? LoadAsync(진행률 UI) : 바로 추론
+  → State == NotLoaded ? LoadAsync(사이드카 spawn + 모델 로드, 진행률 UI) : 바로 추론
   → 추론 완료 → idle 타이머 시작 (AiLocalIdleUnloadMinutes, 기본 10분)
-  → idle 초과 → Unloading → weights.Dispose()
+  → idle 초과 → Unloading → 사이드카 process kill
 설정 창: [모델 언로드] 수동 버튼 + 현재 상태 표시
 ```
 
-- 앱 종료 시 항상 `Dispose()`
+- 앱 종료 시 항상 사이드카 kill + `Dispose()`
 - 로드 중 ✨ 재클릭은 무시(`IsAiProcessing` 가드 기존 재사용)
 
 ## 8. 추론 상세
 
-- **chat template 직접 조립** — LLamaSharp은 GGUF 내장 Jinja 템플릿을 실행하지 못함(`ApplyTemplate` 금지, 스킬 확인). Gemma 4 E2B 마커(본모델에서 검증됨):
-  ```text
-  <|turn>system\n{system}\n<turn|>\n<|turn>user\n{user}\n<turn|>\n<|turn>model\n
-  ```
+- **chat template**: 사이드카 `/v1/chat/completions`가 GGUF 내장 템플릿을 **자동 적용** → in-process(LLamaSharp) 때의 "템플릿 직접 조립" 필요 없음. `messages: [{role, content}]`만 전송.
 - **시스템 프롬프트**: 사용자 프롬프트 + `OutputOnlyGuardrail`(기존 `AiService` 상수 재사용) — "결과물 본문만" 강제
 - **파라미터**(PoC 검증값): `temp 0.7, top-p 0.95, top-k 64`, `MaxTokens` 상한(설정 가능, 기본 300), `ContextSize 8192`
-- **reasoning off**: Gemma 4는 thinking 토큰을 내뱉음(lama.cpp `--reasoning off` 대응). LLamaSharp의 해당 API는 구현 시 설치된 패키지 문서로 확정 — 없으면 템플릿/토큰 필터로 대안
-- 실행: `StatelessExecutor` + `InferAsync`(토큰 스트림) → 전체 수신 후 반환(v1은 non-streaming 유지, FUTURE 문서와 동일 결론)
+- **reasoning off**: EXAONE/Gemma thinking 토큰 억제 — llama-server `--reasoning off`(해당 모델 지원 시) 또는 시스템 프롬프트로 대안
+- 실행: `/v1/chat/completions`(non-streaming, v1 유지 — FUTURE 문서와 동일 결론)
 
-## 9. 설정 UX (설정 창 "AI 도구" 탭 확장)
+## 9. 설정 UX
 
-```text
-┌──────────────────────────────────────────────┐
-│ AI 텍스트 처리                                │
-├──────────────────────────────────────────────┤
-│ 백엔드                                        │
-│   (•) 외부 API      ( ) 내장 모델             │
-│                                              │
-│ ── 외부 API 선택 시: 기존 항목 그대로          │
-│ ── 내장 모델 선택 시:                          │
-│   장치        [auto ▾]  (auto / CPU / GPU)    │
-│   모델        gemma-4-E2B (2.62 GB)           │
-│             [다운로드] [삭제]                  │
-│             상태: 미설치 / 다운로드 중 45% / 준비됨 │
-│   idle 언로드  [10] 분                        │
-└──────────────────────────────────────────────┘
-```
+→ **탭 레이아웃은 별도 문서 `settings-tab-layout.md` 참고** (라디오 + 조건부 섹션, 접기 없음).
 
-- 내장 모델 선택 + 모델 미설치 상태에서 ✨ 클릭 → LiveRegion "AI 모델을 먼저 설치하세요" + 설정 창 유도
+- 내장 모델 선택 + 엔진/모델 미설치 상태에서 ✨ 클릭 → LiveRegion "AI 모델을 먼저 설치하세요" + 설정 창 유도
 - 프롬프트·타임아웃 입력은 백엔드 공통(기존 유지)
+- **idle 언로드 NumericAdjuster v1에 포함** (공통 타임아웃과 구분되는 별도 라벨 "로컬 모델 idle 언로드(분)")
 
-## 10. 성능 기대 (PoC 실측 기반)
+## 10. 성능 (PoC 실측 — CPU 전용, EXAONE-4.0-1.2B bf16)
 
-| 시나리오 | GPU(auto, 5070 Ti) | CPU 전용 |
-|---|---|---|
-| 짧은 문장 번역 | ~3초 | ~4초 |
-| 긴 문단(출력 ~100토큰) | ~3초 | ~6~8초 예상 |
+| 시나리오 | 실측 (CPU, `--gpu-layers 0`) |
+|---|---|
+| 첫 로드(다운로드 후 → Ready) | **~1.2 s** (bf16 2.4GB, ctx 8K) |
+| 짧은 문장 번역(✨ 대표 작업) | **~1.6 s** |
+| 긴 문단(출력 ~100토큰) | ~5–8 s 예상 (토큰 수 비례) |
 
-→ 진행 표시(`IsAiProcessing` + 로드 진행률)만 있으면 어느 장치에서도 수용 가능.
+→ 로드·추론 모두 2초 내라 **진행 UI는 첫 사용만 짧게** 노출하면 충분. idle 언로드로 상주 RAM 0 유지.
 
 ## 11. 리스크와 fail-safe
 
 | 상황 | 동작 |
 |---|---|
-| 모델 파일 손상/미다운로드 | 에러 공지 + 설정 유도. 원본 텍스트 보존 |
-| `gpu` 선택 + GPU 부재 | 명확한 에러, auto 변경 권고 |
-| 로드 중 취소/앱 종료 | `CancellationToken` + `Dispose`, 반쪽 상태 남김 없음 |
+| 모델/엔진 파일 손상·미다운로드 | 에러 공지 + 설정 유도. 원본 텍스트 보존 |
+| 사이드카 spawn 실패/죽음 | `IsReady=false` → 에러 공지 + 원본 유지 |
+| 로드 중 취소/앱 종료 | `CancellationToken` + kill, 반쪽 상태 남김 없음 |
 | 추론 타임아웃 | 기존 `AiTimeoutSeconds` 재사용 → 원본 유지 + 에러 공지 |
 | SHA-256 불일치 | 파일 삭제 + 재다운로드 권고 |
+| CPU 로드 1~3분+ | 진행률 UI + "로딩 중" LiveRegion. 첫 사용만 |
 
 ## 12. 구현 단위 (파일별)
 
 ### Model
-- [MODIFY] `Models/AppConfig.cs`: `AiBackend`("api" 기본), `AiLocalDevice`("auto" 기본), `AiLocalIdleUnloadMinutes`(10), `AiLocalModel` 추가
-- [NEW] `Models/ModelManifest.cs`: manifest 스키마
+- [MODIFY] `Models/AppConfig.cs`: `AiBackend`("api" 기본), `AiLocalIdleUnloadMinutes`(10), `AiLocalModel`, `AiEnginePath` 추가. (`AiLocalDevice` 제거 — CPU 전용)
+- [NEW] `Models/ModelManifest.cs`: manifest 스키마 (엔진+모델 공용)
 
 ### Service
 - [NEW] `Services/ILlmBackend.cs`: 인터페이스 + `BackendState`
 - [MODIFY] `Services/AiService.cs`: `RemoteApiBackend`로 래핑(내부 로직 변경 없음)
-- [NEW] `Services/LocalGgufBackend.cs`: LLamaSharp 로드/추론/언로드, chat template 조립, 장치 pinning
-- [NEW] `Services/ModelStore.cs`: 다운로드·재개·SHA-256·경로 관리
+- [NEW] `Services/LocalGgufBackend.cs`: 사이드카 HTTP 추론, chat messages 조립, 상태 머신
+- [NEW] `Services/SidecarProcessManager.cs`: `llama-server.exe` spawn/kill/health (자동완성 `KananaProcessManager` 패턴 재사용 — §5 주의사항 포함)
+- [NEW] `Services/ModelStore.cs`: 엔진·모델 다운로드·재개·SHA-256·경로 관리
 
 ### ViewModel
 - [MODIFY] `ViewModels/MainViewModel.cs`: `BackendSelector` 경유 실행, 로드 진행률 바인딩, idle 타이머
-- [MODIFY] `ViewModels/SettingsViewModel.cs`: 백엔드 라디오, 장치 선택, 모델 설치/삭제/상태, idle 분
+- [MODIFY] `ViewModels/SettingsViewModel.cs`: 백엔드 라디오, 엔진/모델 다운로드·상태, idle 분 (레이아웃은 `settings-tab-layout.md`)
 
 ### View / DI / 프로젝트
-- [MODIFY] `Views/SettingsWindow.xaml`: "AI 도구" 탭 확장(§9 레이아웃)
+- [MODIFY] `Views/SettingsWindow.xaml`: "AI 도구" 탭 재구성 (`settings-tab-layout.md` §3)
 - [MODIFY] `App.xaml.cs`: `ILlmBackend` 등록(백엔드 팩토리)
-- [MODIFY] `AltKey.csproj`: `LLamaSharp`, `LLamaSharp.Backend.Cpu`, `LLamaSharp.Backend.Cuda12`, `LLamaSharp.Backend.Vulkan` + 네이티브 DLL(`llama.dll`, `ggml*.dll`) `<None Include>` + `CopyToOutputDirectory=PreserveNewest`(자동 복사 안 됨 — 스킬 확인)
+- [MODIFY] `AltKey.csproj`: **LLamaSharp 패키지 제거** (in-process 미사용). 사이드카는 외부 exe라 NuGet 불필요.
 
 ## 13. 테스트 계획
 
 ### 단위 (`AltKey.Tests/Services/` 기능별 분리, 파일 400줄 이하)
-- `ModelStore`: manifest 파싱·SHA-256 검증(합격/불일치 fixture), 경로 규칙
-- `LocalGgufBackend`: chat template 조립(fixture: §8 마커), 장치 선택 로직(auto/cpu/gpu × GPU 유무)
+- `ModelStore`: manifest 파싱·SHA-256 검증(합격/불일치 fixture), 경로 규칙 (엔진+모델)
+- `SidecarProcessManager`: spawn arg(`--gpu-layers 0` 확인), 포트 스캔, health poll 타임아웃 (fake process)
+- `LocalGgufBackend`: chat messages 조립(fixture), 상태 머신(NotLoaded→Loading→Ready→Unloading)
 - `RemoteApiBackend`: 기존 `AiService` 테스트 이관·유지
-- fail-safe: 로드 실패 → 예외 타입 확인 (네이티브 로드는 fake weights로 분리 테스트)
+- fail-safe: spawn 실패 → 예외 타입 확인
 
 ### 수동
-1. auto + GPU 머신: ✨ → 3초 내 결과, RAM 상승→idle 언로드 확인
-2. cpu 고정: 동일 플로우, ~4초
-3. gpu 선택 + GPU 부재 시나리오(시뮬레이션): 에러 메시지 확인
-4. 모델 미설치 + ✨ 클릭: 유도 플로우
-5. 다운로드 진행률·중단·재개·SHA-256 실패 시뮬레이션
-6. 앱 종료 시 프로세스 메모리 회수 확인
+1. CPU 머신: ✨ → 첫 로드 1~3분+ 진행률 확인 → 번역 결과, RAM 상승→idle 언로드 확인
+2. 모델 미설치 + ✨ 클릭: 유도 플로우
+3. 엔진/모델 다운로드 진행률·중단·재개·SHA-256 실패 시뮬레이션
+4. 앱 종료 시 사이드카 프로세스 메모리 회수 확인 (tasklist)
 
 ## 14. AGENTS.md 체크리스트
 
-- [ ] 접근성: 진행 표시 + LiveRegion 공지(로드 시작/완료/실패)
+- [ ] 접근성: 진행 표시 + LiveRegion 공지(로드 시작/완료/실패, 다운로드 상태)
 - [ ] 주석 한국어로, 값 조정 지점에 충분히
 - [ ] 테스트 위치·길이 규칙 준수
 - [ ] `dotnet build` (AltKey.Tests 포함) 통과
 - [ ] 커밋: `feat(ai-local): ...` 형식
+
+## 15. v1 → v2 변경 요약
+
+| 항목 | v1 | v2 |
+|---|---|---|
+| 엔진 | LLamaSharp in-process (네이티브 DLL 번들) | llama-server.exe 사이드카 (on-demand 다운로드) |
+| 장치 | auto/cpu/gpu 선택 | **CPU 전용** (`--gpu-layers 0`) |
+| 모델 | unsloth gemma-4-E2B UD-Q4_K_XL 단일 | EXAONE-4.0-1.2B(bf16) + gemma-4-E2B-it-qat-q4_0 **내부 PoC** 후 채택, 사용자 선택 없음 |
+| chat template | 직접 조립(LLamaSharp 한계) | 서버 자동 적용 |
+| 설정 탭 | §9 인라인 레이아웃 | 별도 문서 `settings-tab-layout.md` (라디오+조건부) |
