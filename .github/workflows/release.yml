@@ -70,12 +70,29 @@ jobs:
           iscc installer/AltKey.iss
         shell: pwsh
 
+      - name: Extract version from tag
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}".TrimStart('v')
+          Write-Host "RELEASE_VERSION=$version"
+          Add-Content -Path $env:GITHUB_ENV -Value "RELEASE_VERSION=$version"
+
       - name: Upload Release Asset
         uses: softprops/action-gh-release@v2
         with:
           files: |
             dist/AltKey-Portable-*.zip
             dist/AltKey-Setup-*.exe
+          body: |
+            ## AltKey ${{ github.ref_name }}
+
+            ### 다운로드
+
+            | 패키지 | 설명 |
+            |---------|------|
+            | **AltKey-Setup-${{ github.ref_name }}.exe** | 설치 프로그램 (권장). 메인 앱과 `AltKey.Tools` 편집 도구를 함께 포함합니다. |
+            | **AltKey-Portable-${{ github.ref_name }}.zip** | 포터블 버전. 원하는 위치에 압축 해제 후 `AltKey.exe`를 실행하면 됩니다. |
+            | **AltKey-${{ env.RELEASE_VERSION }}.0.msix** | Microsoft Store 제출용 아티팩트 (서명 없음). 일반 PC에서 직접 설치할 수 없으니, 설치 프로그램이나 포터블 버전을 사용하세요. |
           fail_on_unmatched_files: true
           overwrite: true
         env:
