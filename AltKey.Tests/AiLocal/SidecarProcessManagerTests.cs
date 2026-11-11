@@ -58,6 +58,15 @@ public class SidecarProcessManagerTests
         int cIdx = Array.IndexOf(args, "-c");
         Assert.True(cIdx >= 0);
         Assert.Equal("8192", args[cIdx + 1]);
+
+        // Gemma 4 E2B는 reasoning 모델 — thinking 토큰을 끕니다(속도·출력 품질).
+        int rIdx = Array.IndexOf(args, "--reasoning");
+        Assert.True(rIdx >= 0);
+        Assert.Equal("off", args[rIdx + 1]);
+
+        // 멀티모달 mmproj(비전) 자동 로딩을 명시적으로 꺼 RAM을 절약합니다.
+        int vIdx = Array.IndexOf(args, "--no-mmproj");
+        Assert.True(vIdx >= 0);
     }
 
     // 바인드해서 실제로 쓸 수 있는 포트를 하나 얻어옵니다. (테스트 헬퍼)

@@ -24,7 +24,7 @@ public class LocalGgufBackend : IAsyncDisposable
     private int _activeRequests;
 
     // 로컬 모델 파일명 (manifest의 model.fileName과 일치).
-    private const string ModelFileName = "EXAONE-4.0-1.2B-Q8_0.gguf";
+    private const string ModelFileName = "gemma-4-E2B_q4_0-it.gguf";
 
     /// <summary>모델이 메모리에 로드돼 있는지(사이드카 실행 중).</summary>
     public bool IsLoaded => _sidecar.IsRunning;
@@ -161,7 +161,10 @@ public class LocalGgufBackend : IAsyncDisposable
             [
                 new ChatMessage { Role = "system", Content = systemPrompt },
                 new ChatMessage { Role = "user", Content = inputText }
-            ]
+            ],
+            // 출력 토큰 상한 — reasoning 모델이 thinking을 과도하게 뽑아내지 않게 하고,
+            // 긴 번역(컨텍스트 8k)도 처리할 수 있는 여유를 준다.
+            MaxTokens = 4096
         };
 
         using var httpClient = new HttpClient();

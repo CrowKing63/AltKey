@@ -24,6 +24,10 @@ public partial class SettingsWindow : Window
         // 접근성: 설정 창이 열릴 때 현재 탭의 첫 컨트롤로 포커스를 이동한다.
         Loaded += (_, _) => FocusFirstControlInSelectedTab();
 
+        // 로컬 AI 파일은 사용자가 수동으로 배치할 수도 있어, 창이 활성화될 때마다
+        // 설치 상태를 디스크에서 다시 확인해 다운로드 버튼 활성/비활성을 갱신한다.
+        Activated += (_, _) => _vm.UpdateLocalAiReady();
+
         // 포커스 추적기에 현재 창을 등록해 보조 기능 모듈이 활성 창을 알 수 있게 한다.
         FocusTracker.Register(this);
     }

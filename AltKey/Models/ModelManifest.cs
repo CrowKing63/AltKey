@@ -14,7 +14,7 @@ public class ModelManifest
         Entries.FirstOrDefault(e => e.Component == component);
 
     /// <summary>
-    /// [역할] 기본(내장) manifest입니다. 현재 PoC로 검증된 EXAONE-4.0-1.2B-Q8_0 +
+    /// [역할] 기본(내장) manifest입니다. 현재 PoC로 검증된 Gemma 4 E2B (q4_0) +
     /// llama.cpp b12262 Windows CPU 빌드를 담습니다. "로컬 AI 다운로드" 버튼이
     /// 이 명세에 따라 엔진·모델을 설치합니다.
     /// </summary>
@@ -34,11 +34,11 @@ public class ModelManifest
             new ManifestEntry
             {
                 Component = "model",
-                FileName = "EXAONE-4.0-1.2B-Q8_0.gguf",
-                SourceUrl = "https://huggingface.co/LGAI-EXAONE/EXAONE-4.0-1.2B-GGUF/resolve/main/EXAONE-4.0-1.2B-Q8_0.gguf",
-                Sha256 = "cc0b2a3f447e134cafd2853104d06227122cc280f4c9fee8c90172066174ef04",
-                SizeBytes = 1_363_939_616,
-                Version = "Q8_0"
+                FileName = "gemma-4-E2B_q4_0-it.gguf",
+                SourceUrl = "https://huggingface.co/google/gemma-4-E2B-it-qat-q4_0-gguf/resolve/main/gemma-4-E2B_q4_0-it.gguf",
+                Sha256 = "fa401b55b07ee70a54c6dae3903c783a6e65064312529ea57175cb5f8dec6634",
+                SizeBytes = 3_349_516_256,
+                Version = "q4_0"
             }
         }
     };
@@ -52,7 +52,7 @@ public class ManifestEntry
     // 구성 종류 ("engine" / "model").
     public string Component { get; set; } = "";
 
-    // 저장될 파일 이름 (예: llama-server.exe, EXAONE-4.0-1.2B-Q8_0.gguf).
+    // 저장될 파일 이름 (예: llama-server.exe, gemma-4-E2B_q4_0-it.gguf).
     public string FileName { get; set; } = "";
 
     // 다운로드 원본 URL (HuggingFace resolve).

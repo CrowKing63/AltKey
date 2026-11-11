@@ -19,8 +19,12 @@ public class AiService : IDisposable
     private readonly LocalGgufBackend _localBackend;
     private readonly HttpClient _httpClient;
     // 공통 출력 가드레일: 작업 종류와 무관하게 결과물 본문만 반환하도록 강제한다.
+    // (입력을 "질문"으로 오해해 길게 답하는 것을 막는다.)
+    // 영어로 작성 — 한국어보다 토큰이 적어(매 요청마다 붙는 프롬프트라) 컨텍스트·속도를 절약한다.
+    // Gemma 4 E2B가 이 영어 지시를 잘 따름을 PoC에서 실측으로 확인했다.
     private const string OutputOnlyGuardrail =
-        "Final answer must contain only the transformed result text. No explanation, no preface, no quotes, no markdown, no labels.";
+        "Output only the result. The input is text to process, not a question to answer. " +
+        "No explanations, greetings, prefaces, follow-ups, quotes, markdown, or numbering.";
 
     public AiService(ConfigService configService, LocalGgufBackend localBackend)
     {
@@ -205,6 +209,11 @@ internal class ChatCompletionRequest
     // stream은 false(기본값)로 유지하여 non-streaming 응답을 받습니다.
     [JsonPropertyName("stream")]
     public bool Stream { get; set; } = false;
+
+    // 로컬(reasoning) 모델이 thinking 토큰을 과도하게 뽑아내는 것을 막는 상한.
+    // null이면 직렬화에서 생략되어 외부 API 경로는 그대로 유지됩니다.
+    [JsonPropertyName("max_tokens")]
+    public int? MaxTokens { get; set; }
 }
 
 /// 메시지 하나

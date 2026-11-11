@@ -391,7 +391,8 @@ public partial class SettingsViewModel : ObservableObject
              AiDefaultPrompt = c.AiDefaultPrompt;
              AiTimeoutSeconds = c.AiTimeoutSeconds <= 0 ? 30 : c.AiTimeoutSeconds;
              IsLocalAi = c.AiBackend == "local";
-             AiLocalIdleUnloadMinutes = c.AiLocalIdleUnloadMinutes <= 0 ? 10 : c.AiLocalIdleUnloadMinutes;
+             // 0은 "추론 직후 즉시 언로드"라는 유효 값이므로, 음수일 때만 기본값 10으로 복구합니다.
+            AiLocalIdleUnloadMinutes = c.AiLocalIdleUnloadMinutes < 0 ? 10 : c.AiLocalIdleUnloadMinutes;
              LocalAiStateText = _localBackend.IsLoaded ? "로드됨" : "미로드";
              UpdateLocalAiReady();
 
@@ -873,16 +874,18 @@ public partial class SettingsViewModel : ObservableObject
     }
 
     // 로컬 엔진+모델 설치 여부를 계산해 상태(버튼 활성/상태문구)를 갱신합니다.
-    private void UpdateLocalAiReady()
+    // 로컬 AI 설치 상태(엔진+모델 존재 여부)를 디스크에서 다시 확인해 갱신합니다.
+    // 설정이 로드될 때·다운로드 완료 후·설정 창이 활성화될 때 호출됩니다.
+    public void UpdateLocalAiReady()
     {
         LocalAiReady = File.Exists(_modelStore.EnginePath)
-                     && File.Exists(_modelStore.ModelPath("EXAONE-4.0-1.2B-Q8_0.gguf"));
+                     && File.Exists(_modelStore.ModelPath("gemma-4-E2B_q4_0-it.gguf"));
         if (LocalAiReady)
             LocalAiDownloadStatusMessage = "엔진 + 모델 설치됨";
     }
 
     /// <summary>
-    /// [역할] "로컬 AI 다운로드" 버튼 — 엔진(llama.cpp zip)과 모델(EXAONE gguf)을
+    /// [역할] "로컬 AI 다운로드" 버튼 — 엔진(llama.cpp zip)과 모델(Gemma gguf)을
     /// 순서로 내려받아 SHA-256으로 검증한 뒤 설치합니다. CPU 전용입니다.
     /// </summary>
     [RelayCommand]

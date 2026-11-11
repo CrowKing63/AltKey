@@ -576,7 +576,7 @@
                                         Margin="0,0,0,8"
                                         HorizontalAlignment="Left"
                                         AutomationProperties.Name="로컬 AI 엔진과 모델 다운로드"
-                                        ToolTip="llama.cpp 엔진(약 25MB)과 EXAONE 1.2B 모델(약 1.4GB)을 한 번에 내려받습니다."/>
+                                        ToolTip="llama.cpp 엔진(약 25MB)과 Gemma 4 E2B 모델(약 3.2GB)을 한 번에 내려받습니다."/>
                                 <ProgressBar Value="{Binding LocalAiDownloadProgress}" Maximum="100" Height="6" Margin="0,0,0,4"/>
                                 <TextBlock Text="{Binding LocalAiDownloadStatusMessage}" Foreground="{DynamicResource SettingsFgSub}" FontSize="{StaticResource ScaledSettingsSubFontSize}" TextWrapping="Wrap"/>
 

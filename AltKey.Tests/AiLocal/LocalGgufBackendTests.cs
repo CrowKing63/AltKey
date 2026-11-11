@@ -10,8 +10,8 @@ namespace AltKey.Tests.AiLocal;
 public class LocalGgufBackendTests
 {
     [Fact]
-    // chat completion 요청을 보내고 응답의 content를 추출하는지 확인합니다(스텁 서버).
-    public async Task SendChatCompletion_returnsContent_fromStubServer()
+    // chat completion 요청에 max_tokens(출력 상한)가 포함되고, 응답 content를 추출하는지 확인합니다(스텁 서버).
+    public async Task SendChatCompletion_includesMaxTokens_and_returnsContent()
     {
         int port = SidecarProcessManager.FindFreePort(8090);
         var listener = new HttpListener();
@@ -19,13 +19,16 @@ public class LocalGgufBackendTests
         listener.Start();
 
         const string expectedContent = "안녕하세요";
+        string? capturedBody = null;
 
-        // 스텁 서버: /v1/chat/completions에 고정 응답을 반환합니다.
+        // 스텁 서버: 요청 본문을 캡처하고 /v1/chat/completions에 고정 응답을 반환합니다.
         var serverTask = Task.Run(async () =>
         {
             while (listener.IsListening)
             {
                 var ctx = await listener.GetContextAsync();
+                using var reader = new StreamReader(ctx.Request.InputStream, Encoding.UTF8);
+                capturedBody = await reader.ReadToEndAsync();
                 var resp = new
                 {
                     choices = new[] { new { message = new { role = "assistant", content = expectedContent } } }
@@ -43,6 +46,10 @@ public class LocalGgufBackendTests
             string result = await LocalGgufBackend.SendChatCompletionAsync(
                 $"http://127.0.0.1:{port}", "test input", "system prompt", CancellationToken.None);
             Assert.Equal(expectedContent, result);
+
+            // 요청 본문에 max_tokens가 4096으로 설정됐는지 확인합니다.
+            var req = JsonDocument.Parse(capturedBody!);
+            Assert.Equal(4096, req.RootElement.GetProperty("max_tokens").GetInt32());
         }
         finally
         {

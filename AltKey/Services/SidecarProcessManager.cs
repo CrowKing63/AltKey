@@ -22,7 +22,7 @@ public interface ISidecarProcess
 /// GPU는 전혀 쓰지 않고 CPU 전용으로 돌립니다(--gpu-layers 0).
 /// [참고] StartAsync/StopAsync/WaitForHealthyAsync는 실제 프로세스와 HTTP를 다루는 통합 레벨이라
 /// 단위 테스트로 검증하지 않습니다(단위 테스트는 FindFreePort·BuildStartArguments로 커버).
-/// 서버 동작 자체는 PoC(llama-server b12262, EXAONE Q8_0)에서 실측으로 확인했습니다.
+/// 서버 동작 자체는 PoC(llama-server b12262, Gemma 4 E2B)에서 실측으로 확인했습니다.
 /// </summary>
 public class SidecarProcessManager : ISidecarProcess
 {
@@ -76,7 +76,12 @@ public class SidecarProcessManager : ISidecarProcess
             "--port", port.ToString(),
             "--gpu-layers", "0",
             // 컨텍스트 크기는 -c/--ctx-size로만 받음. (--context-size은 b12262가 인식 못 해 즉시 종료.)
-            "-c", "8192"
+            "-c", "8192",
+            // Gemma 4 E2B는 reasoning(추론) 모델 — thinking 토큰을 끄면 속도가 ~20s → ~1.5s로
+            // 빨라지고 출력도 깔끔해진다(PoC 실측). 텍스트 전용 ✨에는 thinking이 필요 없다.
+            "--reasoning", "off",
+            // Gemma는 멀티모달 모델 — mmproj(비전 프로젝터) 자동 로딩을 명시적으로 꺼 RAM을 절약한다.
+            "--no-mmproj"
         ];
     }
 
