@@ -138,7 +138,14 @@ public class AppConfig
     // AI API 요청 타임아웃(초)입니다.
     public int AiTimeoutSeconds { get; set; } = 30;
 
-    // ── 상단바 버튼 설정 ─────────────────────────────────────────────────
+    // AI 처리 백엔드 종류입니다. "api"(기본, 기존 HTTP API) 또는 "local"(로컬 GGUF 모델).
+    // 기본값 "api"라 로컬 기능을 안 써도 기존 동작이 그대로 유지됩니다.
+    public string AiBackend { get; set; } = "api";
+
+    // 로컬 모델 유휴 언로드 대기 시간(분). AI 요청이 이 이상 없으면 모델을 메모리에서 내려 RAM을 반환합니다.
+    public int AiLocalIdleUnloadMinutes { get; set; } = 10;
+
+    // ── 상단바 버튼 설정 ──────────────────────────────────────────────
 
     // 상단바에 표시할 버튼 목록과 순서입니다. 비어 있으면 기본값이 적용됩니다.
     public List<HeaderButtonConfig> HeaderButtons { get; set; } = [];

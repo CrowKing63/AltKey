@@ -4,6 +4,7 @@
         xmlns:vm="clr-namespace:AltKey.ViewModels"
         xmlns:conv="clr-namespace:AltKey.Themes"
         xmlns:ctrl="clr-namespace:AltKey.Controls"
+        xmlns:convc="clr-namespace:AltKey.Converters"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         mc:Ignorable="d"
@@ -18,6 +19,7 @@
         <ResourceDictionary>
         <conv:BoolToVisibilityConverter x:Key="BoolToVis"/>
         <conv:InverseBoolToVisibilityConverter x:Key="InvBoolToVis"/>
+        <convc:InverseBooleanConverter x:Key="InvBool"/>
         <!-- 접근성: 설정 창 범위에서만 Fluent 컨트롤 스타일을 opt-in으로 적용해 포커스/간격 일관성을 확보한다. -->
         <Style TargetType="Button" BasedOn="{StaticResource FluentButtonStyle}"/>
         <Style TargetType="TextBox" BasedOn="{StaticResource FluentTextBoxStyle}"/>
@@ -520,6 +522,16 @@
                         <StackPanel Margin="8,10,8,10">
                             <TextBlock Text="AI 텍스트 처리" Style="{StaticResource SectionTitleStyle}"/>
                             <!-- 표시(상단바 ✨ 버튼 켜기/끄기)는 상단바 탭에서 관리하고, 이 탭은 AI 동작 세팅만 담당합니다. -->
+                            <!-- 백엔드 선택: 외부 API vs 로컬 모델(CPU 전용). -->
+                            <StackPanel Orientation="Horizontal" Margin="0,4,0,16">
+                                <RadioButton Content="외부 API" GroupName="AiBackend"
+                                             IsChecked="{Binding IsLocalAi, Converter={StaticResource InvBool}}"
+                                             VerticalContentAlignment="Center"/>
+                                <RadioButton Content="로컬 모델 (CPU 전용)" GroupName="AiBackend"
+                                             IsChecked="{Binding IsLocalAi}"
+                                             Margin="16,0,0,0"
+                                             VerticalContentAlignment="Center"/>
+                            </StackPanel>
                             <StackPanel>
                                 <TextBlock Text="API 엔드포인트 URL (OpenAI 호환)" Foreground="{DynamicResource SettingsFgSub}" FontSize="{DynamicResource ScaledSettingsSubFontSize}" Margin="0,0,0,4"/>
                                 <TextBox Text="{Binding AiEndpoint, UpdateSourceTrigger=LostFocus}" Margin="0,0,0,16" Padding="8,4" Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}" BorderBrush="{DynamicResource SettingsBorder}"/>
@@ -554,6 +566,18 @@
                                         Margin="0,0,0,16"
                                         HorizontalAlignment="Left"
                                         ToolTip="엔드포인트·모델·API 키가 올바른지 확인합니다. 먼저 위 항목을 입력한 뒤 눌러 주세요."/>
+
+                                <!-- 로컬 AI: 엔진+모델을 한 번에 다운로드(CPU 전용). -->
+                                <TextBlock Text="로컬 AI (CPU 전용)" Style="{StaticResource SectionTitleStyle}" Margin="0,8,0,4"/>
+                                <Button Content="엔진 + 모델 다운로드"
+                                        Command="{Binding DownloadLocalAiCommand}"
+                                        Style="{StaticResource SettingsActionButtonStyle}"
+                                        Margin="0,0,0,8"
+                                        HorizontalAlignment="Left"
+                                        AutomationProperties.Name="로컬 AI 엔진과 모델 다운로드"
+                                        ToolTip="llama.cpp 엔진(약 25MB)과 EXAONE 1.2B 모델(약 1.4GB)을 한 번에 내려받습니다."/>
+                                <ProgressBar Value="{Binding LocalAiDownloadProgress}" Maximum="100" Height="6" Margin="0,0,0,4"/>
+                                <TextBlock Text="{Binding LocalAiDownloadStatusMessage}" Foreground="{DynamicResource SettingsFgSub}" FontSize="{StaticResource ScaledSettingsSubFontSize}" TextWrapping="Wrap"/>
                             </StackPanel>
                         </StackPanel>
                     </ScrollViewer>

@@ -34,6 +34,7 @@ public partial class SettingsViewModel : ObservableObject
     private readonly DownloadService      _downloadService;
     private readonly InstallerService     _installerService;
     private readonly AiService            _aiService;
+    private readonly ModelStore           _modelStore;
 
     private CancellationTokenSource?      _downloadCts;
 
@@ -221,6 +222,11 @@ public partial class SettingsViewModel : ObservableObject
      public bool CanUseIdleOpacity => ActiveOpacityEnabled;
      public bool CanEditIdleOpacity => ActiveOpacityEnabled && IdleOpacityEnabled;
 
+    // 로컬 AI (CPU 전용) — 백엔드 선택 + on-demand 다운로드 상태.
+    [ObservableProperty] private bool isLocalAi;
+    [ObservableProperty] private string localAiDownloadStatusMessage = "";
+    [ObservableProperty] private double localAiDownloadProgress;
+
     // ── 생성자 ──────────────────────────────────────────────────────────────
 
     public SettingsViewModel(
@@ -233,7 +239,8 @@ public partial class SettingsViewModel : ObservableObject
         UpdateService        updateService,
         DownloadService      downloadService,
         InstallerService     installerService,
-        AiService            aiService)
+        AiService            aiService,
+        ModelStore           modelStore)
     {
         _configService  = configService;
         _themeService   = themeService;
@@ -245,6 +252,7 @@ public partial class SettingsViewModel : ObservableObject
         _downloadService = downloadService;
         _installerService = installerService;
         _aiService      = aiService;
+        _modelStore     = modelStore;
         _configService.ConfigChanged += OnConfigChanged;
 
         // T-9.5: 현재 버전 초기화
@@ -370,6 +378,7 @@ public partial class SettingsViewModel : ObservableObject
              AiModel = c.AiModel;
              AiDefaultPrompt = c.AiDefaultPrompt;
              AiTimeoutSeconds = c.AiTimeoutSeconds <= 0 ? 30 : c.AiTimeoutSeconds;
+             IsLocalAi = c.AiBackend == "local";
 
              // 상단바 설정
              HeaderButtons = new ObservableCollection<HeaderButtonConfig>(
@@ -819,6 +828,48 @@ public partial class SettingsViewModel : ObservableObject
         var clamped = Math.Clamp(value, 5, 300);
         if (clamped != value) { AiTimeoutSeconds = clamped; return; }
         _configService.Update(c => c.AiTimeoutSeconds = clamped);
+    }
+
+    // 로컬 AI 백엔드 선택 — "local"/"api" 문자열로 저장합니다.
+    partial void OnIsLocalAiChanged(bool value)
+    {
+        if (_isLoading) return;
+        _configService.Update(c => c.AiBackend = value ? "local" : "api");
+    }
+
+    /// <summary>
+    /// [역할] "로컬 AI 다운로드" 버튼 — 엔진(llama.cpp zip)과 모델(EXAONE gguf)을
+    /// 순서로 내려받아 SHA-256으로 검증한 뒤 설치합니다. CPU 전용입니다.
+    /// </summary>
+    [RelayCommand]
+    private async Task DownloadLocalAiAsync()
+    {
+        var manifest = ModelManifest.Default;
+        var engineEntry = manifest.GetEntry("engine")!;
+        var modelEntry  = manifest.GetEntry("model")!;
+
+        string engineDir = Path.GetDirectoryName(_modelStore.EnginePath)!;
+
+        // 진행률 바 초기화. UI 스레드에서 만든 Progress<T>는 콜백을 UI 스레드로 마샬링해
+        // 바인딩 갱신을 안전하게 합니다. (모델 다운로드가 크고 느리므로 여기서만 진행률을 갱신.)
+        LocalAiDownloadProgress = 0;
+        var progress = new Progress<double>(p => LocalAiDownloadProgress = p);
+
+        // 1) 엔진 zip 다운로드 + SHA 검증. (작음 — 진행률 바 없이 상태 텍스트만.)
+        LocalAiDownloadStatusMessage = "엔진 다운로드 중...";
+        string engineZip = Path.Combine(engineDir, engineEntry.FileName);
+        await _modelStore.DownloadAsync(engineEntry.SourceUrl, engineZip, engineEntry.Sha256);
+
+        // 2) 엔진 zip 추출 → engine/ (llama-server.exe + ggml DLL 등).
+        LocalAiDownloadStatusMessage = "엔진 설치 중...";
+        System.IO.Compression.ZipFile.ExtractToDirectory(engineZip, engineDir, overwriteFiles: true);
+
+        // 3) 모델 다운로드 + SHA 검증. (크고 느림 — 진행률 바 갱신.)
+        LocalAiDownloadStatusMessage = "모델 다운로드 중...";
+        await _modelStore.DownloadAsync(modelEntry.SourceUrl, _modelStore.ModelPath(modelEntry.FileName), modelEntry.Sha256, progress);
+
+        LocalAiDownloadProgress = 100;
+        LocalAiDownloadStatusMessage = "설치 완료.";
     }
 
     /// <summary>설정한 엔드포인트·모델로 짧은 테스트 요청을 보냅니다.</summary>

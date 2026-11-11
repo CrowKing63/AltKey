@@ -90,7 +90,8 @@ public class SoundSettingsTests
             new UpdateService(),
             new DownloadService(),
             new InstallerService(),
-            new AiService(configService));
+            new AiService(configService, new LocalGgufBackend(new SidecarProcessManager(), new ModelStore())),
+            new ModelStore());
     }
 
     private static string CreateTempDataDir()

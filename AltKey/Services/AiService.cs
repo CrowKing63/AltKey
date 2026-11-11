@@ -16,14 +16,16 @@ namespace AltKey.Services;
 public class AiService : IDisposable
 {
     private readonly ConfigService _configService;
+    private readonly LocalGgufBackend _localBackend;
     private readonly HttpClient _httpClient;
     // 공통 출력 가드레일: 작업 종류와 무관하게 결과물 본문만 반환하도록 강제한다.
     private const string OutputOnlyGuardrail =
         "Final answer must contain only the transformed result text. No explanation, no preface, no quotes, no markdown, no labels.";
 
-    public AiService(ConfigService configService)
+    public AiService(ConfigService configService, LocalGgufBackend localBackend)
     {
         _configService = configService;
+        _localBackend = localBackend;
         _httpClient = new HttpClient();
     }
 
@@ -38,6 +40,15 @@ public class AiService : IDisposable
     public async Task<string> ProcessTextAsync(string inputText, string prompt = "", CancellationToken ct = default)
     {
         var config = _configService.Current;
+
+        // 로컬 백엔드 선택 — llama-server(CPU 전용)로 위임. API 경로 검증과 무관하게 가장 먼저 분기한다.
+        if (string.Equals(config.AiBackend, "local", StringComparison.OrdinalIgnoreCase))
+        {
+            var localBasePrompt = string.IsNullOrWhiteSpace(prompt) ? config.AiDefaultPrompt : prompt;
+            if (string.IsNullOrWhiteSpace(localBasePrompt))
+                throw new AiServiceException("프롬프트가 설정되지 않았습니다. 설정 → AI 탭에서 기본 프롬프트를 입력하세요.");
+            return await _localBackend.ProcessTextAsync(inputText, BuildSystemPromptWithGuardrail(localBasePrompt), ct);
+        }
 
         // 엔드포인트 검증
         if (string.IsNullOrWhiteSpace(config.AiEndpoint))
@@ -183,7 +194,7 @@ public class AiServiceException : Exception
 // ── OpenAI-compatible Chat API DTO ──────────────────────────────────────────
 
 /// 요청 본문
-file class ChatCompletionRequest
+internal class ChatCompletionRequest
 {
     [JsonPropertyName("model")]
     public string Model { get; set; } = "";
@@ -197,7 +208,7 @@ file class ChatCompletionRequest
 }
 
 /// 메시지 하나
-file class ChatMessage
+internal class ChatMessage
 {
     [JsonPropertyName("role")]
     public string Role { get; set; } = "";
@@ -207,21 +218,21 @@ file class ChatMessage
 }
 
 /// 응답 본문
-file class ChatCompletionResponse
+internal class ChatCompletionResponse
 {
     [JsonPropertyName("choices")]
     public List<ChatChoice>? Choices { get; set; }
 }
 
 /// 응답 선택지 하나
-file class ChatChoice
+internal class ChatChoice
 {
     [JsonPropertyName("message")]
     public ChatMessage? Message { get; set; }
 }
 
 /// AI 서비스 전용 JSON 직렬화 옵션
-file static class AiJsonOptions
+internal static class AiJsonOptions
 {
     public static readonly JsonSerializerOptions Default = new()
     {

@@ -225,3 +225,23 @@ PathResolver.DataDir 기준 (포터블/설치 자동 분기)
 | 모델 | unsloth gemma-4-E2B UD-Q4_K_XL 단일 | EXAONE-4.0-1.2B(bf16) + gemma-4-E2B-it-qat-q4_0 **내부 PoC** 후 채택, 사용자 선택 없음 |
 | chat template | 직접 조립(LLamaSharp 한계) | 서버 자동 적용 |
 | 설정 탭 | §9 인라인 레이아웃 | 별도 문서 `settings-tab-layout.md` (라디오+조건부) |
+
+## 16. 구현 진행 상태 (2026-11)
+
+| 단계 | 상태 | 비고 |
+|---|---|---|
+| 1. Model (ModelManifest, AppConfig) | ✅ 완료 | `AiBackend`, manifest 스키마(엔진+모델) |
+| 2. SidecarProcessManager | ✅ 완료 | FindFreePort, BuildStartArgs(`--gpu-layers 0`), spawn/kill/health |
+| 3. ModelStore (SHA + 경로 + 다운로드) | ✅ 완료 | 엔진 zip·모델 GGUF, SHA-256 검증, stub 서버 TDD |
+| 4. LocalGgufBackend + AiService facade | ✅ 완료 | `ILlmBackend`, `RemoteApiBackend` 래핑(기존 로직 유지) |
+| 5. LLamaSharp 제거 | ✅ (no-op) | 이미 패키지 없음 |
+| 6a. ModelStore.DownloadAsync (TDD) | ✅ 완료 | stub 서버로 download+SHA 검증 통과 |
+| 6b. 설정 UI (XAML + ViewModel) | ✅ 완료 | 백엔드 라디오, 단일 다운로드 버튼, 상태/진행률, `InverseBooleanConverter` |
+| 7. 검증(통합·수동) | ⏳ 남은 | 앱 실행 → 다운로드 → 로드 → 추론 end-to-end (사용자 수동 확인 필요) |
+
+- 테스트: **284개 전체 통과**. 메인 + `AltKey.Tools` 솔루션 빌드 성공.
+- 커밋은 사용자 수동 검증 이후 수행(AGENTS.md 규칙 — 수동 검증이 필요한 코드 수정은 확인 전 커밋 금지).
+
+## 17. 나중에 다듬을 것 (메모)
+
+- **시스템 프롬프트 강화**: ✨가 선택 문장을 *처리*(번역·정리 등 사용자 프롬프트 적용)해야 하는데, 현재는 파편 문장을 "질문"으로 오해해 일반 챗 어시스턴트처럼 길게 답하는 경우가 있음(예: "이번 계획은 별도의 문서로" → 문서 구조 설명 4항목). `OutputOnlyGuardrail`/시스템 프롬프트가 "입력 텍스트에 사용자 프롬프트를 적용해 **결과물 본문만** 내라. 질문으로 해석해 답하거나 설명·인사·후속 제안 금지"를 더 강하게 강제해야 함. (2026-11, 사용자 보고 — 당장 작업 아님)
