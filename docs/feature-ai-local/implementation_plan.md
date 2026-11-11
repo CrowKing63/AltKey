@@ -78,7 +78,7 @@ public enum BackendState { NotLoaded, Loading, Ready, Unloading }
 
 ## 5. 엔진 배포 (llama-server.exe, CPU prebuilt)
 
-- **on-demand 다운로드**: 설정 창 "엔진 다운로드" 버튼 → `DownloadService`로 CPU prebuilt `llama-server.exe` 수신 → SHA-256 검증 → `DataDir/engine/llama-server.exe` 저장
+- **on-demand 다운로드**: 설정 창 **단일 "로컬 AI 다운로드" 버튼** 한 번으로 엔진(`llama-server.exe`) + 모델(`EXAONE-4.0-1.2B-Q8_0.gguf`)을 순서로 수신 → 각 SHA-256 검증 → `DataDir/engine/`·`DataDir/models/` 저장
 - spawn: `llama-server.exe -m <gguf> -c 8192 --port <port> --gpu-layers 0 --threads <n>`
 - 포트: 8081 기본, 충돌 시 8082~8090 스캔 (자동완성 `KananaProcessManager` 패턴 재사용)
 - 헬스체크: `/health` poll, **CPU 로드 1~3분+ 커버하도록 타임아웃 ≥120s** (자동완성 스킬 확인 — 30s는 로드 중 프로세스 죽임)
@@ -184,7 +184,7 @@ public enum BackendState { NotLoaded, Loading, Ready, Unloading }
 
 ### ViewModel
 - [MODIFY] `ViewModels/MainViewModel.cs`: `BackendSelector` 경유 실행, 로드 진행률 바인딩, idle 타이머
-- [MODIFY] `ViewModels/SettingsViewModel.cs`: 백엔드 라디오, 엔진/모델 다운로드·상태, idle 분 (레이아웃은 `settings-tab-layout.md`)
+- [MODIFY] `ViewModels/SettingsViewModel.cs`: 백엔드 라디오, **단일 다운로드(엔진+모델)·합산 상태**, idle 분 (레이아웃은 `settings-tab-layout.md`)
 
 ### View / DI / 프로젝트
 - [MODIFY] `Views/SettingsWindow.xaml`: "AI 도구" 탭 재구성 (`settings-tab-layout.md` §3)
