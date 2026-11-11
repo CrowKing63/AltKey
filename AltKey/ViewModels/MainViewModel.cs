@@ -28,6 +28,7 @@ public partial class MainViewModel : ObservableObject
     private readonly OskLauncherService _oskLauncher;
     private readonly LiveRegionService _liveRegion;
     private readonly AiService _aiService;
+    private readonly SoundService _soundService;
 
     // 표시명 → 파일명 매핑 (T-7.1: AvailableLayouts가 표시명을 저장)
     private readonly Dictionary<string, string> _displayToFileName = [];
@@ -217,13 +218,15 @@ public partial class MainViewModel : ObservableObject
         InputService           inputService,
         OskLauncherService     oskLauncher,
         LiveRegionService      liveRegion,
-        AiService              aiService)
+        AiService              aiService,
+        SoundService           soundService)
     {
         _configService  = configService;
         _layoutService  = layoutService;
         _profileService = profileService;
         _liveRegion = liveRegion;
         _aiService = aiService;
+        _soundService = soundService;
 
         Keyboard     = keyboardViewModel;
         Settings     = settingsViewModel;
@@ -613,6 +616,8 @@ public partial class MainViewModel : ObservableObject
                 ClipboardHelper.SetTextWithRetry(result));
             await Task.Delay(50, ct);
             _inputService.SendCombo([VirtualKeyCode.VK_CONTROL, VirtualKeyCode.VK_V]);
+            // 붙여넣기 직후 키 사운드 한 번 재생해 결과가 입력됐음을 알려 줌.
+            _soundService.Play();
             await Task.Delay(100, ct);
             _liveRegion.Announce("AI 처리 완료");
         }

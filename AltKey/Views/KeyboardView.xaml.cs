@@ -69,13 +69,22 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
                     }
                 };
 
-                // AI 처리 중: "Al"(≈AI) 타이틀 깜빡임 시작/종료.
+                // AI 처리 중: "Al"(≈AI) 타이틀 + ✨ 버튼 깜빡임 시작/종료.
                 mainVm.PropertyChanged += (_, e) =>
                 {
                     if (e.PropertyName == nameof(MainViewModel.IsAiProcessing))
                         Dispatcher.InvokeAsync(() =>
                         {
-                            if (mainVm.IsAiProcessing) StartAiBlink(); else StopAiBlink();
+                            if (mainVm.IsAiProcessing)
+                            {
+                                StartAiBlink();       // "Al" 타이틀
+                                StartAiBlinkButton(); // ✨ 버튼 (극단적)
+                            }
+                            else
+                            {
+                                StopAiBlink();
+                                StopAiBlinkButton();
+                            }
                         });
                 };
             }
@@ -106,6 +115,52 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
         _aiBlinkStoryboard?.Stop();
         _aiBlinkStoryboard = null;
         if (AiBlinkLabel is not null) AiBlinkLabel.Opacity = 1.0;
+    }
+
+    // ✨ AI 버튼 자체 깜빡임: 비활성화(흐림) 상태이므로 "Al"보다 더 극단적으로
+    // (Opacity 1.0 ↔ 0.1, 0.35초 왕복) 빠르게 깜빡여 처리 중임을 강조.
+    // 좌/우 어느 위치에 있든 IsAiButton인 버튼을 비주얼 트리로 찾아 적용.
+    private Storyboard? _aiButtonBlinkStoryboard;
+
+    private void StartAiBlinkButton()
+    {
+        if (_aiButtonBlinkStoryboard is not null) return;
+        var btn = FindAiButton();
+        if (btn is null) return;
+        var anim = new DoubleAnimation(1.0, 0.1, TimeSpan.FromSeconds(0.4))
+        {
+            AutoReverse = true,
+            RepeatBehavior = RepeatBehavior.Forever
+        };
+        Storyboard.SetTarget(anim, btn);
+        Storyboard.SetTargetProperty(anim, new PropertyPath(UIElement.OpacityProperty));
+        _aiButtonBlinkStoryboard = new Storyboard();
+        _aiButtonBlinkStoryboard.Children.Add(anim);
+        _aiButtonBlinkStoryboard.Begin();
+    }
+
+    private void StopAiBlinkButton()
+    {
+        _aiButtonBlinkStoryboard?.Stop();
+        _aiButtonBlinkStoryboard = null;
+        // 버튼 Opacity를 원래대로 복원.
+        if (FindAiButton() is { } btn) btn.Opacity = 1.0;
+    }
+
+    // 비주얼 트리를 걸어 IsAiButton인 헤더 버튼을 찾는다. (좌/우 DataTemplate 어디든)
+    private System.Windows.Controls.Button? FindAiButton() => FindAiButtonInTree(this);
+
+    private static System.Windows.Controls.Button? FindAiButtonInTree(DependencyObject root)
+    {
+        for (int i = 0; i < VisualTreeHelper.GetChildrenCount(root); i++)
+        {
+            var child = VisualTreeHelper.GetChild(root, i);
+            if (child is System.Windows.Controls.Button btn && (btn.DataContext as HeaderButtonVm)?.IsAiButton == true)
+                return btn;
+            var found = FindAiButtonInTree(child);
+            if (found is not null) return found;
+        }
+        return null;
     }
 
     private void ApplySuggestionBarHeight()
