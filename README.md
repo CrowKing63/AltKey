@@ -14,7 +14,7 @@ Windows 환경에서 한국어 입력을 최적화하여 지원하는 경량 화
 [![Platform](https://img.shields.io/badge/Platform-Windows%2010%2B-0078D4?style=flat-square)](https://www.microsoft.com/windows)
 [![Microsoft Store](https://img.shields.io/badge/Microsoft%20Store-Get%20it%20Free-0078D4?style=flat-square)](https://apps.microsoft.com/detail/9mztz1c990d7)
 
-[설치](#설치) · [기능](#기능) · [최근 반영](#최근-반영) · [커스터마이징](#커스터마이징) · [매뉴얼](https://github.com/CrowKing63/AltKey/wiki)
+[설치](#설치) · [기능](#기능) · [커스터마이징](#커스터마이징) · [매뉴얼](https://github.com/CrowKing63/AltKey/wiki)
 
 </div>
 
