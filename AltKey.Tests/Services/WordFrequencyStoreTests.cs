@@ -97,17 +97,17 @@ public class WordFrequencyStoreTests : IDisposable
     [Fact]
     public void PruneLowest_removes_exactly_twenty_percent_when_ties_exist()
     {
-        var store = new WordFrequencyStore(_testDir, "test-ko-prune");
+        var store = new WordFrequencyStore(_testDir, "test-ko-prune", maxWords: 100);
         // 5001개 단어: 4500개 빈도 1, 500개 빈도 2, 1개 빈도 100
-        for (int i = 0; i < 4500; i++) store.RecordWord($"a{i}");
-        for (int i = 0; i < 500; i++) { store.RecordWord($"b{i}"); store.RecordWord($"b{i}"); }
+        for (int i = 0; i < 90; i++) store.RecordWord($"a{i}");
+        for (int i = 0; i < 10; i++) { store.RecordWord($"b{i}"); store.RecordWord($"b{i}"); }
         store.RecordWord("big");  // 첫 기록
         for (int i = 0; i < 99; i++) store.RecordWord("big");
 
         store.Flush();
-        // MaxWords=5000이므로 RecordWord 내부에서 PruneLowest가 한 번 호출됨
+        // maxWords=100이므로 RecordWord 내부에서 PruneLowest가 한 번 호출됨
         int totalAfter = store.Count;
-        Assert.InRange(totalAfter, 3990, 4010);  // 5001 - 1000 ± 오차
+        Assert.InRange(totalAfter, 79, 83);  // 101 - 20 ± 오차
         Assert.True(store.Contains("big"));       // 빈도 100은 살아남아야
     }
 

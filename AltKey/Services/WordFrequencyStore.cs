@@ -9,14 +9,14 @@ namespace AltKey.Services;
 /// T-9.3: 단어 빈도 저장소 — 언어별 인스턴스, 로컬 JSON 파일에 학습 데이터 유지
 public class WordFrequencyStore
 {
-    private const int MaxWords = 5000;
+    private readonly int _maxWords;
 
     private readonly string _filePath;
     private Dictionary<string, int> _freq = [];
     private readonly JsonSerializerOptions _jsonOptions = new()
     {
         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-        WriteIndented = true
+        WriteIndented = false
     };
 
     // 디바운스 저장용
@@ -44,8 +44,9 @@ public class WordFrequencyStore
     }
 
     /// 테스트용: 커스텀 디렉토리 지정
-    public WordFrequencyStore(string baseDir, string languageCode)
+    public WordFrequencyStore(string baseDir, string languageCode, int maxWords = 50000)
     {
+        _maxWords = maxWords;
         _filePath = Path.Combine(baseDir, $"user-words.{languageCode}.json");
         Load();
         _debounceTimer = new System.Timers.Timer(1000) { AutoReset = false };
@@ -61,7 +62,7 @@ public class WordFrequencyStore
         lock (_saveLock)
         {
             _freq[word] = (_freq.TryGetValue(word, out var c) ? c : 0) + 1;
-            if (_freq.Count > MaxWords) PruneLowest();
+            if (_freq.Count > _maxWords) PruneLowest();
         }
         ScheduleSave();
     }
@@ -83,7 +84,7 @@ public class WordFrequencyStore
             else
             {
                 _freq[word] = frequency;
-                if (_freq.Count > MaxWords) PruneLowest();
+                if (_freq.Count > _maxWords) PruneLowest();
             }
         }
         ScheduleSave();

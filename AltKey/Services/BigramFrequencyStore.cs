@@ -10,18 +10,21 @@ namespace AltKey.Services;
 /// WordFrequencyStore와 동일 규율: 1초 디바운스 + 원자적 쓰기 + UnsafeRelaxedJsonEscaping.
 public class BigramFrequencyStore
 {
-    private const int MaxPairs = 50000;
     private const int MaxNextPerPrev = 50;
     private const string Choseong19 = "ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ";
 
-    private readonly string _filePath;
+    private readonly int _maxPairs;
     private Dictionary<string, Dictionary<string, int>> _bigrams = [];
+    // 캐시: _bigrams 전체 쌍 수. 모든 mutation 경로에서 함께 갱신되어 항상 실제와 일치한다 (O(1) 조회).
+    private int _totalCount;
+    private readonly string _filePath;
     private readonly JsonSerializerOptions _jsonOptions = new()
     {
         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-        WriteIndented = true
+        WriteIndented = false
     };
 
+    // 디바운스 저장용
     private readonly System.Timers.Timer _debounceTimer;
     private readonly object _saveLock = new();
     private bool _pending;
@@ -34,9 +37,7 @@ public class BigramFrequencyStore
         {
             lock (_saveLock)
             {
-                int total = 0;
-                foreach (var nexts in _bigrams.Values) total += nexts.Count;
-                return total;
+                return _totalCount;
             }
         }
     }
@@ -64,8 +65,9 @@ public class BigramFrequencyStore
     public BigramFrequencyStore(string languageCode)
         : this(PathResolver.DataDir, languageCode) { }
 
-    public BigramFrequencyStore(string baseDir, string languageCode)
+    public BigramFrequencyStore(string baseDir, string languageCode, int maxPairs = 200000)
     {
+        _maxPairs = maxPairs;
         _filePath = Path.Combine(baseDir, $"user-bigrams.{languageCode}.json");
         Load();
         _debounceTimer = new System.Timers.Timer(1000) { AutoReset = false };
@@ -87,10 +89,12 @@ public class BigramFrequencyStore
                 map = new Dictionary<string, int>();
                 _bigrams[prev] = map;
             }
+            bool isNewPair = !map.ContainsKey(next);
             map[next] = (map.TryGetValue(next, out var c) ? c : 0) + 1;
+            if (isNewPair) _totalCount++;
 
-            if (map.Count > MaxNextPerPrev) PrunePerPrev(map);
-            pruneNeeded = Count > MaxPairs;
+            if (map.Count > MaxNextPerPrev) _totalCount -= PrunePerPrev(map);
+            pruneNeeded = _totalCount > _maxPairs;
         }
         if (pruneNeeded)
         {
@@ -149,6 +153,7 @@ public class BigramFrequencyStore
                 removed = map.Remove(next);
                 if (map.Count == 0) _bigrams.Remove(prev);
             }
+            if (removed) _totalCount--;
         }
         if (removed) ScheduleSave();
         return removed;
@@ -161,8 +166,7 @@ public class BigramFrequencyStore
     public void SetPairCount(string prev, string next, int count)
     {
         if (string.IsNullOrWhiteSpace(prev) || string.IsNullOrWhiteSpace(next)) return;
-        prev = prev.Trim();
-        next = next.Trim();
+        prev = prev.Trim(); next = next.Trim();
         count = Math.Max(1, count);
 
         lock (_saveLock)
@@ -172,9 +176,10 @@ public class BigramFrequencyStore
                 map = new Dictionary<string, int>();
                 _bigrams[prev] = map;
             }
-
+            bool isNewPair = !map.ContainsKey(next);
             map[next] = count;
-            if (map.Count > MaxNextPerPrev) PrunePerPrev(map);
+            if (isNewPair) _totalCount++;
+            if (map.Count > MaxNextPerPrev) _totalCount -= PrunePerPrev(map);
         }
 
         ScheduleSave();
@@ -192,6 +197,7 @@ public class BigramFrequencyStore
                 removedCount = map.Count;
                 _bigrams.Remove(prev);
             }
+            _totalCount -= removedCount;
         }
         if (removedCount > 0) ScheduleSave();
         return removedCount;
@@ -199,7 +205,11 @@ public class BigramFrequencyStore
 
     public void Clear()
     {
-        lock (_saveLock) { _bigrams.Clear(); }
+        lock (_saveLock)
+        {
+            _bigrams.Clear();
+            _totalCount = 0;
+        }
         ScheduleSave();
     }
 
@@ -231,6 +241,7 @@ public class BigramFrequencyStore
         if (shouldSave) Save();
     }
 
+    /// 앱 종료 시 호출 — 파일 저장
     public void Flush()
     {
         _debounceTimer.Stop();
@@ -267,6 +278,7 @@ public class BigramFrequencyStore
         {
             if (!File.Exists(_filePath))
             {
+                // 파일이 없으면 빈 파일 생성 (설치 시 자동 생성)
                 Directory.CreateDirectory(Path.GetDirectoryName(_filePath)!);
                 File.WriteAllText(_filePath, "{}");
             }
@@ -274,8 +286,11 @@ public class BigramFrequencyStore
             _bigrams = JsonSerializer
                 .Deserialize<Dictionary<string, Dictionary<string, int>>>(json)
                 ?? [];
+            int total = 0;
+            foreach (var m in _bigrams.Values) total += m.Count;
+            _totalCount = total;
         }
-        catch { _bigrams = []; }
+        catch { _bigrams = []; _totalCount = 0; }
     }
 
     /// <summary>
@@ -292,10 +307,10 @@ public class BigramFrequencyStore
         Load();
     }
 
-    private static void PrunePerPrev(Dictionary<string, int> map)
+    private static int PrunePerPrev(Dictionary<string, int> map)
     {
         int targetRemoveCount = map.Count / 5;
-        if (targetRemoveCount == 0) return;
+        if (targetRemoveCount == 0) return 0;
         var toRemove = map
             .OrderBy(kv => kv.Value)
             .ThenBy(kv => kv.Key, StringComparer.Ordinal)
@@ -303,12 +318,12 @@ public class BigramFrequencyStore
             .Select(kv => kv.Key)
             .ToList();
         foreach (var k in toRemove) map.Remove(k);
+        return toRemove.Count;
     }
 
     private void PruneGlobal()
     {
-        int total = 0;
-        foreach (var m in _bigrams.Values) total += m.Count;
+        int total = _totalCount;
         int targetRemoveCount = total / 5;
         if (targetRemoveCount == 0) return;
 
@@ -321,7 +336,8 @@ public class BigramFrequencyStore
             .Take(targetRemoveCount)
             .ToList();
 
-        Debug.WriteLine($"[BigramFrequencyStore] Pruned {flat.Count} of {total} pairs.");
+        Debug.WriteLine(
+            $"[BigramFrequencyStore] Pruned {flat.Count} of {total} pairs.");
         foreach (var t in flat)
         {
             if (_bigrams.TryGetValue(t.Prev, out var map))
@@ -330,6 +346,7 @@ public class BigramFrequencyStore
                 if (map.Count == 0) _bigrams.Remove(t.Prev);
             }
         }
+        _totalCount -= flat.Count;
     }
 
     private static bool IsCompatibleJamoChoseong(char c) =>

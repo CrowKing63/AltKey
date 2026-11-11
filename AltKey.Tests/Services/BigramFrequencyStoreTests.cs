@@ -228,5 +228,32 @@ public class BigramFrequencyStoreTests : IDisposable
         Assert.True(nextCount <= 50);
     }
 
+    [Fact]
+    public void Count_matches_actual_pair_count_after_mixed_operations()
+    {
+        var store = NewStore();
+        for (int i = 0; i < 5; i++) store.Record("안녕", $"n{i}");
+        store.SetPairCount("감사", "합니다", 7);
+        store.SetPairCount("감사", "해요", 3);
+        store.Record("감사", "요");
+        Assert.True(store.RemovePair("안녕", "n0"));
+        store.RemoveAllFor("없는prev"); // no-op
+
+        // 캐시(_totalCount)가 실제 쌍 수와 항상 일치해야 함
+        Assert.Equal(store.GetAllPairs().Count, store.Count);
+    }
+
+    [Fact]
+    public void Global_pruning_triggers_and_keeps_count_consistent()
+    {
+        var store = new BigramFrequencyStore(_tempDir, "ko", maxPairs: 20);
+        // 서로 다른 prev로 30개 쌍 기록 → 전역 프루닝 발동 (없으면 30이 됨)
+        for (int i = 0; i < 30; i++)
+            store.Record($"p{i}", $"n{i}");
+
+        Assert.True(store.Count <= 25); // 프루닝이 실제로 발동했는지
+        Assert.Equal(store.GetAllPairs().Count, store.Count); // 캐시 불변
+    }
+
     private string GetFilePath(string lang) => Path.Combine(_tempDir, $"user-bigrams.{lang}.json");
 }
