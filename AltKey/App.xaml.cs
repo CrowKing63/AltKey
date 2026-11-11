@@ -135,7 +135,7 @@ public partial class App : System.Windows.Application
             // AI 텍스트 처리 서비스
             services.AddSingleton<AiService>();
             // 로컬 AI(라마.cpp 사이드카) — API/로컬 백엔드 선택용
-            services.AddSingleton<SidecarProcessManager>();
+            services.AddSingleton<ISidecarProcess, SidecarProcessManager>();
             services.AddSingleton<ModelStore>();
             services.AddSingleton<LocalGgufBackend>();
             services.AddSingleton<ToolsReloadSignalService>();

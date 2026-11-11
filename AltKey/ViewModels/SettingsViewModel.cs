@@ -35,6 +35,7 @@ public partial class SettingsViewModel : ObservableObject
     private readonly InstallerService     _installerService;
     private readonly AiService            _aiService;
     private readonly ModelStore           _modelStore;
+    private readonly LocalGgufBackend     _localBackend;
 
     private CancellationTokenSource?      _downloadCts;
 
@@ -226,6 +227,11 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty] private bool isLocalAi;
     [ObservableProperty] private string localAiDownloadStatusMessage = "";
     [ObservableProperty] private double localAiDownloadProgress;
+    // 로컬 엔진+모델 설치 여부(둘 다 존재) — true면 다운로드 버튼 비활성.
+    [ObservableProperty] private bool localAiReady;
+    // 로컬 모델 상태 표시(로드됨/미로드) + idle 언로드 대기 시간(분).
+    [ObservableProperty] private string localAiStateText = "미로드";
+    [ObservableProperty] private int aiLocalIdleUnloadMinutes = 10;
 
     // ── 생성자 ──────────────────────────────────────────────────────────────
 
@@ -240,7 +246,8 @@ public partial class SettingsViewModel : ObservableObject
         DownloadService      downloadService,
         InstallerService     installerService,
         AiService            aiService,
-        ModelStore           modelStore)
+        ModelStore           modelStore,
+        LocalGgufBackend     localBackend)
     {
         _configService  = configService;
         _themeService   = themeService;
@@ -253,7 +260,12 @@ public partial class SettingsViewModel : ObservableObject
         _installerService = installerService;
         _aiService      = aiService;
         _modelStore     = modelStore;
+        _localBackend   = localBackend;
         _configService.ConfigChanged += OnConfigChanged;
+
+        // 로컬 모델 로드/언로드 신호 → 상태 표시 갱신 (배경 스레드에서 발생, 바인딩이 자동 마샬링).
+        _localBackend.Unloaded += () => LocalAiStateText = "미로드";
+        _localBackend.Loaded += () => LocalAiStateText = "로드됨";
 
         // T-9.5: 현재 버전 초기화
         var asmVersion = Assembly.GetExecutingAssembly().GetName().Version;
@@ -379,6 +391,9 @@ public partial class SettingsViewModel : ObservableObject
              AiDefaultPrompt = c.AiDefaultPrompt;
              AiTimeoutSeconds = c.AiTimeoutSeconds <= 0 ? 30 : c.AiTimeoutSeconds;
              IsLocalAi = c.AiBackend == "local";
+             AiLocalIdleUnloadMinutes = c.AiLocalIdleUnloadMinutes <= 0 ? 10 : c.AiLocalIdleUnloadMinutes;
+             LocalAiStateText = _localBackend.IsLoaded ? "로드됨" : "미로드";
+             UpdateLocalAiReady();
 
              // 상단바 설정
              HeaderButtons = new ObservableCollection<HeaderButtonConfig>(
@@ -837,6 +852,35 @@ public partial class SettingsViewModel : ObservableObject
         _configService.Update(c => c.AiBackend = value ? "local" : "api");
     }
 
+    // 로컬 모델 idle 언로드 대기 시간(분) — 0~60분. 0 = 추론 직후 즉시 언로드. 변경 시 설정에 저장합니다.
+    partial void OnAiLocalIdleUnloadMinutesChanged(int value)
+    {
+        if (_isLoading) return;
+        var clamped = Math.Clamp(value, 0, 60);
+        if (clamped != value) { AiLocalIdleUnloadMinutes = clamped; return; }
+        _configService.Update(c => c.AiLocalIdleUnloadMinutes = clamped);
+    }
+
+    /// <summary>
+    /// [역할] "모델 언로드" 버튼 — 로컬 모델을 메모리에서 내려 사이드카 프로세스를 종료합니다.
+    /// RAM을 회수하며, 다음 ✨ 요청 시 다시 로드됩니다.
+    /// </summary>
+    [RelayCommand]
+    private async Task UnloadLocalAiAsync()
+    {
+        await _localBackend.UnloadAsync();
+        LocalAiStateText = "미로드";
+    }
+
+    // 로컬 엔진+모델 설치 여부를 계산해 상태(버튼 활성/상태문구)를 갱신합니다.
+    private void UpdateLocalAiReady()
+    {
+        LocalAiReady = File.Exists(_modelStore.EnginePath)
+                     && File.Exists(_modelStore.ModelPath("EXAONE-4.0-1.2B-Q8_0.gguf"));
+        if (LocalAiReady)
+            LocalAiDownloadStatusMessage = "엔진 + 모델 설치됨";
+    }
+
     /// <summary>
     /// [역할] "로컬 AI 다운로드" 버튼 — 엔진(llama.cpp zip)과 모델(EXAONE gguf)을
     /// 순서로 내려받아 SHA-256으로 검증한 뒤 설치합니다. CPU 전용입니다.
@@ -869,7 +913,8 @@ public partial class SettingsViewModel : ObservableObject
         await _modelStore.DownloadAsync(modelEntry.SourceUrl, _modelStore.ModelPath(modelEntry.FileName), modelEntry.Sha256, progress);
 
         LocalAiDownloadProgress = 100;
-        LocalAiDownloadStatusMessage = "설치 완료.";
+        LocalAiDownloadStatusMessage = "엔진 + 모델 설치 완료";
+        UpdateLocalAiReady(); // 설치됨 → 버튼 비활성
     }
 
     /// <summary>설정한 엔드포인트·모델로 짧은 테스트 요청을 보냅니다.</summary>

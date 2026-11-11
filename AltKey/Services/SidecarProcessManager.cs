@@ -6,17 +6,31 @@ using System.Net.Sockets;
 namespace AltKey.Services;
 
 /// <summary>
+/// [역할] 사이드카(llama-server) 프로세스의 라이프사이클을 추상한 인터페이스입니다.
+/// LocalGgufBackend가 이 인터페이스에만 의존해 fake로 단위 테스트할 수 있습니다.
+/// </summary>
+public interface ISidecarProcess
+{
+    bool IsRunning { get; }
+    string BaseUrl { get; }
+    Task StartAsync(string enginePath, string modelPath, CancellationToken ct);
+    ValueTask DisposeAsync();
+}
+
+/// <summary>
 /// [역할] 로컬 AI용 llama-server.exe 사이드카 프로세스를 시작/종료하고 health를 확인하는管理类입니다.
 /// GPU는 전혀 쓰지 않고 CPU 전용으로 돌립니다(--gpu-layers 0).
 /// [참고] StartAsync/StopAsync/WaitForHealthyAsync는 실제 프로세스와 HTTP를 다루는 통합 레벨이라
 /// 단위 테스트로 검증하지 않습니다(단위 테스트는 FindFreePort·BuildStartArguments로 커버).
 /// 서버 동작 자체는 PoC(llama-server b12262, EXAONE Q8_0)에서 실측으로 확인했습니다.
 /// </summary>
-public class SidecarProcessManager : IAsyncDisposable
+public class SidecarProcessManager : ISidecarProcess
 {
     private Process? _process;
     private HttpClient? _healthClient;
     private int _port;
+    // 시작 동기화 게이트 — 병행 ✨ 요청이 중복 사이드카를 띄우는 것을 막습니다(플래그).
+    private readonly SemaphoreSlim _startGate = new(1, 1);
 
     // 현재 서버가 실행 중인지.
     public bool IsRunning => _process is { HasExited: false };
@@ -72,33 +86,44 @@ public class SidecarProcessManager : IAsyncDisposable
     /// </summary>
     public async Task StartAsync(string enginePath, string modelPath, CancellationToken ct)
     {
-        if (IsRunning)
-            throw new InvalidOperationException("llama-server가 이미 실행 중입니다.");
-
-        _port = FindFreePort(8080);
-
-        var psi = new ProcessStartInfo
-        {
-            FileName = enginePath,
-            UseShellExecute = false,
-            CreateNoWindow = true // 콘솔 창 없이 백그라운드 실행
-        };
-        foreach (var a in BuildStartArguments(modelPath, _port))
-            psi.ArgumentList.Add(a);
-
-        _process = new Process { StartInfo = psi };
-        _process.Start();
-
+        // 게이트로 시작을 직렬화합니다 — 첫 요청이 health 대기 중일 때 두 번째 ✨가
+        // 중복 프로세스를 띄우지 않고, 이미 실행 중이면 바로 반환합니다.
+        await _startGate.WaitAsync(ct);
         try
         {
-            await WaitForHealthyAsync(ct);
+            if (IsRunning)
+                return; // 이미 로드됨 — no-op (중복 시작 방지)
+
+            _port = FindFreePort(8080);
+
+            var psi = new ProcessStartInfo
+            {
+                FileName = enginePath,
+                UseShellExecute = false,
+                CreateNoWindow = true // 콘솔 창 없이 백그라운드 실행
+            };
+            foreach (var a in BuildStartArguments(modelPath, _port))
+                psi.ArgumentList.Add(a);
+
+            _process = new Process { StartInfo = psi };
+            _process.Start();
+
+            try
+            {
+                await WaitForHealthyAsync(ct);
+            }
+            catch
+            {
+                // health가 안 되는 경우(타임아웃·취소·프로세스 즉시 사망) 프로세스를 반드시 정리합니다.
+                // 그대로 두면 포트·RAM을 점유한 좀비 프로세스가 남습니다.
+                // (게이트를 이미 가진 상태이므로 StopCoreAsync로 직접 정리 — 재진입 방지.)
+                await StopCoreAsync();
+                throw;
+            }
         }
-        catch
+        finally
         {
-            // health가 안 되는 경우(타임아웃·취소·프로세스 즉시 사망) 프로세스를 반드시 정리합니다.
-            // 그대로 두면 포트·RAM을 점유한 좀비 프로세스가 남습니다.
-            await StopAsync();
-            throw;
+            _startGate.Release();
         }
     }
 
@@ -131,13 +156,37 @@ public class SidecarProcessManager : IAsyncDisposable
     /// </summary>
     public async Task StopAsync()
     {
-        if (_process is { HasExited: false })
+        // 게이트로 시작과 정리를 직렬화합니다 — 언로드 중 새 ✨가 포트 충돌 없이 대기합니다.
+        await _startGate.WaitAsync();
+        try
         {
-            _process.Kill(entireProcessTree: true);
-            await _process.WaitForExitAsync();
+            await StopCoreAsync();
         }
-        _process?.Dispose();
-        _process = null;
+        finally
+        {
+            _startGate.Release();
+        }
+    }
+
+    // 게이트를 이미 가진 상태에서 호출하는 내부 정리(StartAsync의 catch·Dispose 등).
+    // 재진입 방지용 — public StopAsync는 이 메서드를 감싸게이트를 잡습니다.
+    private async Task StopCoreAsync()
+    {
+        var proc = _process;
+        _process = null; // IsRunning이 즉시 정확해집니다 — 상태 플래그가 먼저 갱신됩니다.
+        if (proc is { HasExited: false })
+        {
+            try
+            {
+                proc.Kill(entireProcessTree: true);
+                await proc.WaitForExitAsync();
+            }
+            catch
+            {
+                // Kill 실패(프로세스 이미 종료 등) — 자원은 아래 Dispose로 정리합니다.
+            }
+        }
+        proc?.Dispose();
         _healthClient?.Dispose();
         _healthClient = null;
     }

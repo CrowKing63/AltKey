@@ -217,6 +217,7 @@ public class WindowOpacityProfileTests
 
     private static SettingsViewModel CreateSettingsViewModel(ConfigService configService)
     {
+        var localBackend = new LocalGgufBackend(new SidecarProcessManager(), new ModelStore(), configService);
         return new SettingsViewModel(
             configService,
             new ThemeService(configService),
@@ -227,8 +228,9 @@ public class WindowOpacityProfileTests
             new UpdateService(),
             new DownloadService(),
             new InstallerService(),
-            new AiService(configService, new LocalGgufBackend(new SidecarProcessManager(), new ModelStore())),
-            new ModelStore());
+            new AiService(configService, localBackend),
+            new ModelStore(),
+            localBackend);
     }
 
     private static string CreateTempDataDir()

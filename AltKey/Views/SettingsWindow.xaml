@@ -572,12 +572,28 @@
                                 <Button Content="엔진 + 모델 다운로드"
                                         Command="{Binding DownloadLocalAiCommand}"
                                         Style="{StaticResource SettingsActionButtonStyle}"
+                                        IsEnabled="{Binding LocalAiReady, Converter={StaticResource InvBool}}"
                                         Margin="0,0,0,8"
                                         HorizontalAlignment="Left"
                                         AutomationProperties.Name="로컬 AI 엔진과 모델 다운로드"
                                         ToolTip="llama.cpp 엔진(약 25MB)과 EXAONE 1.2B 모델(약 1.4GB)을 한 번에 내려받습니다."/>
                                 <ProgressBar Value="{Binding LocalAiDownloadProgress}" Maximum="100" Height="6" Margin="0,0,0,4"/>
                                 <TextBlock Text="{Binding LocalAiDownloadStatusMessage}" Foreground="{DynamicResource SettingsFgSub}" FontSize="{StaticResource ScaledSettingsSubFontSize}" TextWrapping="Wrap"/>
+
+                                <!-- 로컬 모델 상태 표시 + idle 언로드 (RAM 회수). -->
+                                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                    <TextBlock Text="{Binding LocalAiStateText}" Foreground="{DynamicResource SettingsFgSub}" FontSize="{StaticResource ScaledSettingsSubFontSize}" VerticalAlignment="Center"/>
+                                    <Button Content="모델 언로드"
+                                            Command="{Binding UnloadLocalAiCommand}"
+                                            Style="{StaticResource SettingsActionButtonStyle}"
+                                            Margin="8,0,0,0"
+                                            HorizontalAlignment="Left"
+                                            AutomationProperties.Name="로컬 모델 언로드"
+                                            ToolTip="로드된 로컬 모델을 메모리에서 내려 RAM을 회수합니다. 다음 사용 시 다시 로드됩니다."/>
+                                </StackPanel>
+                                <TextBlock Text="모델 idle 언로드(분)" Foreground="{DynamicResource SettingsFgSub}" FontSize="{StaticResource ScaledSettingsSubFontSize}" Margin="0,8,0,2"/>
+                                <ctrl:NumericAdjuster Value="{Binding AiLocalIdleUnloadMinutes}" Minimum="0" Maximum="60" Step="1" DecimalPlaces="0"
+                                                     AutomationProperties.Name="로컬 모델 idle 언로드 대기 시간(분, 0=즉시 언로드)"/>
                             </StackPanel>
                         </StackPanel>
                     </ScrollViewer>

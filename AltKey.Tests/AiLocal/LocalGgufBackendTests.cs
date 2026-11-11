@@ -49,4 +49,108 @@ public class LocalGgufBackendTests
             listener.Stop(); // serverTask도 함께 종료됩니다.
         }
     }
+
+    // ── idle 언로드 / UnloadAsync (사이드카 라이프사이클) ───────────────────────
+
+    /// <summary>
+    /// [역할] ISidecarProcess 스텁 — StartAsync/DisposeAsync 호출을 추적하고
+    /// IsRunning 상태를 조작할 수 있습니다.
+    /// </summary>
+    private sealed class FakeSidecar : ISidecarProcess
+    {
+        public bool IsRunning { get; set; }
+        public int StartCalls { get; private set; }
+        public int DisposeCalls { get; private set; }
+
+        public string BaseUrl => "http://127.0.0.1:9";
+
+        public Task StartAsync(string enginePath, string modelPath, CancellationToken ct)
+        {
+            StartCalls++;
+            IsRunning = true;
+            return Task.CompletedTask;
+        }
+
+        public ValueTask DisposeAsync()
+        {
+            DisposeCalls++;
+            IsRunning = false;
+            return ValueTask.CompletedTask;
+        }
+    }
+
+    [Fact]
+    public async Task UnloadAsync_StopsSidecar_And_FiresUnloaded()
+    {
+        var sidecar = new FakeSidecar { IsRunning = true };
+        await using var backend = new LocalGgufBackend(sidecar, null!, null!);
+
+        var unloadedFired = false;
+        backend.Unloaded += () => unloadedFired = true;
+
+        await backend.UnloadAsync();
+
+        Assert.False(sidecar.IsRunning);
+        Assert.Equal(1, sidecar.DisposeCalls);
+        Assert.True(unloadedFired);
+    }
+
+    [Fact]
+    public async Task UnloadAsync_WhenNotRunning_IsNoOp()
+    {
+        var sidecar = new FakeSidecar { IsRunning = false };
+        await using var backend = new LocalGgufBackend(sidecar, null!, null!);
+
+        await backend.UnloadAsync();
+
+        Assert.Equal(0, sidecar.DisposeCalls); // 미로드 — 사이드카 안 건드림
+    }
+
+    [Fact]
+    public async Task IdleTimeout_UnloadsSidecar()
+    {
+        var sidecar = new FakeSidecar { IsRunning = true };
+        // 200ms idle 타임아웃 — 추론 완료 후 그 이상 새 요청 없으면 언로드.
+        await using var backend = new LocalGgufBackend(sidecar, null!, null!, TimeSpan.FromMilliseconds(200));
+
+        // 추론 완료 시점과 동일하게 idle 타이머 시작.
+        backend.RestartIdleTimer();
+
+        await Task.Delay(600); // 200ms 타이머 + 여유
+
+        Assert.False(sidecar.IsRunning);
+        Assert.Equal(1, sidecar.DisposeCalls);
+    }
+
+    [Fact]
+    public async Task NewRequest_CancelsIdleTimer()
+    {
+        var sidecar = new FakeSidecar { IsRunning = true };
+        await using var backend = new LocalGgufBackend(sidecar, null!, null!, TimeSpan.FromMilliseconds(200));
+
+        backend.RestartIdleTimer();
+        // 100ms 후 새 요청 → 타이머 취소 (언로드 안 함).
+        await Task.Delay(100);
+        backend.CancelIdleTimer();
+
+        await Task.Delay(400); // 타이머가 취소됐으므로 언로드 안 됨.
+
+        Assert.True(sidecar.IsRunning);
+        Assert.Equal(0, sidecar.DisposeCalls);
+    }
+
+    [Fact]
+    public async Task IdleZero_UnloadsImmediately()
+    {
+        var sidecar = new FakeSidecar { IsRunning = true };
+        // 0분 idle — 타이머 즉시 만료 → 언로드 (추론 직후 즉시 회수).
+        await using var backend = new LocalGgufBackend(sidecar, null!, null!, TimeSpan.Zero);
+
+        backend.RestartIdleTimer();
+
+        await Task.Delay(100); // 0ms 타이머 + 여유
+
+        Assert.False(sidecar.IsRunning);
+        Assert.Equal(1, sidecar.DisposeCalls);
+    }
 }
