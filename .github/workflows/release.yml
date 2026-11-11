@@ -92,20 +92,16 @@ jobs:
             |---------|------|
             | **AltKey-Setup-${{ github.ref_name }}.exe** | 설치 프로그램 (권장). 메인 앱과 `AltKey.Tools` 편집 도구를 함께 포함합니다. |
             | **AltKey-Portable-${{ github.ref_name }}.zip** | 포터블 버전. 원하는 위치에 압축 해제 후 `AltKey.exe`를 실행하면 됩니다. |
-            | **AltKey-${{ env.RELEASE_VERSION }}.0.msix** | Microsoft Store 제출용 아티팩트 (서명 없음). 일반 PC에서 직접 설치할 수 없으니, 설치 프로그램이나 포터블 버전을 사용하세요. |
           fail_on_unmatched_files: true
           overwrite: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # MSIX(마이크로소프트 스토어) 패키지 — 독립 잡으로 격리해 팩킹 실패가
-  # 포터블·인스톨러 릴리스를 깨지 않게 한다. needs: release 로 기존 릴리스가
-  # 먼저 생성된 뒤에 같은 릴리스에 .msix만 추가한다(경쟁 조건 없음).
+  # 포터블·인스톨러 릴리스를 깨지 않게 한다. GitHub 릴리스에는 올리지 않고
+  # 워크플로 아티팩트로만 보관한다(스토어 제출용, 서명 없음).
   msix:
-    needs: release
     runs-on: windows-latest
-    permissions:
-      contents: write
 
     steps:
       - uses: actions/checkout@v4
@@ -153,11 +149,8 @@ jobs:
           -Version ${{ github.ref_name }}
           -BuildDir dist/publish
 
-      - name: Upload MSIX to Release
-        uses: softprops/action-gh-release@v2
+      - name: Upload MSIX as workflow artifact (스토어 제출용)
+        uses: actions/upload-artifact@v4
         with:
-          files: dist/AltKey-*.msix
-          fail_on_unmatched_files: true
-          overwrite: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: AltKey-msix-${{ github.ref_name }}
+          path: dist/AltKey-*.msix
