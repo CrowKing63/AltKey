@@ -532,7 +532,8 @@
                                              Margin="16,0,0,0"
                                              VerticalContentAlignment="Center"/>
                             </StackPanel>
-                            <!-- 공통 설정: 프롬프트·타임아웃은 백엔드(API/로컬)와 무관하게 항상 표시.
+                            <!-- 공통 설정: 프롬프트는 백엔드(API/로컬)와 무관하게 항상 표시.
+                                 타임아웃은 UI에서 숨기고 config의 AiTimeoutSeconds로만 관리(로컬은 60초 하드코딩).
                                  (settings-tab-layout.md §3.1 — API 박스 안에 있던 공통 항목을 위로 올림) -->
                             <StackPanel>
                                 <TextBlock Text="공통 설정" Style="{StaticResource SectionTitleStyle}"/>
@@ -550,9 +551,6 @@
                                            FontSize="{DynamicResource ScaledSettingsSubFontSize}"
                                            Margin="0,0,0,16"
                                            TextWrapping="Wrap"/>
-                                <TextBlock Text="타임아웃 (초)" Foreground="{DynamicResource SettingsFgSub}" FontSize="{DynamicResource ScaledSettingsSubFontSize}" Margin="0,0,0,4"/>
-                                <ctrl:NumericAdjuster Value="{Binding AiTimeoutSeconds}" Minimum="5" Maximum="300" Step="5" DecimalPlaces="0"
-                                                      Margin="0,0,0,16"/>
                             </StackPanel>
 
                             <!-- 외부 API 선택 시만 표시: 라디오가 '로컬'이면 이 박스는 숨김.
