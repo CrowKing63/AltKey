@@ -809,4 +809,8 @@ public class HeaderButtonVm : ObservableObject
     public bool IsToggle { get; init; }
     public double Width { get; init; } = 32;
     public double FontSize { get; init; } = 14;
+
+    // AI(✨) 버튼 여부 — 처리 중 스피너 표시에 사용 (Id가 "Ai"일 때 true).
+    // 계산 속성이므로 생성 시 별도로 설정할 필요가 없다.
+    public bool IsAiButton => Id == HeaderButtonConfig.IdAi;
 }

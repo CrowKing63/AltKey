@@ -2,6 +2,8 @@
 
 > `implementation_plan.md`(내장 AI 기능)의 §9 "설정 UX"를 구체화하는 **서브 계획**이다. 이 문서는 settings 탭 레이아웃만 다룬다. 엔진/모델 다운로드·추론 로직 자체는 `implementation_plan.md`의 ModelStore 관할.
 
+> **상태 (2026-11): 구현 완료.** §3의 라디오 + 공통 박스 + 조건부 박스 구조가 `Views/SettingsWindow.xaml` "AI 도구" 탭에 반영됨.
+
 ## 1. 배경 (현재 상태)
 
 `Views/SettingsWindow.xaml`의 "AI 도구" 탭(518~560줄)은 현재 **외부 API 세팅만** 담고 있다:

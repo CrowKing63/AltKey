@@ -68,8 +68,44 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
                         Dispatcher.InvokeAsync(() => ApplyScale());
                     }
                 };
+
+                // AI 처리 중: "Al"(≈AI) 타이틀 깜빡임 시작/종료.
+                mainVm.PropertyChanged += (_, e) =>
+                {
+                    if (e.PropertyName == nameof(MainViewModel.IsAiProcessing))
+                        Dispatcher.InvokeAsync(() =>
+                        {
+                            if (mainVm.IsAiProcessing) StartAiBlink(); else StopAiBlink();
+                        });
+                };
             }
         }
+    }
+
+    // AI 처리 중 "Al"(≈AI) 타이틀 깜빡임. IsAiProcessing이 true가 되면 Opacity를
+    // 1.0 ↔ 0.3으로 부드럽게 왕복 반복하고, false가 되면 멈추고 원래 투명도로 복원.
+    private Storyboard? _aiBlinkStoryboard;
+
+    private void StartAiBlink()
+    {
+        if (_aiBlinkStoryboard is not null || AiBlinkLabel is null) return;
+        var anim = new DoubleAnimation(1.0, 0.3, TimeSpan.FromSeconds(0.4))
+        {
+            AutoReverse = true,
+            RepeatBehavior = RepeatBehavior.Forever
+        };
+        Storyboard.SetTarget(anim, AiBlinkLabel);
+        Storyboard.SetTargetProperty(anim, new PropertyPath(UIElement.OpacityProperty));
+        _aiBlinkStoryboard = new Storyboard();
+        _aiBlinkStoryboard.Children.Add(anim);
+        _aiBlinkStoryboard.Begin();
+    }
+
+    private void StopAiBlink()
+    {
+        _aiBlinkStoryboard?.Stop();
+        _aiBlinkStoryboard = null;
+        if (AiBlinkLabel is not null) AiBlinkLabel.Opacity = 1.0;
     }
 
     private void ApplySuggestionBarHeight()

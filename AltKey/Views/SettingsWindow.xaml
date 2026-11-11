@@ -532,16 +532,10 @@
                                              Margin="16,0,0,0"
                                              VerticalContentAlignment="Center"/>
                             </StackPanel>
+                            <!-- 공통 설정: 프롬프트·타임아웃은 백엔드(API/로컬)와 무관하게 항상 표시.
+                                 (settings-tab-layout.md §3.1 — API 박스 안에 있던 공통 항목을 위로 올림) -->
                             <StackPanel>
-                                <TextBlock Text="API 엔드포인트 URL (OpenAI 호환)" Foreground="{DynamicResource SettingsFgSub}" FontSize="{DynamicResource ScaledSettingsSubFontSize}" Margin="0,0,0,4"/>
-                                <TextBox Text="{Binding AiEndpoint, UpdateSourceTrigger=LostFocus}" Margin="0,0,0,16" Padding="8,4" Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}" BorderBrush="{DynamicResource SettingsBorder}"/>
-
-                                <TextBlock Text="API 키 (Windows DPAPI 암호화 저장, 로컬 서버시 비움)" Foreground="{DynamicResource SettingsFgSub}" FontSize="{DynamicResource ScaledSettingsSubFontSize}" Margin="0,0,0,4"/>
-                                <TextBox Text="{Binding AiApiKey, UpdateSourceTrigger=LostFocus}" Margin="0,0,0,16" Padding="8,4" Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}" BorderBrush="{DynamicResource SettingsBorder}"/>
-
-                                <TextBlock Text="모델 이름 (예: gpt-4o-mini, llama3 등)" Foreground="{DynamicResource SettingsFgSub}" FontSize="{DynamicResource ScaledSettingsSubFontSize}" Margin="0,0,0,4"/>
-                                <TextBox Text="{Binding AiModel, UpdateSourceTrigger=LostFocus}" Margin="0,0,0,16" Padding="8,4" Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}" BorderBrush="{DynamicResource SettingsBorder}"/>
-
+                                <TextBlock Text="공통 설정" Style="{StaticResource SectionTitleStyle}"/>
                                 <TextBlock Text="기본 프롬프트 (AI 동작 지시)" Foreground="{DynamicResource SettingsFgSub}" FontSize="{DynamicResource ScaledSettingsSubFontSize}" Margin="0,0,0,4"/>
                                 <TextBox Text="{Binding AiDefaultPrompt, UpdateSourceTrigger=LostFocus}" Height="60" TextWrapping="Wrap" AcceptsReturn="True" Margin="0,0,0,8" Padding="8,4" Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}" BorderBrush="{DynamicResource SettingsBorder}"/>
                                 <Button Content="긴 한글 프롬프트 편집기 열기"
@@ -556,19 +550,33 @@
                                            FontSize="{DynamicResource ScaledSettingsSubFontSize}"
                                            Margin="0,0,0,16"
                                            TextWrapping="Wrap"/>
-
                                 <TextBlock Text="타임아웃 (초)" Foreground="{DynamicResource SettingsFgSub}" FontSize="{DynamicResource ScaledSettingsSubFontSize}" Margin="0,0,0,4"/>
                                 <ctrl:NumericAdjuster Value="{Binding AiTimeoutSeconds}" Minimum="5" Maximum="300" Step="5" DecimalPlaces="0"
-                                                      Margin="0,0,0,8"/>
+                                                      Margin="0,0,0,16"/>
+                            </StackPanel>
+
+                            <!-- 외부 API 선택 시만 표시: 라디오가 '로컬'이면 이 박스는 숨김.
+                                 (settings-tab-layout.md §3 — 하단 잘림 방지 위해 활성 섹션만 노출) -->
+                            <StackPanel Visibility="{Binding IsLocalAi, Converter={StaticResource InvBoolToVis}}">
+                                <TextBlock Text="외부 API" Style="{StaticResource SectionTitleStyle}"/>
+                                <TextBlock Text="API 엔드포인트 URL (OpenAI 호환)" Foreground="{DynamicResource SettingsFgSub}" FontSize="{DynamicResource ScaledSettingsSubFontSize}" Margin="0,0,0,4"/>
+                                <TextBox Text="{Binding AiEndpoint, UpdateSourceTrigger=LostFocus}" Margin="0,0,0,16" Padding="8,4" Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}" BorderBrush="{DynamicResource SettingsBorder}"/>
+                                <TextBlock Text="API 키 (Windows DPAPI 암호화 저장, 로컬 서버시 비움)" Foreground="{DynamicResource SettingsFgSub}" FontSize="{DynamicResource ScaledSettingsSubFontSize}" Margin="0,0,0,4"/>
+                                <TextBox Text="{Binding AiApiKey, UpdateSourceTrigger=LostFocus}" Margin="0,0,0,16" Padding="8,4" Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}" BorderBrush="{DynamicResource SettingsBorder}"/>
+                                <TextBlock Text="모델 이름 (예: gpt-4o-mini, llama3 등)" Foreground="{DynamicResource SettingsFgSub}" FontSize="{DynamicResource ScaledSettingsSubFontSize}" Margin="0,0,0,4"/>
+                                <TextBox Text="{Binding AiModel, UpdateSourceTrigger=LostFocus}" Margin="0,0,0,16" Padding="8,4" Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}" BorderBrush="{DynamicResource SettingsBorder}"/>
                                 <Button Content="연결 테스트 (짧은 API 요청)"
                                         Command="{Binding TestAiConnectionCommand}"
                                         Style="{StaticResource SettingsActionButtonStyle}"
                                         Margin="0,0,0,16"
                                         HorizontalAlignment="Left"
                                         ToolTip="엔드포인트·모델·API 키가 올바른지 확인합니다. 먼저 위 항목을 입력한 뒤 눌러 주세요."/>
+                            </StackPanel>
 
+                            <!-- 로컬 모델 선택 시만 표시: 라디오가 '외부 API'면 이 박스는 숨김. -->
+                            <StackPanel Visibility="{Binding IsLocalAi, Converter={StaticResource BoolToVis}}">
                                 <!-- 로컬 AI: 엔진+모델을 한 번에 다운로드(CPU 전용). -->
-                                <TextBlock Text="로컬 AI (CPU 전용)" Style="{StaticResource SectionTitleStyle}" Margin="0,8,0,4"/>
+                                <TextBlock Text="로컬 AI (CPU 전용)" Style="{StaticResource SectionTitleStyle}"/>
                                 <Button Content="엔진 + 모델 다운로드"
                                         Command="{Binding DownloadLocalAiCommand}"
                                         Style="{StaticResource SettingsActionButtonStyle}"
