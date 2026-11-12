@@ -2,8 +2,15 @@
 .SYNOPSIS
     AltKey 아이콘을 GDI+로 그려서 ICO / PNG 파일로 저장합니다.
     DIB 형식으로 ICO를 만들어 .NET 컴파일러와 호환성을 보장합니다.
+
+.NOTES
+    [비활성화됨 — 2026-11] 이 스크립트는 구 아이콘(파란 사각형 + 흰 "A")을 생성하는 레거시 도구입니다.
+    실행하면 현재 브랜드 에셋(icon.ico, icon.png, tray-icon.ico)이 구 디자인으로 덮어써집니다.
+    신규 아이콘(잉크 키캡 + 라벤더 "Al")의 파생 에셋은 scripts\build-final-icon.ps1과
+    512 마스터(docs\assets\icon-concepts\altkey-icon-final-512.png)에서 만들며,
+    파생 생성 스크립트는 에이전트 세션에 보관되어 있습니다. 이 스크립트를 실행하지 마세요.
 .EXAMPLE
-    .\scripts\create-icon.ps1
+    .\scripts\create-icon.ps1   # ← 구 디자인 재생성 (사용 금지)
 #>
 
 Add-Type -AssemblyName System.Drawing
