@@ -26,6 +26,9 @@
 <sys:Double x:Key="ScaledSettingsBodyLargeFontSize">14</sys:Double>
 <sys:Double x:Key="ScaledSettingsHeadingFontSize">16</sys:Double>
 <sys:Double x:Key="ScaledToolTitleFontSize">22</sys:Double>
+<!-- 설정 창 헤더 로고 크기: '설정' 제목 + 버전 행의 2줄 총 높이에 맞춘 기본값(40px).
+     App.xaml.cs의 UpdateScaledFontSize()가 글자 배율과 함께 갱신한다. -->
+<sys:Double x:Key="SettingsLogoSize">40</sys:Double>
 <sys:Double x:Key="KeyFontSizeSmall">10</sys:Double>
 
     <!-- ── 애니메이션 시간 ────────────────────────────────────────────────── -->

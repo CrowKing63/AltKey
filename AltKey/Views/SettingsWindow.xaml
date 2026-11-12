@@ -206,25 +206,38 @@
 
             <DockPanel Grid.Row="0" Margin="0,0,0,12">
                 <Border Style="{StaticResource FluentCardBorderStyle}" Padding="12,10">
-                    <StackPanel Orientation="Vertical">
-                        <TextBlock Text="설정" FontSize="{DynamicResource ScaledSettingsHeadingFontSize}" FontWeight="SemiBold" Foreground="{DynamicResource SettingsFg}"/>
-                        <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                            <TextBlock Text="{Binding CurrentVersion, StringFormat=버전 {0}}" FontSize="{DynamicResource ScaledSettingsSubFontSize}" Foreground="{DynamicResource SettingsFgSub}"/>
-                            <TextBlock Text=" | " FontSize="{DynamicResource ScaledSettingsSubFontSize}" Foreground="{DynamicResource SettingsFgSub}" Margin="0,4"/>
-                            <TextBlock>
-                                <Hyperlink NavigateUri="https://github.com/CrowKing63/AltKey/wiki" RequestNavigate="Hyperlink_RequestNavigate">
-                                    <TextBlock Text="사용자 가이드" Foreground="{DynamicResource SettingsFg}" TextDecorations="Underline"/>
-                                </Hyperlink>
-                            </TextBlock>
-                            <!-- 후원: Ko-fi 단일 채널. 매뉴얼 링크와 같은 외부 링크 방식으로 열려 스토어 정책상 문제없음(순수 후원). -->
-                            <TextBlock Text=" | " FontSize="{DynamicResource ScaledSettingsSubFontSize}" Foreground="{DynamicResource SettingsFgSub}" Margin="0,4"/>
-                            <TextBlock>
-                                <Hyperlink NavigateUri="https://ko-fi.com/crowking63" RequestNavigate="Hyperlink_RequestNavigate">
-                                    <TextBlock Text="후원하기" Foreground="{DynamicResource SettingsFg}" TextDecorations="Underline"/>
-                                </Hyperlink>
-                            </TextBlock>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <!-- 로고: 앱 아이콘(잉크 키캡 + 라벤더 "Al")을 그대로 사용. 어두운 배경이라 라이트/다크 테마 모두에서 대비가 유지된다.
+                             크기는 SettingsLogoSize 리소스로 '설정'+버전 2줄 총 높이에 맞춰 글자 크기 배율과 함께 스케일된다. -->
+                        <Image Source="/Assets/logo.png"
+                               Width="{DynamicResource SettingsLogoSize}"
+                               Height="{DynamicResource SettingsLogoSize}"
+                               VerticalAlignment="Center"
+                               Stretch="Uniform"/>
+                        <StackPanel Grid.Column="1" Orientation="Vertical" Margin="12,0,0,0">
+                            <TextBlock Text="설정" FontSize="{DynamicResource ScaledSettingsHeadingFontSize}" FontWeight="SemiBold" Foreground="{DynamicResource SettingsFg}"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                <TextBlock Text="{Binding CurrentVersion, StringFormat=버전 {0}}" FontSize="{DynamicResource ScaledSettingsSubFontSize}" Foreground="{DynamicResource SettingsFgSub}"/>
+                                <TextBlock Text=" | " FontSize="{DynamicResource ScaledSettingsSubFontSize}" Foreground="{DynamicResource SettingsFgSub}" Margin="0,4"/>
+                                <TextBlock>
+                                    <Hyperlink NavigateUri="https://github.com/CrowKing63/AltKey/wiki" RequestNavigate="Hyperlink_RequestNavigate">
+                                        <TextBlock Text="사용자 가이드" Foreground="{DynamicResource SettingsFg}" TextDecorations="Underline"/>
+                                    </Hyperlink>
+                                </TextBlock>
+                                <!-- 후원: Ko-fi 단일 채널. 매뉴얼 링크와 같은 외부 링크 방식으로 열려 스토어 정책상 문제없음(순수 후원). -->
+                                <TextBlock Text=" | " FontSize="{DynamicResource ScaledSettingsSubFontSize}" Foreground="{DynamicResource SettingsFgSub}" Margin="0,4"/>
+                                <TextBlock>
+                                    <Hyperlink NavigateUri="https://ko-fi.com/crowking63" RequestNavigate="Hyperlink_RequestNavigate">
+                                        <TextBlock Text="후원하기" Foreground="{DynamicResource SettingsFg}" TextDecorations="Underline"/>
+                                    </Hyperlink>
+                                </TextBlock>
+                            </StackPanel>
                         </StackPanel>
-                    </StackPanel>
+                    </Grid>
                 </Border>
             </DockPanel>
 

@@ -342,6 +342,8 @@ public partial class App : System.Windows.Application
             currentApp.Resources["ScaledSettingsBodyLargeFontSize"] = 14.0 * scalePercent / 100.0;
             currentApp.Resources["ScaledSettingsHeadingFontSize"] = 16.0 * scalePercent / 100.0;
             currentApp.Resources["ScaledToolTitleFontSize"] = 22.0 * scalePercent / 100.0;
+            // [접근성] 설정 창 헤더 로고도 같은 배율로 자라 '설정'+버전 2줄 높이를 유지한다.
+            currentApp.Resources["SettingsLogoSize"] = 40.0 * scalePercent / 100.0;
         }
 
         // [접근성] 상주하는 AltKey.Tools 프로세스에도 같은 배율을 알립니다.

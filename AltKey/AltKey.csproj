@@ -47,6 +47,10 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
+    <!-- 설정 창 헤더 로고: 어두운 잉크 배경이라 라이트/다크 테마 모두에서 대비가 유지된다. -->
+    <Resource Include="Assets\logo.png" />
+  </ItemGroup>
+  <ItemGroup>
     <EmbeddedResource Include="Assets\Data\ko-words.txt" />
     <EmbeddedResource Include="Assets\Data\en-words.txt" />
   </ItemGroup>
