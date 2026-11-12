@@ -50,7 +50,11 @@ public class TrayService : IDisposable
             return;
         }
 
-        if (propertyName is null or nameof(Models.AppConfig.AskBeforeHideToTray))
+        // 메뉴 내용이 의존하는 설정(AskBeforeHideToTray)이 바뀔 때만 재빌드합니다.
+        // 예전엔 어떤 설정 변경이든(propertyName이 null 포함) 전체 WinForms 메뉴를 다시 만들어
+        // 텍스트 측정까지 돌렸는데, 설정 창 바인딩 루프가 세터에 재진입할 때마다 그 비용이
+        // 겹겹이 쌓여 스택 오버플로로 이어지던 요인이었습니다.
+        if (propertyName == nameof(Models.AppConfig.AskBeforeHideToTray))
         {
             _notifyIcon.ContextMenuStrip = BuildContextMenu();
         }

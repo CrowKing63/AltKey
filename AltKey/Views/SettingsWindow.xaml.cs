@@ -34,6 +34,19 @@ public partial class SettingsWindow : Window
 
     private void CloseButton_Click(object sender, RoutedEventArgs e) => Close();
 
+    /// <summary>
+    /// AI 백엔드 라디오 버튼 클릭 시 IsLocalAi를 명시적으로 설정합니다.
+    /// 바인딩이 OneWay라 라디오 버튼 상태가 소스로 write-back되는 경로(UpdateSource)가 끊어져,
+    /// 예전마다 주기가 겹겹이 쌓여 WinForms 트레이 메뉴 재빌드·네이티브 텍스트 측정으로
+    /// 스택 오버플로까지 이어지던 피드백 루프가 더 이상 만들어지지 않습니다.
+    /// 창 생성 시 초기 Checked 이벤트도 같은 값으로 설정하므로 속성 변경이 발생하지 않아 안전합니다.
+    /// </summary>
+    private void OnApiBackendRadioChecked(object sender, RoutedEventArgs e)
+        => _vm.IsLocalAi = false;
+
+    private void OnLocalBackendRadioChecked(object sender, RoutedEventArgs e)
+        => _vm.IsLocalAi = true;
+
     protected override void OnKeyDown(WpfKeyEventArgs e)
     {
         if (e.Key == Key.Escape) { Close(); return; }
