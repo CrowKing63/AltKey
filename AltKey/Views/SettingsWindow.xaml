@@ -585,6 +585,10 @@
                                         ToolTip="llama.cpp 엔진(약 25MB)과 Gemma 4 E2B 모델(약 3.2GB)을 한 번에 내려받습니다."/>
                                 <ProgressBar Value="{Binding LocalAiDownloadProgress}" Maximum="100" Height="6" Margin="0,0,0,4"/>
                                 <TextBlock Text="{Binding LocalAiDownloadStatusMessage}" Foreground="{DynamicResource SettingsFgSub}" FontSize="{StaticResource ScaledSettingsSubFontSize}" TextWrapping="Wrap"/>
+                                <!-- 저장 위치 안내: 실제 경로는 포터블/설치판에 따라 달라지므로 경로 대신 폴더 이름으로만 안내합니다.
+                                     (같은 폴더는 고급 탭의 '사용자 설정 데이터 폴더 열기' 버튼으로 열 수 있음) -->
+                                <TextBlock Text="엔진과 모델은 '사용자 설정 데이터 폴더'(고급 탭에서 열기 가능)에 저장됩니다."
+                                           Foreground="{DynamicResource SettingsFgSub}" FontSize="{StaticResource ScaledSettingsSubFontSize}" TextWrapping="Wrap" Margin="0,4,0,0"/>
 
                                 <!-- 로컬 모델 상태 표시 + idle 언로드 (RAM 회수). -->
                                 <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
