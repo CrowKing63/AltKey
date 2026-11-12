@@ -355,16 +355,43 @@ public partial class App : System.Windows.Application
 
     // T-6.7: 파일 로깅
     // [참고] 경로는 PathResolver.DataDir로 지정되어 설치형(%AppData%\AltKey) 및 포터블 모드 모두 쓰기 가능합니다.
+    // [로테이션] 예외가 반복되면 로그가 무한정 커지는 문제를 막기 위해(실제 419MB까지 쌓인 적 있음),
+    // 크기 한도를 넘으면 이전 파일 하나만 .old로 남겨두고 새 파일로 다시 시작합니다.
+    private const long MaxErrorLogBytes = 5 * 1024 * 1024; // 5MB
+
     internal static void LogError(Exception ex)
     {
         try
         {
             var logPath = Path.Combine(
                 PathResolver.DataDir, "altkey-error.log");
+            RotateErrorLogIfNeeded(logPath);
             File.AppendAllText(logPath,
                 $"[{DateTime.Now:u}] {ex}\n\n");
         }
         catch { /* 로그 쓰기 실패 — 무시 */ }
+    }
+
+    /// <summary>
+    /// 에러 로그가 크기 한도를 넘으면 altkey-error.log.old로 옮기고 새 파일을 시작합니다.
+    /// 이전 세대 하나만 남겨 최근 오류를 바로 볼 수 있게 하되, 디스크 사용량은 두 파일 치(약 10MB)로 한정합니다.
+    /// </summary>
+    private static void RotateErrorLogIfNeeded(string logPath)
+    {
+        if (!File.Exists(logPath))
+        {
+            return;
+        }
+
+        var size = new FileInfo(logPath).Length;
+        if (size <= MaxErrorLogBytes)
+        {
+            return;
+        }
+
+        var oldPath = logPath + ".old";
+        try { File.Delete(oldPath); } catch { /* 이전 .old를 지우지 못해도 넘어간다. */ }
+        File.Move(logPath, oldPath);
     }
 
     /// <summary>
