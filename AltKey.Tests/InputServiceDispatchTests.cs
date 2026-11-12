@@ -165,4 +165,41 @@ public class InputServiceDispatchTests
         Assert.Contains(VirtualKeyCode.VK_E, svc.KeyUps);
         Assert.Contains(VirtualKeyCode.VK_LWIN, svc.KeyUps);
     }
+
+    /// <summary>
+    /// 포그라운드 settle 대기를 관찰하는 테스트용 InputService.
+    /// 실제 SendInput만 건너뛰고 판단 로직(EnsureForegroundSettled)은 그대로 실행한다.
+    /// </summary>
+    public sealed class SettleTrackingInputService : InputService
+    {
+        public IntPtr ForegroundHwnd { get; set; } = new(1);
+        public int SettleWaits { get; private set; }
+
+        public override IntPtr GetForegroundHwnd() => ForegroundHwnd;
+
+        internal override void SleepForForegroundSettle() => SettleWaits++;
+
+        internal override void DispatchInput(Win32.INPUT[] inputs) =>
+            EnsureForegroundSettled();
+    }
+
+    [Fact]
+    public void DispatchInput_waits_on_first_dispatch_and_after_foreground_change_only()
+    {
+        var svc = new SettleTrackingInputService();
+        var batch = new[] { default(Win32.INPUT) };
+
+        // 첫 전송(초기 상태에서 포그라운드 변경에 해당) → 1회 대기.
+        svc.DispatchInput(batch);
+        Assert.Equal(1, svc.SettleWaits);
+
+        // 포그라운드 변화 없는 연속 전송 → 추가 대기 없음.
+        svc.DispatchInput(batch);
+        Assert.Equal(1, svc.SettleWaits);
+
+        // 새로운 포그라운드 변경 후 전송 → 다시 1회 대기.
+        svc.ForegroundHwnd = new(2);
+        svc.DispatchInput(batch);
+        Assert.Equal(2, svc.SettleWaits);
+    }
 }

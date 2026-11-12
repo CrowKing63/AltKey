@@ -613,10 +613,41 @@ public class InputService
 
     internal virtual void DispatchInput(Win32.INPUT[] inputs)
     {
+        EnsureForegroundSettled();
         uint sent = Win32.SendInput((uint)inputs.Length, inputs, Marshal.SizeOf<Win32.INPUT>());
         if (sent == 0 && Marshal.GetLastWin32Error() == Win32.ERROR_ACCESS_DENIED)
             ElevatedAppDetected?.Invoke();
     }
+
+    /// <summary>
+    /// [왜] 포그라운드가 막 바뀐 직후(텍스트 필드 클릭 등)에 주입된 입력은 대상 앱이
+    /// 활성화 처리를 마치기 전이라 간혹 분실된다. SendAtomicReplace의 백스페이스
+    /// settle delay와 같은 클래스의 문제다 (해당 주석 참고).
+    /// 마지막 전송 이후 포그라운드 창이 바뀐 경우에만 대기한다 —
+    /// 연속 입력 중에는 추가 지연이 없도록 한다.
+    /// </summary>
+    internal virtual void EnsureForegroundSettled()
+    {
+        var fg = GetForegroundHwnd();
+        if (fg == _lastDispatchForegroundHwnd)
+            return;
+
+        SleepForForegroundSettle();
+        _lastDispatchForegroundHwnd = GetForegroundHwnd();
+    }
+
+    /// <summary>
+    /// 실제 대기. 테스트가 판단 로직만 검증하고 잠자는 것을 건너뛸 수 있게 분리했다.
+    /// </summary>
+    internal virtual void SleepForForegroundSettle() => Thread.Sleep(ForegroundSettleDelayMs);
+
+    /// <summary>
+    /// 포그라운드 변경 후 대상 앱 활성화 처리가 끝날 때까지 기다리는 시간(ms).
+    /// BackspaceSettleDelayMs와 같은 수준 — 메시지 루프가 한 주기 이상 돌기 충분한 값.
+    /// </summary>
+    internal const int ForegroundSettleDelayMs = 50;
+
+    private IntPtr _lastDispatchForegroundHwnd = IntPtr.Zero;
 
     private void HandleVolumeControl(string direction, int step)
     {
