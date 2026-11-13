@@ -44,14 +44,14 @@ function Initialize-Canvas {
 
 function Add-Keycap {
     param([System.Drawing.Graphics]$Graphics, [int]$Size, [System.Drawing.Color]$KeyFill, [System.Drawing.Color]$BaseFill)
-    $silhouette = [System.Drawing.RectangleF]::new($Size * 0.11, $Size * 0.11, $Size * 0.78, $Size * 0.78)
-    $basePath = New-RoundedRectPath -Rect $silhouette -Radius ($Size * 0.15)
+    $silhouette = [System.Drawing.RectangleF]::new($Size * 0.03, $Size * 0.03, $Size * 0.94, $Size * 0.94)
+    $basePath = New-RoundedRectPath -Rect $silhouette -Radius ($Size * 0.18)
     $baseBrush = [System.Drawing.SolidBrush]::new($BaseFill)
     $Graphics.FillPath($baseBrush, $basePath)
     $baseBrush.Dispose(); $basePath.Dispose()
 
-    $keyRect = [System.Drawing.RectangleF]::new($Size * 0.11, $Size * 0.11, $Size * 0.78, $Size * 0.72)
-    $keyPath = New-RoundedRectPath -Rect $keyRect -Radius ($Size * 0.15)
+    $keyRect = [System.Drawing.RectangleF]::new($Size * 0.03, $Size * 0.03, $Size * 0.94, $Size * 0.87)
+    $keyPath = New-RoundedRectPath -Rect $keyRect -Radius ($Size * 0.18)
     $keyBrush = [System.Drawing.SolidBrush]::new($KeyFill)
     $Graphics.FillPath($keyBrush, $keyPath)
     $keyBrush.Dispose(); $keyPath.Dispose()
@@ -63,13 +63,13 @@ function Add-Keycap {
 function Add-SliderGlyph {
     param([System.Drawing.Graphics]$Graphics, [int]$Size, [System.Drawing.RectangleF]$KeyRect, [System.Drawing.Color]$Color)
 
-    $boxW = $Size * 0.42
-    $boxH = $Size * 0.30
+    $boxW = $Size * 0.506
+    $boxH = $Size * 0.36
     $x0 = $KeyRect.X + ($KeyRect.Width - $boxW) / 2
     $y0 = $KeyRect.Y + ($KeyRect.Height - $boxH) / 2
 
-    $lineThick = $Size * 0.045
-    $knobR     = $Size * 0.062
+    $lineThick = $Size * 0.054
+    $knobR     = $Size * 0.075
     # Knob x offsets (fraction of boxW) per line — varied so it reads as "sliders", not "list".
     $knobFx = @(0.30, 0.68, 0.45)
 

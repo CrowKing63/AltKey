@@ -4,7 +4,7 @@
 
 .DESCRIPTION
     Renders the finalized "A" variant (ink keycap, lavender #C4B5FD "Al" accent,
-    white "t", Segoe UI Bold at SizeRatio 0.34) at every size, then:
+    white "t", Segoe UI Bold at SizeRatio 0.41) at every size, then:
       - assembles a multi-size .ico (PNG-compressed entries: 16/32/48/256)
       - writes a standalone 512px master PNG (512 cannot fit in a standard .ico:
         the per-entry dimension byte maxes at 255, with 0 meaning 256).
@@ -68,15 +68,15 @@ function Add-Keycap {
         [System.Drawing.Color]$KeyFill,
         [System.Drawing.Color]$BaseFill
     )
-    $silhouette = [System.Drawing.RectangleF]::new($Size * 0.11, $Size * 0.11, $Size * 0.78, $Size * 0.78)
-    $basePath = New-RoundedRectPath -Rect $silhouette -Radius ($Size * 0.15)
+    $silhouette = [System.Drawing.RectangleF]::new($Size * 0.03, $Size * 0.03, $Size * 0.94, $Size * 0.94)
+    $basePath = New-RoundedRectPath -Rect $silhouette -Radius ($Size * 0.18)
     $baseBrush = [System.Drawing.SolidBrush]::new($BaseFill)
     $Graphics.FillPath($baseBrush, $basePath)
     $baseBrush.Dispose()
     $basePath.Dispose()
 
-    $keyRect = [System.Drawing.RectangleF]::new($Size * 0.11, $Size * 0.11, $Size * 0.78, $Size * 0.72)
-    $keyPath = New-RoundedRectPath -Rect $keyRect -Radius ($Size * 0.15)
+    $keyRect = [System.Drawing.RectangleF]::new($Size * 0.03, $Size * 0.03, $Size * 0.94, $Size * 0.87)
+    $keyPath = New-RoundedRectPath -Rect $keyRect -Radius ($Size * 0.18)
     $keyBrush = [System.Drawing.SolidBrush]::new($KeyFill)
     $Graphics.FillPath($keyBrush, $keyPath)
     $keyBrush.Dispose()
@@ -96,7 +96,7 @@ function Add-AltLabel {
         [System.Drawing.Color]$ColorAl,
         [System.Drawing.Color]$ColorT,
         [string]$FontFamily = "Segoe UI",
-        [float]$SizeRatio = 0.34,
+        [float]$SizeRatio = 0.41,
         [System.Drawing.FontStyle]$FontStyle = [System.Drawing.FontStyle]::Bold
     )
     $fontSize = $Size * $SizeRatio
