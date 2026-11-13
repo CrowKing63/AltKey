@@ -44,14 +44,14 @@ function Initialize-Canvas {
 
 function Add-Keycap {
     param([System.Drawing.Graphics]$Graphics, [int]$Size, [System.Drawing.Color]$KeyFill, [System.Drawing.Color]$BaseFill)
-    $silhouette = [System.Drawing.RectangleF]::new($Size * 0.03, $Size * 0.03, $Size * 0.94, $Size * 0.94)
-    $basePath = New-RoundedRectPath -Rect $silhouette -Radius ($Size * 0.18)
+    $silhouette = [System.Drawing.RectangleF]::new(0, 0, $Size, $Size)
+    $basePath = New-RoundedRectPath -Rect $silhouette -Radius ($Size * 0.19)
     $baseBrush = [System.Drawing.SolidBrush]::new($BaseFill)
     $Graphics.FillPath($baseBrush, $basePath)
     $baseBrush.Dispose(); $basePath.Dispose()
 
-    $keyRect = [System.Drawing.RectangleF]::new($Size * 0.03, $Size * 0.03, $Size * 0.94, $Size * 0.87)
-    $keyPath = New-RoundedRectPath -Rect $keyRect -Radius ($Size * 0.18)
+    $keyRect = [System.Drawing.RectangleF]::new(0, 0, $Size, $Size * 0.926)
+    $keyPath = New-RoundedRectPath -Rect $keyRect -Radius ($Size * 0.19)
     $keyBrush = [System.Drawing.SolidBrush]::new($KeyFill)
     $Graphics.FillPath($keyBrush, $keyPath)
     $keyBrush.Dispose(); $keyPath.Dispose()
@@ -63,13 +63,13 @@ function Add-Keycap {
 function Add-SliderGlyph {
     param([System.Drawing.Graphics]$Graphics, [int]$Size, [System.Drawing.RectangleF]$KeyRect, [System.Drawing.Color]$Color)
 
-    $boxW = $Size * 0.506
-    $boxH = $Size * 0.36
+    $boxW = $Size * 0.538
+    $boxH = $Size * 0.383
     $x0 = $KeyRect.X + ($KeyRect.Width - $boxW) / 2
     $y0 = $KeyRect.Y + ($KeyRect.Height - $boxH) / 2
 
-    $lineThick = $Size * 0.054
-    $knobR     = $Size * 0.075
+    $lineThick = $Size * 0.057
+    $knobR     = $Size * 0.08
     # Knob x offsets (fraction of boxW) per line — varied so it reads as "sliders", not "list".
     $knobFx = @(0.30, 0.68, 0.45)
 
@@ -131,18 +131,25 @@ function Save-DownscaledPng {
     $bmp.Dispose()
 }
 
-# --- Render the three 256 masters. ---
+# --- Render the three masters (over-rendered at 512, delivered at 256). ---
 $v1 = { param($g,$s,$k) Add-SliderGlyph -Graphics $g -Size $s -KeyRect $k -Color $pastelLavender }
 $v2 = { param($g,$s,$k) Add-SliderGlyph -Graphics $g -Size $s -KeyRect $k -Color $white }
 $v3 = { param($g,$s,$k) Add-AltLabel    -Graphics $g -Size $s -KeyRect $k -ColorAl $pastelMint -ColorT $white }
 
-$m1 = Join-Path $outputDir "altkey-tools-v1-lavender-slider.png"
-$m2 = Join-Path $outputDir "altkey-tools-v2-white-slider.png"
-$m3 = Join-Path $outputDir "altkey-tools-v3-mint-alt.png"
-Save-MasterPng -Size 256 -OutputPath $m1 -DrawLabel $v1
-Save-MasterPng -Size 256 -OutputPath $m2 -DrawLabel $v2
-Save-MasterPng -Size 256 -OutputPath $m3 -DrawLabel $v3
-Write-Host "Masters: v1/v2/v3 (256)"
+$pairs = @(
+    @{ Out = "altkey-tools-v1-lavender-slider.png"; Draw = $v1 },
+    @{ Out = "altkey-tools-v2-white-slider.png";    Draw = $v2 },
+    @{ Out = "altkey-tools-v3-mint-alt.png";        Draw = $v3 }
+)
+foreach ($p in $pairs) {
+    $tmp  = Join-Path $env:TEMP ("tools-over-{0}" -f (Split-Path -Leaf $p.Out))
+    Save-MasterPng -Size 512 -OutputPath $tmp -DrawLabel $p.Draw
+    $over = [System.Drawing.Bitmap]::FromFile($tmp)
+    Save-DownscaledPng -Master $over -Size 256 -OutputPath (Join-Path $outputDir $p.Out)
+    $over.Dispose()
+    Remove-Item $tmp -Force
+}
+Write-Host "Masters: v1/v2/v3 (256, over-rendered from 512)"
 
 # --- Comparison board: 3 columns x rows of 256/48/32/16. ---
 $margin = 24
@@ -153,7 +160,7 @@ $board = [System.Drawing.Bitmap]::new($boardW, $boardH, [System.Drawing.Imaging.
 $bg = [System.Drawing.Graphics]::FromImage($board)
 $bg.Clear([System.Drawing.Color]::FromArgb(255, 245, 243, 250))
 
-$masters = @([System.Drawing.Image]::FromFile($m1), [System.Drawing.Image]::FromFile($m2), [System.Drawing.Image]::FromFile($m3))
+$masters = @($pairs | ForEach-Object { [System.Drawing.Image]::FromFile((Join-Path $outputDir $_.Out)) })
 $y = $margin
 foreach ($s in $sizes) {
     for ($c = 0; $c -lt 3; $c++) {

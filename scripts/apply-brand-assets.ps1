@@ -13,6 +13,7 @@
       - AltKey.Tools\Assets\tools-icon.png (256)
       - AltKey.Tools\Assets\tools-icon.ico (DIB 16/32/48/256)
       - msix\Assets\Square150x150Logo.png / Square44x44Logo.png / StoreLogo.png
+      - msix\Assets\Square300x300Logo.png (스토어 제출용 300x300)
       - docs\assets\altkey-logo.png   (index.html 브랜트 마크)
       - Wiki\AltKey.wiki\altkey-logo.png (위키 홈 로고)
 
@@ -116,7 +117,7 @@ $b48 = Downsample $toolsMaster 48; $b256 = Downsample $toolsMaster 256
 Save-IcoDib (Join-Path $root "AltKey.Tools\Assets\tools-icon.ico") @($b16, $b32, $b48, $b256)
 Write-Host "OK: AltKey.Tools\Assets\tools-icon.png, tools-icon.ico"
 
-# --- 5) MSIX 로고 (Square150 / Square44 / StoreLogo 50) ---
+# --- 5) MSIX 로고 (Square150 / Square44 / StoreLogo 50 / Square300 스토어 제출용) ---
 $s150 = Downsample $master 150
 $s150.Save((Join-Path $root "msix\Assets\Square150x150Logo.png"), [System.Drawing.Imaging.ImageFormat]::Png)
 $s150.Dispose()
@@ -126,7 +127,10 @@ $s44.Dispose()
 $s50 = Downsample $master 50
 $s50.Save((Join-Path $root "msix\Assets\StoreLogo.png"), [System.Drawing.Imaging.ImageFormat]::Png)
 $s50.Dispose()
-Write-Host "OK: msix\Assets (150/44/50)"
+$s300 = Downsample $master 300
+$s300.Save((Join-Path $root "msix\Assets\Square300x300Logo.png"), [System.Drawing.Imaging.ImageFormat]::Png)
+$s300.Dispose()
+Write-Host "OK: msix\Assets (150/44/50/300)"
 
 # --- 6) 웹(index.html)·위키용 로고 PNG (512 마스터 원본) ---
 Copy-Item $master (Join-Path $root "docs\assets\altkey-logo.png") -Force

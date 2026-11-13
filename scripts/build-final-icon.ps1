@@ -4,7 +4,11 @@
 
 .DESCRIPTION
     Renders the finalized "A" variant (ink keycap, lavender #C4B5FD "Al" accent,
-    white "t", Segoe UI Bold at SizeRatio 0.41) at every size, then:
+    white "t", Segoe UI Bold at SizeRatio 0.436) with ZERO transparent padding —
+    the keycap fills the whole canvas. To keep the boundary anti-aliasing smooth
+    despite the shape touching the bitmap edge, the master is over-rendered at
+    1024 and downsampled to 512 (the downscale averages away the clipped edge pixels).
+    Then:
       - assembles a multi-size .ico (PNG-compressed entries: 16/32/48/256)
       - writes a standalone 512px master PNG (512 cannot fit in a standard .ico:
         the per-entry dimension byte maxes at 255, with 0 meaning 256).
@@ -68,15 +72,15 @@ function Add-Keycap {
         [System.Drawing.Color]$KeyFill,
         [System.Drawing.Color]$BaseFill
     )
-    $silhouette = [System.Drawing.RectangleF]::new($Size * 0.03, $Size * 0.03, $Size * 0.94, $Size * 0.94)
-    $basePath = New-RoundedRectPath -Rect $silhouette -Radius ($Size * 0.18)
+    $silhouette = [System.Drawing.RectangleF]::new(0, 0, $Size, $Size)
+    $basePath = New-RoundedRectPath -Rect $silhouette -Radius ($Size * 0.19)
     $baseBrush = [System.Drawing.SolidBrush]::new($BaseFill)
     $Graphics.FillPath($baseBrush, $basePath)
     $baseBrush.Dispose()
     $basePath.Dispose()
 
-    $keyRect = [System.Drawing.RectangleF]::new($Size * 0.03, $Size * 0.03, $Size * 0.94, $Size * 0.87)
-    $keyPath = New-RoundedRectPath -Rect $keyRect -Radius ($Size * 0.18)
+    $keyRect = [System.Drawing.RectangleF]::new(0, 0, $Size, $Size * 0.926)
+    $keyPath = New-RoundedRectPath -Rect $keyRect -Radius ($Size * 0.19)
     $keyBrush = [System.Drawing.SolidBrush]::new($KeyFill)
     $Graphics.FillPath($keyBrush, $keyPath)
     $keyBrush.Dispose()
@@ -96,7 +100,7 @@ function Add-AltLabel {
         [System.Drawing.Color]$ColorAl,
         [System.Drawing.Color]$ColorT,
         [string]$FontFamily = "Segoe UI",
-        [float]$SizeRatio = 0.41,
+        [float]$SizeRatio = 0.436,
         [System.Drawing.FontStyle]$FontStyle = [System.Drawing.FontStyle]::Bold
     )
     $fontSize = $Size * $SizeRatio
@@ -150,9 +154,13 @@ function Save-DownscaledPng {
     $bmp.Dispose()
 }
 
-# --- 1. Render the 512 master (native). ---
+# --- 1. Render the 1024 over-master (zero padding), downsample to the 512 master. ---
+$overPath = Join-Path $outputDir "altkey-icon-final-1024.png"
+Save-MasterPng -Size 1024 -OutputPath $overPath
 $masterPath = Join-Path $outputDir "altkey-icon-final-512.png"
-Save-MasterPng -Size 512 -OutputPath $masterPath
+$over = [System.Drawing.Bitmap]::FromFile($overPath)
+Save-DownscaledPng -Master $over -Size 512 -OutputPath $masterPath
+$over.Dispose()
 $master = [System.Drawing.Bitmap]::FromFile($masterPath)
 
 # --- 2. Produce 256/48/32/16 by downscaling the master. ---
