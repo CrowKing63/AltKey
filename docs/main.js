@@ -16,20 +16,20 @@
   const keyboardImages = {
     light: {
       src: 'assets/AltKey_Basic_Light.png',
-      width: 1126,
-      height: 382,
+      width: 1352,
+      height: 459,
       alt: 'AltKey 라이트 테마 기본 키보드 화면'
     },
     dark: {
       src: 'assets/AltKey_Basic_Dark.png',
-      width: 1126,
-      height: 382,
+      width: 1352,
+      height: 459,
       alt: 'AltKey 다크 테마 기본 키보드 화면'
     },
     'high-contrast': {
       src: 'assets/AltKey_Basic_HighContrast.png',
-      width: 1126,
-      height: 382,
+      width: 1352,
+      height: 459,
       alt: 'AltKey 고대비 테마 기본 키보드 화면'
     }
   };
