@@ -317,6 +317,14 @@ h3 {
   background: transparent;
 }
 
+/* [버튼 아이콘] 텍스트 앞의 GitHub·Microsoft Store 마크 — currentColor로 버튼 텍스트 색을 따라가며(라이트/다크/고대비 공통) 테마에 맞춘다 */
+.button .btn-icon {
+  width: 18px;
+  height: 18px;
+  margin-right: 0.5rem;
+  flex-shrink: 0;
+}
+
 .glass-panel {
   position: relative;
   overflow: hidden;

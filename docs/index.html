@@ -15,6 +15,16 @@
 </head>
 
 <body>
+  <!-- [버튼 아이콘 스프라이트] GitHub·Microsoft Store 마크 — fill="currentColor"로 각 버튼의 텍스트 색을 따라가며(라이트/다크/고대비 공통) 테마에 맞춘다 -->
+  <svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+    <symbol id="icon-github" viewBox="0 0 24 24">
+      <path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
+    </symbol>
+    <symbol id="icon-mstore" viewBox="0 0 24 24">
+      <path fill="currentColor" d="M8 3.75V6H2.75C2.33579 6 2 6.33579 2 6.75V18.25C2 19.7688 3.23122 21 4.75 21H19.25C20.7688 21 22 19.7688 22 18.25V6.75C22 6.33579 21.6642 6 21.25 6H16V3.75C16 2.7835 15.2165 2 14.25 2H9.75C8.7835 2 8 2.7835 8 3.75ZM9.75 3.5H14.25C14.3881 3.5 14.5 3.61193 14.5 3.75V6H9.5V3.75C9.5 3.61193 9.61193 3.5 9.75 3.5ZM8 13V9.5H11.5V13H8ZM8 17.5V14H11.5V17.5H8ZM16 13H12.5V9.5H16V13ZM12.5 17.5V14H16V17.5H12.5Z"/>
+    </symbol>
+  </svg>
+
   <header class="site-header">
     <a class="brand" href="#" aria-label="AltKey 홈">
       <img class="brand-mark" src="assets/altkey-logo.png" alt="" />
@@ -52,8 +62,8 @@
           선택한 문장은 CPU에서 돌아가는 로컬 AI가 요약·정리해 줍니다.
         </p>
         <div class="hero-actions" aria-label="주요 작업">
-          <a class="button primary" href="https://github.com/CrowKing63/AltKey/releases/latest">최신 버전 다운로드</a>
-          <a class="button secondary" href="https://apps.microsoft.com/detail/9mztz1c990d7">Microsoft Store</a>
+          <a class="button primary" href="https://github.com/CrowKing63/AltKey/releases/latest"><svg class="btn-icon" aria-hidden="true"><use href="#icon-github"/></svg>최신 버전 다운로드</a>
+          <a class="button secondary" href="https://apps.microsoft.com/detail/9mztz1c990d7"><svg class="btn-icon" aria-hidden="true"><use href="#icon-mstore"/></svg>Microsoft Store</a>
         </div>
       </div>
 
@@ -125,9 +135,9 @@
         </a>
       </div>
       <div class="video-frame glass-panel">
-        <!-- 메인 영상: 핵심 기능 소개 (index=2) -->
-        <iframe src="https://www.youtube.com/embed/y-kHDagh5S0?autoplay=1&mute=1&loop=1&playlist=y-kHDagh5S0"
-          title="AltKey 핵심 기능 소개"
+        <!-- 메인 영상: AltKey 트레일러 (30초) — 자동재생·음소거 -->
+        <iframe src="https://www.youtube.com/embed/bFxC3Y0SFNA?autoplay=1&mute=1"
+          title="AltKey 트레일러"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowfullscreen></iframe>
       </div>
@@ -302,10 +312,10 @@
         <h2 id="download-title">설치형 또는 포터블로 시작하세요</h2>
         <p>Windows 10 22H2 이상에서 사용할 수 있으며, 최신 릴리스에는 AltKey.Tools가 함께 포함됩니다.</p>
         <div class="download-actions">
-          <a class="button primary" href="https://apps.microsoft.com/detail/9mztz1c990d7">Microsoft Store</a>
-          <a class="button primary" href="https://github.com/CrowKing63/AltKey/releases/latest">GitHub Releases</a>
+          <a class="button primary" href="https://apps.microsoft.com/detail/9mztz1c990d7"><svg class="btn-icon" aria-hidden="true"><use href="#icon-mstore"/></svg>Microsoft Store</a>
+          <a class="button primary" href="https://github.com/CrowKing63/AltKey/releases/latest"><svg class="btn-icon" aria-hidden="true"><use href="#icon-github"/></svg>GitHub Releases</a>
           <a class="button secondary" href="feedback.html">피드백 보내기</a>
-          <a class="button ghost" href="https://github.com/CrowKing63/AltKey">소스 코드</a>
+          <a class="button ghost" href="https://github.com/CrowKing63/AltKey"><svg class="btn-icon" aria-hidden="true"><use href="#icon-github"/></svg>소스 코드</a>
         </div>
       </div>
     </section>
