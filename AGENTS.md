@@ -23,8 +23,13 @@
 - 영어 입력은 한국어 레이아웃 내부의 `"가/A"` 토글, 즉 **QuietEnglish 서브모드**로 처리한다.
 
 ## 4. 빌드·테스트 규칙
-- 메인 빌드: `AltKey.Tools\AltKey.Tools.csproj` (이 프로젝트를 빌드하면 솔루션 전체가 함께 빌드된다)
-- 테스트: `AltKey.Tests\AltKey.Tests.csproj`
+- 단위 테스트: `AltKey.Tests\AltKey.Tests.csproj` (`dotnet test`)
+- 수동 검증(커밋 전): 호스트에서 디버그 exe를 실행하는 대신 **Windows Sandbox**에서 Release publish로 검증한다. 샌드박스는 깨끗한 환경이라 최초 설치 동작(기본값, 설정 마이그레이션)도 그대로 확인된다.
+  1. `release.yml`과 동일한 레시피로 publish (샌드박스에 .NET 런타임이 없어 self-contained 필수):
+     - 메인: `dotnet publish AltKey/AltKey.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -o dist/publish`
+     - Tools: 같은 인자에 `-o dist/publish/Tools` (§6.5의 exe 탐색 순서와 일치)
+  2. `AltKey\layouts`를 `dist/publish/layouts`로 복사하고, exe 옆에 포터블용 `config.json` 생성 (`scripts/package-portable.ps1`과 동일) — 데이터가 샌드박스 내 exe 폴더에 모이니 테스트 후 폴더를 드래그해 밖으로 빼내 검사할 수 있다.
+  3. 실행: PowerShell에서 `windowsandbox.exe dist\publish` 또는 폴더를 샌드박스 창에 드래그&드롭.
 - 사용자 변수 조정 기능은 **슬라이더 대신 `NumericAdjuster` 기반**으로 구현한다.
 
 ## 5. 테스트 작성 규칙
@@ -63,7 +68,7 @@
 - 사용자가 명시적으로 요구하지 않는 한, 런타임 적용 책임인 `MainViewModel`/`ProfileService`를 도구 앱으로 옮기지 않는다.
 
 ### 6.8 Tools 변경 후 권장 확인
-- 가능하면 함께 확인: 메인 앱 빌드 / `AltKey.Tools` 빌드 / 설정 창에서 도구 실행 여부 / 저장 후 메인 앱 반영 여부.
+- 가능하면 함께 확인: 샌드박스 publish(§4) / 설정 창에서 도구 실행 여부 / 저장 후 메인 앱 반영 여부.
 
 ## 7. 커밋 메시지 규칙
 - 커밋 메시지는 **한국어**로 쉽게 작성한다.
