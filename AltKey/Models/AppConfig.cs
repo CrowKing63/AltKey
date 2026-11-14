@@ -138,9 +138,10 @@ public class AppConfig
     // AI API 요청 타임아웃(초)입니다.
     public int AiTimeoutSeconds { get; set; } = 30;
 
-    // AI 처리 백엔드 종류입니다. "api"(기본, 기존 HTTP API) 또는 "local"(로컬 GGUF 모델).
-    // 기본값 "api"라 로컬 기능을 안 써도 기존 동작이 그대로 유지됩니다.
-    public string AiBackend { get; set; } = "api";
+    // AI 처리 백엔드 종류입니다. "local"(기본, 로컬 GGUF 모델) 또는 "api"(외부 HTTP API).
+    // 기본값 "local"이라 신규 설치에서는 설정 없이도 AI가 동작합니다.
+    // (기존 API 사용자는 ConfigService 마이그레이션이 "api"로 보존합니다.)
+    public string AiBackend { get; set; } = "local";
 
     // 로컬 모델 유휴 언로드 대기 시간(분). AI 요청이 이 이상 없으면 모델을 메모리에서 내려 RAM을 반환합니다.
     public int AiLocalIdleUnloadMinutes { get; set; } = 10;

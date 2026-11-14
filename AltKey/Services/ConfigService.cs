@@ -47,6 +47,7 @@ public class ConfigService
 
                 MigrateWindowConfig(json);
                 MigrateLegacyLayoutNames();
+                MigrateAiBackend(json);
             }
             catch
             {
@@ -93,6 +94,33 @@ public class ConfigService
     {
         Load();
         ConfigChanged?.Invoke(propertyName);
+    }
+
+    /// <summary>
+    /// AI 백엔드 설정(AiBackend)이 없는 구버전 config.json에서 기존 API 사용자의 동작을 보존합니다.
+    /// 키가 없으면서 엔드포인트가 채워져 있으면 "api"로 고정하고,
+    /// 그 외(키 없음 + 엔드포인트 비어)는 새 기본값("local")을 그대로 둡니다.
+    /// </summary>
+    private void MigrateAiBackend(string json)
+    {
+        try
+        {
+            var node = JsonNode.Parse(json)?.AsObject();
+            if (node == null)
+                return;
+
+            // 직렬화 정책(SnakeCaseLower)상 키 이름은 "ai_backend"입니다.
+            // 수동 편집 대비 대소문자만 다르면 인식되도록 case-insensitive로 찾습니다.
+            var hasKey = node.Any(k => string.Equals(k.Key, "ai_backend", StringComparison.OrdinalIgnoreCase));
+            if (hasKey)
+                return;
+
+            if (!string.IsNullOrWhiteSpace(Current.AiEndpoint))
+                Current.AiBackend = "api";
+        }
+        catch
+        {
+        }
     }
 
     /// <summary>

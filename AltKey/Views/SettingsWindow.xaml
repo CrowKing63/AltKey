@@ -533,19 +533,19 @@
                         <StackPanel Margin="8,10,8,10">
                             <TextBlock Text="AI 텍스트 처리" Style="{StaticResource SectionTitleStyle}"/>
                             <!-- 표시(상단바 ✨ 버튼 켜기/끄기)는 상단바 탭에서 관리하고, 이 탭은 AI 동작 세팅만 담당합니다. -->
-                            <!-- 백엔드 선택: 외부 API vs 로컬 모델(CPU 전용).
+                            <!-- 백엔드 선택: 로컬 모델(CPU 전용, 기본) vs 외부 API.
                                  OneWay 바인딩 + 클릭 시 명시적으로 IsLocalAi를 설정합니다.
                                  TwoWay였다가 라디오 버튼의 write-back이 속성 세터에 재진입하는
-                                 피드백 루프가 만들어져, 설정 창을 열었다 닫을 때마다 네이티브 텍스트
+                                 피드백 루프가 만들어져, 설정 창을 열었다 닫았다 때마다 네이티브 텍스트
                                  측정까지 겹겹이 쌓여 스택 오버플로로 앱이 꺼지던 문제를 막습니다. -->
                             <StackPanel Orientation="Horizontal" Margin="0,4,0,16">
-                                <RadioButton Content="외부 API" GroupName="AiBackend"
-                                             IsChecked="{Binding IsLocalAi, Converter={StaticResource InvBool}, Mode=OneWay}"
-                                             Checked="OnApiBackendRadioChecked"
-                                             VerticalContentAlignment="Center"/>
                                 <RadioButton Content="로컬 모델 (CPU 전용)" GroupName="AiBackend"
                                              IsChecked="{Binding IsLocalAi, Mode=OneWay}"
                                              Checked="OnLocalBackendRadioChecked"
+                                             VerticalContentAlignment="Center"/>
+                                <RadioButton Content="외부 API" GroupName="AiBackend"
+                                             IsChecked="{Binding IsLocalAi, Converter={StaticResource InvBool}, Mode=OneWay}"
+                                             Checked="OnApiBackendRadioChecked"
                                              Margin="16,0,0,0"
                                              VerticalContentAlignment="Center"/>
                             </StackPanel>

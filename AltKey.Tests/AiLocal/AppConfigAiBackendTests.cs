@@ -6,11 +6,11 @@ namespace AltKey.Tests.AiLocal;
 public class AppConfigAiBackendTests
 {
     [Fact]
-    // 새 설정의 AI 백엔드 기본값이 "api"(기존 동작 유지)인지 확인합니다.
-    public void NewConfig_defaults_aiBackend_to_api()
+    // 새 설정의 AI 백엔드 기본값이 "local"(로컬 우선)인지 확인합니다.
+    public void NewConfig_defaults_aiBackend_to_local()
     {
         var config = new AppConfig();
-        Assert.Equal("api", config.AiBackend);
+        Assert.Equal("local", config.AiBackend);
     }
 
     [Fact]
