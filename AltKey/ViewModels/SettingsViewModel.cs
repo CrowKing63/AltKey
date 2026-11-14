@@ -1397,6 +1397,9 @@ public partial class SettingsViewModel : ObservableObject
     {
         try
         {
+            // 폴더가 없는 환경(샌드박스 등)에서도 버튼을 누르는 순간 먼저 만들어,
+            // Explorer가 존재하지 않는 경로에 문서 폴더 같은 기본 위치로 폴백하는 것을 막습니다.
+            Directory.CreateDirectory(PathResolver.DataDir);
             Process.Start(new ProcessStartInfo
             {
                 FileName = "explorer.exe",

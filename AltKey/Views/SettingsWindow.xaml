@@ -346,9 +346,9 @@
                     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                         <StackPanel Margin="8,10,8,10">
                             <TextBlock Text="좌측 상단바" Style="{StaticResource SectionTitleStyle}"/>
-                            <TextBlock Text="상단바 버튼은 좌측·우측 쪽별로 관리합니다. 각 버튼의 표시를 켜고 끌 수 있고, 같은쪽 안의 표시 순서를 조정할 수 있습니다." Foreground="{DynamicResource SettingsFgSub}" FontSize="{DynamicResource ScaledSettingsSubFontSize}"/>
-                            <TextBlock Text="접기와 닫기 버튼은 항상 우측 끝에 고정되며, 화면 맨 오른쪽부터는 닫기 → 접기 순서로 보입니다." Foreground="{DynamicResource SettingsFgSub}" FontSize="{DynamicResource ScaledSettingsSubFontSize}" Margin="0,0,0,2"/>
-                            <TextBlock Text="상단바의 버튼 없는 빈 칸과 가운데 드래그 핸들은 더블 클릭으로 접기/펼치기를 지원하며, 더블 클릭 시간은 윈도우 설정을 따릅니다." Foreground="{DynamicResource SettingsFgSub}" FontSize="{DynamicResource ScaledSettingsSubFontSize}" Margin="0,0,0,8"/>
+                            <TextBlock Text="상단바 버튼은 좌측·우측 쪽별로 관리합니다. 각 버튼의 표시를 켜고 끌 수 있고, 같은쪽 안의 표시 순서를 조정할 수 있습니다." Foreground="{DynamicResource SettingsFgSub}" FontSize="{DynamicResource ScaledSettingsSubFontSize}" TextWrapping="Wrap"/>
+                            <TextBlock Text="접기와 닫기 버튼은 항상 우측 끝에 고정되며, 화면 맨 오른쪽부터는 닫기 → 접기 순서로 보입니다." Foreground="{DynamicResource SettingsFgSub}" FontSize="{DynamicResource ScaledSettingsSubFontSize}" Margin="0,0,0,2" TextWrapping="Wrap"/>
+                            <TextBlock Text="상단바의 버튼 없는 빈 칸과 가운데 드래그 핸들은 더블 클릭으로 접기/펼치기를 지원하며, 더블 클릭 시간은 윈도우 설정을 따릅니다." Foreground="{DynamicResource SettingsFgSub}" FontSize="{DynamicResource ScaledSettingsSubFontSize}" Margin="0,0,0,8" TextWrapping="Wrap"/>
                             <ItemsControl ItemsSource="{Binding LeftHeaderButtons}"
                             ItemTemplate="{StaticResource HeaderButtonRowTemplate}"/>
 
@@ -360,15 +360,13 @@
 
                             <Separator Background="{DynamicResource SettingsHighlight}" Margin="0,16,0,16"/>
                             <TextBlock Text="상세 편집 진입" Style="{StaticResource SectionTitleStyle}"/>
-                            <TextBlock Text="새 항목 추가는 아래 버튼으로, 기존 항목 수정은 각 행의 편집 버튼으로 독립 편집기를 엽니다." Foreground="{DynamicResource SettingsFgSub}" FontSize="{DynamicResource ScaledSettingsSubFontSize}" Margin="0,0,0,8"/>
+                            <TextBlock Text="새 항목 추가는 아래 버튼으로, 기존 항목 수정은 각 행의 편집 버튼으로 독립 편집기를 엽니다." Foreground="{DynamicResource SettingsFgSub}" FontSize="{DynamicResource ScaledSettingsSubFontSize}" Margin="0,0,0,8" TextWrapping="Wrap"/>
                             <TextBlock Text="{Binding HeaderButtonLimitSummary}" Foreground="{DynamicResource SettingsFgSub}" FontSize="{DynamicResource ScaledSettingsSubFontSize}" TextWrapping="Wrap" Margin="0,0,0,8"/>
-                            <Button x:Name="TopBarFirstFocusable"
-                                    Content="새 커스텀 단축키 추가"
+                            <Button Content="새 커스텀 단축키 추가"
                                     Command="{Binding AddCustomHeaderButtonCommand}"
                                     Style="{StaticResource SettingsPrimaryButtonStyle}"
                                     HorizontalAlignment="Left"
-                                    IsEnabled="{Binding CanAddMoreCustomHeaderButtons}"
-                                    KeyboardNavigation.TabIndex="25"/>
+                                    IsEnabled="{Binding CanAddMoreCustomHeaderButtons}"/>
                         </StackPanel>
                     </ScrollViewer>
                 </TabItem>

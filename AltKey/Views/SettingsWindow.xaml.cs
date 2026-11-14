@@ -91,10 +91,12 @@ public partial class SettingsWindow : Window
         }
 
         // 각 탭의 대표 첫 컨트롤 이름에 우선 포커싱하고, 실패하면 탭 본문에서 첫 포커스 가능한 요소를 탐색한다.
+        // [상단바] 대표 컨트롤을 지정하지 않는다 — "새 커스텀 단축키 추가" 버튼은 본문 중간(좌·우 목록 아래)에 있어
+        // 포커스가 그쪽으로 가면서 ScrollViewer가 자동으로 중간까지 스크롤되는 문제를 막기 위해,
+        // 폴백 탐색이 본문 맨 위(첫 행의 체크박스)로 포커스를 보내도록 한다.
         FrameworkElement? primary = tab.Header?.ToString() switch
         {
             "외형" => AppearanceFirstFocusable,
-            "상단바" => TopBarFirstFocusable,
             "동작" => BehaviorFirstFocusable,
             "보조기능" => A11yFirstFocusable,
             "고급" => AdvancedFirstFocusable,
