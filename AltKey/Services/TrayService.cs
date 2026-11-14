@@ -9,7 +9,7 @@ namespace AltKey.Services;
 
 /// <summary>
 /// [역할] 윈도우 작업 표시줄의 알림 영역(트레이 아이콘)을 관리하는 서비스입니다.
-/// [기능] 트레이 아이콘 표시, 우클릭 메뉴(레이아웃 변경, 설정 등), 더블 클릭 시 키보드 보이기/숨기기 등을 처리합니다.
+/// [기능] 트레이 아이콘 표시, 좌클릭·우클릭 메뉴(레이아웃 변경, 설정, 종료 등)를 보여줍니다.
 /// </summary>
 public class TrayService : IDisposable
 {
@@ -87,7 +87,14 @@ public class TrayService : IDisposable
 
         var menu = BuildContextMenu();
         _notifyIcon.ContextMenuStrip = menu;
-        _notifyIcon.DoubleClick     += (_, _) => ToggleVisibility();
+        // [접근성] 시선 입력에서는 우클릭이 어려울 수 있어 좌클릭으로도 메뉴를 엽니다.
+        // (기존 "더블클릭 = 키보드 보이기/숨기기"는 좌클릭 메뉴와 충돌해 제거 — 메뉴의 "보이기/숨기기" 항목을 쓰세요.)
+        // 우클릭은 ContextMenuStrip이 네이티브로 처리하고, 좌클릭은 클릭 위치(커서)에 같은 메뉴를 표시합니다.
+        _notifyIcon.MouseUp += (_, e) =>
+        {
+            if (e.Button == MouseButtons.Left)
+                _notifyIcon.ContextMenuStrip?.Show(System.Windows.Forms.Cursor.Position);
+        };
     }
 
     // ── 컨텍스트 메뉴 ────────────────────────────────────────────────────────
