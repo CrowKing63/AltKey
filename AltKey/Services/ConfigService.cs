@@ -37,39 +37,53 @@ public class ConfigService
     /// </summary>
     public void Load()
     {
-        if (!File.Exists(PathResolver.ConfigPath))
+        var fileExists = File.Exists(PathResolver.ConfigPath);
+        if (fileExists)
+        {
+            try
+            {
+                var json = File.ReadAllText(PathResolver.ConfigPath);
+                Current = JsonSerializer.Deserialize<AppConfig>(json, JsonOptions.Default) ?? new();
+
+                MigrateWindowConfig(json);
+                MigrateLegacyLayoutNames();
+            }
+            catch
+            {
+                // 설정 파일을 읽지 못하면 기본 설정으로 돌아서 앱을 계속 실행할 수 있게 합니다.
+                Current = new AppConfig();
+            }
+        }
+
+        // 상단바 버튼 목록은 설정 창과 메인 화면 모두 즉시 써야 하므로,
+        // 비어 있으면(최초 설치 또는 마이그레이션) 여기서 바로 기본값을 채웁니다.
+        var changed = EnsureHeaderButtonDefaults();
+
+        if (fileExists && NormalizeHeaderButtons())
+        {
+            changed = true;
+        }
+
+        // 파일이 없으면 기본값 저장, 있으면 변경분만 저장합니다.
+        if (changed || !fileExists)
         {
             Save();
-            return;
         }
+    }
 
-        try
+    /// <summary>
+    /// 상단바 버튼 목록이 비어 있으면 기본 구성을 채웁니다.
+    /// 채운 경우에만 true를 반환해 불필요한 저장을 줄입니다.
+    /// </summary>
+    private bool EnsureHeaderButtonDefaults()
+    {
+        Current.HeaderButtons ??= [];
+        if (Current.HeaderButtons.Count == 0)
         {
-            var json = File.ReadAllText(PathResolver.ConfigPath);
-            Current = JsonSerializer.Deserialize<AppConfig>(json, JsonOptions.Default) ?? new();
-
-            MigrateWindowConfig(json);
-            MigrateLegacyLayoutNames();
-
-            // 상단바 버튼 목록은 설정 창과 메인 화면 모두 즉시 써야 하므로,
-            // 비어 있으면 여기서 바로 기본값을 채우고 저장합니다.
-            Current.HeaderButtons ??= [];
-            if (Current.HeaderButtons.Count == 0)
-            {
-                Current.HeaderButtons = HeaderButtonConfig.CreateDefaults();
-                Save();
-                return;
-            }
-
-            if (NormalizeHeaderButtons())
-            {
-                Save();
-            }
+            Current.HeaderButtons = HeaderButtonConfig.CreateDefaults();
+            return true;
         }
-        catch
-        {
-            Current = new AppConfig();
-        }
+        return false;
     }
 
     /// <summary>
