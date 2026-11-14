@@ -10,7 +10,7 @@ namespace AltKey.Services;
 /// 서버가 안 띄어 있으면 사이드카(ISidecarProcess)로 시작합니다(CPU 전용).
 /// [기능] 추론 완료 후 일정 시간(idle) 동안 새 요청이 없으면 모델을 메모리에서 내려 RAM을 회수합니다.
 /// </summary>
-public class LocalGgufBackend : IAsyncDisposable
+public class LocalGgufBackend : IAsyncDisposable, IDisposable
 {
     private readonly ISidecarProcess _sidecar;
     private readonly ModelStore _store;
@@ -22,6 +22,8 @@ public class LocalGgufBackend : IAsyncDisposable
     private CancellationTokenSource? _idleCts;
     // in-flight 추론 요청 수 (Interlocked). 이 값이 > 0이면 idle 타이머는 언로드하지 않습니다.
     private int _activeRequests;
+    // 0=미정리 / 1=정리됨 — DI 동기 경로와 명시적 async 경로가 겹쳐도 한 번만 정리되게 하는 가드입니다.
+    private int _disposed;
 
     // 로컬 모델 파일명 (manifest의 model.fileName과 일치).
     private const string ModelFileName = "gemma-4-E2B_q4_0-it.gguf";
@@ -221,9 +223,38 @@ public class LocalGgufBackend : IAsyncDisposable
         return serverMsg is not null ? $"로컬 AI 오류: {serverMsg}" : $"로컬 AI 오류 (HTTP {(int)response.StatusCode})";
     }
 
-    public async ValueTask DisposeAsync()
+    public ValueTask DisposeAsync()
     {
+        if (Interlocked.Exchange(ref _disposed, 1) != 0)
+            return default; // 이미 정리됨 — no-op
         CancelIdleTimer();
-        await _sidecar.DisposeAsync();
+        return _sidecar.DisposeAsync();
+    }
+
+    /// <summary>
+    /// [역할] DI 컨테이너의 동기 dispose 경로(App.OnExit)에서 호출됩니다.
+    /// OnExit가 async가 아니어서 비동기 정리를 블로킹으로 기다립니다.
+    /// 사이드카가 10초 내 응답하지 않으면 포기하고 프로세스 정리만 앱 종료 시 OS에 맡깁니다 — 종료는 절대 막지 않습니다.
+    /// </summary>
+    public void Dispose()
+    {
+        if (Interlocked.Exchange(ref _disposed, 1) != 0)
+            return; // 이미 정리됨 — no-op
+        CancelIdleTimer();
+        try
+        {
+            // OnExit가 동기라 비동기 정리를 백그라운드 태스크로 돌려 블로킹 대기합니다.
+            Task.Run(async () => await _sidecar.DisposeAsync()).Wait(TimeSpan.FromSeconds(10));
+        }
+        catch (TimeoutException)
+        {
+            // 사이드카가 10초 내 응답하지 않으면 포기 — 프로세스 정리는 앱 종료 시 OS에 맡깁니다.
+            App.LogError(new TimeoutException("사이드카 정리가 10초 안에 끝나지 않아 앱 종료 시 OS 정리로 넘겼습니다."));
+        }
+        catch (AggregateException ex)
+        {
+            // 정리 실패가 앱 종료를 깨뜨리면 안 됩니다.
+            App.LogError(ex);
+        }
     }
 }

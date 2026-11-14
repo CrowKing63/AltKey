@@ -199,4 +199,30 @@ public class LocalGgufBackendTests
         Assert.False(sidecar.IsRunning);
         Assert.Equal(1, sidecar.DisposeCalls);
     }
+
+    [Fact]
+    // 동기 Dispose(DI 컨테이너의 App.OnExit 경로)도 사이드카를 종료하는지 확인합니다.
+    public void Dispose_Sync_StopsSidecar()
+    {
+        var sidecar = new FakeSidecar { IsRunning = true };
+        var backend = new LocalGgufBackend(sidecar, null!, null!);
+
+        backend.Dispose();
+
+        Assert.False(sidecar.IsRunning);
+        Assert.Equal(1, sidecar.DisposeCalls);
+    }
+
+    [Fact]
+    // 동기+비동기 dispose가 겹쳐도 사이드카는 한 번만 정리되는지 확인합니다.
+    public async Task Dispose_Twice_DisposesSidecarOnce()
+    {
+        var sidecar = new FakeSidecar { IsRunning = true };
+        var backend = new LocalGgufBackend(sidecar, null!, null!);
+
+        backend.Dispose();
+        await backend.DisposeAsync();
+
+        Assert.Equal(1, sidecar.DisposeCalls);
+    }
 }
