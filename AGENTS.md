@@ -25,11 +25,13 @@
 ## 4. 빌드·테스트 규칙
 - 단위 테스트: `AltKey.Tests\AltKey.Tests.csproj` (`dotnet test`)
 - 수동 검증(커밋 전): 호스트에서 디버그 exe를 실행하는 대신 **Windows Sandbox**에서 Release publish로 검증한다. 샌드박스는 깨끗한 환경이라 최초 설치 동작(기본값, 설정 마이그레이션)도 그대로 확인된다.
+- **수동 검증을 필요로 하는 코드 수정은 완료 시점까지 아래 1~3번 레시피로 샌드박스용 번들(`dist/AltKey-sandbox`)을 만들어 전달하는 것까지 포함한다.** "빌드는 됐으니 직접 실행해 보세요" 식의 디버그 exe 안내로는 대체하지 않는다 — 사용자가 드래그&드롭만으로 검증에 들어갈 수 있어야 한다.
+- **번들은 폴더 단위로 전달하고 zip으로 압축하지 않는다** — 샌드박스는 `dist/AltKey-sandbox` 폴더를 그대로 드래그해 사용한다.
   1. `release.yml`과 동일한 레시피로 publish (샌드박스에 .NET 런타임이 없어 self-contained 필수):
-     - 메인: `dotnet publish AltKey/AltKey.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -o dist/publish`
-     - Tools: 같은 인자에 `-o dist/publish/Tools` (§6.5의 exe 탐색 순서와 일치)
-  2. `AltKey\layouts`를 `dist/publish/layouts`로 복사하고, exe 옆에 포터블용 `config.json` 생성 (`scripts/package-portable.ps1`과 동일) — 데이터가 샌드박스 내 exe 폴더에 모이니 테스트 후 폴더를 드래그해 밖으로 빼내 검사할 수 있다.
-  3. 실행: PowerShell에서 `windowsandbox.exe dist\publish` 또는 폴더를 샌드박스 창에 드래그&드롭.
+     - 메인: `dotnet publish AltKey/AltKey.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -o dist/AltKey-sandbox`
+     - Tools: 같은 인자에 `-o dist/AltKey-sandbox/Tools` (§6.5의 exe 탐색 순서와 일치)
+  2. `AltKey\layouts`를 `dist/AltKey-sandbox/layouts`로 복사하고, exe 옆에 포터블용 `config.json` 생성 (`scripts/package-portable.ps1`과 동일) — 데이터가 샌드박스 내 exe 폴더에 모이니 테스트 후 폴더를 드래그해 밖으로 빼내 검사할 수 있다.
+  3. 실행: PowerShell에서 `windowsandbox.exe dist\AltKey-sandbox` 또는 폴더를 샌드박스 창에 드래그&드롭.
 - 사용자 변수 조정 기능은 **슬라이더 대신 `NumericAdjuster` 기반**으로 구현한다.
 
 ## 5. 테스트 작성 규칙
@@ -83,4 +85,4 @@
 3. 주석을 함께 갱신했는가?
 4. `AltKey.Tools` 분리 아키텍처를 거스르지 않는가?
 5. 테스트 위치·파일 길이 규칙을 지켰는가?
-6. 필요한 빌드/테스트/도구 실행 검증을 했는가?
+6. 필요한 빌드/테스트/도구 실행 검증을 했는가? (수동 검증이 필요하면 §4 샌드박스 번들까지 만든 것인가?)
