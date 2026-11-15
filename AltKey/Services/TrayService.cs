@@ -89,12 +89,29 @@ public class TrayService : IDisposable
         _notifyIcon.ContextMenuStrip = menu;
         // [접근성] 시선 입력에서는 우클릭이 어려울 수 있어 좌클릭으로도 메뉴를 엽니다.
         // (기존 "더블클릭 = 키보드 보이기/숨기기"는 좌클릭 메뉴와 충돌해 제거 — 메뉴의 "보이기/숨기기" 항목을 쓰세요.)
-        // 우클릭은 ContextMenuStrip이 네이티브로 처리하고, 좌클릭은 클릭 위치(커서)에 같은 메뉴를 표시합니다.
-        _notifyIcon.MouseUp += (_, e) =>
-        {
-            if (e.Button == MouseButtons.Left)
-                _notifyIcon.ContextMenuStrip?.Show(System.Windows.Forms.Cursor.Position);
-        };
+        // 우클릭은 ContextMenuStrip이 네이티브로 처리하고, 좌클릭도 아래 ShowTrayMenu()가 같은 네이티브 경로를
+        // 타서 두 버튼이 완전히 동일하게 동작합니다(외부 클릭 시 닫힘 포함).
+        _notifyIcon.MouseClick += OnTrayMouseClick;
+    }
+
+    /// <summary>좌클릭으로 트레이 컨텍스트 메뉴를 프로그램적으로 엽니다.</summary>
+    private void OnTrayMouseClick(object? sender, System.Windows.Forms.MouseEventArgs e)
+    {
+        if (e.Button == MouseButtons.Left)
+            ShowTrayMenu();
+    }
+
+    /// <summary>좌클릭 경로에서 트레이 컨텍스트 메뉴를 엽니다. NotifyIcon은 우클릭에만 네이티브로 메뉴를
+    /// 표시하고 공개 API가 없어서, 비공개 메서드 ShowContextMenu()를 reflection으로 호출합니다(버전 간 안정적).
+    /// [왜 이렇게 하는가] ContextMenuStrip.Show()로 직접 열면 외부 클릭 시 닫히지 않는 문제가 있어서,
+    /// 우클릭과 동일한 네이티브 경로(ShowContextMenu)를 타야 두 버튼 동작이 일치합니다. (Moonstone과 같은 방식.)
+    /// 미래 런타임에서 메서드가 사라지면 아무 동작 없이 넘어가도 우클릭은 계속 작동합니다.</summary>
+    private void ShowTrayMenu()
+    {
+        if (_notifyIcon is null) return;
+        typeof(NotifyIcon)
+            .GetMethod("ShowContextMenu", BindingFlags.Instance | BindingFlags.NonPublic)?
+            .Invoke(_notifyIcon, null);
     }
 
     // ── 컨텍스트 메뉴 ────────────────────────────────────────────────────────
