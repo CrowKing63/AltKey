@@ -33,9 +33,14 @@ public sealed class FakeInputService : InputService
 
     public override void SendBackspace(int count) => BackspaceCounts.Add(count);
 
-    // [꼬리 공백] 테스트에서 포그라운드 창을 임의로 설정할 수 있게 한다.
+    // [꼬리 공백] 테스트에서 포그라운드 창을 임의로 설정할 수 있게.
     public IntPtr ForegroundHwnd { get; set; } = new(1234);
     public override IntPtr GetForegroundHwnd() => ForegroundHwnd;
+
+    /// <summary>
+    /// [콤보 확정] SendCombo 직전 훅을 테스트에서 발화한다 (실제 Win32 키 전송은 안 함).
+    /// </summary>
+    public void FireComboWillBeSent(IReadOnlyList<VirtualKeyCode> keys) => ComboWillBeSent?.Invoke(keys);
 }
 
 /// <summary>
@@ -211,6 +216,10 @@ internal static class TestSlotFactory
     /// <summary>백스페이스 키용 팩토리</summary>
     public static KeySlot Backspace() =>
         new(Label: "⌫", ShiftLabel: null, Action: new SendKeyAction(VirtualKeyCode.VK_BACK.ToString()));
+
+    /// <summary>붙여넣기 조합키(Ctrl+V)용 팩토리</summary>
+    public static KeySlot Paste() =>
+        new(Label: "Paste", ShiftLabel: null, Action: new SendComboAction(["VK_CONTROL", "VK_V"]));
 
     /// <summary>G-테스트용: (KoreanInputModule, FakeInputService, KoreanDictionaryTestable) 튜플 팩토리</summary>
     internal static (KoreanInputModule module, FakeInputService input, KoreanDictionaryTestable dict) CreateModuleWithInput(

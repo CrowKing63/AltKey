@@ -28,10 +28,12 @@ public sealed class KoreanInputModule : IInputLanguageModule
 
     public KoreanInputModule(InputService input, KoreanDictionary koDict, EnglishDictionary enDict, ConfigService config)
     {
-        _input  = input;
+        _input = input;
         _koDict = koDict;
         _enDict = enDict;
         _config = config;
+        // [콤보 취소] 조합키(Ctrl+A 등)가 OS에 전달될 때 조합을 Esc처럼 취소한다.
+        _input.ComboWillBeSent += OnComboWillBeSent;
     }
 
     public string LanguageCode => "ko";
@@ -120,6 +122,7 @@ public sealed class KoreanInputModule : IInputLanguageModule
             _composer.Feed(jamo);
             string newOutput = _composer.Current;
             int prefix = CommonPrefixLength(oldOutput, newOutput);
+            DebugLog.Info($"Feed jamo='{jamo}' old='{oldOutput}' new='{newOutput}' bs={oldOutput.Length - prefix}");
             _input.SendAtomicReplace(oldOutput.Length - prefix, newOutput.Substring(prefix), newOutput.Length);
             SuggestionsChanged?.Invoke(_koDict.GetSuggestions(newOutput, _suggestionContext));
             return true;
@@ -216,6 +219,7 @@ public sealed class KoreanInputModule : IInputLanguageModule
             _composer.Backspace();
             string newOutput = _composer.Current;
             int prefix = CommonPrefixLength(oldOutput, newOutput);
+            DebugLog.Info($"Backspace old='{oldOutput}' new='{newOutput}' bs={oldOutput.Length - prefix}");
             _input.SendAtomicReplace(oldOutput.Length - prefix, newOutput.Substring(prefix), newOutput.Length);
             SuggestionsChanged?.Invoke(_koDict.GetSuggestions(newOutput, _suggestionContext));
             return true;
@@ -241,20 +245,23 @@ public sealed class KoreanInputModule : IInputLanguageModule
     }
 
     /// <summary>
-    /// [꼬리 공백] pending 꼬리 공백 뒤에 구분자·백스페이스가 아닌 키가 오면,
+    /// [꼬리 공백] pending 꼬리 공백 뒤에 구분자·백스페이스가 아닌 단일 키가 오면,
     /// 그 공백은 실제 텍스트가 된다 — 플래그만 정리한다.
-    /// 비문자 액션(ToggleSticky 등)은 화면을 바꾸지 않으므로 실제 문자 키가 올 때까지 플래그를 유지한다.
+    /// 콤보키(붙여넣기·All 버튼 등)는 여기서 관리하지 않는다 —
+    /// SendCombo 디스패치 시 OnComboWillBeSent 훅에서 확정한다.
     /// </summary>
     private void ReleasePendingTrailingSpaceOnNonSeparator(KeySlot slot, KeyContext ctx)
     {
         if (!_pendingTrailingSpace) return;
+
+        // 백스페이스·구분자만 플래그를 유지한다 — 각 HandleKey 분기에서
+        // Retract(구분자) 또는 HandleBackspace 진입부 정리(백스페이스)로 처리된다.
+        // SendKeyAction이 아닌 슬롯(콤보키 등)은 여기서 관리하지 않는다.
         if (slot.Action is not SendKeyAction { Vk: var vkStr }) return;
         if (!Enum.TryParse<VirtualKeyCode>(vkStr, out var vk)) return;
+        if (vk == VirtualKeyCode.VK_BACK || IsSeparator(vk, ctx.ShowUpperCase)) return;
 
-        bool isBackspace = vk == VirtualKeyCode.VK_BACK;
-        bool isSeparator = IsSeparator(vk, ctx.ShowUpperCase);
-        if (!isBackspace && !isSeparator)
-            _pendingTrailingSpace = false;
+        _pendingTrailingSpace = false;
     }
 
     /// <summary>
@@ -269,7 +276,9 @@ public sealed class KoreanInputModule : IInputLanguageModule
         if (!_pendingTrailingSpace) return;
         _pendingTrailingSpace = false;
 
-        if (_input.GetForegroundHwnd() != _pendingTrailingSpaceTarget) return;
+        bool fgMatch = _input.GetForegroundHwnd() == _pendingTrailingSpaceTarget;
+        DebugLog.Info($"RetractPendingTrailingSpace fired fgMatch={fgMatch}");
+        if (!fgMatch) return;
         _input.SendBackspace(1);
     }
 
@@ -469,6 +478,25 @@ public sealed class KoreanInputModule : IInputLanguageModule
         _suggestionContext = null;
         SuggestionsChanged?.Invoke(Array.Empty<string>());
         _input.ResetTrackedLength();
+    }
+
+    /// <summary>
+    /// [콤보 취소] 조합키(Ctrl+A 등)가 OS에 전달되기 직전 조합을 Esc처럼 취소한다.
+    /// 대상 앱은 이 숏컷으로 전체 선택 같은 동작을 수행하므로, 보내기 전에 조합 상태를
+    /// 초기화해 "화면 꼬리 = 조합 상태" 전제가 깨지지 않게 한다. 확정(FinalizeComposition)과
+    /// 달리 학습·bigram 문맥에는 참여하지 않는다 — 단축키로 끊긴 글자는 완성된 단어가 아니므로.
+    /// (단독 수정키 탭만으로는 선택이 생기지 않아 추가 트리거는 불필요하다.)
+    /// </summary>
+    private void OnComboWillBeSent(IReadOnlyList<VirtualKeyCode> keys)
+    {
+        // [꼬리 공백] 콤보는 화면의 공백을 지우지 않으므로 pending 꼬리 공백은
+        // 이제 실제 텍스트로 확정한다(플래그만 정리, 백스페이스는 남기지 않음).
+        ClearPendingTrailingSpace();
+
+        // 조합 중이면 Esc처럼 취소 — 학습 없이 상태만 초기화한다. 화면 글자는 그대로 남고
+        // (Esc와 동일) 이후 숏컷·백스페이스가 OS에 raw로 전달된다.
+        if (_composer.HasComposition || _englishPrefix.Length > 0)
+            CancelComposition();
     }
 
     /// <summary>

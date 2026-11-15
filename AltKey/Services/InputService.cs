@@ -461,8 +461,17 @@ public class InputService
         }
     }
 
+    /// <summary>
+    /// [콤보 취소] 조합키(Ctrl+A 등)를 OS에 실제로 보내기 직전에 호출한다.
+    /// 언어 모듈이 조합 중 상태를 Esc처럼 취소하는 용도 — 대상 앱은 이 숏컷으로 전체
+    /// 선택 같은 동작을 수행하므로, 그 전에 조합 상태가 초기화돼야 한다.
+    /// 일반 델리게이트(이벤트 아님) — 테스트용 FakeInputService에서 발화해야 해서.
+    /// </summary>
+    public Action<IReadOnlyList<VirtualKeyCode>>? ComboWillBeSent { get; set; }
+
     public void SendCombo(List<VirtualKeyCode> keys)
     {
+        ComboWillBeSent?.Invoke(keys);
         foreach (var k in keys)
             SendKeyDown(k);
         foreach (var k in Enumerable.Reverse(keys))
@@ -494,6 +503,7 @@ public class InputService
     /// </summary>
     public virtual void SendAtomicReplace(int prevLen, string newText, int fullNewLength)
     {
+        DebugLog.Info($"SendAtomicReplace prevLen={prevLen} text='{newText}' fullNewLength={fullNewLength}");
         // 백스페이스 배치와 새 유니코드 문자 배치를 분리해 보낸다.
         // 두 배치가 0지연으로 붙어 가면 일부 앱(메모장 EDIT 컨트롤 등)이 메시지 처리
         // 타이밍에 따라 이벤트 하나를 간혹 분실한다("열렬 → 열열렬" 중복 버그).
