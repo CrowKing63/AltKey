@@ -154,6 +154,12 @@ public partial class HeaderShortcutEditorWindow : Window, INotifyPropertyChanged
     /// </summary>
     private void LoadFromConfig()
     {
+        // 마이그레이션: 메인 앱과 공유 — 기존 사용자의 목록에 스크래치패드 같은 나중에 생긴 기본 버튼이
+        // 없으면 누락된 BuiltIn만 목록 끝에 보정합니다 (커스텀 버튼·순서는 그대로 유지).
+        var ensuredButtons = HeaderButtonConfig.EnsureAllBuiltIns(_configService.Current.HeaderButtons);
+        if (ensuredButtons.Count != _configService.Current.HeaderButtons.Count)
+            _configService.Current.HeaderButtons = ensuredButtons;
+
         var (target, isCreate, error) = HeaderButtonConfig.ResolveEditTarget(
             _configService.Current.HeaderButtons,
             _requestedHeaderButtonId,

@@ -521,6 +521,13 @@ public partial class KeyboardViewModel : ObservableObject
 
     public event Action? LiveRegionChanged;
 
+    /// <summary>[스크래치패드] 포그라운드가 스크래치패드일 때 그 메모 박스를 반환 (아니면 null). MainViewModel이 설정한다.
+    /// 이 값이 null이 아니면 KeyPressed는 스크래치패드를 외부 앱처럼 취급해 내부 조합(Unicode) 경로를 사용한다.</summary>
+    public Func<System.Windows.Controls.TextBox?>? ScratchPadForegroundBox { get; set; }
+
+    /// <summary>[스크래치패드][임시] 포그라운드가 스크래치패드 창인지만 판별 — 구분자 진단 로그용. 확인 후 제거.</summary>
+    public Func<bool>? IsScratchPadForeground { get; set; }
+
     private void RaiseLiveRegionChanged()
     {
         LiveRegionChanged?.Invoke();
@@ -647,7 +654,11 @@ public partial class KeyboardViewModel : ObservableObject
             return;
         }
 
-        if (_inputService.IsForegroundOwnWindow())
+        // [스크래치패드] 포그라운드가 스크래치패드면 자기 창 브랜치를 건너뛰고 아래 외부 앱 경로(내부 조합)를 쓴다.
+        var scratchPadBox = ScratchPadForegroundBox?.Invoke();
+        DebugLog.Info($"KeyPressed slot='{slot.Label}' padBox={(scratchPadBox is null ? "null" : "ok")} ownFg={_inputService.IsForegroundOwnWindow()} svcMode={_inputService.Mode}");
+
+        if (_inputService.IsForegroundOwnWindow() && scratchPadBox is null)
         {
             _autoComplete.CancelComposition();
 
@@ -676,6 +687,14 @@ public partial class KeyboardViewModel : ObservableObject
 
         if (IsSeparatorKey(slot))
         {
+            // [스크래치패드][임시 프로브] 스페이스 미반영 진단 — 포커스 복원 전 상태 기록. 확인 후 제거.
+            DebugLog.Info($"SepSend slot='{slot.Label}' padFg={(IsScratchPadForeground?.Invoke() ?? false)} boxFocusedPre={(scratchPadBox?.IsKeyboardFocused ?? false)}");
+
+            // [스크래치패드] 구분자도 자모와 같은 대상 — 메모 박스 포커스가 끊겼다면 복원한다.
+            // 자모 경로는 이미 이 복원을 하고 있어, 복원이 없는 구분자만 대상에서 빠지는 비대칭을 막는다.
+            if (scratchPadBox is not null && !scratchPadBox.IsKeyboardFocused)
+                System.Windows.Input.Keyboard.Focus(scratchPadBox);
+
             _autoComplete.OnSeparator();
             if (effectiveAction is not null)
             {
@@ -686,11 +705,20 @@ public partial class KeyboardViewModel : ObservableObject
             return;
         }
 
+        // 스크래치패드는 항상 내부 조합(Unicode) 경로를 쓴다 — 자기 창 IME 상태에 의존하면 한글이 안 조합된다.
+        var inputMode = scratchPadBox is not null || _inputService.Mode == InputMode.Unicode
+            ? InputMode.Unicode
+            : InputMode.VirtualKey;
+
+        // 메모 박스가 포커스를 잃었을 때(제목바 클릭 등) 다시 놓아 문자가 유실되지 않게 한다.
+        if (scratchPadBox is not null && !scratchPadBox.IsKeyboardFocused)
+            System.Windows.Input.Keyboard.Focus(scratchPadBox);
+
         var ctx = new KeyContext(
             ShowUpperCase,
             _inputService.HasActiveModifiers,
             _inputService.HasActiveModifiersExcludingShift,
-            _inputService.Mode,
+            inputMode,
             _inputService.TrackedOnScreenLength);
 
         bool handled = _autoComplete.OnKey(slot, ctx);

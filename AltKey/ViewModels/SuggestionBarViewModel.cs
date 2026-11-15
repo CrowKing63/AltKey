@@ -44,6 +44,12 @@ public partial class SuggestionBarViewModel : ObservableObject
     // [접근성][L3] 키보드 스캔 엔진이 제안 목록 갱신을 감지할 수 있도록 알립니다.
     public event Action? ScanTargetsChanged;
 
+    // [스크래치패드] 수락 전 입력 대상(메모 박스) 포커스를 확보하는 훅이다.
+    // 키 입력(KeyPressed)은 메모 박스 포커스가 끊겼을 때 스스로 복원하지만, 제안 수락 경로는
+    // 그런 로직이 없어 SendInput이 포그라운드(예: 키보드 창)으로 가 사라질 수 있다 —
+    // MainViewModel이 패드 여부와 포그라운드를 검사해 연결한다.
+    public Action? PrepareInputTarget { get; set; }
+
     public SuggestionBarViewModel(
         AutoCompleteService autoComplete,
         InputService inputService,
@@ -146,6 +152,9 @@ public partial class SuggestionBarViewModel : ObservableObject
     [RelayCommand]
     private void AcceptSuggestion(string suggestion)
     {
+        // 수락 전 입력 대상 포커스 확보 — 키 입력 경로(KeyPressed)의 재포커스와 같은 역할이다.
+        PrepareInputTarget?.Invoke();
+
         if (_currentMode == SuggestionMode.Bigram)
         {
             // 바이그램 모드: 유니코드 모드에서만 처리, 그 외는 무시

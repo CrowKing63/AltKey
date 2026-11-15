@@ -1,8 +1,11 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
+using System.Windows;
+using System.Windows.Interop;
 using AltKey.Models;
 using AltKey.Platform;
+using AltKey.Views;
 using Microsoft.Extensions.DependencyInjection;
 using WpfApp = System.Windows.Application;
 using WpfMsgBox = System.Windows.MessageBox;
@@ -29,6 +32,7 @@ public partial class MainViewModel : ObservableObject
     private readonly LiveRegionService _liveRegion;
     private readonly AiService _aiService;
     private readonly SoundService _soundService;
+    private readonly ScratchPadViewModel _scratchPadVm; // 스크래치패드 메모 (U1)
 
     // 표시명 → 파일명 매핑 (T-7.1: AvailableLayouts가 표시명을 저장)
     private readonly Dictionary<string, string> _displayToFileName = [];
@@ -219,7 +223,8 @@ public partial class MainViewModel : ObservableObject
         OskLauncherService     oskLauncher,
         LiveRegionService      liveRegion,
         AiService              aiService,
-        SoundService           soundService)
+        SoundService           soundService,
+        ScratchPadViewModel    scratchPadViewModel)
     {
         _configService  = configService;
         _layoutService  = layoutService;
@@ -227,6 +232,7 @@ public partial class MainViewModel : ObservableObject
         _liveRegion = liveRegion;
         _aiService = aiService;
         _soundService = soundService;
+        _scratchPadVm = scratchPadViewModel;
 
         Keyboard     = keyboardViewModel;
         Settings     = settingsViewModel;
@@ -236,6 +242,55 @@ public partial class MainViewModel : ObservableObject
         _autoCompleteService = autoCompleteService;
         _inputService = inputService;
         _oskLauncher = oskLauncher;
+
+        // [스크래치패드] 포그라운드가 스크래치패드면 외부 앱처럼(내부 조합 경로) 입력 처리 — 자기 창 IME에 맡기면 한글이 안 조합된다.
+        keyboardViewModel.ScratchPadForegroundBox = () =>
+        {
+            if (_scratchPadWindow is not { IsVisible: true } pad) return null;
+
+            var fg = Win32.GetForegroundWindow();
+            if (fg == IntPtr.Zero) return null;
+
+            // 1) 포그라운드가 패드 창 자체인 경우
+            if (fg == new WindowInteropHelper(pad).Handle)
+                return pad.InputBox;
+
+            // 2) 포그라운드가 키보드(메인) 창인 경우: 패드가 열려 있을 때 키를 클릭하면 WPF가
+            //    같은 프로세스의 키보드 창을 활성화해 포그라운드를 뺏긴다 (SetForegroundWindow는
+            //    우리 프로세스가 이미 포그라운드를 갖고 있으면 성공한다). 이 경우에도 "패드를 여고
+            //    키를 눌렀다"로 보고 패드로 라우팅한다. 외부 앱이 포그라운드면 활성화 자체가
+            //    차단되므로 포그라운드가 그대로 유지되어 외부 경로로 간다.
+            var main = System.Windows.Application.Current?.MainWindow;
+            if (main is not null && fg == new WindowInteropHelper(main).Handle)
+                return pad.InputBox;
+
+            return null;
+        };
+
+        // [스크래치패드][임시] 구분자 진단 로그용 — 포그라운드가 패드 창인지만 판별한다. 확인 후 제거.
+        keyboardViewModel.IsScratchPadForeground = () =>
+        {
+            if (_scratchPadWindow is not { IsVisible: true } pad) return false;
+            var fg = Win32.GetForegroundWindow();
+            return fg != IntPtr.Zero && fg == new WindowInteropHelper(pad).Handle;
+        };
+
+        // [스크래치패드] 제안 수락도 키 입력과 같은 대상 판별으로 전송 전 포커스를 확보한다.
+        // KeyPressed는 메모 박스 포커스가 끊겼을 때 스스로 복원하지만(KeyboardViewModel),
+        // 수락 경로는 그 로직이 없어 포그라운드가 키보드 창으로 쏠려 있을 때 SendInput이
+        // AltKey 자체로 가 사라진다 — 전송 전 패드 창/메모 박스 포커스를 다시 놓아 준다.
+        suggestionBarViewModel.PrepareInputTarget = () =>
+        {
+            var padBox = keyboardViewModel.ScratchPadForegroundBox?.Invoke();
+            bool padVisible = _scratchPadWindow is { IsVisible: true };
+            DebugLog.Info($"AcceptPrep padVisible={padVisible} padBox={(padBox is null ? "null" : "ok")} boxFocused={(padBox is null ? "-" : (padBox.IsKeyboardFocused ? "y" : "n"))}");
+
+            if (padBox is null) return; // 외부 앱이 입력 대상인 경우 — 포그라운드를 건드리지 않는다
+            if (_scratchPadWindow is not { IsVisible: true } pad) return;
+
+            if (!pad.IsActive) pad.Activate();
+            if (!padBox.IsKeyboardFocused) System.Windows.Input.Keyboard.Focus(padBox);
+        };
 
         _profileService.ForegroundAppChanged += OnForegroundAppChanged;
         _configService.ConfigChanged += OnConfigChanged;
@@ -481,6 +536,134 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void ToggleClipboardPanel() => Clipboard.IsVisible = !Clipboard.IsVisible;
 
+    // ── 스크래치패드 (U1) ───────────────────────────────────────────
+    // 창은 첫 열림 때만 만들고, 이후 Show/Hide만 관리합니다 (클립보드 패널 토글과 같은 패턴).
+    private ScratchPadWindow? _scratchPadWindow;
+    private Window? _scratchPadHost;          // 키보드 창(MainWindow) — 패드 배치의 기준
+    private bool _scratchPadWasOpen;          // 트레이 숨김 중 패드가 열려 있었는지 기억
+
+    /// <summary>
+    /// MainWindow가 자신을 연결합니다 — 패드는 키보드 창의 위치를 기준으로 떠야 하므로
+    /// 호스트(키보드 창)의 이동·크기 변화·숨김/보임을 여기서 구독합니다.
+    /// </summary>
+    internal void AttachScratchPadHost(Window host)
+    {
+        _scratchPadHost = host;
+        host.LocationChanged += OnScratchPadHostMoved;
+        host.SizeChanged += OnScratchPadHostMoved;
+        host.IsVisibleChanged += OnScratchPadHostVisibilityChanged;
+
+        // 투명도 완전 연동: 키보드 창이 페이드(유휴·설정 변경)하면 열린 패드도 같은 값으로 따라갑니다 (2026-11-15).
+        if (host is MainWindow mw)
+            mw.OpacityStateApplied += OnHostOpacityStateApplied;
+    }
+
+    [RelayCommand]
+    private void ToggleScratchPad()
+    {
+        if (_scratchPadWindow is null)
+        {
+            _scratchPadWindow = new ScratchPadWindow(_scratchPadVm);
+            _scratchPadWindow.Owner = _scratchPadHost; // 작업표시줄에 안 보임, 앱 종료 시 자동 정리
+            _scratchPadWindow.OnCloseRequested += OnScratchPadCloseRequested;
+        }
+
+        if (IsScratchPadOpen())
+            HideScratchPad();
+        else
+            ShowScratchPad();
+    }
+
+    private bool IsScratchPadOpen() => _scratchPadWindow is { IsVisible: true };
+
+    private void ShowScratchPad()
+    {
+        var pad = _scratchPadWindow!;
+        ApplyComputedPadPosition(pad); // 열기 전 계산 위치로 배치 (D4)
+        pad.Show();
+        pad.Activate();       // 열기 시 자동 포커스 — 커서가 바로 메모에 놓임 (D5)
+        pad.FocusTextBox();
+
+        // 투명도 연동: 키보드 창의 현재 투명도에서 시작합니다 —
+        // 유휴 페이딩 중인 동안에 패드가 갑자기 100%로 튀는 것을 방지 (2026-11-15).
+        if (_scratchPadHost is { } host)
+            pad.Opacity = host.Opacity;
+    }
+
+    // 투명도 완전 연동 — 키보드 창의 투명도 목표가 바뀌면(유휴 페이딩·설정 변경 등) 열린 패드도 같은 값으로 동기화합니다.
+    private void OnHostOpacityStateApplied(double targetOpacity, int durationMs)
+    {
+        if (_scratchPadWindow is not { IsVisible: true } pad) return;
+
+        if (durationMs <= 0)
+        {
+            // 즉시 적용 — 이전 애니메이션을 제거하고 값만 씁니다.
+            pad.BeginAnimation(System.Windows.Window.OpacityProperty, null);
+            pad.Opacity = targetOpacity;
+        }
+        else
+        {
+            // 같은 시간으로 함께 페이드합니다 (BeginAnimation은 이전 애니메이션을 자동으로 대체).
+            pad.BeginAnimation(
+                System.Windows.Window.OpacityProperty,
+                new System.Windows.Media.Animation.DoubleAnimation
+                {
+                    From = pad.Opacity,
+                    To = targetOpacity,
+                    Duration = new System.Windows.Duration(TimeSpan.FromMilliseconds(durationMs))
+                });
+        }
+    }
+
+    private void HideScratchPad()
+    {
+        _scratchPadVm.SaveNow(); // 500ms 디바운스 창을 넘어 안 저장된 내용이 없도록 즉시 저장
+        _scratchPadWindow?.Hide();
+    }
+
+    private void OnScratchPadCloseRequested() => HideScratchPad();
+
+    // 키보드 창이 이동·크기 변경(드래그든 상하 이동 버튼이든)되면 열린 패드를 재배치 (D6).
+    private void OnScratchPadHostMoved(object? sender, EventArgs e)
+    {
+        if (_scratchPadWindow is not { IsVisible: true } pad) return;
+        ApplyComputedPadPosition(pad);
+    }
+
+    // 키보드 창이 트레이로 숨겨지면 패드도 함께 숨기고, 복원 시 다시 표시합니다.
+    // (owned 창은 owner Hide에 자동 숨기지 않으므로 여기서 명시 처리 — D3/§3.1)
+    private void OnScratchPadHostVisibilityChanged(object? sender, DependencyPropertyChangedEventArgs e)
+    {
+        if (_scratchPadWindow is null || _scratchPadHost is null) return;
+
+        if (!_scratchPadHost.IsVisible)
+        {
+            _scratchPadWasOpen = IsScratchPadOpen();
+            if (_scratchPadWasOpen) _scratchPadWindow.Hide();
+        }
+        else if (_scratchPadWasOpen)
+        {
+            _scratchPadWasOpen = false;
+            ShowScratchPad();
+        }
+    }
+
+    // 위치는 매번 계산·적용만 하고 저장하지 않습니다 — 패드 드래그로 만든 임시 오프셋은
+    // 다음 재계산(키보드 이동·열기) 시 계산 위치로 돌아갑니다 (D4/D6, 영속화 없음).
+    private void ApplyComputedPadPosition(ScratchPadWindow pad)
+    {
+        if (_scratchPadHost is not { } host) return;
+
+        var (left, top) = ScratchPadPlacement.PlacePad(
+            new Rect(host.Left, host.Top, host.ActualWidth, host.ActualHeight),
+            SystemParameters.WorkArea,
+            pad.Width,
+            pad.Height);
+
+        pad.Left = left;
+        pad.Top = top;
+    }
+
     [RelayCommand]
     private void SendOsImeHangul()
     {
@@ -661,6 +844,18 @@ public partial class MainViewModel : ObservableObject
             _configService.Current.HeaderButtons = configs;
             _configService.Save();
         }
+        else
+        {
+            // 마이그레이션: 기존 사용자의 목록에는 스크래치패드 같은 나중에 생긴 기본 버튼이 없으므로
+            // 누락된 BuiltIn만 목록 끝에 보정합니다 (커스텀 버튼·순서는 그대로 유지).
+            var ensured = HeaderButtonConfig.EnsureAllBuiltIns(configs);
+            if (ensured.Count != configs.Count)
+            {
+                _configService.Current.HeaderButtons = ensured;
+                _configService.Save();
+                configs = ensured;
+            }
+        }
         var left  = new ObservableCollection<HeaderButtonVm>();
         var right = new ObservableCollection<HeaderButtonVm>();
         foreach (var cfg in configs)
@@ -691,6 +886,8 @@ public partial class MainViewModel : ObservableObject
             HeaderButtonConfig.IdSettings => CreateBuiltInHeaderButtonVm(config, Settings.OpenSettingsCommand),
             // AI ✨ 버튼은 상단바 설정의 Visible만으로 표시됩니다.
             HeaderButtonConfig.IdAi => CreateBuiltInHeaderButtonVm(config, ExecuteAiCommand),
+            // 스크래치패드도 AI와 같은 패턴 — Visible 토글만 (창 생성·Show/Hide는 ToggleScratchPad가 관리)
+            HeaderButtonConfig.IdScratchPad => CreateBuiltInHeaderButtonVm(config, ToggleScratchPadCommand),
             _ => null
         };
     }
@@ -763,6 +960,7 @@ public partial class MainViewModel : ObservableObject
                 HeaderButtonConfig.IdOsk => "화면 키보드를 엽니다.",
                 HeaderButtonConfig.IdSettings => "설정 창을 엽니다.",
                 HeaderButtonConfig.IdAi => "선택한 텍스트를 AI로 가공합니다.",
+                HeaderButtonConfig.IdScratchPad => "빠른 메모를 엽니다.",
                 _ => ""
             };
         }

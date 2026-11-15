@@ -1,6 +1,6 @@
 # 스크래치패드(빠른 메모) 기능 계획
 
-> 상태: **계획 (개정 2)** — U2~U4 완료·검증됨, U1 구현은 사용자 확인 대기. (2026-11-15 브레인스토밍 3라운드 + 범위 재확인)
+> 상태: **계획 (개정 4)** — U2~U4 완료·검증됨, U1 구현 + 수동 검증 피드백 5건 반영은 사용자 재확인 대기. (2026-11-15 브레인스토밍 3라운드 → 범위 재확인 → 피드백 반영)
 
 ## 1. 배경
 
@@ -55,7 +55,7 @@ PlacePad(keyboardRect, workArea, padSize):   # 열기 시 / 키보드 이동 시
 
 ### 3.4 헤더 버튼 연결
 - `HeaderButtonConfig`: `IdScratchPad = "ScratchPad"` 추가 — `CreateDefaults()`에 `visible: false` (D1), `IsBuiltInId`/이름·아이콘(✏️)·툴팁·접근성 이름 switch 보강.
-- **마이그레이션 필수**: `MainViewModel.RebuildHeaderButtons()`는 목록이 비어 있을 때만 기본값을 넣으므로, 기존 사용자에게 새 버튼이 안 보인다 → `HeaderButtonConfig.EnsureAllBuiltIns(List<HeaderButtonConfig>)` 순수 함수 추가(누락된 BuiltIn ID를 목록 끝에 보정, 커스텀 버튼·순서 불변)을 **메인 앱과 AltKey.Tools 상단바 편집기가 공유** (§6.2 공용 ViewModel/Service 경계 규칙 — Models에 둠).
+- **마이그레이션 필수**: `MainViewModel.RebuildHeaderButtons()`는 목록이 비어 있을 때만 기본값을 넣으므로, 기존 사용자에게 새 버튼이 안 보인다 → `HeaderButtonConfig.EnsureAllBuiltIns(List<HeaderButtonConfig>)` 순수 함수 추가(누락된 BuiltIn ID를 설정 앞에 보정, "새 기능" 기본 버튼은 맨 앞 고정 — 개정 5 참고, 커스텀 버튼 불변)을 **메인 앱과 AltKey.Tools 상단바 편집기가 공유** (§6.2 공용 ViewModel/Service 경계 규칙 — Models에 둠).
 - `MainViewModel`에 `ToggleScratchPadCommand` (ClipboardPanel 토글과 동일 구조: 창 생성은 지연, 이후 Show/Hide만).
 
 ### 3.5 영속화 + 숏컷 버튼
@@ -128,3 +128,27 @@ PlacePad(keyboardRect, workArea, padSize):   # 열기 시 / 키보드 이동 시
 - 드래그 중 겹침 클램프(구 D9)는 **후순위** — 필요해지면 `ConstrainPadPosition` 순수 함수로 추가.
 - 패드 드래그 위치는 **임시 오프셋** — D4/D6에 따라 다음 키보드 이동·열기 시 계산 위치로 복귀 (영속화 없음). 커스텀 위치를 기억하는 기능이 필요해지면 그때 추가.
 - U5 문서 대상은 `Wiki/AltKey.wiki` (docs/wiki-meta-manual.md 지시서 준수: 한국어, 비전문가 언어, 접근성 관점).
+
+## 11. 개정 4 — 수동 검증 피드백 5건 반영 (2026-11-15)
+
+사용자 샌드박스 검증 후 보고한 항목과 처리:
+
+| # | 보고 | 처리 |
+|---|---|---|
+| 1 | AI ✨·스크래치패드가 설정(⚙) 오른쪽에 배치됨 | `CreateDefaults()` 순서 변경(AI·스크래치패드를 설정 왼쪽) + `EnsureAllBuiltIns` 마이그레이션 강화: 설정 오른쪽의 기존 기본 버튼도 설정 바로 앞으로 정렬(커스텀 버튼은 절대 미이동). 새 설치·기존 설치 모두 `[.., Osk, AI, 스크래치패드, ⚙]`. |
+| 2 | 텍스트 선택 색이 거의 안 보임 / 붙여넣기 후 선택이 안 풀림 | 선택 브러시를 `SettingsHighlight`(거의 흰색)에서 테마별 `MemoSelectionBg`(라벤더 계열)로 교체. 붙여넣기(`SelectedText`) 후 커서를 붙여넣기 끝으로 옮겨 선택 해제 — WPF는 자동 해제가 없음. |
+| 3 | 투명도·유휴 페이딩을 패드와 완전 연동 | `MainWindow`가 투명도 목표값 적용 시 `OpacityStateApplied`(목표값, 시간 ms) 이벤트를 발생시키고, `MainViewModel`이 열린 패드를 같은 값·같은 시간으로 동기화. 패드에 마우스를 올리면 키보드 호버처럼 타이머 초기화·기본 투명도 복원(`ResetIdleFade`/`ResumeIdleFade` 공용). 열기 시 호스트 현재 투명도에서 시작(팝 방지). |
+| 4 | 드래그 바 더블 클릭 시 `DragMove()` 예외 | 더블 클릭으로 창이 이동한 뒤 마우스 단추 상태와 어긋난 MouseMove가 와 `DragMove()`가 `InvalidOperationException`를 던지는 것 — KeyboardView와 동일하게 "단추가 실제로 눌려 있을 때만 DragMove" 가드 추가. |
+| 5 | "스크래치패드" 이름이 직관적이지 않음 | 사용자 확인으로 **"빠른 메모"** 확정 — 버튼 이름·툴팁·접근성 이름·창 제목·읽어주기 문구만 교체, 코드 ID(`ScratchPad`)는 그대로. |
+
+테스트: `HeaderButtonEnsureBuiltInsTests`에 마이그레이션 정렬 2건 추가(기존 순서 가정을 새 규칙으로 수정), 전체 322통과. 샌드박스 번들 재생성 완료.
+
+## 12. 개정 5 — 기본 버튼 배치 규칙 변경 (2026-11-15)
+
+사용자 결정: **새 기능을 추가할 때 설정(⚙) 다음이 아니라 맨 앞(1번)에 넣는다.** 현재 1번을 2로 미고 1번에 새 기능 추가.
+AI가 먼저 추가됐고 그다음 스크래치패드가 추가됐으므로, 기본 순서는 **빠른 메모 → AI → … → 설정(마지막)** — 최신순으로 맨 앞.
+
+- `CreateDefaults()`: `[빠른 메모, AI, 클립보드, 이모지, 자동완성, 한/영, Osk, 설정]` 순서로 재배치.
+- `HeaderButtonConfig.FrontBuiltInIds = [IdScratchPad, IdAi]` 상수 추가 — "맨 앞 고정" 목록(최신순). 새 기본 기능을 만들면 이 목록과 `CreateDefaults()`를 함께 고친다 (주석에 규칙 명시).
+- `EnsureAllBuiltIns()`: ① 설정 오른쪽의 기존 기본 버튼을 설정 바로 앞으로 → ② **새 기능 기본 버튼(FrontBuiltInIds)을 최신순으로 맨 앞(1번) 고정**(없으면 숨김 버튼 생성) → ③ 나머지 누락 기본 버튼을 설정 앞에 추가. 커스텀 버튼은 절대 미이동, 멱등 유지.
+- 효과: 기존 설치 `[.., Osk, AI, 빠른 메모, ⚙]` → `[빠른 메모, AI, .., ⚙]`. 표시 개수 한계(한쪽 8개) 확인 — 기본 표시 6개로 여유 있음.

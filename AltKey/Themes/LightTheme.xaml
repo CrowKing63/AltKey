@@ -47,6 +47,8 @@
     <SolidColorBrush x:Key="SettingsFgHint"    Color="#FF666674"/>
     <SolidColorBrush x:Key="SecondaryButtonDisabledFg" Color="#FF666674"/>
     <SolidColorBrush x:Key="SettingsHighlight" Color="#FFF1F1F5"/>
+    <!-- 스크래치패드 메모 텍스트 선택 — 브랜드 라벤더로 명확히 보이게 합니다 (2026-11-15). -->
+    <SolidColorBrush x:Key="MemoSelectionBg" Color="#FFC4B5FD"/>
     <SolidColorBrush x:Key="SettingsBorder"    Color="#FFC9CAD3"/>
     <sys:Double x:Key="SecondaryButtonDisabledOpacity">0.72</sys:Double>
     <!-- UAC 경고 배너 -->

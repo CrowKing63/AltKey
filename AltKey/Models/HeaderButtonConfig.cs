@@ -128,21 +128,110 @@ public class HeaderButtonConfig
     public const string IdOsk = "Osk";
     public const string IdSettings = "Settings";
     public const string IdAi = "Ai";
+    public const string IdScratchPad = "ScratchPad";
+
+    /// <summary>
+    /// 상단바 맨 앞(1번)에 고정되는 "새 기능" 기본 버튼 — 최신순.
+    /// [규칙] 새 기본 기능을 추가할 때 설정(⚙) 앞에 넣지 않고, 현재 1번을 2로 미고 1번에 추가합니다 (2026-11-15 사용자 결정).
+    /// 그래서 새 기능을 만들면 이 목록에도 id를 최신순으로 넣고, CreateDefaults()에도 같은 순서로 배치하세요.
+    /// </summary>
+    private static readonly string[] FrontBuiltInIds = [IdScratchPad, IdAi];
 
     /// <summary>
     /// 기본 버튼 구성 목록을 생성합니다. HeaderButtons가 비어 있을 때(최초 실행 또는 마이그레이션)에 사용됩니다.
     /// 리스트 순서가 곧 상단바 표시 순서입니다.
+    /// 새 기능은 맨 앞에 최신순으로 배치하고, 설정(⚙)은 항상 마지막입니다 (2026-11-15 사용자 결정).
     /// </summary>
     public static List<HeaderButtonConfig> CreateDefaults() =>
     [
+        // 새 기본 기능은 "최신순"으로 맨 앞에 배치합니다 — FrontBuiltInIds와 같은 순서.
+        // 둘 다 기본 OFF입니다 — 사용자가 상단바에서 직접 켭니다.
+        CreateBuiltIn(IdScratchPad, visible: false, position: "Right"),
+        CreateBuiltIn(IdAi, visible: false, position: "Right"),
         CreateBuiltIn(IdClipboard, visible: true, position: "Right"),
         CreateBuiltIn(IdEmoji, visible: true, position: "Right"),
         CreateBuiltIn(IdAutoComplete, visible: true, position: "Right"),
         CreateBuiltIn(IdOsIme, visible: true, position: "Right"),
         CreateBuiltIn(IdOsk, visible: true, position: "Right"),
         CreateBuiltIn(IdSettings, visible: true, position: "Right"),
-        CreateBuiltIn(IdAi, visible: false, position: "Right"),
     ];
+
+    /// <summary>
+    /// 목록에 없는 기본(BuiltIn) 버튼을 보정하고, "새 기능" 기본 버튼(FrontBuiltInIds)을 상단바 맨 앞(1번)으로 정렬한 새 목록을 반환합니다 (마이그레이션).
+    /// - 깨진 기본 버튼: 구버전 앱이 같은 ID의 항목을 Custom으로 강등해 저장한 경우 BuiltIn으로 되돌립니다 (자가치유 — 구버전은 아직 모르는 BuiltIn ID를 Custom으로 내립니다).
+    /// - 새 기능 기본 버튼(빠른 메모 → AI): 지금 위치와 상관없이 최신순으로 맨 앞으로 옮깁니다. 없으면 숨김 버튼으로 추가됩니다.
+    ///   기존 설치에서 [.., Osk, AI, 빠른 메모, 설정] 같은 순서가 [빠른 메모, AI, .., 설정]으로 바뀌는 것이 이 단계입니다.
+    /// - 나머지 누락 기본 버튼: 설정(⚙) 바로 앞에 추가 (설정이 없으면 목록 끝).
+    /// - 설정 오른쪽에 있는 기존 기본 버튼: 설정 바로 앞으로 옮김 (오래된 설정 파일 보정 — 2026-11-15 사용자 결정). 커스텀 버튼은 절대 옮기지 않습니다.
+    /// 두 번 호출해도 중복·이동이 생기지 않습니다(멱등). 메인 앱과 AltKey.Tools 상단바 편집기가 공유합니다.
+    /// </summary>
+    public static List<HeaderButtonConfig> EnsureAllBuiltIns(List<HeaderButtonConfig> buttons)
+    {
+        var result = new List<HeaderButtonConfig>(buttons);
+        var defaults = CreateDefaults();
+
+        // 0) 자가치유: 구버전 앱이 같은 ID의 기본 버튼을 Custom으로 강등해 저장한 경우 보정합니다.
+        //    구버전은 아직 모르는 BuiltIn ID를 "Custom"으로 내리고 커스텀 기본값을 채워 저장하는데,
+        //    새 버전은 알려진 BuiltIn ID면 Kind만 되돌립니다 (Visible·Position 등 사용자 상태는 보존).
+        foreach (var item in result)
+        {
+            if (item.Kind == HeaderButtonKind.Custom && IsBuiltInId(item.Id))
+            {
+                item.Kind = HeaderButtonKind.BuiltIn;
+                item.CustomAction = null;
+                item.IconText = "";
+                item.Tooltip = "";
+                item.AccessibleName = "";
+            }
+        }
+
+        // 1) 설정(⚙) 오른쪽의 기존 기본 버튼을 설정 바로 앞으로 옮깁니다.
+        //    (이걸 먼저 하면, 아래에서 추가되는 누락 버튼과 순서가 섞이지 않습니다.)
+        int settingsIndex = result.FindIndex(b => b.Id == IdSettings);
+        if (settingsIndex >= 0)
+        {
+            var trailingBuiltIns = new List<HeaderButtonConfig>();
+            for (int i = result.Count - 1; i > settingsIndex; i--)
+                if (result[i].Kind == HeaderButtonKind.BuiltIn)
+                    trailingBuiltIns.Add(result[i]); // 뒤에서 앞에서 순으로 수집
+
+            foreach (var item in trailingBuiltIns)
+                result.Remove(item);
+
+            int insertAt = result.FindIndex(b => b.Id == IdSettings); // 항목을 빼면서 위치가 바뀌었으므로 다시 찾습니다
+            for (int i = trailingBuiltIns.Count - 1; i >= 0; i--)
+                result.Insert(insertAt++, trailingBuiltIns[i]); // 역순 삽입 = 원래 상대 순서 유지
+        }
+
+        // 2) 새 기능 기본 버튼을 맨 앞에 고정합니다 — 최신순(빠른 메모 → AI).
+        //    기존 항목은 여기서부터 1번을 2로 밀리는 식입니다. 목록에 없으면 기본값(숨김)으로 만들어 추가합니다.
+        var frontBlock = FrontBuiltInIds
+            .Select(id => result.FirstOrDefault(b => b.Id == id) ?? defaults.First(d => d.Id == id))
+            .ToList();
+        foreach (var item in frontBlock)
+            result.Remove(item); // 기존 항목은 뺀다 — 없는 항목은 Remove가 아무 일도 하지 않습니다.
+        result.InsertRange(0, frontBlock);
+
+        // 3) 나머지 없는 기본 버튼을 추가합니다 — 설정이 있으면 바로 앞에, 없으면 목록 끝에.
+        int insertBeforeSettings = result.FindIndex(b => b.Id == IdSettings);
+        foreach (var builtIn in defaults)
+        {
+            if (result.All(b => b.Id != builtIn.Id))
+            {
+                if (insertBeforeSettings >= 0)
+                {
+                    result.Insert(insertBeforeSettings, builtIn);
+                    insertBeforeSettings++; // 연속 삽입해도 기본 목록의 상대 순서가 유지됩니다
+                }
+                else
+                {
+                    result.Add(builtIn);
+                }
+            }
+        }
+
+        return result;
+    }
 
     public static HeaderButtonConfig CreateBuiltIn(string id, bool visible = true, string position = "Right") => new()
     {
@@ -171,7 +260,7 @@ public class HeaderButtonConfig
     };
 
     public static bool IsBuiltInId(string id) => id is
-        IdClipboard or IdEmoji or IdAutoComplete or IdOsIme or IdOsk or IdSettings or IdAi;
+        IdClipboard or IdEmoji or IdAutoComplete or IdOsIme or IdOsk or IdSettings or IdAi or IdScratchPad;
 
     public static string GetDisplayName(string id) => id switch
     {
@@ -182,6 +271,7 @@ public class HeaderButtonConfig
         IdOsk => "화면 키보드",
         IdSettings => "설정",
         IdAi => "AI",
+        IdScratchPad => "빠른 메모",
         _ => "커스텀 단축키"
     };
 
@@ -194,6 +284,7 @@ public class HeaderButtonConfig
         IdOsk => "⌨",
         IdSettings => "⚙",
         IdAi => "✨",
+        IdScratchPad => "✏️",
         _ => "?"
     };
 
@@ -206,6 +297,7 @@ public class HeaderButtonConfig
         IdOsk => "화면 키보드 열기",
         IdSettings => "설정 열기",
         IdAi => "AI 텍스트 처리",
+        IdScratchPad => "빠른 메모 열기",
         _ => GetDisplayName(id)
     };
 
@@ -218,6 +310,7 @@ public class HeaderButtonConfig
         IdOsk => "화면 키보드 버튼",
         IdSettings => "설정 버튼",
         IdAi => "AI 텍스트 처리 버튼",
+        IdScratchPad => "빠른 메모 버튼",
         _ => GetDisplayName(id)
     };
 

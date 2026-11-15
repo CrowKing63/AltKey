@@ -113,6 +113,8 @@ public partial class App : System.Windows.Application
             services.AddSingleton<StartupService>();
             services.AddSingleton<SoundService>();
             services.AddSingleton<ClipboardService>();
+            // 스크래치패드 메모 저장/로드 (U1)
+            services.AddSingleton<ScratchPadService>();
             services.AddSingleton<UpdateService>();
             // T-9.5: 자동 업데이트 서비스
             services.AddSingleton<DownloadService>();
@@ -143,6 +145,7 @@ public partial class App : System.Windows.Application
             services.AddSingleton<KeyboardViewModel>();
             services.AddSingleton<EmojiViewModel>();
             services.AddSingleton<ClipboardViewModel>();
+            services.AddSingleton<ScratchPadViewModel>();
             services.AddSingleton<SettingsViewModel>();
             services.AddSingleton<MainViewModel>();
             // T-9.3: 자동 완성 바 ViewModel

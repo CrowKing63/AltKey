@@ -54,6 +54,9 @@ public partial class MainWindow : Window
         _inputService  = inputService;
         _configService.ConfigChanged += OnConfigChanged;
 
+        // 스크래치패드: 이 창(키보드 창)이 패드 배치의 기준이 되므로 이동·크기·숨김/보임을 연결합니다.
+        viewModel.AttachScratchPadHost(this);
+
         // T-1.7: 자동 페이딩 타이머 — 생성자에서 먼저 만들어두면
         // Show() 중 IsVisibleChanged가 OnSourceInitialized보다 앞서 떠도 null이 아니어서 NRE를 피한다.
         SetupFadeTimer();
@@ -241,29 +244,21 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// 유휴 기능이 켜져 있으면 타이머를 (재)시작합니다.
-    /// 창이 처음 표시되거나 트레이에서 다시 보일 때 '보이기 시작한 시점'부터 카운트를 시작하게 하는 공통 경로입니다.
+    /// 이 창(키보드 창)의 투명도 목표가 적용된 뒤 일어납니다 (목표값, 애니메이션 시간 ms — 0이면 즉시 적용).
+    /// 스크래치패드 창이 같은 값으로 자신도 동기화하는 데 사용합니다 (2026-11-15 완전 연동).
     /// </summary>
-    private void StartIdleTimerIfNeeded()
-    {
-        if (!WindowOpacityProfile.ShouldStartIdleTimer(_configService.Current))
-        {
-            _fadeTimer.Stop();
-            return;
-        }
+    internal event Action<double, int>? OpacityStateApplied;
 
-        _fadeTimer.Stop();
-        _fadeTimer.Start();
-    }
-
-    private void MainWindow_MouseEnter(object? sender, System.Windows.Input.MouseEventArgs e)
+    /// <summary>마우스가 이 창(또는 연동된 스크래치패드)에 들어온 것 같을 때 — 유휴 타이머를 초기화하고 기본 투명도로 되돌립니다.</summary>
+    public void ResetIdleFade()
     {
         _isIdleOpacityApplied = false;
         _fadeTimer.Stop();
         ApplyOpacityForCurrentState();
     }
 
-    private void MainWindow_MouseLeave(object? sender, System.Windows.Input.MouseEventArgs e)
+    /// <summary>마우스가 떠난 것 같을 때 — 유휴 페이딩 타이머를 (켜져 있으면) 다시 시작하고 현재 상태의 투명도를 적용합니다.</summary>
+    public void ResumeIdleFade()
     {
         _isIdleOpacityApplied = false;
 
@@ -278,6 +273,26 @@ public partial class MainWindow : Window
         }
 
         ApplyOpacityForCurrentState();
+    }
+
+    private void MainWindow_MouseEnter(object? sender, System.Windows.Input.MouseEventArgs e) => ResetIdleFade();
+
+    private void MainWindow_MouseLeave(object? sender, System.Windows.Input.MouseEventArgs e) => ResumeIdleFade();
+
+    /// <summary>
+    /// 유휴 기능이 켜져 있으면 타이머를 (재)시작합니다.
+    /// 창이 처음 표시되거나 트레이에서 다시 보일 때 '보이기 시작한 시점'부터 카운트를 시작하게 하는 공통 경로입니다.
+    /// </summary>
+    private void StartIdleTimerIfNeeded()
+    {
+        if (!WindowOpacityProfile.ShouldStartIdleTimer(_configService.Current))
+        {
+            _fadeTimer.Stop();
+            return;
+        }
+
+        _fadeTimer.Stop();
+        _fadeTimer.Start();
     }
 
     private void FadeTimer_Tick(object? s, EventArgs e)
@@ -299,6 +314,7 @@ public partial class MainWindow : Window
         {
             BeginAnimation(OpacityProperty, null);
             Opacity = targetOpacity;
+            OpacityStateApplied?.Invoke(targetOpacity, 0); // 스크래치패드도 같은 값으로 즉시 동기화
             return;
         }
 
@@ -310,6 +326,7 @@ public partial class MainWindow : Window
                 To = targetOpacity,
                 Duration = TimeSpan.FromMilliseconds(durationMs)
             });
+        OpacityStateApplied?.Invoke(targetOpacity, durationMs); // 스크래치패드가 같은 시간으로 함께 페이드
     }
 
     private double GetCurrentTargetOpacity()
@@ -351,6 +368,7 @@ public partial class MainWindow : Window
         Opacity = 0;
         BeginAnimation(OpacityProperty,
             new DoubleAnimation(0, GetCurrentTargetOpacity(), new Duration(TimeSpan.FromMilliseconds(280))));
+        OpacityStateApplied?.Invoke(GetCurrentTargetOpacity(), 280); // 열린 스크래치패드가 함께 페이드인
     }
 
     private void OnPreviewGotKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)

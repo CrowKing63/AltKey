@@ -44,6 +44,8 @@
     <SolidColorBrush x:Key="SettingsFgHint"    Color="#66FFFFFF"/>
     <SolidColorBrush x:Key="SecondaryButtonDisabledFg" Color="#FF2A2A2A"/>
     <SolidColorBrush x:Key="SettingsHighlight" Color="#33FFFFFF"/>
+    <!-- 스크래치패드 메모 텍스트 선택 — 어두운 배경 위라 흰 글자가 읽히는 중간 톤 퍼플로 합니다. -->
+    <SolidColorBrush x:Key="MemoSelectionBg" Color="#FF6B5CAE"/>
     <SolidColorBrush x:Key="SettingsBorder"    Color="#55FFFFFF"/>
     <sys:Double x:Key="SecondaryButtonDisabledOpacity">0.88</sys:Double>
     <!-- UAC 경고 배너 -->
