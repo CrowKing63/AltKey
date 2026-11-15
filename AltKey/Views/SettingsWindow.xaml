@@ -384,13 +384,28 @@
                                       AutomationProperties.Name="자동 실행"
                                       Visibility="{Binding IsPackagedStartup, Converter={StaticResource InvBoolToVis}}"/>
 
-                            <!-- 스토어(MSIX) 버전 안내: 매니페스트의 시작 프로그램 등록이 자동 실행을 관리하므로
-                                 앱 내 체크박스는 숨기고 Windows 설정을 안내합니다. -->
-                            <TextBlock Text="스토어 버전에서는 Windows 설정 &gt; 앱 &gt; 시작 프로그램에서 AltKey를 켜거나 꺼야 합니다."
-                                       Foreground="{DynamicResource SettingsFgSub}" FontSize="{DynamicResource ScaledSettingsSubFontSize}" TextWrapping="Wrap"
-                                       Margin="0,0,0,16"
+                            <!-- 스토어(MSIX) 버전: 자동 실행은 앱 내 체크박스가 아니라 매니페스트에 등록된
+                                 시작 작업(Windows 설정 > 앱 > 시작 프로그램)이 관리합니다.
+                                 다른 버전과 같은 형식(제목 + 버튼)을 유지하되, 체크박스 대신
+                                 Windows 설정의 시작 앱 관리 창으로 바로 가는 버튼을 제공합니다. -->
+                            <TextBlock Text="Windows 시작 시 자동 실행"
+                                       Foreground="{DynamicResource SettingsFg}"
+                                       Margin="0,0,0,4"
                                        Visibility="{Binding IsPackagedStartup, Converter={StaticResource BoolToVis}}"
-                                       AutomationProperties.Name="스토어 버전 시작 프로그램 안내"/>
+                                       AutomationProperties.Name="스토어 버전 자동 실행 제목"/>
+                            <Button Content="시작 앱 관리 열기"
+                                    Command="{Binding OpenStartupAppsSettingsCommand}"
+                                    Style="{StaticResource SettingsActionButtonStyle}"
+                                    Margin="0,0,0,8"
+                                    ToolTip="Windows 설정의 시작 프로그램 목록에서 AltKey를 켜거나 끌 수 있습니다."
+                                    Visibility="{Binding IsPackagedStartup, Converter={StaticResource BoolToVis}}"
+                                    KeyboardNavigation.TabIndex="31"
+                                    AutomationProperties.Name="시작 앱 관리 열기"/>
+                            <TextBlock Text="스토어 버전에서는 Windows가 시작 앱을 직접 관리합니다. 위 버튼으로 시작 프로그램 목록을 열어 AltKey를 켜거나 끌 수 있습니다."
+                                       Foreground="{DynamicResource SettingsFgSub}" FontSize="{DynamicResource ScaledSettingsSubFontSize}" TextWrapping="Wrap"
+                                       Margin="16,0,0,16"
+                                       Visibility="{Binding IsPackagedStartup, Converter={StaticResource BoolToVis}}"
+                                       AutomationProperties.Name="스토어 버전 시작 앱 안내"/>
 
                             <TextBlock Text="닫기/숨김" Style="{StaticResource SectionTitleStyle}"/>
                             <CheckBox Content="닫기 확인 다시 묻지 않기"

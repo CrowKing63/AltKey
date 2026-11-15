@@ -537,6 +537,25 @@ public partial class SettingsViewModel : ObservableObject
         _configService.Update(c => c.RunOnStartup = value);
     }
 
+    /// <summary>
+    /// [T-8.1] 스토어(MSIX) 버전 — Windows 설정의 "앱 > 시작 프로그램" 관리 창을 엽니다.
+    /// 스토어 버전은 자동 실행이 앱 내 체크박스가 아니라 매니페스트에 등록된 시작 작업으로
+    /// 관리되므로, 체크박스 대신 OS 설정 화면으로 바로 가는 단축 버튼을 제공합니다.
+    /// </summary>
+    [RelayCommand]
+    private void OpenStartupAppsSettings()
+    {
+        try
+        {
+            // ms-settings-startup: "설정 > 앱 > 시작 프로그램" 페이지를 여는 시스템 예약 URI입니다.
+            Process.Start(new ProcessStartInfo("ms-settings-startup:") { UseShellExecute = true });
+        }
+        catch (Exception ex)
+        {
+            WpfMsgBox.Show($"시작 앱 관리 창을 열 수 없습니다: {ex.Message}", "오류", WpfMsgBoxButton.OK, WpfMsgBoxImage.Error);
+        }
+    }
+
     // ── T-8.2: 키 클릭 사운드 ──────────────────────────────────────────────
 
     partial void OnSoundEnabledChanged(bool value)
