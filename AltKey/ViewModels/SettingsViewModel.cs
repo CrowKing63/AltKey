@@ -547,8 +547,8 @@ public partial class SettingsViewModel : ObservableObject
     {
         try
         {
-            // ms-settings-startup: "설정 > 앱 > 시작 프로그램" 페이지를 여는 시스템 예약 URI입니다.
-            Process.Start(new ProcessStartInfo("ms-settings-startup:") { UseShellExecute = true });
+            // ms-settings-startupapps: "설정 > 앱 > 시작 프로그램" 페이지를 여는 시스템 예약 URI입니다.
+            Process.Start(new ProcessStartInfo("ms-settings-startupapps:") { UseShellExecute = true });
         }
         catch (Exception ex)
         {
