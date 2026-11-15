@@ -267,14 +267,6 @@ public partial class MainViewModel : ObservableObject
             return null;
         };
 
-        // [스크래치패드][임시] 구분자 진단 로그용 — 포그라운드가 패드 창인지만 판별한다. 확인 후 제거.
-        keyboardViewModel.IsScratchPadForeground = () =>
-        {
-            if (_scratchPadWindow is not { IsVisible: true } pad) return false;
-            var fg = Win32.GetForegroundWindow();
-            return fg != IntPtr.Zero && fg == new WindowInteropHelper(pad).Handle;
-        };
-
         // [스크래치패드] 제안 수락도 키 입력과 같은 대상 판별으로 전송 전 포커스를 확보한다.
         // KeyPressed는 메모 박스 포커스가 끊겼을 때 스스로 복원하지만(KeyboardViewModel),
         // 수락 경로는 그 로직이 없어 포그라운드가 키보드 창으로 쏠려 있을 때 SendInput이
