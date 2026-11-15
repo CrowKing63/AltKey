@@ -26,7 +26,8 @@
 | D6 | 키보드 이동(드래그/상하 이동 버튼 등)이 있으면 열린 패드는 **자동 재배치** | 사용자가 명시 — "패드가 열린 채 상하 이동 버튼을 누르는 경우" |
 | D7 | 앱 간 복사·붙여넣기 자동화 없음. 편집 숏컷 **버튼**만: 모두 선택 / 잘라내기 / 복사 / 붙여넣기 | 사용자가 명시 |
 | D8 | 드래그 핸들 더블클릭 = 접기/펼치기 제거 → **창 수평 중앙 배치**. 접기/펼치는 빈 바 더블클릭 + 접기 버튼으로만 (U3 ✅) | 사용자가 명시 |
-| D9 | **겹침 금지 불변식**: 패드가 떠 있는 동안 키보드(AltKey) 창과 겹치지 않는다. 드래그 중에도 즉시 클램프 | 사용자가 명시 — "알트키 창과 겹치지 않게 떠야 하고 드래그해서 옮길 수 있어야" |
+
+> **D9(드래그 중 겹침 클램프)는 후순위** — 임의로 창을 드래그할 때 굳이 겹치게 올릴 상황이 없어 과한 설계라 제거 (2026-11-15 사용자 결정). 필요해지면 순수 함수로 나중에 추가.
 
 ## 3. U1: 스크래치패드 패널 (핵심)
 
@@ -49,15 +50,8 @@ PlacePad(keyboardRect, workArea, padSize):   # 열기 시 / 키보드 이동 시
   left  = keyboardRect.Left + (keyboardRect.Width - padSize.Width) / 2  # 수평 중앙
   top   = below ? keyboardRect.Bottom + Gap : keyboardRect.Top - padSize.Height - Gap
   → WorkArea에 클램프 (Gap = 4px)
-
-ConstrainPadPosition(x, y, keyboardRect, workArea, padSize):   # 드래그 중(D9 겹침 금지)
-  1. WorkArea로 클램프 (화면 밖으로 나가지 않는 기본 불변식)
-  2. keyboardRect와 교차하면: 이동 거리가 가장 작은 비교차 위치로 이동
-     (후보: 키보드 창 위/아래/왼쪽/오른쪽 — WorkArea에 들어가는 후보 중 최소 변위 선택)
-  3. 비교차 영역이 없으면(극소 작업 영역): WorkArea 클램프 결과 반환
 ```
-- 호출 시점: ① 열기 시 ② 키보드 창 `LocationChanged`/크기 변경 시(열려 있을 때만). D6 — 드래그든 상하 이동 버튼이든 무엇이든 키보드 위치가 바뀌면 재계산. 패드 자체 드래그로 만든 임시 오프셋은 다음 재계산 시 사라짐(영속화 없음, D4).
-- 드래그(`MouseMove`) 중: 매 이동마다 `ConstrainPadPosition` 적용 → **패드가 절대 키보드 창을 덮지 못함** (D9).
+- 호출 시점: ① 열기 시 ② 키보드 창 `LocationChanged`/크기 변경 시(열려 있을 때만). D6 — 드래그든 **상하 이동 버튼**이든 무엇이든 키보드 위치가 바뀌면 재계산. 패드 자체 드래그로 만든 임시 오프셋은 다음 재계산 시 사라짐(영속화 없음, D4).
 
 ### 3.4 헤더 버튼 연결
 - `HeaderButtonConfig`: `IdScratchPad = "ScratchPad"` 추가 — `CreateDefaults()`에 `visible: false` (D1), `IsBuiltInId`/이름·아이콘(✏️)·툴팁·접근성 이름 switch 보강.
@@ -79,7 +73,7 @@ ConstrainPadPosition(x, y, keyboardRect, workArea, padSize):   # 드래그 중(D
 - `AltKey/Views/ScratchPadWindow.xaml` / `.xaml.cs`
 - `AltKey/ViewModels/ScratchPadViewModel.cs`
 - `AltKey/Services/ScratchPadService.cs`
-- `AltKey/Views/ScratchPadPlacement.cs` (순수 배치 함수 + D9 겹침 금지 클램프 — `KeyboardWindowPlacement` 옆)
+- `AltKey/Views/ScratchPadPlacement.cs` (순수 배치 함수 — `KeyboardWindowPlacement` 옆)
 - `AltKey.Tests/ScratchPad/...` (기능별 폴더, 파일당 400줄 이하)
 
 **수정**
@@ -99,7 +93,7 @@ ConstrainPadPosition(x, y, keyboardRect, workArea, padSize):   # 드래그 중(D
 
 ## 7. 테스트 계획
 
-1. `ScratchPadPlacementTests` — 상반부→아래/하반부→위, 수평 중앙, WorkArea 클램프, 극소 작업 영역 + **`ConstrainPadPosition` 비교차 케이스** (D9: 드래그 중 겹침 금지, 최소 변위 방향, 비교차 영역 없을 때 폴백).
+1. `ScratchPadPlacementTests` — 상반부→아래/하반부→위, 수평 중앙, WorkArea 클램프, 극소 작업 영역.
 2. `HeaderButtonEnsureBuiltInsTests` — 누락 BuiltIn 추가, 기존 순서·커스텀 버튼 불변, 멱등(두 번 호출해도 중복 없음), ScratchPad 기본 OFF 확인.
 3. `ScratchPadServiceTests` — 저장/로드, 빈 파일, 손상 JSON → 빈 상태.
 4. 회귀: 전체 `dotnet test` 최초 실행을 계약 변경 검증으로 사용.
@@ -112,7 +106,6 @@ ConstrainPadPosition(x, y, keyboardRect, workArea, padSize):   # 드래그 중(D
 - [ ] 패드에서 타이핑 후 다른 앱 클릭 → 그 앱에 입력, 패드는 가시 유지 (강제 라우팅 없음)
 - [ ] 키보드 드래그/상하 이동 버튼 → 열린 패드가 재배치 (D6)
 - [ ] 패드 드래그로 임시 이동 → 다음 키보드 이동·열기 시 계산 위치로 복귀 (D4/D6)
-- [ ] **패드 드래그를 키보드 창 쪽으로 시도 → 겹치지 못하고 가장 가까운 비교차 위치에 클램프** (D9)
 - [ ] 숏컷 버튼 4개 동작 (모두 선택/잘라내기/복사/붙여넣기)
 - [ ] 재시작 후 내용 유지 (`scratchpad.json`)
 - [ ] 트레이로 숨김 → 패드도 함께 숨김, 복원 시 정상
@@ -122,15 +115,16 @@ ConstrainPadPosition(x, y, keyboardRect, workArea, padSize):   # 드래그 중(D
 
 | 단위 | 범위 | 추정 |
 |---|---|---|
-| U1 | 스크래치패드 패널 (서비스·창·배치+겹침 금지 클램프·헤더 버튼·포커스·숏컷 + 테스트) | 11–12.5h |
+| U1 | 스크래치패드 패널 (서비스·창·배치·헤더 버튼·포커스·숏컷 + 테스트) | 10.5–12h |
 | U5 | 문서: Wiki 매뉴얼(스크래치패드 페이지, 상단바/드래그 동작 갱신, 핫키 제거 반영) + wiki-meta-manual 체크리스트 | 1.5h |
 | — | 샌드박스 수동 검증 번들 | 1h |
-| **합계** | | **≈ 13.5–15h (약 2일)** |
+| **합계** | | **≈ 13–14.5h (약 2일)** |
 
 ## 10. 가정·오픈 질문
 
 - 멀티모니터: 주 모니터 WorkArea 기준(기존 코드들과 동일 가정). 부 모니터 지원은 이번 범위 밖.
 - 패드 고정 크기(600×320)는 첫 값 — 수동 검증 시 글자 가독성 기준으로 조정 가능.
-- Z-order: D9가 겹침을 원천 차단하므로 "AltKey 창이 항상 위에" 특수 z-management는 불필요 (양쪽 모두 Topmost, 활성화 순서가 계층을 정하지만 겹치지 않아 시각적 충돌 없음).
+- Z-order: 배치가 위/아래로 분리되므로 양쪽 모두 Topmost여도 시각적 충돌 없음 — 특수 z-management 불필요.
+- 드래그 중 겹침 클램프(구 D9)는 **후순위** — 필요해지면 `ConstrainPadPosition` 순수 함수로 추가.
 - 패드 드래그 위치는 **임시 오프셋** — D4/D6에 따라 다음 키보드 이동·열기 시 계산 위치로 복귀 (영속화 없음). 커스텀 위치를 기억하는 기능이 필요해지면 그때 추가.
 - U5 문서 대상은 `Wiki/AltKey.wiki` (docs/wiki-meta-manual.md 지시서 준수: 한국어, 비전문가 언어, 접근성 관점).
