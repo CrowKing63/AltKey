@@ -157,6 +157,14 @@ public partial class App : System.Windows.Application
             var config       = Services.GetRequiredService<ConfigService>();
             themeService.Apply(config.Current.Theme);
 
+            // 시작 시점에 효과음 설정을 먼저 적용합니다.
+            // 예전엔 설정 창을 열었을 때만 적용돼, 실행 후 설정 화면을 열기 전까지 키 소리가 안 났습니다.
+            var soundService = Services.GetRequiredService<SoundService>();
+            soundService.Configure(
+                config.Current.SoundEnabled,
+                config.Current.SoundFilePath,
+                config.Current.SoundVolumePercent);
+
             // 글꼴 배율 적용
             _configService = config;
             _configService.ConfigChanged += OnConfigChanged;
