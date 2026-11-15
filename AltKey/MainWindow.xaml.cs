@@ -16,7 +16,6 @@ public partial class MainWindow : Window
     private readonly WindowService  _windowService;
     private readonly ConfigService  _configService;
     private readonly TrayService    _trayService;
-    private readonly HotkeyService  _hotkeyService;
     private readonly MainViewModel  _viewModel;
     private readonly InputService   _inputService;
 
@@ -36,7 +35,6 @@ public partial class MainWindow : Window
         WindowService  windowService,
         ConfigService  configService,
         TrayService    trayService,
-        HotkeyService  hotkeyService,
         MainViewModel  viewModel,
         InputService   inputService)
     {
@@ -52,7 +50,6 @@ public partial class MainWindow : Window
         _windowService = windowService;
         _configService = configService;
         _trayService   = trayService;
-        _hotkeyService = hotkeyService;
         _viewModel     = viewModel;
         _inputService  = inputService;
         _configService.ConfigChanged += OnConfigChanged;
@@ -122,11 +119,6 @@ public partial class MainWindow : Window
 
         MouseEnter += MainWindow_MouseEnter;
         MouseLeave += MainWindow_MouseLeave;
-
-        // T-5.7: 전역 단축키 등록
-        var (mods, vk) = HotkeyService.ParseHotkey(_configService.Current.GlobalHotkey);
-        _hotkeyService.Register(hwnd, mods, vk);
-        _hotkeyService.HotkeyPressed += () => _trayService.ToggleVisibility();
     }
 
     // Esc 키도 제목 표시줄 닫기와 같은 확인 절차를 거쳐 트레이 숨김으로 이어집니다.

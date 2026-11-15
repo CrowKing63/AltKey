@@ -109,7 +109,6 @@ public partial class App : System.Windows.Application
             services.AddSingleton<ProfileService>();
             services.AddSingleton<TrayService>();
             services.AddSingleton<ThemeService>();
-            services.AddSingleton<HotkeyService>();
             services.AddSingleton<AccessibilityNavigationService>();
             services.AddSingleton<StartupService>();
             services.AddSingleton<SoundService>();

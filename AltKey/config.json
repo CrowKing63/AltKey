@@ -12,7 +12,6 @@
   "DwellTimeMs": 800,
   "StickyKeysEnabled": true,
   "Theme": "system",
-  "GlobalHotkey": "Ctrl+Alt+K",
   "AutoProfileSwitch": true,
   "Profiles": {},
   "Window": {

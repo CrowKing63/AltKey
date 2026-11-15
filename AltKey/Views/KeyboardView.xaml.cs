@@ -366,7 +366,8 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
     }
 
     /// <summary>
-    /// 상단 핸들은 한 번 누른 뒤 움직이면 창 이동, 같은 자리에서 두 번 누르면 접기/펼치기로 동작을 나눕니다.
+    /// 상단 핸들은 한 번 누른 뒤 움직이면 창 이동, 더블 클릭하면 창을 좌우 수평 중앙으로 배치합니다(윈도우 제목 표시줄과 같은 동작).
+    /// 접기/펼치는 빈 바 더블 클릭과 접기 버튼에서만 처리합니다.
     /// </summary>
     private void DragHandle_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
@@ -374,7 +375,7 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
 
         if (e.ClickCount == 2)
         {
-            ToggleCollapsedState();
+            CenterWindowHorizontally();
             dragHandle.ReleaseMouseCapture();
             _isDragHandlePressed = false;
             e.Handled = true;
@@ -385,6 +386,17 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
         _dragHandlePressPoint = e.GetPosition(this);
         dragHandle.CaptureMouse();
         e.Handled = true;
+    }
+
+    /// <summary>
+    /// 드래그 핸들 더블 클릭으로 창을 작업 영역 안에서 좌우 수평 중앙에 배치합니다.
+    /// 세로 위치와 앵커는 그대로 유지하며, MainWindow의 초기 중앙 배치와 같은 공식을 사용합니다.
+    /// </summary>
+    private void CenterWindowHorizontally()
+    {
+        if (Window.GetWindow(this) is not { } window) return;
+        var workArea = System.Windows.SystemParameters.WorkArea;
+        window.Left = workArea.Left + (workArea.Width - window.ActualWidth) / 2;
     }
 
     /// <summary>

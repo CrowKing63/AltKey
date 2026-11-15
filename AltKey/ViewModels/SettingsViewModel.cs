@@ -27,7 +27,6 @@ public partial class SettingsViewModel : ObservableObject
     private readonly ConfigService        _configService;
     private readonly ThemeService         _themeService;
     private readonly LayoutService        _layoutService;
-    private readonly HotkeyService        _hotkeyService;
     private readonly StartupService       _startupService;
     private readonly SoundService         _soundService;
     private readonly UpdateService        _updateService;
@@ -56,7 +55,6 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty] private bool   dwellEnabled   = false;
     [ObservableProperty] private int    dwellTimeMs    = 800;
     [ObservableProperty] private string selectedLayout = "";
-    [ObservableProperty] private string globalHotkey   = "Ctrl+Alt+K";
     [ObservableProperty] private int    windowScale    = 100;
     [ObservableProperty] private bool   skipCloseConfirm = false;
 
@@ -239,7 +237,6 @@ public partial class SettingsViewModel : ObservableObject
         ConfigService        configService,
         ThemeService         themeService,
         LayoutService        layoutService,
-        HotkeyService        hotkeyService,
         StartupService       startupService,
         SoundService         soundService,
         UpdateService        updateService,
@@ -252,7 +249,6 @@ public partial class SettingsViewModel : ObservableObject
         _configService  = configService;
         _themeService   = themeService;
         _layoutService  = layoutService;
-        _hotkeyService  = hotkeyService;
         _startupService = startupService;
         _soundService   = soundService;
         _updateService  = updateService;
@@ -334,7 +330,6 @@ public partial class SettingsViewModel : ObservableObject
             DwellEnabled   = c.DwellEnabled;
             DwellTimeMs    = c.DwellTimeMs;
             SelectedLayout = c.DefaultLayout;
-            GlobalHotkey   = c.GlobalHotkey;
             WindowScale    = c.Window.Scale;
             SkipCloseConfirm = !c.AskBeforeHideToTray;
 
@@ -516,18 +511,6 @@ public partial class SettingsViewModel : ObservableObject
     {
         if (_isLoading) return;
         _configService.Update(c => c.DefaultLayout = value, "DefaultLayout");
-    }
-
-    partial void OnGlobalHotkeyChanged(string value)
-    {
-        if (_isLoading) return;
-        _configService.Update(c => c.GlobalHotkey = value);
-        if (WpfApp.Current.MainWindow is MainWindow mw)
-        {
-            var hwnd = new System.Windows.Interop.WindowInteropHelper(mw).Handle;
-            if (hwnd != IntPtr.Zero)
-                _hotkeyService.Reregister(hwnd, value);
-        }
     }
 
     partial void OnWindowScaleChanged(int value)

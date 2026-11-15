@@ -80,7 +80,6 @@ public class AiLocalIdleUnloadTests
             configService,
             new ThemeService(configService),
             new LayoutService(),
-            new HotkeyService(),
             new StartupService(),
             new SoundService(),
             new UpdateService(),

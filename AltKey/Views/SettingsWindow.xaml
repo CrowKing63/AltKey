@@ -348,7 +348,7 @@
                             <TextBlock Text="좌측 상단바" Style="{StaticResource SectionTitleStyle}"/>
                             <TextBlock Text="상단바 버튼은 좌측·우측 쪽별로 관리합니다. 각 버튼의 표시를 켜고 끌 수 있고, 같은쪽 안의 표시 순서를 조정할 수 있습니다." Foreground="{DynamicResource SettingsFgSub}" FontSize="{DynamicResource ScaledSettingsSubFontSize}" TextWrapping="Wrap"/>
                             <TextBlock Text="접기와 닫기 버튼은 항상 우측 끝에 고정되며, 화면 맨 오른쪽부터는 닫기 → 접기 순서로 보입니다." Foreground="{DynamicResource SettingsFgSub}" FontSize="{DynamicResource ScaledSettingsSubFontSize}" Margin="0,0,0,2" TextWrapping="Wrap"/>
-                            <TextBlock Text="상단바의 버튼 없는 빈 칸과 가운데 드래그 핸들은 더블 클릭으로 접기/펼치기를 지원하며, 더블 클릭 시간은 윈도우 설정을 따릅니다." Foreground="{DynamicResource SettingsFgSub}" FontSize="{DynamicResource ScaledSettingsSubFontSize}" Margin="0,0,0,8" TextWrapping="Wrap"/>
+                            <TextBlock Text="상단바의 버튼 없는 빈 칸은 더블 클릭으로 접기/펼치기를, 가운데 드래그 핸들은 더블 클릭으로 창을 좌우 중앙으로 배치합니다. 더블 클릭 시간은 윈도우 설정을 따릅니다." Foreground="{DynamicResource SettingsFgSub}" FontSize="{DynamicResource ScaledSettingsSubFontSize}" Margin="0,0,0,8" TextWrapping="Wrap"/>
                             <ItemsControl ItemsSource="{Binding LeftHeaderButtons}"
                             ItemTemplate="{StaticResource HeaderButtonRowTemplate}"/>
 
@@ -376,17 +376,7 @@
                         <StackPanel Margin="8,10,8,10">
                             <TextBlock Text="입력/실행" Style="{StaticResource SectionTitleStyle}"/>
 
-                            <TextBlock Text="전역 단축키" Foreground="{DynamicResource SettingsFgSub}" FontSize="{DynamicResource ScaledSettingsSubFontSize}" Margin="0,0,0,4"/>
-                            <TextBox x:Name="BehaviorFirstFocusable"
-                                     Text="{Binding GlobalHotkey, UpdateSourceTrigger=LostFocus}"
-                                     Margin="0,0,0,16"
-                                     Padding="8,4"
-                                     Background="{DynamicResource SettingsHighlight}" Foreground="{DynamicResource SettingsFg}"
-                                     BorderBrush="{DynamicResource SettingsBorder}"
-                                     KeyboardNavigation.TabIndex="30"
-                                     AutomationProperties.Name="전역 단축키 입력"/>
-
-                            <CheckBox Content="Windows 시작 시 자동 실행"
+                            <CheckBox x:Name="BehaviorFirstFocusable" Content="Windows 시작 시 자동 실행"
                                       Foreground="{DynamicResource SettingsFg}"
                                       IsChecked="{Binding RunOnStartup}"
                                       Margin="0,0,0,16"

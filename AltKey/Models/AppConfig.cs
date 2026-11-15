@@ -63,9 +63,6 @@ public class AppConfig
     // 앱의 테마 설정 ("light", "dark", "system" 중 선택).
     public string Theme             { get; set; } = "system";
     
-    // 키보드를 띄우거나 숨길 때 사용하는 전체 시스템 단축키입니다.
-    public string GlobalHotkey      { get; set; } = "Ctrl+Alt+K";
-    
     // 실행 중인 프로그램에 따라 키보드 레이아웃을 자동으로 바꿀지 여부입니다.
     public bool   AutoProfileSwitch { get; set; } = true;
     
