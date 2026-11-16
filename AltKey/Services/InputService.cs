@@ -77,7 +77,14 @@ public class InputService
 
     public InputService()
     {
+        // SANDBOX_TEST(Windows Sandbox 테스트 빌드): 샌드박스 안의 모든 프로세스가 관리자 권한으로
+        // 실행되므로 elevation 체크를 건너뛰고, 자동완성(Unicode 모드)이 일반 빌드와 동일하게 동작하게 합니다.
+        // 정식 빌드는 이 상수를 정의하지 않아 기존 동작과 완전히 같습니다.
+#if SANDBOX_TEST
+        _isElevated = false;
+#else
         _isElevated = CheckElevated();
+#endif
         Mode = _isElevated ? InputMode.VirtualKey : InputMode.Unicode;
     }
 

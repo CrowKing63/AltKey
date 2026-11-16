@@ -13,6 +13,12 @@
     <Version>1.6.0</Version>
     <ApplicationIcon>Assets\icon.ico</ApplicationIcon>
   </PropertyGroup>
+  <!-- Windows Sandbox 테스트 빌드: publish 시 -p:SandboxTestBuild=true 를 붙이면 SANDBOX_TEST 상수가 정의되고
+       관리자 권한 체크가 비활성화되어 샌드박스(모든 프로세스가 관리자 권한)에서도 자동완성(Unicode 모드)을
+       테스트할 수 있다. 정식 빌드(인자 없음)에는 영향이 없다. -->
+  <PropertyGroup Condition="'$(SandboxTestBuild)' == 'true'">
+    <DefineConstants>$(DefineConstants);SANDBOX_TEST</DefineConstants>
+  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.*" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.*" />

@@ -28,8 +28,9 @@
 - **수동 검증을 필요로 하는 코드 수정은 완료 시점까지 아래 1~3번 레시피로 샌드박스용 번들(`dist/AltKey-sandbox`)을 만들어 전달하는 것까지 포함한다.** "빌드는 됐으니 직접 실행해 보세요" 식의 디버그 exe 안내로는 대체하지 않는다 — 사용자가 드래그&드롭만으로 검증에 들어갈 수 있어야 한다.
 - **번들은 폴더 단위로 전달하고 zip으로 압축하지 않는다** — 샌드박스는 `dist/AltKey-sandbox` 폴더를 그대로 드래그해 사용한다.
   1. `release.yml`과 동일한 레시피로 publish (샌드박스에 .NET 런타임이 없어 self-contained 필수):
-     - 메인: `dotnet publish AltKey/AltKey.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -o dist/AltKey-sandbox`
-     - Tools: 같은 인자에 `-o dist/AltKey-sandbox/Tools` (§6.5의 exe 탐색 순서와 일치)
+     - 메인: `dotnet publish AltKey/AltKey.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:SandboxTestBuild=true -o dist/AltKey-sandbox`
+     - Tools (편집기 기능을 테스트할 때만): 같은 인자에 `-o dist/AltKey-sandbox/Tools` (§6.5의 exe 탐색 순서와 일치). 넣지 않아도 메인 앱은 정상 동작하며, 설정에서 편집기를 열려 할 때 "도구 앱을 찾을 수 없음" 메시지만 뜹니다 — 입력·자동완성 테스트만이라면 이 단계는 생략해도 됩니다(번들 ~78MB 절약).
+     - **`-p:SandboxTestBuild=true`(샌드박스 전용)**: `SANDBOX_TEST` 상수를 정의해 관리자 권한 체크를 건너뛴다 — 샌드박스는 모든 프로세스가 관리자라 이 플래그 없으면 자동완성(Unicode 모드)이 강제 OFF된다. 실제 관리자 모드 동작(VirtualKey 강제)을 검증할 때만 빼고 빌드한다.
   2. `AltKey\layouts`를 `dist/AltKey-sandbox/layouts`로 복사하고, exe 옆에 포터블용 `config.json` 생성 (`scripts/package-portable.ps1`과 동일) — 데이터가 샌드박스 내 exe 폴더에 모이니 테스트 후 폴더를 드래그해 밖으로 빼내 검사할 수 있다.
   3. 실행: PowerShell에서 `windowsandbox.exe dist\AltKey-sandbox` 또는 폴더를 샌드박스 창에 드래그&드롭.
 - 사용자 변수 조정 기능은 **슬라이더 대신 `NumericAdjuster` 기반**으로 구현한다.
