@@ -21,6 +21,8 @@
             </Style.Triggers>
         </Style>
         <Style x:Key="AdjustValueTextBoxStyle" TargetType="TextBox">
+            <!-- [접근성] 값 표시도 좌우 버튼과 같은 배율로 커지도록 글자 크기를 적용합니다. -->
+            <Setter Property="FontSize" Value="{DynamicResource ScaledSettingsHeadingFontSize}"/>
             <Setter Property="TextAlignment" Value="Center"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
