@@ -36,6 +36,14 @@ public partial class ScratchPadViewModel : ObservableObject
     /// <summary>모두 선택 (Ctrl+A와 동일).</summary>
     public void SelectAll(WpfTextBox? textBox) => textBox?.SelectAll();
 
+    /// <summary>메모 내용을 모두 지우고 입력 위치를 문서 시작으로 옮깁니다.</summary>
+    public void Clear(WpfTextBox? textBox)
+    {
+        if (textBox is null) return;
+        textBox.Clear();
+        textBox.Focus();
+    }
+
     /// <summary>잘라내기 (선택 영역을 클립보드에 두고 지움).</summary>
     public void Cut(WpfTextBox? textBox) => textBox?.Cut();
 

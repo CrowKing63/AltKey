@@ -95,7 +95,14 @@
                             Click="SelectAllButton_Click"
                             ToolTip="모두 선택 (Ctrl+A)"
                             AutomationProperties.Name="모두 선택">
-                        <TextBlock Text="선택"/>
+                        <TextBlock Text="모두 선택"/>
+                    </Button>
+                    <Button Style="{StaticResource PadButtonStyle}"
+                            FontSize="{DynamicResource ScaledSettingsBaseFontSize}"
+                            Click="ClearButton_Click"
+                            ToolTip="지우기"
+                            AutomationProperties.Name="지우기">
+                        <TextBlock Text="지우기"/>
                     </Button>
                     <Button Style="{StaticResource PadButtonStyle}"
                             FontSize="{DynamicResource ScaledSettingsBaseFontSize}"

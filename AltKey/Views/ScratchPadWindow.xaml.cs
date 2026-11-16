@@ -44,6 +44,25 @@ public partial class ScratchPadWindow : Window
         // (설정·레이아웃 편집기 등 다른 AltKey 창과 같은 패턴 — 없으면 키보드 입력 시
         //  재포커스 로직이 오래된 텍스트 상자를 찾아 포커스를 빼앗아 메모에 타이핑이 안 됨.)
         FocusTracker.Register(this);
+
+        // 메인 창은 ShowActivated="False"라 클릭해도 패드의 Deactivated가
+        // 발생하지 않을 수 있습니다. 입력 이벤트를 메인 창에서 직접 받아
+        // 클릭 동작이 끝난 뒤 메모 TextBox에 포커스를 돌려줍니다.
+        if (Owner is MainWindow host)
+        {
+            host.PreviewMouseDown += Host_PreviewMouseDown;
+            Closed += (_, _) => host.PreviewMouseDown -= Host_PreviewMouseDown;
+        }
+    }
+
+    private void Host_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+    {
+        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Input,
+            new Action(() =>
+            {
+                if (IsVisible && Owner is MainWindow host && host.IsVisible)
+                    FocusTextBox();
+            }));
     }
 
     /// <summary>열기 시 자동 포커스(D5): TextBox에 커서를 놓아 바로 타이핑할 수 있게 합니다.</summary>
@@ -113,13 +132,45 @@ public partial class ScratchPadWindow : Window
 
     // ── 헤더 버튼 ────────────────────────────────────────────────────────
 
-    private void CloseButton_Click(object sender, RoutedEventArgs e) => OnCloseRequested?.Invoke();
+    private void CloseButton_Click(object sender, RoutedEventArgs e)
+    {
+        PlayButtonSound();
+        OnCloseRequested?.Invoke();
+    }
 
     // 편집 숏컷: ViewModel이 TextBox 참조로 실행합니다 (D7 — 앱 간 자동화 없음).
-    private void SelectAllButton_Click(object sender, RoutedEventArgs e) => _viewModel.SelectAll(NoteTextBox);
-    private void CutButton_Click(object sender, RoutedEventArgs e) => _viewModel.Cut(NoteTextBox);
-    private void CopyButton_Click(object sender, RoutedEventArgs e) => _viewModel.Copy(NoteTextBox);
-    private void PasteButton_Click(object sender, RoutedEventArgs e) => _viewModel.Paste(NoteTextBox);
+    private void SelectAllButton_Click(object sender, RoutedEventArgs e)
+    {
+        PlayButtonSound();
+        _viewModel.SelectAll(NoteTextBox);
+    }
+
+    private void ClearButton_Click(object sender, RoutedEventArgs e)
+    {
+        PlayButtonSound();
+        _viewModel.Clear(NoteTextBox);
+    }
+
+    private void CutButton_Click(object sender, RoutedEventArgs e)
+    {
+        PlayButtonSound();
+        _viewModel.Cut(NoteTextBox);
+    }
+
+    private void CopyButton_Click(object sender, RoutedEventArgs e)
+    {
+        PlayButtonSound();
+        _viewModel.Copy(NoteTextBox);
+    }
+
+    private void PasteButton_Click(object sender, RoutedEventArgs e)
+    {
+        PlayButtonSound();
+        _viewModel.Paste(NoteTextBox);
+    }
+
+    /// <summary>빠른 메모의 버튼 입력에 키보드와 같은 효과음을 재생합니다.</summary>
+    private static void PlayButtonSound() => App.Services?.GetService<SoundService>()?.Play();
 
     // 드래그 상태 플래드 — IsDragging은 XAML에서 두 번 쓰지 않으므로 코드에 둡니다.
     private bool IsDragging { get; set; }
