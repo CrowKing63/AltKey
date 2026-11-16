@@ -1203,6 +1203,14 @@ public partial class SettingsViewModel : ObservableObject
         if (item is null || item.Kind != HeaderButtonKind.Custom)
             return;
 
+        // 삭제는 되돌릴 수 없어, 실수로 버튼을 눌러버려 단축키가 지워지는 상황을 막기 위해 먼저 확인합니다.
+        var result = WpfMsgBox.Show(
+            $"상단바 단축키 \"{item.DisplayName}\"을(를) 삭제하시겠습니까?",
+            "상단바 단축키 삭제",
+            WpfMsgBoxButton.YesNo,
+            WpfMsgBoxImage.Warning);
+        if (result != WpfMsgBoxResult.Yes) return;
+
         HeaderButtons.Remove(item);
         RaiseHeaderButtonCollectionChanged();
         SaveHeaderButtons();
