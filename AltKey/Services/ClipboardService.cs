@@ -147,6 +147,35 @@ public class ClipboardService : IDisposable
     /// </summary>
     public bool IsFavorite(string text) => _favorites.Contains(text);
 
+    // ── 사용자 설정 복원·초기화 연동 ─────────────────────────────────────
+
+    /// <summary>
+    /// 사용자 설정 복원 시 호출 — 파일을 다시 읽어 인메모리 히스토리·즐겨찾기를 바꿉니다.
+    /// 종료 시 Dispose의 최종 저장이 복원된 내용을 덮어쓰지 않도록 합니다.
+    /// </summary>
+    public void ReloadFromDisk()
+    {
+        _history.Clear();
+        _favorites.Clear();
+        Load();
+        HistoryChanged?.Invoke();
+        FavoritesChanged?.Invoke();
+    }
+
+    /// <summary>
+    /// 사용자 설정 초기화 시 호출 — 히스토리와 즐겨찾기를 모두 삭제합니다.
+    /// (ClearHistory는 히스토리만 비우므로, 즐겨찾기까지 함께 정리해야 처음 설치 상태가 됩니다.)
+    /// </summary>
+    public void ClearAll()
+    {
+        _history.Clear();
+        _favorites.Clear();
+        _lastClipboard = null;
+        HistoryChanged?.Invoke();
+        FavoritesChanged?.Invoke();
+        Save();
+    }
+
     // ── 파일 저장/로드 ────────────────────────────────────────────────────
 
     /// <summary>

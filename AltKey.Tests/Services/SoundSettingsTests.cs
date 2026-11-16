@@ -92,7 +92,13 @@ public class SoundSettingsTests
             new InstallerService(),
             new AiService(configService, localBackend),
             new ModelStore(),
-            localBackend);
+            localBackend,
+            // 사용자 설정 백업·복원·초기화 관련 의존성 — 이 테스트들은 해당 기능을 쓰지 않아 기본 인스턴스만 넘깁니다.
+            new SettingsBackupService(),
+            new ClipboardService(),
+            new ScratchPadService(),
+            new KoreanDictionary(lang => new WordFrequencyStore(lang), lang => new BigramFrequencyStore(lang)),
+            new EnglishDictionary(lang => new WordFrequencyStore(lang), lang => new BigramFrequencyStore(lang)));
     }
 
     private static string CreateTempDataDir()

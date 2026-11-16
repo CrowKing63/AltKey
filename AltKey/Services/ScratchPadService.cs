@@ -100,6 +100,36 @@ public class ScratchPadService : IDisposable
         _timer?.Dispose();
     }
 
+    // ── 사용자 설정 복원·초기화 연동 ─────────────────────────────────────
+
+    /// <summary>
+    /// 사용자 설정 초기화 시 호출 — 인메모리 미저장 내용을 버립니다.
+    /// 파일은 이미 삭제된 상태라, 닫기·종료 시 저장(WriteFile)이 오래된 내용으로 파일을 다시 만들지 않도록 합니다.
+    /// </summary>
+    public void AbandonPending()
+    {
+        lock (_sync)
+        {
+            if (_disposed) return;
+            _pendingText = null;
+            _dirty = false;
+        }
+    }
+
+    /// <summary>
+    /// 사용자 설정 복원 시 호출 — 미저장 내용을 디스크(복원된 파일) 기준으로 다시 읽습니다.
+    /// 닫기·종료 시 저장이 복원 전의 오래된 내용으로 덮어쓰지 않도록 합니다.
+    /// </summary>
+    public void ReanchorFromDisk()
+    {
+        lock (_sync)
+        {
+            if (_disposed) return;
+            _pendingText = Load();
+            _dirty = true;
+        }
+    }
+
     private void OnDebounceFired(object? state)
     {
         lock (_sync)

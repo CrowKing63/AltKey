@@ -35,6 +35,11 @@ public partial class SettingsViewModel : ObservableObject
     private readonly AiService            _aiService;
     private readonly ModelStore           _modelStore;
     private readonly LocalGgufBackend     _localBackend;
+    private readonly SettingsBackupService _backupService;
+    private readonly ClipboardService      _clipboardService;
+    private readonly ScratchPadService     _scratchPadService;
+    private readonly KoreanDictionary      _koreanDictionary;
+    private readonly EnglishDictionary     _englishDictionary;
 
     private CancellationTokenSource?      _downloadCts;
 
@@ -244,7 +249,12 @@ public partial class SettingsViewModel : ObservableObject
         InstallerService     installerService,
         AiService            aiService,
         ModelStore           modelStore,
-        LocalGgufBackend     localBackend)
+        LocalGgufBackend     localBackend,
+        SettingsBackupService backupService,
+        ClipboardService     clipboardService,
+        ScratchPadService    scratchPadService,
+        KoreanDictionary     koreanDictionary,
+        EnglishDictionary    englishDictionary)
     {
         _configService  = configService;
         _themeService   = themeService;
@@ -257,6 +267,11 @@ public partial class SettingsViewModel : ObservableObject
         _aiService      = aiService;
         _modelStore     = modelStore;
         _localBackend   = localBackend;
+        _backupService  = backupService;
+        _clipboardService = clipboardService;
+        _scratchPadService = scratchPadService;
+        _koreanDictionary = koreanDictionary;
+        _englishDictionary = englishDictionary;
         _configService.ConfigChanged += OnConfigChanged;
 
         // 로컬 모델 로드/언로드 신호 → 상태 표시 갱신 (배경 스레드에서 발생, 바인딩이 자동 마샬링).
@@ -547,8 +562,8 @@ public partial class SettingsViewModel : ObservableObject
     {
         try
         {
-            // ms-settings-startupapps: "설정 > 앱 > 시작 프로그램" 페이지를 여는 시스템 예약 URI입니다.
-            Process.Start(new ProcessStartInfo("ms-settings-startupapps:") { UseShellExecute = true });
+            // ms-settings:startupapps는 "설정 > 앱 > 시작 프로그램" 페이지를 여는 공식 URI입니다.
+            Process.Start(new ProcessStartInfo("ms-settings:startupapps") { UseShellExecute = true });
         }
         catch (Exception ex)
         {
@@ -1413,6 +1428,191 @@ public partial class SettingsViewModel : ObservableObject
         {
             WpfMsgBox.Show($"폴더를 열 수 없습니다: {ex.Message}", "오류", WpfMsgBoxButton.OK, WpfMsgBoxImage.Error);
         }
+    }
+
+    // ── 사용자 설정 백업 / 복원 / 초기화 ──────────────────────────────────
+
+    /// <summary>
+    /// 현재 사용자 설정(설정·레이아웃·사용자 단어·바이그램 통계·빠른 메모·클립보드 히스토리)을
+    /// 단일 ZIP 파일로 저장합니다. 로컬 AI 엔진·모델은 수백 MB라 제외됩니다.
+    /// </summary>
+    [RelayCommand]
+    private void BackupUserSettings()
+    {
+        var dialog = new WpfDialog.SaveFileDialog
+        {
+            Title = "사용자 설정 백업",
+            Filter = "ZIP 압축 파일 (*.zip)|*.zip",
+            FileName = $"AltKey-backup-{DateTime.Now:yyyyMMdd-HHmm}.zip",
+            DefaultExt = ".zip",
+            AddExtension = true,
+        };
+        if (dialog.ShowDialog() != true) return;
+
+        try
+        {
+            var path = _backupService.CreateBackup(dialog.FileName);
+            WpfMsgBox.Show(
+                $"백업이 완료되었습니다:\n{path}",
+                "사용자 설정 백업",
+                WpfMsgBoxButton.OK,
+                WpfMsgBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            WpfMsgBox.Show($"백업에 실패했습니다: {ex.Message}", "오류", WpfMsgBoxButton.OK, WpfMsgBoxImage.Error);
+        }
+    }
+
+    /// <summary>
+    /// 선택한 ZIP 백업 파일로 사용자 설정을 복원합니다.
+    /// 순서: 검증 → 확인 팝업(덮어쓸 항목 안내) → 복원 → 인메모리 상태 재고정 → 재시작.
+    /// </summary>
+    [RelayCommand]
+    private void RestoreUserSettings()
+    {
+        var dialog = new WpfDialog.OpenFileDialog
+        {
+            Title = "사용자 설정 복원",
+            Filter = "ZIP 압축 파일 (*.zip)|*.zip",
+            DefaultExt = ".zip",
+        };
+        if (dialog.ShowDialog() != true) return;
+
+        // 파일을 건드리기 전에 먼저 검증 — 잘못된 파일은 여기서 차단합니다.
+        try
+        {
+            SettingsBackupService.ValidateBackup(dialog.FileName);
+        }
+        catch (Exception ex)
+        {
+            WpfMsgBox.Show(
+                $"복원할 수 없는 파일입니다:\n{ex.Message}",
+                "사용자 설정 복원",
+                WpfMsgBoxButton.OK,
+                WpfMsgBoxImage.Warning);
+            return;
+        }
+
+        var result = WpfMsgBox.Show(
+            "선택한 백업 파일로 사용자 설정을 복원합니다.\n\n" +
+            "아래 항목이 백업 시점의 상태로 덮어써집니다:\n" +
+            "• 모든 앱 설정 (config.json)\n" +
+            "• 레이아웃 전체 (백업에 없는 커스텀 레이아웃은 삭제됨)\n" +
+            "• 사용자 단어·바이그램 학습 데이터\n" +
+            "• 빠른 메모·클립보드 히스토리\n\n" +
+            "복원 후 앱이 재시작됩니다.\n계속하시겠습니까?",
+            "사용자 설정 복원",
+            WpfMsgBoxButton.YesNo,
+            WpfMsgBoxImage.Warning);
+        if (result != WpfMsgBoxResult.Yes) return;
+
+        try
+        {
+            _backupService.RestoreFromZip(dialog.FileName);
+            ApplyRestoredStateToMemory();
+            RestartAppAfterSettingsChange();
+        }
+        catch (Exception ex)
+        {
+            WpfMsgBox.Show($"복원에 실패했습니다: {ex.Message}", "오류", WpfMsgBoxButton.OK, WpfMsgBoxImage.Error);
+        }
+    }
+
+    /// <summary>
+    /// 사용자 설정을 처음 설치한 상태로 초기화합니다.
+    /// 순서: 경고 팝업(삭제 항목 + 백업 권장 안내) → 파일 삭제 → 인메모리 상태 정리 → 재시작.
+    /// 로컬 AI 엔진·모델은 유지됩니다.
+    /// </summary>
+    [RelayCommand]
+    private void ResetUserSettings()
+    {
+        var result = WpfMsgBox.Show(
+            "사용자 설정을 처음 설치한 상태로 초기화합니다.\n\n" +
+            "아래 항목이 삭제됩니다:\n" +
+            "• 모든 앱 설정 (기본값으로 재설정됨)\n" +
+            "• 커스텀 레이아웃 (내장 Basic/Basic Plus는 자동 복원됨)\n" +
+            "• 사용자 단어·바이그램 학습 데이터\n" +
+            "• 빠른 메모·클립보드 히스토리\n\n" +
+            "로컬 AI 엔진·모델은 유지됩니다.\n" +
+            "삭제 전에 '사용자 설정 백업'을 먼저 하는 것을 권장합니다.\n\n" +
+            "계속하시겠습니까?",
+            "사용자 설정 초기화",
+            WpfMsgBoxButton.YesNo,
+            WpfMsgBoxImage.Warning);
+        if (result != WpfMsgBoxResult.Yes) return;
+
+        try
+        {
+            _backupService.ResetUserSettings();
+            ApplyResetStateToMemory();
+            RestartAppAfterSettingsChange();
+        }
+        catch (Exception ex)
+        {
+            WpfMsgBox.Show($"초기화에 실패했습니다: {ex.Message}", "오류", WpfMsgBoxButton.OK, WpfMsgBoxImage.Error);
+        }
+    }
+
+    /// <summary>
+    /// 복원 후 인메모리 상태를 디스크(복원된 파일) 기준으로 다시 읽습니다.
+    /// 앱 종료 시 각 서비스가 메모리의 오래된 내용으로 파일을 다시 쓰면
+    /// 복원이 무효화되기 때문입니다 (사전 Flush, 설정 저장, 클립보드·메모 최종 저장).
+    /// </summary>
+    private void ApplyRestoredStateToMemory()
+    {
+        _configService.ReloadFromDiskAndNotify(null);
+        _koreanDictionary.ReloadUserWords();
+        _englishDictionary.ReloadUserWords();
+        _koreanDictionary.ReloadBigrams();
+        _englishDictionary.ReloadBigrams();
+        _clipboardService.ReloadFromDisk();
+        _scratchPadService.ReanchorFromDisk();
+        _layoutService.InvalidateCache();
+        _layoutService.NotifyExternalLayoutsChanged();
+    }
+
+    /// <summary>
+    /// 초기화(파일 삭제) 후 인메모리 상태를 정리합니다.
+    /// 종료 시 Flush·저장 경로가 삭제된 파일에 오래된 내용을 다시 쓰지 않도록 합니다.
+    /// </summary>
+    private void ApplyResetStateToMemory()
+    {
+        // config.json은 파일을 지우지 않고 내용만 기본값으로 덮어씀 — 포터블 모드 마커를 보존합니다.
+        _configService.ResetToDefaults();
+        _koreanDictionary.ClearUserWords();
+        _englishDictionary.ClearUserWords();
+        _koreanDictionary.ClearBigrams();
+        _englishDictionary.ClearBigrams();
+        _clipboardService.ClearAll();
+        _scratchPadService.AbandonPending();
+        _layoutService.InvalidateCache();
+        _layoutService.NotifyExternalLayoutsChanged();
+    }
+
+    /// <summary>
+    /// 백업·복원·초기화 후 앱을 재시작합니다.
+    /// ResetWindowLayout과 같은 방식: 새 프로세스 시작 → 현재 프로세스 종료.
+    /// mw.ResetPending으로 종료 시 창 위치 저장을 건너뛰어,
+    /// 초기화·복원 전의 상태로 config.json을 덮어쓰지 않습니다.
+    /// </summary>
+    private void RestartAppAfterSettingsChange()
+    {
+        var executablePath = Environment.ProcessPath;
+        if (string.IsNullOrEmpty(executablePath)) return;
+
+        try
+        {
+            if (WpfApp.Current.MainWindow is MainWindow mw)
+                mw.ResetPending = true;
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = executablePath,
+                UseShellExecute = true,
+            });
+            ShutdownCurrentApp();
+        }
+        catch (Win32Exception) { }
     }
 
     // ── T-5.12: 관리자 권한으로 재시작 ──────────────────────────────────────

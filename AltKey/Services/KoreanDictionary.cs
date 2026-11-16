@@ -454,6 +454,15 @@ public class KoreanDictionary
     /// </summary>
     public void ReloadBigrams() => _bigramStore.ReloadFromDisk();
 
+    /// <summary>
+    /// 사용자 설정 초기화 시 호출 — 인메모리 학습 데이터를 비웁니다.
+    /// 파일은 이미 삭제된 상태라, 종료 시 Flush가 오래된 내용으로 파일을 다시 만들지 않도록 합니다.
+    /// </summary>
+    public void ClearUserWords() => _userStore.Clear();
+
+    /// <summary>사용자 설정 초기화 시 호출 — 인메모리 bigram 통계를 비웁니다 (ClearUserWords와 같은 이유).</summary>
+    public void ClearBigrams() => _bigramStore.Clear();
+
     private static IReadOnlyList<string> LoadBuiltIn()
     {
         var asm = Assembly.GetExecutingAssembly();

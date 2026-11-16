@@ -115,6 +115,8 @@ public partial class App : System.Windows.Application
             services.AddSingleton<ClipboardService>();
             // 스크래치패드 메모 저장/로드 (U1)
             services.AddSingleton<ScratchPadService>();
+            // 사용자 설정 백업·복원·초기화 (설정 > 고급)
+            services.AddSingleton<SettingsBackupService>();
             services.AddSingleton<UpdateService>();
             // T-9.5: 자동 업데이트 서비스
             services.AddSingleton<DownloadService>();
@@ -179,7 +181,10 @@ public partial class App : System.Windows.Application
 
             // T-2.10b: ProfileService → InputService 관리자 권한 알림 연결
             var inputService = Services.GetRequiredService<InputService>();
+#if !SANDBOX_TEST
+            // 샌드박스 테스트 빌드는 모든 앱이 "관리자 권한"이라 이 배너가 창 전환마다 뜨므로 건너뜁니다.
             profileService.ElevatedAppDetected += () => inputService.NotifyElevatedApp();
+#endif
 
             // 06: 관리자 모드에서 자동완성 강제 OFF
             if (inputService.IsElevated && config.Current.AutoCompleteEnabled)

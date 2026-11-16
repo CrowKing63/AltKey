@@ -279,6 +279,19 @@ public class ConfigService
     }
 
     /// <summary>
+    /// 설정을 처음 설치한 상태(기본값)로 되돌립니다. 메모리와 파일 모두 기본값으로 쓰입니다.
+    /// [중요] 파일을 삭제하지 않고 내용을 덮어써서, 포터블 모드 마커(config.json이 exe 옆에 존재)를 보존합니다.
+    /// — 파일을 지우면 재시작 시 설치판 모드(%AppData%)로 오인돼 데이터 폴더가 바뀌기 때문입니다.
+    /// </summary>
+    public void ResetToDefaults()
+    {
+        Current = new AppConfig();
+        EnsureHeaderButtonDefaults();
+        Save();
+        ConfigChanged?.Invoke(null);
+    }
+
+    /// <summary>
     /// 현재 설정을 config.json에 저장합니다.
     /// 잠깐 파일 사용 충돌이 나면 몇 번 재시도해, 외부 도구와 함께 써도 저장 성공률을 높입니다.
     /// [배포] 읽기 전용 경로(예: 스토어 설치 디렉터리)에서 쓰기 거부(UnauthorizedAccessException)가 나도
