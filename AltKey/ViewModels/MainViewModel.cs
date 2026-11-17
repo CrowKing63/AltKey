@@ -267,22 +267,27 @@ public partial class MainViewModel : ObservableObject
             return null;
         };
 
-        // [스크래치패드] 제안 수락도 키 입력과 같은 대상 판별으로 전송 전 포커스를 확보한다.
+        // [스크래치패드] 전송 전 입력 대상(패드의 메모 박스)을 확보한다.
+        // 패드가 열려 있을 때 키보드 창의 버튼을 클릭하면 WPF가 같은 프로세스의 키보드 창을 활성화해
+        // 포그라운드를 뺏긴다(SetForegroundWindow는 우리 프로세스가 이미 포그라운드를 갖고 있으면 성공).
         // KeyPressed는 메모 박스 포커스가 끊겼을 때 스스로 복원하지만(KeyboardViewModel),
-        // 수락 경로는 그 로직이 없어 포그라운드가 키보드 창으로 쏠려 있을 때 SendInput이
+        // 제안 수락·클립보드 붙여넣기 경로는 그 로직이 없어 그대로 SendInput을 보내면
         // AltKey 자체로 가 사라진다 — 전송 전 패드 창/메모 박스 포커스를 다시 놓아 준다.
-        suggestionBarViewModel.PrepareInputTarget = () =>
+        void EnsureScratchPadInputTarget()
         {
             var padBox = keyboardViewModel.ScratchPadForegroundBox?.Invoke();
             bool padVisible = _scratchPadWindow is { IsVisible: true };
-            DebugLog.Info($"AcceptPrep padVisible={padVisible} padBox={(padBox is null ? "null" : "ok")} boxFocused={(padBox is null ? "-" : (padBox.IsKeyboardFocused ? "y" : "n"))}");
+            DebugLog.Info($"InputPrep padVisible={padVisible} padBox={(padBox is null ? "null" : "ok")} boxFocused={(padBox is null ? "-" : (padBox.IsKeyboardFocused ? "y" : "n"))}");
 
             if (padBox is null) return; // 외부 앱이 입력 대상인 경우 — 포그라운드를 건드리지 않는다
             if (_scratchPadWindow is not { IsVisible: true } pad) return;
 
             if (!pad.IsActive) pad.Activate();
             if (!padBox.IsKeyboardFocused) System.Windows.Input.Keyboard.Focus(padBox);
-        };
+        }
+
+        suggestionBarViewModel.PrepareInputTarget = EnsureScratchPadInputTarget;
+        clipboardViewModel.PrepareInputTarget = EnsureScratchPadInputTarget;
 
         _profileService.ForegroundAppChanged += OnForegroundAppChanged;
         _configService.ConfigChanged += OnConfigChanged;

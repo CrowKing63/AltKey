@@ -29,6 +29,11 @@ public partial class ClipboardViewModel : ObservableObject
     [ObservableProperty]
     private ObservableCollection<ClipboardItem> items = [];
 
+    // [스크래치패드] Ctrl+V 전송 전 입력 대상(패드의 메모 박스)을 확보하는 훅 — MainViewModel이 연결한다.
+    // 패드가 열려 있을 때 이 패널의 항목 버튼을 클릭하면 WPF가 같은 프로세스의 키보드 창을 활성화해
+    // 포그라운드를 뺏기고, 그대로 Ctrl+V를 보내면 AltKey 자체로 가 사라진다(제안 수락 경로와 동일한 증세).
+    public Action? PrepareInputTarget { get; set; }
+
     public ClipboardViewModel(ClipboardService clipboardService, InputService inputService)
     {
         _clipboardService = clipboardService;
@@ -103,6 +108,9 @@ public partial class ClipboardViewModel : ObservableObject
     private void PasteItem(string text)
     {
         _clipboardService.PasteItem(text);
+        // [스크래치패드] 패드가 열려 있으면 포그라운드가 자기(키보드) 창으로 쏠려 있을 수 있다 —
+        // 전송 전 패드/메모 박스 포커스를 확보한 뒤 보낸다. 외부 앱이 대상이면 훅은 아무 일도 안 한다.
+        PrepareInputTarget?.Invoke();
         // Ctrl+V 전송으로 붙여넣기
         _inputService.HandleAction(new SendComboAction(["VK_CONTROL", "VK_V"]));
         IsVisible = false; // 선택 즉시 패널 닫기
