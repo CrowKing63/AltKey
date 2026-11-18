@@ -653,6 +653,14 @@ public partial class KeyboardViewModel : ObservableObject
 
         // [스크래치패드] 포그라운드가 스크래치패드면 자기 창 브랜치를 건너뛰고 아래 외부 앱 경로(내부 조합)를 쓴다.
         var scratchPadBox = ScratchPadForegroundBox?.Invoke();
+        if (scratchPadBox is not null)
+        {
+            string keyAction = effectiveAction is SendKeyAction
+                ? "SendKey"
+                : effectiveAction?.GetType().Name ?? "none";
+            InputDiagnosticTrace.LogScratchPadKey(
+                _inputService.Mode.ToString(), keyAction, scratchPadBox, scratchPadBox.IsKeyboardFocused);
+        }
 
         if (_inputService.IsForegroundOwnWindow() && scratchPadBox is null)
         {
@@ -704,8 +712,12 @@ public partial class KeyboardViewModel : ObservableObject
             : InputMode.VirtualKey;
 
         // 메모 박스가 포커스를 잃었을 때(제목바 클릭 등) 다시 놓아 문자가 유실되지 않게 한다.
+        if (scratchPadBox is not null)
+            ScratchPadImePolicy.ConfigureTextBox(scratchPadBox, inputMode);
         if (scratchPadBox is not null && !scratchPadBox.IsKeyboardFocused)
             System.Windows.Input.Keyboard.Focus(scratchPadBox);
+        if (scratchPadBox is not null)
+            InputDiagnosticTrace.LogScratchPadStage("KEY_FOCUS_READY", inputMode.ToString(), scratchPadBox);
 
         var ctx = new KeyContext(
             ShowUpperCase,
@@ -715,6 +727,9 @@ public partial class KeyboardViewModel : ObservableObject
             _inputService.TrackedOnScreenLength);
 
         bool handled = _autoComplete.OnKey(slot, ctx);
+        if (scratchPadBox is not null)
+            InputDiagnosticTrace.LogScratchPadStage("KEY_COMPOSER_RESULT", inputMode.ToString(), scratchPadBox, $"handled={handled} actionPresent={effectiveAction is not null}");
+
         if (!handled && effectiveAction is not null)
         {
             _inputService.HandleAction(effectiveAction);

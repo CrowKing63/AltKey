@@ -1,8 +1,9 @@
-<Window x:Class="AltKey.Views.ScratchPadWindow"
+<local:AnchoredPanelWindowBase x:Class="AltKey.Views.ScratchPadWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:AltKey.Views"
         mc:Ignorable="d"
         Title="빠른 메모"
         WindowStyle="None"
@@ -15,7 +16,7 @@
         MouseEnter="Window_MouseEnter"
         MouseLeave="Window_MouseLeave">
 
-    <Window.Resources>
+    <local:AnchoredPanelWindowBase.Resources>
         <!-- 접근성/시각 일관성: 키보드 상단바 버튼과 같은 호버 대비를 써서
              패드 안에서도 "누를 수 있는 곳"이 예측되게 합니다. -->
         <Style x:Key="PadButtonStyle" TargetType="Button">
@@ -49,7 +50,20 @@
                 </Setter.Value>
             </Setter>
         </Style>
-    </Window.Resources>
+
+        <!-- 가/A 버튼: 테마 강조색을 유지하면서 호버·누름 반응은 opacity로 준다.
+             PadButtonStyle의 배경 색trigger는 로컬 배경값에 가려지므로 이 방식으로 피드백을 보존한다. -->
+        <Style x:Key="AccentPadButtonStyle" TargetType="Button" BasedOn="{StaticResource PadButtonStyle}">
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Opacity" Value="0.85"/>
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Opacity" Value="0.7"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </local:AnchoredPanelWindowBase.Resources>
 
     <!-- 접근성/미관: 메인 키보드 창과 같은 둥근 카드로 그려 바깥 직각 레이어를 숨긴다. -->
     <Border Background="{DynamicResource KeyboardBg}"
@@ -125,6 +139,20 @@
                             AutomationProperties.Name="붙여넣기">
                         <TextBlock Text="붙여넣기"/>
                     </Button>
+                    <!-- 가/A: 메인 키보드 토글과 같은 서브모드 — 붙여넣기 오른쪽, 닫기 왼쪽.
+                         강조색은 메인 키보드 가/A 키와 같은 AccentBrush를 써서 테마 간 일관성을 유지합니다.
+                         '가'와 'A'의 글자 폭이 달라 왼쪽 버튼들이 흔들리지 않도록 너비는 고정합니다. -->
+                    <Button x:Name="KoreanSubmodeButton"
+                            Style="{StaticResource AccentPadButtonStyle}"
+                            Width="32"
+                            Background="{DynamicResource AccentBrush}"
+                            Foreground="{DynamicResource AccentForegroundBrush}"
+                            FontSize="{DynamicResource ScaledSettingsBaseFontSize}"
+                            Click="KoreanSubmodeButton_Click"
+                            ToolTip="영어 입력으로 전환"
+                            AutomationProperties.Name="영어로 전환">
+                        <TextBlock x:Name="KoreanSubmodeLabel" Text="가"/>
+                    </Button>
                 </StackPanel>
 
                 <!-- 닫기: 숨김(종료 아님) — MainViewModel이 Show/Hide를 관리 -->
@@ -157,4 +185,4 @@
                      Text="{Binding Text, Mode=TwoWay}"/>
         </Grid>
     </Border>
-</Window>
+</local:AnchoredPanelWindowBase>
