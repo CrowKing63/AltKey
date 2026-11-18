@@ -82,8 +82,9 @@
 
         <!-- 항목 행: 전체면 = 붙여넣기 버튼, 우측 ★·✕는 그 위에 얹힌 별도 버튼 (클릭은 각자 처리) -->
         <DataTemplate x:Key="ClipboardItemRow">
+            <!-- [2줄 미리보기] 행 높이는 44px 고정 — 긴 미리보기는 최대 2줄까지 줄바꿈되고 그 이상은 ellipsis -->
             <Grid Height="44" Margin="0,1">
-                <!-- 붙여넣기 영역: 미리보기(1줄 ellipsis) + 상대 시간. 우측 70px는 ★·✕ 버튼 자리.
+                <!-- 붙여넣기 영역: 미리보기(최대 2줄 줄바꿈) + 상대 시간. 우측 70px는 ★·✕ 버튼 자리.
                      행 클릭/Enter = 이 버튼의 커맨드 (DataContext = ClipboardItem) -->
                 <Button Focusable="False"
                         Command="{Binding DataContext.PasteItemCommand, RelativeSource={RelativeSource AncestorType=Window}}"
@@ -92,15 +93,22 @@
                     <Button.Template>
                         <ControlTemplate TargetType="Button">
                             <Border x:Name="RowBorder" Background="Transparent" CornerRadius="8" Padding="10,0,70,0">
+                                <!-- 미리보기는 남은 폭(시간 열 제외) 안에서 줄바꿈하고 최대 2줄까지 표시.
+                                     MaxHeight 35 = 라인 높이 17.29px × 2줄 ≈ 34.58 — 그 이상은 ellipsis.
+                                     세로 중앙 정렬로 고정 높이(44px) 행 안에서 균형을 맞춘다 (측정 확인). -->
                                 <Grid>
-                                    <TextBlock Text="{Binding Preview}" FontSize="13"
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="{Binding Preview}" FontSize="13"
                                                Foreground="{DynamicResource SettingsFg}"
-                                               TextTrimming="CharacterEllipsis"/>
+                                               TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxHeight="35"
+                                               VerticalAlignment="Center"/>
                                     <!-- 상대 시간: 기록 없으면(구형 데이터) 빈 문자열이라 안 보임 -->
-                                    <TextBlock Text="{Binding TimeText}" FontSize="11"
+                                    <TextBlock Grid.Column="1" Text="{Binding TimeText}" FontSize="11"
                                                Foreground="{DynamicResource SettingsFgHint}"
-                                               HorizontalAlignment="Right" VerticalAlignment="Center"
-                                               Margin="0,0,8,0"/>
+                                               VerticalAlignment="Center" Margin="8,0,0,0"/>
                                 </Grid>
                             </Border>
                             <ControlTemplate.Triggers>
@@ -212,6 +220,10 @@
             </Grid>
 
             <!-- 목록: '고정' 섹션 + '최근' 리스트 (검색 필터는 ViewModel이 적용) -->
+            <!-- [수평 폭 제약] 수평 스크롤바를 'Disabled'로 고정해야 한다. 'Hidden'으로 바꾸면 콘텐츠에
+                 무한 폭을 줘서 긴 미리보기 행이 창 너비(360px)보다 넓게 늘어난다 — 별표·삭제 버튼까지
+                 창 밖으로 밀려나고 TextTrimming ellipsis도 발동하지 않는다. 'Disabled'는 폭을 뷰포트에
+                 맞춰 제약해 줄임이 정상 동작한다 (WPF 레이아웃 측정으로 확인). -->
             <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                 <StackPanel>
                     <!-- 고정 섹션: 비어 있으면 숨김. ★ 항상 라벤더 채움 표시 -->

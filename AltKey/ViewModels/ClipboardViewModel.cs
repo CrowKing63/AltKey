@@ -9,7 +9,7 @@ namespace AltKey.ViewModels;
 
 /// <summary>
 /// [역할] 클립보드 항목 하나를 표현하는 데이터 클래스입니다.
-/// [속성] FullText: 전체 텍스트, Preview: 미리보기(1줄·40자), CopiedAt: 마지막 복사 시각(구형 데이터면 null),
+/// [속성] FullText: 전체 텍스트, Preview: 미리보기(최대 2줄·120자), CopiedAt: 마지막 복사 시각(구형 데이터면 null),
 ///        IsFavorite: 고정 여부, IsSelected: 키보드 내비게이션 선택 상태, TimeText: 상대 시간 표시 문자열
 /// </summary>
 public partial class ClipboardItem : ObservableObject
@@ -229,8 +229,9 @@ public partial class ClipboardViewModel : ObservableObject
 
     private static string Preview(string text)
     {
-        // 최대 40자까지 미리보기 (1줄로 줄임)
-        var singleLine = text.Replace('\n', ' ').Replace('\r', ' ');
-        return singleLine.Length <= 40 ? singleLine : singleLine[..37] + "...";
+        // 줄바꿈 제거 + 120자 제한 — UI는 최대 2줄로 줄바꿈해 표시(행 MaxHeight 35)하므로
+        // 여기서는 검색·표시를 위한 여유분만 남긴다.
+        var singleLine = text.Replace("\n", " ").Replace("\r", " ").TrimStart();
+        return singleLine.Length <= 120 ? singleLine : singleLine[..120] + "...";
     }
 }
