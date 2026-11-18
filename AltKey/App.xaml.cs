@@ -145,7 +145,6 @@ public partial class App : System.Windows.Application
 
             // ViewModel
             services.AddSingleton<KeyboardViewModel>();
-            services.AddSingleton<EmojiViewModel>();
             services.AddSingleton<ClipboardViewModel>();
             services.AddSingleton<ScratchPadViewModel>();
             services.AddSingleton<SettingsViewModel>();
@@ -153,6 +152,7 @@ public partial class App : System.Windows.Application
             // T-9.3: 자동 완성 바 ViewModel
             services.AddSingleton<SuggestionBarViewModel>();
             // 창
+            services.AddSingleton<AnchoredPanelService>(); // 키보드 창에 앵커되는 패널(빠른 메모·클립보드) 호스트
             services.AddSingleton<MainWindow>();
 
             Services = services.BuildServiceProvider();

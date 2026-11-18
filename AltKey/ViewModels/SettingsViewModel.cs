@@ -62,6 +62,8 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty] private string selectedLayout = "";
     [ObservableProperty] private int    windowScale    = 100;
     [ObservableProperty] private bool   skipCloseConfirm = false;
+    // [U4] 클립보드 패널: 항목을 붙여넣은 뒤 자동으로 닫을지 여부 (기본값: 닫기)
+    [ObservableProperty] private bool   clipboardCloseAfterPaste = true;
 
     // T-8.1: 자동 실행
     [ObservableProperty] private bool runOnStartup;
@@ -347,6 +349,7 @@ public partial class SettingsViewModel : ObservableObject
             SelectedLayout = c.DefaultLayout;
             WindowScale    = c.Window.Scale;
             SkipCloseConfirm = !c.AskBeforeHideToTray;
+            ClipboardCloseAfterPaste = c.ClipboardCloseAfterPaste;
 
             // T-8.1: 자동 실행
             RunOnStartup = _startupService.IsEnabled;
@@ -520,6 +523,12 @@ public partial class SettingsViewModel : ObservableObject
     {
         if (_isLoading) return;
         _configService.Update(c => c.AskBeforeHideToTray = !value, nameof(AppConfig.AskBeforeHideToTray));
+    }
+
+    partial void OnClipboardCloseAfterPasteChanged(bool value)
+    {
+        if (_isLoading) return;
+        _configService.Update(c => c.ClipboardCloseAfterPaste = value, nameof(AppConfig.ClipboardCloseAfterPaste));
     }
 
     partial void OnSelectedLayoutChanged(string value)

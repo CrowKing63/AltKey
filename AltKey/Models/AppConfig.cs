@@ -91,6 +91,10 @@ public class AppConfig
     // 이전에 복사했던 텍스트 목록(클립보드 히스토리) 창을 보여줄지 여부입니다.
     public bool ClipboardPanelEnabled { get; set; } = false;
 
+    // 클립보드 패널에서 항목을 클릭(또는 Enter로 선택)해 붙여넣기한 뒤, 패널을 자동으로 닫을지 여부입니다.
+    // 기본값: true (닫기). 꺼두면 같은 패널을 계속 열어 여러 번 붙여넣기가 가능합니다.
+    public bool ClipboardCloseAfterPaste { get; set; } = true;
+
     // 단어 입력 시 다음 단어를 추천해주는 자동 완성 기능 활성화 여부입니다.
     public bool AutoCompleteEnabled   { get; set; } = false;
 

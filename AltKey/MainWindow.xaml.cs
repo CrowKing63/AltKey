@@ -18,6 +18,7 @@ public partial class MainWindow : Window
     private readonly TrayService    _trayService;
     private readonly MainViewModel  _viewModel;
     private readonly InputService   _inputService;
+    private readonly AnchoredPanelService _anchoredPanels;
 
     private DispatcherTimer _fadeTimer = null!;
     private bool _isIdleOpacityApplied;
@@ -36,7 +37,8 @@ public partial class MainWindow : Window
         ConfigService  configService,
         TrayService    trayService,
         MainViewModel  viewModel,
-        InputService   inputService)
+        InputService   inputService,
+        AnchoredPanelService anchoredPanels)
     {
         InitializeComponent();
         DataContext = viewModel;
@@ -54,8 +56,9 @@ public partial class MainWindow : Window
         _inputService  = inputService;
         _configService.ConfigChanged += OnConfigChanged;
 
-        // 스크래치패드: 이 창(키보드 창)이 패드 배치의 기준이 되므로 이동·크기·숨김/보임을 연결합니다.
-        viewModel.AttachScratchPadHost(this);
+        // 키보드 창에 앵커되는 패널(빠른 메모·클립보드): 이 창이 배치 기준이 되므로 이동·크기·숨김/보임을 연결합니다.
+        _anchoredPanels = anchoredPanels;
+        _anchoredPanels.AttachHost(this);
 
         // T-1.7: 자동 페이딩 타이머 — 생성자에서 먼저 만들어두면
         // Show() 중 IsVisibleChanged가 OnSourceInitialized보다 앞서 떠도 null이 아니어서 NRE를 피한다.
@@ -391,7 +394,7 @@ public partial class MainWindow : Window
         Keyboard.Focus(restoreTarget);
     }
 
-    /// <summary>포커스 대상이 메인 창 안의 KeyboardView(키·제안바·이모지 등) 아래인지 판별합니다.</summary>
+    /// <summary>포커스 대상이 메인 창 안의 KeyboardView(키·제안바 등) 아래인지 판별합니다.</summary>
     private bool IsWithinKeyboardViewSurface(DependencyObject? d)
     {
         if (KeyboardViewControl is null || d is null) return false;

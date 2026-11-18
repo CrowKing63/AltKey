@@ -454,23 +454,5 @@
         </DockPanel>
         </Border>
 
-        <!-- T-8.3: 이모지 패널 오버레이 (헤더 바 바로 아래, 키보드 위에 표시) -->
-        <views:EmojiPanel
-            DataContext="{Binding Emoji}"
-            Visibility="{Binding IsVisible, Converter={StaticResource BoolToVis}}"
-            VerticalAlignment="Top"
-            Margin="0,28,0,0"
-            Panel.ZIndex="6"/>
-
-        <!-- T-8.4: 클립보드 패널 오버레이 (헤더 바 바로 아래, 좌측 배치) -->
-        <views:ClipboardPanel
-            DataContext="{Binding Clipboard}"
-            Visibility="{Binding IsVisible, Converter={StaticResource BoolToVis}}"
-            VerticalAlignment="Stretch"
-            HorizontalAlignment="Stretch"
-            
-            Margin="0,28,0,0"
-            Panel.ZIndex="6"/>
-
         </Grid>
 </UserControl>

@@ -420,6 +420,19 @@
                                        TextWrapping="Wrap"
                                        Margin="16,0,0,16"/>
 
+                            <TextBlock Text="클립보드" Style="{StaticResource SectionTitleStyle}"/>
+                            <CheckBox Content="항목 붙여넣기 후 패널 닫기"
+                                      Foreground="{DynamicResource SettingsFg}"
+                                      IsChecked="{Binding ClipboardCloseAfterPaste}"
+                                      Margin="0,0,0,4"
+                                      KeyboardNavigation.TabIndex="100"
+                                      AutomationProperties.Name="항목 붙여넣기 후 패널 닫기"/>
+                            <TextBlock Text="클릭·Enter로 항목을 붙여넣은 뒤 클립보드 패널이 자동으로 닫힙니다. 끄면 붙여넣기 후에도 열려 있어 연속 붙여넣기가 쉽습니다."
+                                       Foreground="{DynamicResource SettingsFgSub}"
+                                       FontSize="{DynamicResource ScaledSettingsSubFontSize}"
+                                       TextWrapping="Wrap"
+                                       Margin="16,0,0,16"/>
+
                             <TextBlock Text="키 반복 입력" Style="{StaticResource SectionTitleStyle}"/>
                             <CheckBox Content="키 반복 입력 사용"
                                       Foreground="{DynamicResource SettingsFg}"

@@ -190,14 +190,11 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
     private void OnWindowSizeChanged(object sender, SizeChangedEventArgs e)
         => UpdateKeyUnit(e.NewSize.Width);
 
-    // 키보드 빈 공간을 클릭하면 열려있던 패널(이모지, 클립보드)을 닫습니다.
+    // 키보드 빈 공간을 클릭하면 열려있던 앵커 패널(빠른 메모, 클립보드)을 닫습니다.
     private void KeyboardBorder_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         if (DataContext is MainViewModel vm)
-        {
-            vm.Emoji.IsVisible     = false;
-            vm.Clipboard.IsVisible = false;
-        }
+            vm.CloseAnchoredPanels();
     }
 
     private void KeyboardBorder_SizeChanged(object sender, SizeChangedEventArgs e)

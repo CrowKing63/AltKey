@@ -47,8 +47,8 @@ public partial class SuggestionBarViewModel : ObservableObject
     // [스크래치패드] 수락 전 입력 대상(메모 박스) 포커스를 확보하는 훅이다.
     // 키 입력(KeyPressed)은 메모 박스 포커스가 끊겼을 때 스스로 복원하지만, 제안 수락 경로는
     // 그런 로직이 없어 SendInput이 포그라운드(예: 키보드 창)으로 가 사라질 수 있다 —
-    // MainViewModel이 패드 여부와 포그라운드를 검사해 연결한다.
-    public Action? PrepareInputTarget { get; set; }
+    // MainViewModel이 패드 여부와 포그라운드를 검사해 연결한다. (true = 프로세스 내 대상 확보)
+    public Func<bool>? PrepareInputTarget { get; set; }
 
     public SuggestionBarViewModel(
         AutoCompleteService autoComplete,
@@ -153,7 +153,7 @@ public partial class SuggestionBarViewModel : ObservableObject
     private void AcceptSuggestion(string suggestion)
     {
         // 수락 전 입력 대상 포커스 확보 — 키 입력 경로(KeyPressed)의 재포커스와 같은 역할이다.
-        PrepareInputTarget?.Invoke();
+        _ = PrepareInputTarget?.Invoke();
 
         if (_currentMode == SuggestionMode.Bigram)
         {
