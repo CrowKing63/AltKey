@@ -28,8 +28,12 @@ public class ClipboardService : IDisposable
     // ── 필드 ──────────────────────────────────────────────────────────────
     private readonly List<string> _history = [];
     private readonly List<string> _favorites = [];
+    // 텍스트 → 마지막 복사 시각 — 행의 상대 시간("N분 전") 표시용. 구형 저장 파일엔 없으므로 null 허용.
+    private readonly Dictionary<string, DateTime> _timestamps = new();
     private readonly DispatcherTimer _pollTimer;
-    private string? _lastClipboard;
+    // [변경 감지 기준] 클립보드 시퀀스 번호 — 텍스트 본문 비교 대신 사용한다.
+    // 같은 텍스트를 다시 복사해도 시퀀스는 증가하므로 "전체 삭제 후 같은 내용 재복사"가 정상 추가된다.
+    private uint _lastSeq;
 
     // 저장 파일 경로 (PathResolver.DataDir + clipboard_history.json)
     private static string SavePath => Path.Combine(PathResolver.DataDir, "clipboard_history.json");
@@ -38,6 +42,9 @@ public class ClipboardService : IDisposable
     {
         // 저장된 히스토리와 즐겨찾기 불러오기
         Load();
+
+        // [폴링 기준점] 시작 시점의 시퀀스 — AltKey 시작 전 클립보드 내용이 있는 그대로면 재추가하지 않는다.
+        _lastSeq = ClipboardHelper.GetSequenceNumberWithRetry();
 
         // 클립보드 폴링 (500ms 간격)
         _pollTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
@@ -49,11 +56,14 @@ public class ClipboardService : IDisposable
 
     private void OnPollTick(object? sender, EventArgs e)
     {
+        var seq = ClipboardHelper.GetSequenceNumberWithRetry();
+        if (seq == _lastSeq) return; // 클립보드 내용이 변한 적 없음
+        _lastSeq = seq; // 변화 감지 — 텍스트가 아니어도 시퀀스 갱신으로 다음 폴링 정상화
+
         // 재시도 로직이 포함된 헬퍼 사용 (다른 프로그램이 클립보드를 점유하고 있어도 안전)
         if (!ClipboardHelper.ContainsTextWithRetry()) return;
         var current = ClipboardHelper.GetTextWithRetry();
-        if (current == null || current == _lastClipboard) return;
-        _lastClipboard = current;
+        if (current == null) return;
         AddToHistory(current);
     }
 
@@ -68,9 +78,13 @@ public class ClipboardService : IDisposable
         _history.Insert(0, text);
         if (_history.Count > MaxHistory)
             _history.RemoveAt(_history.Count - 1);
+        _timestamps[text] = DateTime.Now; // 복사 시각 기록 (상대 시간 표시용)
         HistoryChanged?.Invoke();
         Save();
     }
+
+    /// <summary>해당 텍스트의 마지막 복사 시각을 반환합니다. 기록이 없으면(구형 데이터) null.</summary>
+    public DateTime? CopiedAt(string text) => _timestamps.TryGetValue(text, out var t) ? t : null;
 
     /// <summary>
     /// 기존 항목을 맨 앞으로 이동합니다 (새로 복사한 것처럼).
@@ -80,6 +94,7 @@ public class ClipboardService : IDisposable
         if (!_history.Contains(text)) return;
         _history.Remove(text);
         _history.Insert(0, text);
+        _timestamps[text] = DateTime.Now; // 패널에서 붙여넣기해도 "방금"으로 갱신
         HistoryChanged?.Invoke();
         Save();
     }
@@ -91,17 +106,37 @@ public class ClipboardService : IDisposable
     {
         // 재시도 로직이 포함된 헬퍼 사용 (다른 프로그램이 클립보드를 점유하고 있어도 안전)
         ClipboardHelper.SetTextWithRetry(text);
-        _lastClipboard = text; // 히스토리 중복 추가 방지
+        bool clipboardVerified = string.Equals(ClipboardHelper.GetTextWithRetry(), text, StringComparison.Ordinal);
+        InputDiagnosticTrace.Log($"CLIPBOARD_SET chars={text.Length} verified={clipboardVerified}");
+        _lastSeq = ClipboardHelper.GetSequenceNumberWithRetry(); // 방금 우리가 바꾼 클립보드를 폴링이 "새 복사"로 오인하지 않게
+
         PromoteItem(text);     // 맨 앞으로 이동
     }
 
     /// <summary>
-    /// 히스토리 전체를 삭제합니다.
+    /// 히스토리 전체를 삭제합니다. (즐겨찾기는 보존 — Win+V의 "히스토리 지우기" 시맨틱)
     /// </summary>
     public void ClearHistory()
     {
         _history.Clear();
-        _lastClipboard = null;
+        _timestamps.Clear();
+        // [전체 삭제] 현재 시퀀스를 기준점으로 삼아 — 재복사하지 않으면(내용 불변) 재추가되지 않고,
+        // 같은 텍스트라도 다시 복사하면 시퀀스가 바뀌어 정상 추가된다.
+        // (구 구현은 본문 비교라 같은 텍스트 재복사가 영영 감지되지 않는 문제가 있었다.)
+        _lastSeq = ClipboardHelper.GetSequenceNumberWithRetry();
+        HistoryChanged?.Invoke();
+        Save();
+    }
+
+    /// <summary>
+    /// 히스토리에서 항목 하나를 삭제합니다. (행의 ✕ 버튼)
+    /// 즐겨찾기에서는 건드리지 않습니다 — 완전히 없애려면 ★(고정 해제)부터 해야 합니다.
+    /// 참고: 삭제된 텍스트가 지금 시스템 클립보드에 남아 있으면 재복사 시 다시 추가됩니다 (허용).
+    /// </summary>
+    public void RemoveFromHistory(string text)
+    {
+        if (!_history.Remove(text)) return;
+        _timestamps.Remove(text);
         HistoryChanged?.Invoke();
         Save();
     }
@@ -170,7 +205,9 @@ public class ClipboardService : IDisposable
     {
         _history.Clear();
         _favorites.Clear();
-        _lastClipboard = null;
+        _timestamps.Clear();
+        // 초기화 후 현재 클립보드 내용이 있는 그대로면 재추가하지 않는다 (ClearHistory와 같은 시퀀스 기준).
+        _lastSeq = ClipboardHelper.GetSequenceNumberWithRetry();
         HistoryChanged?.Invoke();
         FavoritesChanged?.Invoke();
         Save();
@@ -191,7 +228,9 @@ public class ClipboardService : IDisposable
             var data = new ClipboardData
             {
                 History = [.. _history],
-                Favorites = [.. _favorites]
+                Favorites = [.. _favorites],
+                // 복사 시각은 ISO 문자열로 저장 (구형 파일엔 이 필드가 없으므로 로드 시 null 허용)
+                Timestamps = _timestamps.ToDictionary(kv => kv.Key, kv => kv.Value.ToString("o"))
             };
             File.WriteAllText(SavePath,
                 JsonSerializer.Serialize(data, JsonOptions.Default));
@@ -216,6 +255,17 @@ public class ClipboardService : IDisposable
 
             _favorites.Clear();
             _favorites.AddRange(data.Favorites.Take(MaxFavorites));
+
+            // 타임스탬프 로드 — 구형 파일엔 Timestamps 자체가 없거나 개별 항목 파싱이 실패할 수 있음 (null 허용)
+            _timestamps.Clear();
+            if (data.Timestamps is not null)
+            {
+                foreach (var kv in data.Timestamps)
+                {
+                    if (DateTime.TryParse(kv.Value, null, System.Globalization.DateTimeStyles.RoundtripKind, out var t))
+                        _timestamps[kv.Key] = t;
+                }
+            }
         }
         catch
         {
@@ -239,4 +289,6 @@ file class ClipboardData
 {
     public List<string> History { get; set; } = [];
     public List<string> Favorites { get; set; } = [];
+    // 텍스트 → ISO 8601 복사 시각 (구형 파일엔 없음 — 로드 시 null 허용)
+    public Dictionary<string, string>? Timestamps { get; set; }
 }

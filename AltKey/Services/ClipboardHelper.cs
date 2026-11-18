@@ -100,4 +100,34 @@ public static class ClipboardHelper
         }
         return false;
     }
+
+    /// <summary>
+    /// 클립보드 시퀀스 번호를 읽습니다.
+    /// 내용이 달라질 때마다 Windows가 증가시키는 값 — 같은 텍스트라도 다시 복사하면 바뀝니다.
+    /// (텍스트 본문 비교로는 "같은 텍스트 재복사"를 감지 못해 전체 삭제 후 항목이 영영 안 들어가는 문제를 막음)
+    /// 실패 시 uint.MaxValue 반환 — 폴링에서 ContainsText 체크가 자연스럽게 필터합니다.
+    /// </summary>
+    public static uint GetSequenceNumberWithRetry(int maxRetries = DefaultMaxRetries)
+    {
+        for (int attempt = 0; attempt < maxRetries; attempt++)
+        {
+            try
+            {
+                return GetClipboardSequenceNumber();
+            }
+            catch (COMException ex) when (IsClipboardError(ex))
+            {
+                if (attempt < maxRetries - 1)
+                    Thread.Sleep(InitialDelayMs << attempt); // 10ms → 20ms → 40ms
+            }
+            catch
+            {
+                return uint.MaxValue;
+            }
+        }
+        return uint.MaxValue;
+    }
+
+    [DllImport("user32.dll")]
+    private static extern uint GetClipboardSequenceNumber();
 }
