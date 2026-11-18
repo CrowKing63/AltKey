@@ -136,6 +136,30 @@ public class HeaderButtonEnsureBuiltInsTests
     }
 
     [Fact]
+    // 기존 설치 설정에 남아 있는 이모지(😊) 버튼 항목이 제거되고, 커스텀 버튼 순서는 그대로 유지되는지 확인합니다.
+    public void legacy_emoji_entry_is_removed_and_custom_order_preserved()
+    {
+        var emoji = new HeaderButtonConfig
+        {
+            Id = "Emoji", // 구버전 설치 설정에 저장된 이모지 기본 버튼 (기능은 2026-11에 제거됨)
+            Kind = HeaderButtonKind.BuiltIn,
+            Visible = true
+        };
+        var custom = Custom("Custom-1");
+
+        var buttons = new List<HeaderButtonConfig> { BuiltIn(HeaderButtonConfig.IdSettings), emoji, custom };
+        var result = HeaderButtonConfig.EnsureAllBuiltIns(buttons);
+
+        Assert.DoesNotContain(result, b => b.Id == "Emoji"); // 이모지 항목은 사라짐
+        int setIdx = result.FindIndex(b => b.Id == HeaderButtonConfig.IdSettings);
+        Assert.True(setIdx < result.FindIndex(b => b.Id == "Custom-1"), "커스텀 버튼 상대 순서 유지");
+
+        // 두 번 호출해도 이모지가 다시 생기지 않는지(멱등) 확인합니다.
+        var twice = HeaderButtonConfig.EnsureAllBuiltIns(result);
+        Assert.DoesNotContain(twice, b => b.Id == "Emoji");
+    }
+
+    [Fact]
     // 두 번 호출해도 중복이 생기지 않는지(멱등) 확인합니다.
     public void calling_twice_does_not_duplicate()
     {
