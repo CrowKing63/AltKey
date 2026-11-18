@@ -39,6 +39,7 @@ public partial class ClipboardViewModel : ObservableObject
     private readonly ClipboardService _clipboardService;
     private readonly InputService _inputService;
     private readonly ConfigService _configService;
+    private readonly SoundService _soundService;
 
     // [스크래치패드] Ctrl+V 전송 전 입력 대상(패드의 메모 박스)을 확보하는 훅 — MainViewModel이 연결한다.
     // 패드가 열려 있으면 포그라운드가 자기(키보드) 창으로 쏠려 있을 수 있어, 그대로 Ctrl+V를 보내면
@@ -54,11 +55,12 @@ public partial class ClipboardViewModel : ObservableObject
     // "패널 닫기" 요청 훅 — ✕·Esc 버튼과 '붙여넣기 후 닫기' 설정이 여기로 수렴합니다 (창/서비스가 연결).
     internal Action RequestClose { get; set; } = () => { };
 
-    public ClipboardViewModel(ClipboardService clipboardService, InputService inputService, ConfigService configService)
+    public ClipboardViewModel(ClipboardService clipboardService, InputService inputService, ConfigService configService, SoundService soundService)
     {
         _clipboardService = clipboardService;
         _inputService = inputService;
         _configService = configService;
+        _soundService = soundService;
         _clipboardService.HistoryChanged += RefreshItems;
         _clipboardService.FavoritesChanged += RefreshItems;
 
@@ -139,6 +141,10 @@ public partial class ClipboardViewModel : ObservableObject
             return; // 엉뚱한 창/컨트롤에 Ctrl+V를 보내지 않는다.
         // Ctrl+V 전송으로 붙여넣기
         _inputService.HandleAction(new SendComboAction(["VK_CONTROL", "VK_V"]));
+
+        // [사운드] 붙여넣기가 실제로 전송됐을 때만 재생 — 위 복원 실패로 반환한 경우엔 소리가 안 나도록 한다.
+        // 다른 UI 동작(버튼 클릭·제안 수락)과 같은 효과음을 사용한다 (설정에서 켜기/파일/볼륨 변경 가능).
+        _soundService.Play();
 
         if (_configService.Current.ClipboardCloseAfterPaste)
             RequestClose();
