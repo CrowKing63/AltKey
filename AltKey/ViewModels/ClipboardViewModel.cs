@@ -26,16 +26,16 @@ public partial class ClipboardItem : ObservableObject
 
 public partial class ClipboardViewModel : ObservableObject
 {
-    // ── 표시 목록(검색 필터 적용됨) ────────────────────────────────
+    // ── 표시 목록 ────────────────────────────────────────────────────────
     // 고정 섹션: 즐겨찾기. 최근 리스트: 히스토리에서 고정 항목을 뺀 것 — 같은 텍스트가 두 섹션에 중복 표시되지 않습니다.
     public ObservableCollection<ClipboardItem> Favorites { get; } = [];
     public ObservableCollection<ClipboardItem> HistoryItems { get; } = [];
 
-    [ObservableProperty] private string _searchText = "";
     [ObservableProperty] private bool _showFavoritesSection; // 고정 섹션 표시 여부 (비어 있으면 숨김)
     [ObservableProperty] private bool _hasAnyItems;          // 빈 상태 안내 표시 여부 (두 목록 모두 비어 있으면 false)
-    [ObservableProperty] private bool _isSearching;          // 검색어 입력 중 여부 — 빈 상태 문구·시작 안내 표시에 사용
     [ObservableProperty] private string _emptyStateMessage = "아직 복사한 항목이 없습니다";
+    // 정렬 순서: true = 내림차순(최신순, 기본값), false = 오름차순(오래된 순). 최근 리스트에만 적용됩니다.
+    [ObservableProperty] private bool _isDescending = true;
 
 
     // 키보드 내비게이션: [고정 + 최근] 결합 목록에서의 인덱스. -1 = 선택 없음.
@@ -71,45 +71,33 @@ public partial class ClipboardViewModel : ObservableObject
         WpfApp.Current.Dispatcher.Invoke(() => RefreshItems());
     }
 
-    /// <summary>검색어가 바뀌면(입력·지우기 버튼·Esc) 필터를 다시 적용하고 빈 상태 문구를 갱신합니다.</summary>
-    partial void OnSearchTextChanged(string value)
-    {
-        IsSearching = !string.IsNullOrWhiteSpace(value);
-        UpdateEmptyStateMessage();
-        RefreshItems();
-    }
-
     // ── 목록 갱신 ─────────────────────────────────────────────────────
 
-    /// <summary>검색 필터를 적용해 두 목록을 다시 구성하고 선택 상태를 보존합니다.</summary>
+    /// <summary>두 목록을 다시 구성합니다 (최근 리스트엔 정렬 순서 적용) — 선택 상태는 보존.</summary>
     private void RefreshItems()
     {
         WpfApp.Current.Dispatcher.Invoke(() =>
         {
-            var query = SearchText.Trim();
             Favorites.Clear();
             HistoryItems.Clear();
 
-            foreach (var text in _clipboardService.Favorites.Where(t => MatchesQuery(t, query)))
+            foreach (var text in _clipboardService.Favorites)
                 Favorites.Add(CreateItem(text, isFavorite: true));
 
             // 고정 항목은 '고정' 섹션에서 이미 표시되므로 최근 리스트에선 뺍니다 (중복 방지).
-            foreach (var text in _clipboardService.History.Where(t => !_clipboardService.IsFavorite(t) && MatchesQuery(t, query)))
+            var history = _clipboardService.History.Where(t => !_clipboardService.IsFavorite(t));
+            // 정렬: 내림차순(최신순) = 서비스 기본 순서, 오름차순(오래된 순) = 역순.
+            if (!IsDescending)
+                history = history.Reverse();
+
+            foreach (var text in history)
                 HistoryItems.Add(CreateItem(text, isFavorite: false));
 
             ShowFavoritesSection = Favorites.Count > 0;
             HasAnyItems = Favorites.Count + HistoryItems.Count > 0;
-            UpdateEmptyStateMessage(); // 목록이 비어/채워진 상태에 따라 문구를 맞춘다
             ApplySelection(); // 목록 재구성 후에도 선택이 같은 항목에 붙도록 (텍스트 기준)
         });
     }
-
-    /// <summary>빈 상태 안내 문구: 검색 중이면 "맞는 항목이 없습니다", 아니면 시작 안내.</summary>
-    private void UpdateEmptyStateMessage()
-        => EmptyStateMessage = IsSearching ? "맞는 항목이 없습니다" : "아직 복사한 항목이 없습니다";
-
-    private static bool MatchesQuery(string text, string query) =>
-        query.Length == 0 || text.Contains(query, StringComparison.OrdinalIgnoreCase);
 
     private ClipboardItem CreateItem(string text, bool isFavorite) => new()
     {
@@ -184,6 +172,25 @@ public partial class ClipboardViewModel : ObservableObject
         ItemAt(_selectedIndex).IsSelected = true;
     }
 
+    /// <summary>텍스트 기준으로 항목을 선택합니다 (정렬 전환 시 같은 항목이 새 위치로 이동해도 선택 유지용). 없으면 아무 일도 안 함.</summary>
+    private void SelectByText(string text)
+    {
+        int index = 0;
+        bool found = false;
+        foreach (var it in Favorites)
+        {
+            if (it.FullText == text) { _selectedIndex = index; found = true; break; }
+            index++;
+        }
+        if (found) return; // 고정 섹션에서 찾음 — 최근 리스트는 순서만 바뀌므로 위치 그대로
+        foreach (var it in HistoryItems)
+        {
+            if (it.FullText == text) { _selectedIndex = index; found = true; break; }
+            index++;
+        }
+        if (found) ApplySelection();
+    }
+
     // ── 명령 ──────────────────────────────────────────────────────────────
 
     /// <summary>항목을 클립보드에 설정하고 붙여넣기 (Ctrl+V)합니다. "붙여넣기 후 닫기" 설정이 ON이면 패널을 닫습니다.</summary>
@@ -225,12 +232,27 @@ public partial class ClipboardViewModel : ObservableObject
     [RelayCommand]
     private void ClearHistory() => _clipboardService.ClearHistory();
 
+    /// <summary>최근 리스트 정렬 순서를 전환합니다 (내림차순 최신순 ↔ 오름차순 오래된 순). 선택은 텍스트 기준으로 유지.</summary>
+    [RelayCommand]
+    private void ToggleSortOrder()
+    {
+        int count = Favorites.Count + HistoryItems.Count;
+        string? selectedText = _selectedIndex >= 0 && _selectedIndex < count ? ItemAt(_selectedIndex).FullText : null;
+
+        IsDescending = !IsDescending;
+        RefreshItems();
+
+        // 정렬로 같은 항목이 새 위치로 이동했으니 텍스트 기준으로 다시 선택한다.
+        if (selectedText != null)
+            SelectByText(selectedText);
+    }
+
     // ── 유틸리티 ──────────────────────────────────────────────────────────
 
     private static string Preview(string text)
     {
         // 줄바꿈 제거 + 120자 제한 — UI는 최대 2줄로 줄바꿈해 표시(행 MaxHeight 35)하므로
-        // 여기서는 검색·표시를 위한 여유분만 남긴다.
+        // 여기서는 표시를 위한 여유분만 남긴다.
         var singleLine = text.Replace("\n", " ").Replace("\r", " ").TrimStart();
         return singleLine.Length <= 120 ? singleLine : singleLine[..120] + "...";
     }

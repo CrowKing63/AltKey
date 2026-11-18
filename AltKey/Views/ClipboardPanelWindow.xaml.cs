@@ -13,7 +13,7 @@ namespace AltKey.Views;
 
 /// <summary>
 /// [역할] 클립보드 히스토리 패널의 독립 창입니다 (D2 — ScratchPadWindow와 같은 차원의 top-level 보조 패널).
-/// [기능] 검색, '고정'+'최근' 섹션 동시 표시, 키보드 내비게이션(↑↓/Enter/Esc), 행 액션(★ 고정·✕ 삭제).
+/// [기능] '고정'+'최근' 섹션 동시 표시, 정렬 순서 전환(최신순↔오래된 순), 키보드 내비게이션(↑↓/Enter/Esc), 행 액션(★ 고정·✕ 삭제).
 /// [참고] ✕는 창을 닫지 않고 숨김만 시킵니다 — Show/Hide는 AnchoredPanelService가 관리합니다.
 /// 드래그 핸들·포그라운드 Win32는 공용 기반 클래스(AnchoredPanelWindowBase)에서 제공합니다.
 /// </summary>
@@ -271,19 +271,12 @@ public partial class ClipboardPanelWindow : AnchoredPanelWindowBase
 
     // ── 키보드 내비게이션 (D5) ────────────────────────────────────────
     // ↑↓ = 선택 이동(랩어라운드), Enter = 선택 항목 붙여넣기, Esc = 닫기.
-    // 검색 박스에 포커스가 있으면 화살표는 텍스트 커서 이동(정상 동작) — 리스트 내비게이션과 충돌 없음.
+    // 텍스트 컨트롤에 포커스가 있으면 화살표는 커서 이동 — 리스트 내비게이션에 넘기지 않는다 (방어적 가드).
 
     private void Window_PreviewKeyDown(object sender, WpfKeyEventArgs e)
     {
         if (e.Key == Key.Escape)
         {
-            // 검색 중: 첫 Esc은 검색어만 지우고, 두 번째 Esc가 닫기 (VS Code 퀵오픈 같은 표준 UX).
-            if (Keyboard.FocusedElement == SearchBox && !string.IsNullOrEmpty(_viewModel.SearchText))
-            {
-                _viewModel.SearchText = "";
-                e.Handled = true;
-                return;
-            }
             ClipboardTrace.Log("CLOSE requested (Esc)");
             OnCloseRequested?.Invoke();
             e.Handled = true;
@@ -305,14 +298,20 @@ public partial class ClipboardPanelWindow : AnchoredPanelWindowBase
                 e.Handled = true;
                 break;
             case Key.Enter:
-                // 선택이 없으면 처리 안 함 (검색 박스 밖에서 Enter는 아무 일도 안 함).
+                // 선택이 없으면 처리 안 함.
                 if (_viewModel.TryPasteSelected())
                     e.Handled = true;
                 break;
         }
     }
 
-    // ── 헤더·검색 버튼 (코드비핸드: 파라미터가 없어 유지 — 행 액션은 XAML에서 커맨드로 바인딩) ────────────
+    // ── 헤더 버튼 (코드비핸드: 파라미터가 없어 유지 — 행 액션은 XAML에서 커맨드로 바인딩) ────────────
+
+    private void ToggleSort_Click(object sender, RoutedEventArgs e)
+    {
+        _viewModel.ToggleSortOrderCommand.Execute(null);
+        PlayButtonSound(); // [사운드] 동작 실행 후에만 재생 — 중간에 끼어든 문제가 있어도 버튼 동작은 보장된다
+    }
 
     private void ClearHistory_Click(object sender, RoutedEventArgs e)
     {
@@ -327,12 +326,6 @@ public partial class ClipboardPanelWindow : AnchoredPanelWindowBase
         PlayButtonSound();
     }
 
-    private void ClearSearch_Click(object sender, RoutedEventArgs e)
-    {
-        _viewModel.SearchText = "";
-        SearchBox.Focus(); // 포커스를 유지해 바로 새 검색어를 칠 수 있게
-    }
-
     /// <summary>키보드 버튼과 같은 효과음을 재생합니다.</summary>
     private static void PlayButtonSound() => App.Services?.GetService<SoundService>()?.Play();
 
@@ -340,11 +333,11 @@ public partial class ClipboardPanelWindow : AnchoredPanelWindowBase
     //    더블클릭 = 수평 중앙, 누르면 이동. XAML의 DragHandle_* 이벤트가 그대로 베이스 메서드에 바인딩됩니다.
 }
 
-/// <summary>빈 문자열 → Visible, 비어 있지 않으면 Collapsed (검색 placeholder 표시용).</summary>
-public class StringEmptyToVisibilityConverter : IValueConverter
+/// <summary>정렬 순서 → 버튼 라벨: 내림차순(최신순) → "최신순", 오름차순(오래된 순) → "오래순". 현재 순서를 표시합니다.</summary>
+public class SortOrderToLabelConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        => value is string s && s.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
+        => value is bool b && b ? "최신순" : "오래순";
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         => throw new NotSupportedException();
