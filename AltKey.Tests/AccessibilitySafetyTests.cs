@@ -138,7 +138,8 @@ public class AccessibilitySafetyTests
                 HeaderButtons = HeaderButtonConfig.CreateDefaults()
             };
 
-            for (int i = 0; i < 3; i++)
+            // 기본 우측 버튼(표시 ON 5개) + 커스텀 4개 = 9 > 한도 8 — 넘친 것을 ConfigService가 숨기는지 검증.
+            for (int i = 0; i < 4; i++)
             {
                 config.HeaderButtons.Add(new HeaderButtonConfig
                 {

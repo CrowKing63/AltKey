@@ -122,7 +122,6 @@ public class HeaderButtonConfig
 
     // ── 기본 버튼 ID 상수 ─────────────────────────────────────────────────
     public const string IdClipboard = "Clipboard";
-    public const string IdEmoji = "Emoji";
     public const string IdAutoComplete = "AutoComplete";
     public const string IdOsIme = "OsIme";
     public const string IdOsk = "Osk";
@@ -149,7 +148,6 @@ public class HeaderButtonConfig
         CreateBuiltIn(IdScratchPad, visible: false, position: "Right"),
         CreateBuiltIn(IdAi, visible: false, position: "Right"),
         CreateBuiltIn(IdClipboard, visible: true, position: "Right"),
-        CreateBuiltIn(IdEmoji, visible: true, position: "Right"),
         CreateBuiltIn(IdAutoComplete, visible: true, position: "Right"),
         CreateBuiltIn(IdOsIme, visible: true, position: "Right"),
         CreateBuiltIn(IdOsk, visible: true, position: "Right"),
@@ -169,6 +167,12 @@ public class HeaderButtonConfig
     {
         var result = new List<HeaderButtonConfig>(buttons);
         var defaults = CreateDefaults();
+
+        // -1) 제거된 기본 버튼 정리: 이모지(😊)는 2026-11에 기능이 완전히 사라졌는데,
+        //     기존 설치 설정에는 아직 버튼 항목이 남아 있어 매 시작 시 여기서 지웁니다.
+        //     커스텀 버튼 ID는 "custom-..."으로 자동 생성되므로 Id가 정확히 "Emoji"인 항목은
+        //     사용자 커스텀일 수 없습니다 (Kind와 무관하게 제거 — 멱등).
+        result.RemoveAll(b => b.Id == LegacyIdEmoji);
 
         // 0) 자가치유: 구버전 앱이 같은 ID의 기본 버튼을 Custom으로 강등해 저장한 경우 보정합니다.
         //    구버전은 아직 모르는 BuiltIn ID를 "Custom"으로 내리고 커스텀 기본값을 채워 저장하는데,
@@ -260,12 +264,15 @@ public class HeaderButtonConfig
     };
 
     public static bool IsBuiltInId(string id) => id is
-        IdClipboard or IdEmoji or IdAutoComplete or IdOsIme or IdOsk or IdSettings or IdAi or IdScratchPad;
+        IdClipboard or IdAutoComplete or IdOsIme or IdOsk or IdSettings or IdAi or IdScratchPad;
+
+    // [마이그레이션] 이모지 버튼은 2026-11에 제거됐지만, 기존 설치 설정 파일에는 항목이 남아 있습니다.
+    // EnsureAllBuiltIns가 그 항목을 지울 때 쓰는 레거시 ID — 새 코드에선 다른 용도로 쓰지 않습니다.
+    private const string LegacyIdEmoji = "Emoji";
 
     public static string GetDisplayName(string id) => id switch
     {
         IdClipboard => "클립보드",
-        IdEmoji => "이모지",
         IdAutoComplete => "자동완성",
         IdOsIme => "OS IME 한영",
         IdOsk => "화면 키보드",
@@ -278,7 +285,6 @@ public class HeaderButtonConfig
     public static string GetBuiltInIconText(string id) => id switch
     {
         IdClipboard => "📋",
-        IdEmoji => "😊",
         IdAutoComplete => "제안",
         IdOsIme => "한/영",
         IdOsk => "⌨",
@@ -291,7 +297,6 @@ public class HeaderButtonConfig
     public static string GetBuiltInTooltip(string id) => id switch
     {
         IdClipboard => "클립보드 열기",
-        IdEmoji => "이모지 열기",
         IdAutoComplete => "자동완성 토글",
         IdOsIme => "OS IME 한영 전환",
         IdOsk => "화면 키보드 열기",
@@ -304,7 +309,6 @@ public class HeaderButtonConfig
     public static string GetBuiltInAccessibleName(string id) => id switch
     {
         IdClipboard => "클립보드 버튼",
-        IdEmoji => "이모지 버튼",
         IdAutoComplete => "자동완성 토글 버튼",
         IdOsIme => "OS IME 한영 전환 버튼",
         IdOsk => "화면 키보드 버튼",

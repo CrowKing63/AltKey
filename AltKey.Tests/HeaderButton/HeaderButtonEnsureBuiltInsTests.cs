@@ -74,11 +74,12 @@ public class HeaderButtonEnsureBuiltInsTests
         var result = HeaderButtonConfig.EnsureAllBuiltIns(buttons);
 
         // 누락된 기본 버튼(이모지·자동완성)은 설정 바로 앞에 채워지고, 새 기능은 맨 앞입니다.
+        // 이모지(😊)는 기능이 사라져 더 이상 채워지지 않습니다 — 누락 기본 버튼(AutoComplete·OsIme·Osk)만 설정 앞에 추가.
         Assert.Equal(
             [HeaderButtonConfig.IdScratchPad, HeaderButtonConfig.IdAi,
              HeaderButtonConfig.IdClipboard, HeaderButtonConfig.IdOsk,
-             HeaderButtonConfig.IdEmoji, HeaderButtonConfig.IdAutoComplete,
-             HeaderButtonConfig.IdOsIme, HeaderButtonConfig.IdSettings],
+             HeaderButtonConfig.IdAutoComplete, HeaderButtonConfig.IdOsIme,
+             HeaderButtonConfig.IdSettings],
             result.Select(b => b.Id).ToArray());
     }
 
@@ -109,14 +110,15 @@ public class HeaderButtonEnsureBuiltInsTests
     {
         var clipboard = BuiltIn(HeaderButtonConfig.IdClipboard);
         var custom = Custom("Custom-1");
-        var emoji = new HeaderButtonConfig
+        // 기존 설치에 있던 기본 버튼(숨김 상태) — 상대 순서·표시 유지 검증용 (이모지는 기능이 사라져 제거됨).
+        var osIme = new HeaderButtonConfig
         {
-            Id = HeaderButtonConfig.IdEmoji,
+            Id = HeaderButtonConfig.IdOsIme,
             Kind = HeaderButtonKind.BuiltIn,
             Visible = false
         };
 
-        var buttons = new List<HeaderButtonConfig> { clipboard, custom, emoji };
+        var buttons = new List<HeaderButtonConfig> { clipboard, custom, osIme };
         var result = HeaderButtonConfig.EnsureAllBuiltIns(buttons);
 
         // 새 기능 기본 버튼 2개(빠른 메모 → AI)가 맨 앞에 추가되고, 나머지는 상대 순서 그대로입니다.
@@ -125,11 +127,11 @@ public class HeaderButtonEnsureBuiltInsTests
 
         int clipIdx = result.FindIndex(b => b.Id == clipboard.Id);
         int customIdx = result.FindIndex(b => b.Id == custom.Id);
-        int emojiIdx = result.FindIndex(b => b.Id == emoji.Id);
-        Assert.True(clipIdx < customIdx && customIdx < emojiIdx, "기존 상대 순서 유지");
+        int osImeIdx = result.FindIndex(b => b.Id == osIme.Id);
+        Assert.True(clipIdx < customIdx && customIdx < osImeIdx, "기존 상대 순서 유지");
 
         Assert.True(result[clipIdx].Visible);          // 표시 여부는 그대로
-        Assert.False(result[emojiIdx].Visible);        // 숨김 설정도 그대로
+        Assert.False(result[osImeIdx].Visible);        // 숨김 설정도 그대로
         Assert.Equal(HeaderButtonKind.Custom, result[customIdx].Kind);
     }
 
