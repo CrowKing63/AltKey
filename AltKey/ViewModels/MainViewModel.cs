@@ -325,6 +325,14 @@ public partial class MainViewModel : ObservableObject
             onShow: () =>
             {
                 if (_scratchPadWindow is not { } pad) return;
+
+                // [열자마자 타이핑] 패드 창을 OS 포그라운드로 올린다. 메인 창은 ShowActivated="False"라
+                // 버튼 클릭으로 포그라운드가 바뀌지 않고, ShowPanel도 공용이라 Activate()를 하지 않는다
+                // (클립보드는 포커스 뺏김 방지). 그래서 여기에서 EnsureForeground로 동기 전환한다 —
+                // 제안 수락·붙여넣기(EnsureScratchPadInputTarget)와 같은 기법. 패드가 포그라운드가 되어야
+                // ScratchPadForegroundBox가 메모 박스를 입력 대상으로 인정해 타이핑이 패드로 간다.
+                AnchoredPanelWindowBase.EnsureForeground(new WindowInteropHelper(pad).Handle);
+
                 ScratchPadImePolicy.ConfigureTextBox(pad.InputBox, _inputService.Mode);
                 pad.FocusTextBox();
             },
