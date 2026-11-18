@@ -98,11 +98,8 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
     private void StartAiBlink()
     {
         if (_aiBlinkStoryboard is not null || AiBlinkLabel is null) return;
-        var anim = new DoubleAnimation(1.0, 0.3, TimeSpan.FromSeconds(0.4))
-        {
-            AutoReverse = true,
-            RepeatBehavior = RepeatBehavior.Forever
-        };
+        StopTitleClickBlink(); // 같은 Opacity를 두 애니메이션이 다투지 않게 클릭 깜빡임은 먼저 정리.
+        var anim = CreateOpacityBlinkAnimation(RepeatBehavior.Forever);
         Storyboard.SetTarget(anim, AiBlinkLabel);
         Storyboard.SetTargetProperty(anim, new PropertyPath(UIElement.OpacityProperty));
         _aiBlinkStoryboard = new Storyboard();
@@ -115,6 +112,47 @@ public partial class KeyboardView : System.Windows.Controls.UserControl
         _aiBlinkStoryboard?.Stop();
         _aiBlinkStoryboard = null;
         if (AiBlinkLabel is not null) AiBlinkLabel.Opacity = 1.0;
+    }
+
+    // "Al" 깜빡임에 쓰는 애니메이션 파라미터: Opacity 1.0 ↔ 0.3, 왕복 한 번 0.4초.
+    // AI 처리 중 영구 깜빡임과 타이틀 클릭 짧은 깜빡임이 함께 쓰기 때문에 팩토리에서 공유한다.
+    private static DoubleAnimation CreateOpacityBlinkAnimation(RepeatBehavior repeat) =>
+        new(1.0, 0.3, TimeSpan.FromSeconds(0.4))
+        {
+            AutoReverse = true,
+            RepeatBehavior = repeat
+        };
+
+    // "AltKey" 타이틀 클릭 효과: 키 소리를 재생하고 "Al" 부분을 AI 처리 중 깜빡임과
+    // 같은 속도로 왕복 2회(약 1.6초)만 짧게 깜빡이게 한다.
+    private Storyboard? _titleClickBlinkStoryboard;
+
+    private void TitleLabel_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        App.Services?.GetService<SoundService>()?.Play();
+
+        // AI 처리 중이면 영구 깜빡임이 이미 돌고 있으므로 중복 시작하지 않는다.
+        if (_aiBlinkStoryboard is not null || AiBlinkLabel is null) return;
+
+        var anim = CreateOpacityBlinkAnimation(new RepeatBehavior(4)); // 왕복 2회: 끝점도 원래 Opacity(1.0).
+        Storyboard.SetTarget(anim, AiBlinkLabel);
+        Storyboard.SetTargetProperty(anim, new PropertyPath(UIElement.OpacityProperty));
+        var sb = new Storyboard();
+        sb.Children.Add(anim);
+        sb.Completed += (_, _) => _titleClickBlinkStoryboard = null;
+        _titleClickBlinkStoryboard = sb;
+        sb.Begin();
+
+        // 타이틀 더블 클릭이 헤더 빈 영역의 "접기" 핸들러까지 올라가지 않게 한다.
+        e.Handled = true;
+    }
+
+    private void StopTitleClickBlink()
+    {
+        if (_titleClickBlinkStoryboard is null) return;
+        _titleClickBlinkStoryboard.Stop();
+        _titleClickBlinkStoryboard = null;
+        AiBlinkLabel.Opacity = 1.0;
     }
 
     // ✨ AI 버튼 자체 깜빡임: 비활성화(흐림) 상태이므로 "Al"보다 더 극단적으로

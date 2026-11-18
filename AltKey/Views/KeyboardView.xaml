@@ -157,8 +157,13 @@
                 <StackPanel Orientation="Horizontal"
                             HorizontalAlignment="Left" VerticalAlignment="Center">
                     <!-- "AltKey" 타이틀: AI 처리 중에는 "Al"(≈AI) 부분을 깜빡여 표시.
-                         (철자는 다르지만 시각적으로 "AI"와 같아 — 처리 중임을 암시) -->
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" IsHitTestVisible="False">
+                         (철자는 다르지만 시각적으로 "AI"와 같아 — 처리 중임을 암시)
+                         클릭하면 효과음 + 짧은 깜빡임이 재생됩니다(TitleLabel_MouseLeftButtonDown). -->
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
+                                 Cursor="Hand"
+                                 MouseLeftButtonDown="TitleLabel_MouseLeftButtonDown"
+                                 AutomationProperties.Name="AltKey 타이틀"
+                                 AutomationProperties.HelpText="클릭하면 효과음과 깜빡임이 재생됩니다">
                         <TextBlock x:Name="AiBlinkLabel" Text="Al" Foreground="{DynamicResource TitleFg}"
                                    FontSize="11" FontWeight="SemiBold"/>
                         <TextBlock Text="tKey" Foreground="{DynamicResource TitleFg}"
