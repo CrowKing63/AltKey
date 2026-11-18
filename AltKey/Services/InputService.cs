@@ -478,12 +478,26 @@ public class InputService
 
     public void SendCombo(List<VirtualKeyCode> keys)
     {
-        ComboWillBeSent?.Invoke(keys);
-        foreach (var k in keys)
-            SendKeyDown(k);
-        foreach (var k in Enumerable.Reverse(keys))
-            SendKeyUp(k);
-        ReleaseTransientModifiers("SendCombo");
+        bool isClipboardPaste = keys.Contains(VirtualKeyCode.VK_CONTROL) && keys.Contains(VirtualKeyCode.VK_V);
+        _isClipboardPasteDispatch = isClipboardPaste;
+        if (isClipboardPaste)
+            InputDiagnosticTrace.Log($"PASTE_KEYS_BEGIN keys={string.Join('+', keys)} {InputDiagnosticTrace.DescribeWindow(GetForegroundHwnd())}");
+
+        try
+        {
+            ComboWillBeSent?.Invoke(keys);
+            foreach (var k in keys)
+                SendKeyDown(k);
+            foreach (var k in Enumerable.Reverse(keys))
+                SendKeyUp(k);
+            ReleaseTransientModifiers("SendCombo");
+        }
+        finally
+        {
+            if (isClipboardPaste)
+                InputDiagnosticTrace.Log($"PASTE_KEYS_END {InputDiagnosticTrace.DescribeWindow(GetForegroundHwnd())}");
+            _isClipboardPasteDispatch = false;
+        }
     }
 
     public virtual void SendUnicode(string text)
@@ -630,9 +644,16 @@ public class InputService
 
     internal virtual void DispatchInput(Win32.INPUT[] inputs)
     {
+        var foregroundBeforeDispatch = GetForegroundHwnd();
+        bool ownWindowTarget = IsForegroundOwnWindow();
         EnsureForegroundSettled();
         uint sent = Win32.SendInput((uint)inputs.Length, inputs, Marshal.SizeOf<Win32.INPUT>());
-        if (sent == 0 && Marshal.GetLastWin32Error() == Win32.ERROR_ACCESS_DENIED)
+        int error = Marshal.GetLastWin32Error();
+        if (_isClipboardPasteDispatch)
+            InputDiagnosticTrace.Log($"PASTE_SENDINPUT requested={inputs.Length} sent={sent} error={error} {InputDiagnosticTrace.DescribeWindow(GetForegroundHwnd())}");
+        else if (ownWindowTarget)
+            InputDiagnosticTrace.Log($"OWN_SENDINPUT mode={Mode} requested={inputs.Length} sent={sent} error={error} {InputDiagnosticTrace.DescribeWindow(foregroundBeforeDispatch)}");
+        if (sent == 0 && error == Win32.ERROR_ACCESS_DENIED)
             ElevatedAppDetected?.Invoke();
     }
 
@@ -665,6 +686,7 @@ public class InputService
     internal const int ForegroundSettleDelayMs = 50;
 
     private IntPtr _lastDispatchForegroundHwnd = IntPtr.Zero;
+    private bool _isClipboardPasteDispatch;
 
     private void HandleVolumeControl(string direction, int step)
     {
