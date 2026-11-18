@@ -13,7 +13,7 @@ namespace AltKey.Views;
 
 /// <summary>
 /// [역할] 클립보드 히스토리 패널의 독립 창입니다 (D2 — ScratchPadWindow와 같은 차원의 top-level 보조 패널).
-/// [기능] '고정'+'최근' 섹션 동시 표시, 정렬 순서 전환(최신순↔오래된 순), 키보드 내비게이션(↑↓/Enter/Esc), 행 액션(★ 고정·✕ 삭제).
+/// [기능] 핀 칩 스트립(MRU) + '최근' 리스트 동시 표시, 정렬 순서 전환(최신순↔오래된 순), Esc 닫기, 행 액션(★ 고정·✕ 삭제).
 /// [참고] ✕는 창을 닫지 않고 숨김만 시킵니다 — Show/Hide는 AnchoredPanelService가 관리합니다.
 /// 드래그 핸들·포그라운드 Win32는 공용 기반 클래스(AnchoredPanelWindowBase)에서 제공합니다.
 /// </summary>
@@ -21,7 +21,7 @@ public partial class ClipboardPanelWindow : AnchoredPanelWindowBase
 {
     private readonly ClipboardViewModel _viewModel;
 
-    // 열려 있는 동안 상대 시간 라벨("N분 전")이 흐르도록 30초마다 갱신 — 목록은 재구성하지 않아 선택·스크롤 유지.
+    // 열려 있는 동안 상대 시간 라벨("N분 전")이 흐르도록 30초마다 갱신 — 목록은 재구성하지 않아 스크롤 위치 유지.
     private System.Windows.Threading.DispatcherTimer? _timeRefreshTimer;
 
     // [붙여넣기 대상] 이 창이 포커스를 가져가기 직전의 외부 앱 창과 그 안의 입력 컨트롤 HWND를 함께 보관한다.
@@ -56,8 +56,13 @@ public partial class ClipboardPanelWindow : AnchoredPanelWindowBase
             if ((bool)e.NewValue)
             {
                 _timeRefreshTimer.Start();
-                // 열기 시 첫 항목 선택 — 0번 항목은 목록 맨 위라 스크롤 없이 보입니다 (D5).
-                _viewModel.SelectFirst();
+                // [2026-11] 열 때마다 스크롤 위치 초기화 — Hide/Show 사이 시각 트리는 살아서 칩 스트립 가로·
+                // 최근 리스트 세로 오프셋이 그대로 남는다. 레이아웃(배치)이 끝난 후(Loaded)에 0으로 되돌린다.
+                Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, () =>
+                {
+                    ChipStripScroll.ScrollToHorizontalOffset(0);
+                    HistoryListScroll.ScrollToVerticalOffset(0);
+                });
                 // [진단] 열림 직후 포그라운드가 어디인지 기록 — 이제 열릴 때 Activate()를 안 해(포커스 뺏김 방지)라
                 // fg가 이전 외부 앱 그대로여야 정상. AltKey 창으로 바뀌면 뭔가 포커스를 훔친 것이다.
                 Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, () =>
@@ -266,43 +271,16 @@ public partial class ClipboardPanelWindow : AnchoredPanelWindowBase
         FocusTracker.Register(this);
     }
 
-    /// <summary>열기 훅: 첫 항목 선택 — ↑↓/Enter 바로 가능.</summary>
-    public void FocusList() => _viewModel.SelectFirst();
-
-    // ── 키보드 내비게이션 (D5) ────────────────────────────────────────
-    // ↑↓ = 선택 이동(랩어라운드), Enter = 선택 항목 붙여넣기, Esc = 닫기.
-    // 텍스트 컨트롤에 포커스가 있으면 화살표는 커서 이동 — 리스트 내비게이션에 넘기지 않는다 (방어적 가드).
+    // ── 닫기 단축키 (D5 축소) ──────────────────────────────────────────
+    // [2026-11] 키보드 내비게이션(↑↓ 이동·Enter 붙여넣기·열림 시 자동 선택)은 핀 칩 UI로 대체되어 제거했고,
+    // 남은 것은 Esc = 패널 닫기뿐이다. (이 핸들러는 XAML 루트의 PreviewKeyDown으로 배선됨.)
 
     private void Window_PreviewKeyDown(object sender, WpfKeyEventArgs e)
     {
-        if (e.Key == Key.Escape)
-        {
-            ClipboardTrace.Log("CLOSE requested (Esc)");
-            OnCloseRequested?.Invoke();
-            e.Handled = true;
-            return;
-        }
-
-        // 텍스트 박스 포커스면 화살표는 커서 이동 — 리스트 내비게이션에 맡기지 않는다.
-        if (Keyboard.FocusedElement is System.Windows.Controls.Primitives.TextBoxBase)
-            return;
-
-        switch (e.Key)
-        {
-            case Key.Up:
-                _viewModel.MoveSelection(-1);
-                e.Handled = true;
-                break;
-            case Key.Down:
-                _viewModel.MoveSelection(1);
-                e.Handled = true;
-                break;
-            case Key.Enter:
-                // 선택이 없으면 처리 안 함.
-                if (_viewModel.TryPasteSelected())
-                    e.Handled = true;
-                break;
-        }
+        if (e.Key != Key.Escape) return;
+        ClipboardTrace.Log("CLOSE requested (Esc)");
+        OnCloseRequested?.Invoke();
+        e.Handled = true;
     }
 
     // ── 헤더 버튼 (코드비핸드: 파라미터가 없어 유지 — 행 액션은 XAML에서 커맨드로 바인딩) ────────────

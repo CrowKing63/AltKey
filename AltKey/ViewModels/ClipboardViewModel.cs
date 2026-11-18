@@ -10,7 +10,7 @@ namespace AltKey.ViewModels;
 /// <summary>
 /// [역할] 클립보드 항목 하나를 표현하는 데이터 클래스입니다.
 /// [속성] FullText: 전체 텍스트, Preview: 미리보기(최대 2줄·120자), CopiedAt: 마지막 복사 시각(구형 데이터면 null),
-///        IsFavorite: 고정 여부, IsSelected: 키보드 내비게이션 선택 상태, TimeText: 상대 시간 표시 문자열
+///        IsFavorite: 고정 여부, TimeText: 상대 시간 표시 문자열
 /// </summary>
 public partial class ClipboardItem : ObservableObject
 {
@@ -19,7 +19,6 @@ public partial class ClipboardItem : ObservableObject
     public DateTime? CopiedAt { get; init; }
 
     [ObservableProperty] private bool isFavorite;
-    [ObservableProperty] private bool isSelected;
     // 상대 시간("N분 전") — VM이 갱신할 때만 바뀝니다 (30초 주기 + 목록 갱신 시).
     [ObservableProperty] private string timeText = "";
 }
@@ -37,10 +36,6 @@ public partial class ClipboardViewModel : ObservableObject
     // 정렬 순서: true = 내림차순(최신순, 기본값), false = 오름차순(오래된 순). 최근 리스트에만 적용됩니다.
     [ObservableProperty] private bool _isDescending = true;
 
-
-    // 키보드 내비게이션: [고정 + 최근] 결합 목록에서의 인덱스. -1 = 선택 없음.
-    private int _selectedIndex = -1;
-
     private readonly ClipboardService _clipboardService;
     private readonly InputService _inputService;
     private readonly ConfigService _configService;
@@ -51,7 +46,7 @@ public partial class ClipboardViewModel : ObservableObject
     // true 반환 = 프로세스 내 대상(스크래치패드)을 확보했으니 호출 쪽은 외부 복원을 스킵한다.
     public Func<bool>? PrepareInputTarget { get; set; }
 
-    // [붙여넣기 대상 복원] 패널이 포커스를 갖고 있을 때 클릭/Enter로 보내는 Ctrl+V가 AltKey 자체로 가지 않도록,
+    // [붙여넣기 대상 복원] 패널이 포커스를 갖고 있을 때 클릭으로 보내는 Ctrl+V가 AltKey 자체로 가지 않도록,
     // 전송 전 포그라운드를 열기 직전의 외부 앱으로 되돌리는 훅 — ClipboardPanelWindow가 연결한다.
     // (스크래치패드가 대상이면 PrepareInputTarget이 true를 돌려 주므로 아래에서 자동 스킵된다.)
     public Func<bool>? RestoreInputTarget { get; set; }
@@ -73,7 +68,7 @@ public partial class ClipboardViewModel : ObservableObject
 
     // ── 목록 갱신 ─────────────────────────────────────────────────────
 
-    /// <summary>두 목록을 다시 구성합니다 (최근 리스트엔 정렬 순서 적용) — 선택 상태는 보존.</summary>
+    /// <summary>두 목록을 다시 구성합니다 (최근 리스트엔 정렬 순서 적용).</summary>
     private void RefreshItems()
     {
         WpfApp.Current.Dispatcher.Invoke(() =>
@@ -95,7 +90,6 @@ public partial class ClipboardViewModel : ObservableObject
 
             ShowFavoritesSection = Favorites.Count > 0;
             HasAnyItems = Favorites.Count + HistoryItems.Count > 0;
-            ApplySelection(); // 목록 재구성 후에도 선택이 같은 항목에 붙도록 (텍스트 기준)
         });
     }
 
@@ -128,69 +122,6 @@ public partial class ClipboardViewModel : ObservableObject
             it.TimeText = FormatCopiedAt(it.CopiedAt);
     }
 
-    // ── 키보드 내비게이션 (↑↓/Enter/Esc — 창 코드비핸드가 호출) ────────────
-
-    /// <summary>열기 시 첫 항목을 선택합니다 — 0번 항목은 항상 목록 맨 위라 스크롤 없이 보입니다.</summary>
-    internal void SelectFirst()
-    {
-        if (Favorites.Count + HistoryItems.Count == 0) return;
-        _selectedIndex = 0;
-        ApplySelection();
-    }
-
-    /// <summary>선택을 delta만큼 이동합니다. 양 끝에서 랩어라운드.</summary>
-    internal void MoveSelection(int delta)
-    {
-        int count = Favorites.Count + HistoryItems.Count;
-        if (count == 0) return;
-        _selectedIndex = (_selectedIndex + delta + count) % count;
-        ApplySelection();
-    }
-
-    /// <summary>선택된 항목을 붙여넣기합니다. 선택이 없으면 false.</summary>
-    internal bool TryPasteSelected()
-    {
-        int count = Favorites.Count + HistoryItems.Count;
-        if (_selectedIndex < 0 || _selectedIndex >= count) return false;
-
-        var item = ItemAt(_selectedIndex);
-        PasteItem(item.FullText);
-        return true;
-    }
-
-    private ClipboardItem ItemAt(int index) =>
-        index < Favorites.Count ? Favorites[index] : HistoryItems[index - Favorites.Count];
-
-    /// <summary>선택 하이라이트를 현재 인덱스 항목에 적용합니다 (이전 항목은 해제).</summary>
-    private void ApplySelection()
-    {
-        foreach (var it in Favorites) it.IsSelected = false;
-        foreach (var it in HistoryItems) it.IsSelected = false;
-
-        int count = Favorites.Count + HistoryItems.Count;
-        if (_selectedIndex < 0 || _selectedIndex >= count) return;
-        ItemAt(_selectedIndex).IsSelected = true;
-    }
-
-    /// <summary>텍스트 기준으로 항목을 선택합니다 (정렬 전환 시 같은 항목이 새 위치로 이동해도 선택 유지용). 없으면 아무 일도 안 함.</summary>
-    private void SelectByText(string text)
-    {
-        int index = 0;
-        bool found = false;
-        foreach (var it in Favorites)
-        {
-            if (it.FullText == text) { _selectedIndex = index; found = true; break; }
-            index++;
-        }
-        if (found) return; // 고정 섹션에서 찾음 — 최근 리스트는 순서만 바뀌므로 위치 그대로
-        foreach (var it in HistoryItems)
-        {
-            if (it.FullText == text) { _selectedIndex = index; found = true; break; }
-            index++;
-        }
-        if (found) ApplySelection();
-    }
-
     // ── 명령 ──────────────────────────────────────────────────────────────
 
     /// <summary>항목을 클립보드에 설정하고 붙여넣기 (Ctrl+V)합니다. "붙여넣기 후 닫기" 설정이 ON이면 패널을 닫습니다.</summary>
@@ -202,7 +133,7 @@ public partial class ClipboardViewModel : ObservableObject
         bool ownTarget = PrepareInputTarget?.Invoke() ?? false;
         InputDiagnosticTrace.LogPasteStage("PRE_DISPATCH", ownTarget);
 
-        // [붙여넣기 대상 복원] 패널이 포커스를 갖고 있으면 외부 앱으로 되돌린다 (클릭/Enter 붙여넣기).
+        // [붙여넣기 대상 복원] 패널이 포커스를 갖고 있으면 외부 앱으로 되돌린다 (클릭 붙여넣기).
         // 단, 방금 스크래치패드를 확보한 경우(ownTarget)는 복원이 오히려 패드에서 포커스를 빼앗아
         // Ctrl+V가 엉뚱한 외부 창으로 가므로 스킵한다.
         if (!ownTarget && RestoreInputTarget is not null && !RestoreInputTarget())
@@ -220,9 +151,13 @@ public partial class ClipboardViewModel : ObservableObject
             RequestClose();
     }
 
-    /// <summary>고정(즐겨찾기)을 토글합니다 — ★. 고정하면 '고정' 섹션으로, 해제하면 원래 위치로 최근 리스트에 복귀.</summary>
+    /// <summary>고정(즐겨찾기)을 토글합니다 — ★. 고정하면 핀 칩 스트립으로, 해제하면 원래 위치로 최근 리스트에 복귀.</summary>
     [RelayCommand]
     private void ToggleFavorite(string text) => _clipboardService.ToggleFavorite(text);
+
+    /// <summary>핀에서 제거합니다 (칩 ✕ = 핀 해제). 항목은 히스토리에서 그대로 유지됩니다.</summary>
+    [RelayCommand]
+    private void RemoveFavorite(string text) => _clipboardService.RemoveFavorite(text);
 
     /// <summary>히스토리에서 항목 하나를 삭제합니다 (행 ✕). 즐겨찾기(★)는 보존 — 완전히 없애려면 ★부터 해제하세요.</summary>
     [RelayCommand]
@@ -232,19 +167,12 @@ public partial class ClipboardViewModel : ObservableObject
     [RelayCommand]
     private void ClearHistory() => _clipboardService.ClearHistory();
 
-    /// <summary>최근 리스트 정렬 순서를 전환합니다 (내림차순 최신순 ↔ 오름차순 오래된 순). 선택은 텍스트 기준으로 유지.</summary>
+    /// <summary>최근 리스트 정렬 순서를 전환합니다 (내림차순 최신순 ↔ 오름차순 오래된 순).</summary>
     [RelayCommand]
     private void ToggleSortOrder()
     {
-        int count = Favorites.Count + HistoryItems.Count;
-        string? selectedText = _selectedIndex >= 0 && _selectedIndex < count ? ItemAt(_selectedIndex).FullText : null;
-
         IsDescending = !IsDescending;
         RefreshItems();
-
-        // 정렬로 같은 항목이 새 위치로 이동했으니 텍스트 기준으로 다시 선택한다.
-        if (selectedText != null)
-            SelectByText(selectedText);
     }
 
     // ── 유틸리티 ──────────────────────────────────────────────────────────

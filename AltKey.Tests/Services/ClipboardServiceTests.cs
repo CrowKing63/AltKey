@@ -6,7 +6,7 @@ using Xunit;
 namespace AltKey.Tests.Services;
 
 /// <summary>
-/// ClipboardService — 저장 파일 로드/저장, 중복·상위 이동, 즐겨찾기 한도, 타임스탬프(상대 시간) 검증.
+/// ClipboardService — 저장 파일 로드/저장, 중복·상위 이동, 핀(MRU) 관리, 타임스탬프(상대 시간) 검증.
 /// DataDir을 임시 폴더로 바꿔 실제 사용자 데이터를 건드리지 않습니다 (순차 실행 전제).
 /// </summary>
 public class ClipboardServiceTests : IDisposable
@@ -142,18 +142,42 @@ public class ClipboardServiceTests : IDisposable
     }
 
     [Fact]
-    public void 즐겨찾기_한도_초과면_가장_오래된_제거()
+    public void 핀_개수_제한이_없다()
     {
-        // 한도 10개 — 10개 채우고 11번째 추가 시 맨 끝(가장 오래된)이 제거된다.
-        var favorites = string.Join(",", Enumerable.Range(1, 10).Select(i => $"\"f{i}\""));
+        // [2026-11] 한도(10) 제거 — 핀은 칩 스트립에서 가로 스크롤로 늘어나므로 전부 유지된다.
+        var favorites = string.Join(",", Enumerable.Range(1, 12).Select(i => $"\u0022f{i}\u0022"));
         using var svc = NewService($"{{\"History\":[],\"Favorites\":[{favorites}]}}");
 
-        Assert.Equal(10, svc.Favorites.Count);
+        Assert.Equal(12, svc.Favorites.Count);
 
         svc.ToggleFavorite("new");
-        Assert.Equal(10, svc.Favorites.Count);
-        Assert.False(svc.Favorites.Contains("f10"), "가장 오래된 항목이 제거됨");
-        Assert.True(svc.IsFavorite("new"));
+        Assert.Equal(13, svc.Favorites.Count);
+        Assert.True(svc.IsFavorite("f1"), "가장 오래된 항목도 유지됨");
+    }
+
+    [Fact]
+    public void 핀_상위_이동은_맨_앞으로_옮긴다()
+    {
+        // [2026-11] MRU — 붙여넣기(PasteItem)가 PromoteFavorite를 호출해 최근 사용 핀이 첫 칩에 온다.
+        using var svc = NewService("""{"History":["a","b","c"],"Favorites":["a","b","c"]}""");
+
+        svc.PromoteFavorite("c");
+        Assert.Equal(["c", "a", "b"], svc.Favorites);
+
+        // 즐겨찾기에 없는 항목은 무시 (no-op).
+        svc.PromoteFavorite("x");
+        Assert.Equal(["c", "a", "b"], svc.Favorites);
+    }
+
+    [Fact]
+    public void 핀_제거해도_히스토리_순서는_그대로다()
+    {
+        // 칩 ✕ = 핀 해제 — 항목은 최근 리스트의 원래 위치로 복귀해야 한다 (히스토리 순서 불변).
+        using var svc = NewService("""{"History":["a","b","c"],"Favorites":["b"]}""");
+
+        svc.RemoveFavorite("b");
+        Assert.Equal(["a", "b", "c"], svc.History);
+        Assert.False(svc.IsFavorite("b"));
     }
 
     // ── 저장 ─────────────────────────────────────────────────────────

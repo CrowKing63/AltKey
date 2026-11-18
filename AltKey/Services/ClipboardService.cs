@@ -14,7 +14,6 @@ public class ClipboardService : IDisposable
 {
     // ── 상수 ──────────────────────────────────────────────────────────────
     private const int MaxHistory = 50;   // 최근 항목 최대 개수
-    private const int MaxFavorites = 10; // 즐겨찾기 최대 개수
 
     // ── 이벤트 ────────────────────────────────────────────────────────────
     public event Action? HistoryChanged;
@@ -111,6 +110,7 @@ public class ClipboardService : IDisposable
         _lastSeq = ClipboardHelper.GetSequenceNumberWithRetry(); // 방금 우리가 바꾼 클립보드를 폴링이 "새 복사"로 오인하지 않게
 
         PromoteItem(text);     // 맨 앞으로 이동
+        PromoteFavorite(text); // [2026-11] 핀도 최근 사용 순(MRU) — 칩 스트립에서 첫 칩으로 이동
     }
 
     /// <summary>
@@ -145,12 +145,26 @@ public class ClipboardService : IDisposable
 
     /// <summary>
     /// 즐겨찾기에 항목을 추가합니다. 이미 있으면 무시합니다.
+    /// [2026-11] 최대 개수 제한 없음 — 핀은 칩 스트립에서 가로 스크롤로 늘어나므로
+    /// 한도 때문에 목록이 줄어드리는 구조가 사라졌습니다.
     /// </summary>
     public void AddFavorite(string text)
     {
         if (_favorites.Contains(text)) return;
-        if (_favorites.Count >= MaxFavorites)
-            _favorites.RemoveAt(_favorites.Count - 1);
+        _favorites.Insert(0, text);
+        FavoritesChanged?.Invoke();
+        Save();
+    }
+
+    /// <summary>
+    /// 핀을 최근 사용 순(MRU)으로 맨 앞으로 이동합니다.
+    /// [2026-11] 칩 스트립이 MRU 순서로 표시되도록 — 붙여넣기(PasteItem) 시 호출해
+    /// "최근에 쓴 핀"이 항상 첫 칩에 오게 합니다. 즐겨찾기에 없으면 무시합니다.
+    /// </summary>
+    public void PromoteFavorite(string text)
+    {
+        if (!_favorites.Contains(text)) return;
+        _favorites.Remove(text);
         _favorites.Insert(0, text);
         FavoritesChanged?.Invoke();
         Save();
@@ -254,7 +268,8 @@ public class ClipboardService : IDisposable
             _history.AddRange(data.History.Take(MaxHistory));
 
             _favorites.Clear();
-            _favorites.AddRange(data.Favorites.Take(MaxFavorites));
+            // [2026-11] 한도 제거 — 저장된 핀을 전부 불러온다 (이전 파일엔 10개까지만 저장됨).
+            _favorites.AddRange(data.Favorites);
 
             // 타임스탬프 로드 — 구형 파일엔 Timestamps 자체가 없거나 개별 항목 파싱이 실패할 수 있음 (null 허용)
             _timestamps.Clear();

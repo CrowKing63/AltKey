@@ -299,7 +299,7 @@ public partial class MainViewModel : ObservableObject
             {
                 var w = _clipboardPanelWindow ??= new ClipboardPanelWindow(Clipboard);
                 w.OnCloseRequested += () => _anchoredPanels.Hide("clipboard"); // ✕·Esc → 숨김(종료 아님)
-                Clipboard.RestoreInputTarget = w.RestoreInputForeground; // 붙여넣기 전 포커스 복원 훅 (클릭/Enter 대상)
+                Clipboard.RestoreInputTarget = w.RestoreInputForeground; // 붙여넣기 전 포커스 복원 훅 (클릭 대상)
                 w.GetInputTargetToPreserveOnHide = () => _scratchPadWindow is { IsVisible: true } scratchPad
                     ? new WindowInteropHelper(scratchPad).Handle
                     : IntPtr.Zero;
@@ -311,8 +311,7 @@ public partial class MainViewModel : ObservableObject
                     ? new WindowInteropHelper(pad).Handle
                     : IntPtr.Zero;
                 _clipboardPanelWindow?.CapturePreviousForeground(scratchPadHwnd);
-            },
-            onShow: () => _clipboardPanelWindow?.FocusList());
+            });
 
         _anchoredPanels.Register(
             "scratchpad", order: 1, width: 600, height: 320,
