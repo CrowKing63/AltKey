@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>AltKey 클립보드 — 핀 칩 목업 v2</title>
+<style>
+  :root {
+    --lav: #C4B5FD;
+    --lav-bg: #F1EBFC;
+    --lav-bd: #DDD2F7;
+    --ink: #1D1B26;
+    --mut: #8A8794;
+    --panel-bg: #FAFAFB;
+    --panel-bd: #E5E1F0;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: transparent; color: var(--ink); padding: 8px 4px; font-size: 13px; line-height: 1.45; }
+
+  h1 { font-size: 16px; font-weight: 700; letter-spacing: -.01em; }
+  .sub { color: var(--mut); font-size: 12px; margin-top: 2px; }
+
+  /* ── 컨트롤 ─────────────────────────────── */
+  .controls { display: flex; gap: 16px; align-items: center; margin: 14px 0 12px; flex-wrap: wrap; }
+  .seg { display: inline-flex; border: 1px solid var(--panel-bd); background: var(--panel-bg); border-radius: 9px; padding: 3px; gap: 2px; }
+  .seg button {
+    border: 0; background: transparent; color: var(--mut); font: inherit; font-size: 12px;
+    padding: 5px 12px; border-radius: 6px; cursor: pointer;
+  }
+  .seg button.on { background: #fff; color: var(--ink); box-shadow: 0 1px 3px rgba(29,27,38,.10); font-weight: 600; }
+
+  /* ── 레이아웃 ─────────────────────────────── */
+  .stage { display: flex; gap: 28px; align-items: flex-start; }
+  .col-left { width: 360px; flex: none; }
+
+  /* ── 패널 목업 ─────────────────────────────── */
+  .panel {
+    background: var(--panel-bg); border: 1px solid var(--panel-bd); border-radius: 14px;
+    box-shadow: 0 8px 28px rgba(29,27,38,.10); overflow: hidden; display: flex; flex-direction: column;
+    transition: height .18s ease;
+  }
+  .hdr {
+    height: 40px; flex: none; display: flex; align-items: center; gap: 8px; padding: 0 10px 0 12px;
+    border-bottom: 1px solid var(--panel-bd);
+  }
+  .hdr .title { font-size: 13px; font-weight: 650; }
+  .hdr .sp { flex: 1; }
+  .sortpill { display: inline-flex; background: #F0EEF4; border-radius: 7px; padding: 2px; gap: 2px; }
+  .sortpill span { font-size: 11px; color: var(--mut); padding: 3px 8px; border-radius: 5px; }
+  .sortpill span.on { background: #fff; color: var(--ink); box-shadow: 0 1px 2px rgba(29,27,38,.10); font-weight: 600; }
+  .closebtn { width: 22px; height: 22px; border-radius: 6px; color: var(--mut); display: grid; place-items: center; font-size: 13px; }
+
+  /* 칩 스트립 — 1줄 고정, 가로 스크롤 */
+  .chips {
+    flex: none; display: flex; flex-wrap: nowrap; gap: 6px; padding: 8px 10px 4px;
+    overflow-x: auto; scrollbar-width: thin; scrollbar-color: #C9BBF0 transparent;
+  }
+  .chips::-webkit-scrollbar { height: 3px; }
+  .chips::-webkit-scrollbar-thumb { background: #C9BBF0; border-radius: 2px; }
+  .chip {
+    flex: none; display: inline-flex; align-items: center; gap: 5px; max-width: 152px; min-width: 74px;
+    height: 28px; padding: 0 6px 0 10px; background: var(--lav-bg); border: 1px solid var(--lav-bd);
+    border-radius: 999px; font-size: 12px; color: #4A3F6B; white-space: nowrap; overflow: hidden;
+  }
+  .chip .txt { overflow: hidden; text-overflow: ellipsis; }
+  .chip .x { flex: none; width: 17px; height: 17px; border-radius: 50%; display: grid; place-items: center;
+    font-size: 10px; color: #8B7BB8; background: rgba(255,255,255,.6); }
+  .chip.sel { background: #E4DBFA; border-color: var(--lav); box-shadow: 0 0 0 2.5px rgba(196,181,253,.35); font-weight: 600; }
+
+  /* 목록 */
+  .list { flex: 1; overflow: hidden; padding: 4px 6px 8px; display: flex; flex-direction: column; }
+  .row {
+    height: 44px; flex: none; border-radius: 9px; padding: 7px 10px; display: flex; align-items: center; gap: 8px;
+  }
+  .row:hover, .row.hover { background: #F3F1F7; }
+  .row.sel { background: var(--lav-bg); box-shadow: inset 0 0 0 1.5px rgba(196,181,253,.55); }
+  .row .txt { flex: 1; font-size: 13px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .row .time { flex: none; font-size: 11px; color: var(--mut); }
+  .row .acts { flex: none; display: none; gap: 5px; }
+  .row.hover .acts, .row.sel .acts { display: inline-flex; }
+  .row.hover .time, .row.sel .time { display: none; }
+  .ic { width: 20px; height: 20px; border-radius: 5px; display: grid; place-items: center; font-size: 11px; color: var(--mut); background: rgba(255,255,255,.7); }
+  .ic.star.on { color: #8B6FE8; background: #EDE4FB; }
+
+  /* 현재 방식: 핀 = 풀 행 */
+  .row.pinrow { background: var(--lav-bg); }
+
+  /* ── 주석(annotations) ─────────────────────── */
+  .col-right { flex: 1; min-width: 260px; padding-top: 4px; }
+  .anno { margin-bottom: 18px; }
+  .anno h3 { font-size: 12.5px; font-weight: 700; color: var(--ink); display: flex; align-items: center; gap: 8px; }
+  .dot { width: 9px; height: 9px; border-radius: 3px; flex: none; }
+  .anno p { font-size: 12px; color: var(--mut); margin-top: 4px; max-width: 400px; }
+  .dim { display: inline-block; font-variant-numeric: tabular-nums; background: #F0EEF4; border-radius: 5px; padding: 1px 6px; font-size: 11px; color: var(--ink); font-weight: 600; }
+
+  /* ── 통계 바 ─────────────────────────────── */
+  .stats { margin-top: 12px; background: var(--panel-bg); border: 1px solid var(--panel-bd); border-radius: 10px; padding: 9px 12px; font-size: 12px; color: var(--ink); }
+  .stats b { font-weight: 650; }
+  .stats .vs { color: var(--mut); }
+
+  .foot { margin-top: 14px; font-size: 11.5px; color: var(--mut); max-width: 720px; }
+</style>
+</head>
+<body>
+
+<h1>AltKey 클립보드 패널 — 핀 칩 목업 v2 (가로 스크롤 + MRU)</h1>
+<div class="sub">폭 360 고정 · 높이 <span class="dim">400</span> · 칩 스트립은 <b>1줄 상수(≈38px)</b> — 핀 개수에 관계없이 목록 높이가 일정</div>
+
+<div class="controls">
+  <div class="seg" id="pinSeg">
+    <button data-pins="0">핀 0</button>
+    <button data-pins="3" class="on">핀 3</button>
+    <button data-pins="6">핀 6</button>
+    <button data-pins="10">핀 10+</button>
+  </div>
+  <div class="seg" id="modeSeg">
+    <button data-mode="chips" class="on">칩 (제안)</button>
+    <button data-mode="rows">행 (현재)</button>
+  </div>
+</div>
+
+<div class="stage">
+  <div class="col-left">
+    <div class="panel" id="panel"></div>
+    <div class="stats" id="stats"></div>
+  </div>
+
+  <div class="col-right">
+    <div class="anno">
+      <h3><span class="dot" style="background:var(--lav)"></span>고정 칩 스트립 — 1줄</h3>
+      <p>헤더 아래 1줄(≈38px). 넘으면 <b>가로 스크롤</b>(끝의 반 칩이 "더 있다"는 신호), 줄바꿈 없음. <b>개수 제한 없음</b>, <b>MRU 정렬</b>: 마지막 붙여넣기한 항목이 맨앞으로 이동. 칩 탭 = 붙여넣기, ✕ = 핀 해제(항목은 최근 목록 복귀).</p>
+    </div>
+    <div class="anno">
+      <h3><span class="dot" style="background:#fff;border:1.5px solid var(--panel-bd)"></span>히스토리 목록</h3>
+      <p>남은 높이를 전부 사용 — <b>핀 0개면 7행, 핀이 하나라도 있으면 항상 6행</b>. 행 44px, 2줄 미리보기 + 상대 시간. ★ = 핀(→ 칩으로 이동), ✕ = 완전 삭제.</p>
+    </div>
+    <div class="anno">
+      <h3><span class="dot" style="background:#F0EEF4"></span>키보드 내비게이션</h3>
+      <p>↑↓로 칩 → 히스토리 한 흐름 이동(기존 결합 인덱스 유지). 선택된 칩이 스크롤 밖이면 자동 스크롤. 선택은 라벤더 틴 + 링.</p>
+    </div>
+  </div>
+</div>
+
+<div class="foot">코드 단순화 부수 효과: <code>MaxFavorites=10</code> 상한과 "상한 도달 시 오래된 핀 밀어내기" 로직 모두 제거 — 칩 표시는 개수와 무관하고 MRU가 자연 정렬을 담당.</div>
+
+<script>
+const PINS = [
+  "안녕하세요, 이번 주 회의는 목요일 오후 3시로 확정됐습니다",
+  'git commit -m "fix(clipboard): 정렬 토글 상태 유지"',
+  "https://altkey.app/docs/setup",
+  "김철수 / AltKey 개발 — feels@altkey.app",
+  "월요일 10:00까지 초안 보내주세요",
+  "SELECT * FROM users WHERE active = 1;",
+  "감사합니다, 좋은 하루 되세요 🙏",
+  "C:\\Users\\uitaek\\AltKey\\docs",
+  "회의록 링크: https://docs.google.com/d/…",
+  "배포 전 체크리스트 — 4단계"
+];
+const HIST = [
+  ["내일 발표자료 최종본 공유드립니다", "방금"],
+  ["이건 다음 스프린트에서 처리해요", "2분 전"],
+  ["https://github.com/uitaek/altkey/pull/142", "9분 전"],
+  ["npm run build --workspace tools", "17분 전"],
+  ["점심 뭐 먹을까, 저는 칼국수", "34분 전"],
+  ["테스트 환경은 샌드박스에서 확인했습니다", "1시간 전"],
+  ["레이아웃 저장 후 메인 앱에 반영됐어요", "2시간 전"],
+  ["다음 미팅: 목요일 15:00 — 영상회의", "어제"],
+  ["빌드 실패 로그 첨부드림 (#A-31)", "어제"],
+  ["새 버전 설치 후 재시작 필요해요", "어제"],
+  ["docs 폴더에 주석 가이드 업데이트됐습니다", "2일 전"],
+  ["스크롤바 스타일 제안 정리해뒀어요", "3일 전"]
+];
+
+const state = { pins: 3, mode: "chips" };
+const panel = document.getElementById("panel");
+const statsEl = document.getElementById("stats");
+
+function esc(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+function render(){
+  const n = state.pins, chipsMode = state.mode === "chips";
+  panel.style.height = (chipsMode ? 400 : 420) + "px";
+
+  let h = `<div class="hdr"><span class="title">클립보드</span><span class="sp"></span>
+    <span class="sortpill"><span class="on">최신순</span><span>오래순</span></span>
+    <span class="closebtn">✕</span></div>`;
+
+  if (chipsMode){
+    // 칩 스트립: 1줄 상수 (≈38px = 패딩 12 + 칩 26) — 핀이 있으면 항상
+    h += `<div class="chips" style="${n===0 ? "display:none" : ""}">`;
+    for (let i=0;i<n;i++){
+      const sel = (n>=1 && i===0) ? " sel" : "";
+      h += `<span class="chip${sel}" title="${esc(PINS[i])}"><span class="txt">${esc(PINS[i])}</span><span class="x">✕</span></span>`;
+    }
+    h += `</div>`;
+
+    // 목록: 344 - (핀 있으면 38) → 행 수. 핀 개수와 무관.
+    const avail = 344 - (n>0 ? 38 : 0);
+    const rowsN = Math.max(0, Math.floor(avail/46));
+    h += `<div class="list">`;
+    for (let i=0;i<Math.min(rowsN, HIST.length);i++){
+      const cls = i===0 ? "sel" : (i===1 ? "hover" : "");
+      h += `<div class="row ${cls}"><span class="txt">${esc(HIST[i][0])}</span>
+        <span class="time">${HIST[i][1]}</span>
+        <span class="acts"><span class="ic star">★</span><span class="ic">✕</span></span></div>`;
+    }
+    h += `</div>`;
+
+    const cur = Math.max(0, Math.floor((364 - n*44)/46));
+    statsEl.innerHTML = `<b>핀 ${n}개</b> · 칩 스트립 1줄 상수 (≈38px) → 목록 <b>${rowsN}행</b> — 핀 개수와 무관
+      <span class="vs"> · 현재 방식(420, 행 44px)이면: ${cur}행</span>`;
+  } else {
+    // 현재 방식: 핀 = 상단 풀 행 (★ 채움)
+    h += `<div class="list" style="padding-top:8px">`;
+    for (let i=0;i<n;i++){
+      const cls = i===0 ? "pinrow sel" : (i===1 ? "pinrow hover" : "pinrow");
+      h += `<div class="row ${cls}"><span class="txt">${esc(PINS[i])}</span>
+        <span class="time">핀됨</span>
+        <span class="acts"><span class="ic star on">★</span><span class="ic">✕</span></span></div>`;
+    }
+    const avail = 364 - n*44;
+    const rowsN = Math.max(0, Math.floor(avail/46));
+    for (let i=0;i<Math.min(rowsN, HIST.length);i++){
+      h += `<div class="row"><span class="txt">${esc(HIST[i][0])}</span>
+        <span class="time">${HIST[i][1]}</span>
+        <span class="acts"><span class="ic star">★</span><span class="ic">✕</span></span></div>`;
+    }
+    h += `</div>`;
+    statsEl.innerHTML = `<b>핀 ${n}개</b> × 44px 행 = <b>${n*44}px</b> → 목록 <b>${rowsN}행</b> 표시 (패널 420)`;
+  }
+  panel.innerHTML = h;
+}
+
+function seg(id, key){
+  const segEl = document.getElementById(id);
+  segEl.querySelectorAll("button").forEach(b=>{
+    b.onclick = ()=>{ state[key] = (key==="pins" ? parseInt(b.dataset.pins) : b.dataset.mode);
+      segEl.querySelectorAll("button").forEach(x=>x.classList.remove("on"));
+      b.classList.add("on"); render(); };
+  });
+}
+seg("pinSeg","pins"); seg("modeSeg","mode");
+render();
+</script>
+</body>
+</html>
