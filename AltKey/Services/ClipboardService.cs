@@ -105,9 +105,7 @@ public class ClipboardService : IDisposable
     {
         // 재시도 로직이 포함된 헬퍼 사용 (다른 프로그램이 클립보드를 점유하고 있어도 안전)
         ClipboardHelper.SetTextWithRetry(text);
-        bool clipboardVerified = string.Equals(ClipboardHelper.GetTextWithRetry(), text, StringComparison.Ordinal);
-        InputDiagnosticTrace.Log($"CLIPBOARD_SET chars={text.Length} verified={clipboardVerified}");
-        _lastSeq = ClipboardHelper.GetSequenceNumberWithRetry(); // 방금 우리가 바꾼 클립보드를 폴링이 "새 복사"로 오인하지 않게
+        _lastSeq = ClipboardHelper.GetSequenceNumberWithRetry(); // 방금 우리가 바꾼 클립보드를 폴링이 "새 복사"로 오인하지 알게
 
         PromoteItem(text);     // 맨 앞으로 이동
         PromoteFavorite(text); // [2026-11] 핀도 최근 사용 순(MRU) — 칩 스트립에서 첫 칩으로 이동

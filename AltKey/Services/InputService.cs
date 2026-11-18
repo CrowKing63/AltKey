@@ -478,26 +478,12 @@ public class InputService
 
     public void SendCombo(List<VirtualKeyCode> keys)
     {
-        bool isClipboardPaste = keys.Contains(VirtualKeyCode.VK_CONTROL) && keys.Contains(VirtualKeyCode.VK_V);
-        _isClipboardPasteDispatch = isClipboardPaste;
-        if (isClipboardPaste)
-            InputDiagnosticTrace.Log($"PASTE_KEYS_BEGIN keys={string.Join('+', keys)} {InputDiagnosticTrace.DescribeWindow(GetForegroundHwnd())}");
-
-        try
-        {
-            ComboWillBeSent?.Invoke(keys);
-            foreach (var k in keys)
-                SendKeyDown(k);
-            foreach (var k in Enumerable.Reverse(keys))
-                SendKeyUp(k);
-            ReleaseTransientModifiers("SendCombo");
-        }
-        finally
-        {
-            if (isClipboardPaste)
-                InputDiagnosticTrace.Log($"PASTE_KEYS_END {InputDiagnosticTrace.DescribeWindow(GetForegroundHwnd())}");
-            _isClipboardPasteDispatch = false;
-        }
+        ComboWillBeSent?.Invoke(keys);
+        foreach (var k in keys)
+            SendKeyDown(k);
+        foreach (var k in Enumerable.Reverse(keys))
+            SendKeyUp(k);
+        ReleaseTransientModifiers("SendCombo");
     }
 
     public virtual void SendUnicode(string text)
@@ -524,7 +510,6 @@ public class InputService
     /// </summary>
     public virtual void SendAtomicReplace(int prevLen, string newText, int fullNewLength)
     {
-        DebugLog.Info($"SendAtomicReplace prevLen={prevLen} text='{newText}' fullNewLength={fullNewLength}");
         // 백스페이스 배치와 새 유니코드 문자 배치를 분리해 보낸다.
         // 두 배치가 0지연으로 붙어 가면 일부 앱(메모장 EDIT 컨트롤 등)이 메시지 처리
         // 타이밍에 따라 이벤트 하나를 간혹 분실한다("열렬 → 열열렬" 중복 버그).
@@ -644,15 +629,9 @@ public class InputService
 
     internal virtual void DispatchInput(Win32.INPUT[] inputs)
     {
-        var foregroundBeforeDispatch = GetForegroundHwnd();
-        bool ownWindowTarget = IsForegroundOwnWindow();
         EnsureForegroundSettled();
         uint sent = Win32.SendInput((uint)inputs.Length, inputs, Marshal.SizeOf<Win32.INPUT>());
         int error = Marshal.GetLastWin32Error();
-        if (_isClipboardPasteDispatch)
-            InputDiagnosticTrace.Log($"PASTE_SENDINPUT requested={inputs.Length} sent={sent} error={error} {InputDiagnosticTrace.DescribeWindow(GetForegroundHwnd())}");
-        else if (ownWindowTarget)
-            InputDiagnosticTrace.Log($"OWN_SENDINPUT mode={Mode} requested={inputs.Length} sent={sent} error={error} {InputDiagnosticTrace.DescribeWindow(foregroundBeforeDispatch)}");
         if (sent == 0 && error == Win32.ERROR_ACCESS_DENIED)
             ElevatedAppDetected?.Invoke();
     }
@@ -686,7 +665,6 @@ public class InputService
     internal const int ForegroundSettleDelayMs = 50;
 
     private IntPtr _lastDispatchForegroundHwnd = IntPtr.Zero;
-    private bool _isClipboardPasteDispatch;
 
     private void HandleVolumeControl(string direction, int step)
     {

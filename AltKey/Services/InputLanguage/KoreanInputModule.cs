@@ -122,7 +122,6 @@ public sealed class KoreanInputModule : IInputLanguageModule
             _composer.Feed(jamo);
             string newOutput = _composer.Current;
             int prefix = CommonPrefixLength(oldOutput, newOutput);
-            DebugLog.Info($"Feed jamo='{jamo}' old='{oldOutput}' new='{newOutput}' bs={oldOutput.Length - prefix}");
             _input.SendAtomicReplace(oldOutput.Length - prefix, newOutput.Substring(prefix), newOutput.Length);
             SuggestionsChanged?.Invoke(_koDict.GetSuggestions(newOutput, _suggestionContext));
             return true;
@@ -219,7 +218,6 @@ public sealed class KoreanInputModule : IInputLanguageModule
             _composer.Backspace();
             string newOutput = _composer.Current;
             int prefix = CommonPrefixLength(oldOutput, newOutput);
-            DebugLog.Info($"Backspace old='{oldOutput}' new='{newOutput}' bs={oldOutput.Length - prefix}");
             _input.SendAtomicReplace(oldOutput.Length - prefix, newOutput.Substring(prefix), newOutput.Length);
             SuggestionsChanged?.Invoke(_koDict.GetSuggestions(newOutput, _suggestionContext));
             return true;
@@ -277,7 +275,6 @@ public sealed class KoreanInputModule : IInputLanguageModule
         _pendingTrailingSpace = false;
 
         bool fgMatch = _input.GetForegroundHwnd() == _pendingTrailingSpaceTarget;
-        DebugLog.Info($"RetractPendingTrailingSpace fired fgMatch={fgMatch}");
         if (!fgMatch) return;
         _input.SendBackspace(1);
     }

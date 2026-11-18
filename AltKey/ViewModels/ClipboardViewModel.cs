@@ -131,21 +131,14 @@ public partial class ClipboardViewModel : ObservableObject
         _clipboardService.PasteItem(text);
         // [스크래치패드] 전송 전 입력 대상(패드의 메모 박스)을 확보한다.
         bool ownTarget = PrepareInputTarget?.Invoke() ?? false;
-        InputDiagnosticTrace.LogPasteStage("PRE_DISPATCH", ownTarget);
 
         // [붙여넣기 대상 복원] 패널이 포커스를 갖고 있으면 외부 앱으로 되돌린다 (클릭 붙여넣기).
         // 단, 방금 스크래치패드를 확보한 경우(ownTarget)는 복원이 오히려 패드에서 포커스를 빼앗아
         // Ctrl+V가 엉뚱한 외부 창으로 가므로 스킵한다.
         if (!ownTarget && RestoreInputTarget is not null && !RestoreInputTarget())
-        {
-            InputDiagnosticTrace.Log("PASTE_ABORT target focus could not be restored");
             return; // 엉뚱한 창/컨트롤에 Ctrl+V를 보내지 않는다.
-        }
-        Services.ClipboardTrace.Log("PASTE Ctrl+V sent (text=<redacted>)");
         // Ctrl+V 전송으로 붙여넣기
         _inputService.HandleAction(new SendComboAction(["VK_CONTROL", "VK_V"]));
-        InputDiagnosticTrace.LogPasteStage("AFTER_SEND_REQUEST", ownTarget);
-
 
         if (_configService.Current.ClipboardCloseAfterPaste)
             RequestClose();

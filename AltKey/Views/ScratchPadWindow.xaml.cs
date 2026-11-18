@@ -30,7 +30,6 @@ public partial class ScratchPadWindow : AnchoredPanelWindowBase
         _viewModel = viewModel;
         DataContext = viewModel;
         InitializeComponent();
-        NoteTextBox.TextChanged += (_, _) => InputDiagnosticTrace.LogScratchPadTextState(NoteTextBox);
 
         // 서브모드가 바뀌면 메인 키보드와 같은 시점에 헤더 버튼 라벨도 갱신한다.
         _autoComplete = App.Services?.GetService<AutoCompleteService>();

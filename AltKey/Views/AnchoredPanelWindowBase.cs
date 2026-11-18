@@ -1,5 +1,4 @@
 using System.Runtime.InteropServices;
-using System.Text;
 using System.Windows;
 using System.Windows.Input;
 
@@ -116,16 +115,6 @@ public class AnchoredPanelWindowBase : Window
     /// <summary>핸들이 아직 유효한 창인지 확인한다 (대상 앱이 종료하면 false).</summary>
     public static bool IsWindowValid(IntPtr hwnd) => hwnd != IntPtr.Zero && IsWindowP(hwnd);
 
-    /// <summary>[진단] 핸들 → "title='...' pid=..." — 포커스 대상이 어떤 창인지 식별한다.</summary>
-    public static string DescribeWindow(IntPtr hwnd)
-    {
-        if (hwnd == IntPtr.Zero) return "(none)";
-        var sb = new StringBuilder(GetWindowTextLengthP(hwnd) + 1);
-        GetWindowTextP(hwnd, sb, sb.Capacity);
-        GetWindowThreadProcessId(hwnd, out var pid);
-        return $"title='{sb}' pid={pid}";
-    }
-
     /// <summary>[폴백] SetForegroundWindow가 Windows에 거부된 경우 AttachThreadInput으로 강제 전환 — 클립보드 매니저들이 쓰는 표준 기법.</summary>
     private static void ForceForegroundViaThreadAttach(IntPtr target)
     {
@@ -158,10 +147,4 @@ public class AnchoredPanelWindowBase : Window
     [DllImport("user32.dll", EntryPoint = "AttachThreadInput")]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool AttachThreadInputP(uint from, uint to, [MarshalAs(UnmanagedType.Bool)] bool attach);
-
-    [DllImport("user32.dll", EntryPoint = "GetWindowTextLengthW")]
-    private static extern int GetWindowTextLengthP(IntPtr hWnd);
-
-    [DllImport("user32.dll", EntryPoint = "GetWindowTextW", CharSet = CharSet.Unicode)]
-    private static extern int GetWindowTextP(IntPtr hWnd, StringBuilder str, int maxCount);
 }

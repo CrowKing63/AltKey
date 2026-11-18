@@ -277,10 +277,7 @@ public partial class MainViewModel : ObservableObject
             // 공용 기반 클래스의 EnsureForeground()가 실제로 포그라운드가 될 때까지 동기 검증한다.
             var padHwnd = new WindowInteropHelper(pad).Handle;
             if (!AnchoredPanelWindowBase.EnsureForeground(padHwnd))
-            {
-                DebugLog.Info("InputPrep pad foreground failed — falling back to external restore");
                 return false; // 확보 실패 — 외부 복원 경로가 붙여넣기 대상을 잡는다
-            }
 
             ScratchPadImePolicy.ConfigureTextBox(padBox, _inputService.Mode);
             if (!padBox.IsKeyboardFocused) System.Windows.Input.Keyboard.Focus(padBox);

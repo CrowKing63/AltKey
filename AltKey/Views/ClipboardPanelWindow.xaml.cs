@@ -63,13 +63,6 @@ public partial class ClipboardPanelWindow : AnchoredPanelWindowBase
                     ChipStripScroll.ScrollToHorizontalOffset(0);
                     HistoryListScroll.ScrollToVerticalOffset(0);
                 });
-                // [진단] 열림 직후 포그라운드가 어디인지 기록 — 이제 열릴 때 Activate()를 안 해(포커스 뺏김 방지)라
-                // fg가 이전 외부 앱 그대로여야 정상. AltKey 창으로 바뀌면 뭔가 포커스를 훔친 것이다.
-                Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, () =>
-                {
-                    var fgNow = GetForegroundWindow();
-                    ClipboardTrace.Log($"SHOWN+100ms fg={fgNow} own={IsOwnProcessWindow(fgNow)} {DescribeWindow(fgNow)}");
-                });
             }
             else
             {
@@ -78,8 +71,6 @@ public partial class ClipboardPanelWindow : AnchoredPanelWindowBase
                 var preservedTarget = GetInputTargetToPreserveOnHide?.Invoke() ?? IntPtr.Zero;
                 if (ShouldRestoreInputForegroundOnHide(currentForeground, preservedTarget))
                     RestoreInputForeground(); // 붙여넣기 대상이 따로 없으면 열기 전 외부 앱으로 되돌린다
-                else
-                    ClipboardTrace.Log($"RESTORE skip: preserve active input target={preservedTarget} fg={currentForeground}");
             }
         };
     }
@@ -91,18 +82,13 @@ public partial class ClipboardPanelWindow : AnchoredPanelWindowBase
         bool capturedPreferredTarget = fg != IntPtr.Zero && fg == preferredOwnTarget;
         // 화상 키보드 상단 버튼·Win+. 등 AltKey 자체에서 열면 일반적으로 외부 앱이 직전 입력 대상입니다.
         // 다만 빠른 메모 창이 실제 포그라운드라면 그 창은 명시적 붙여넣기 대상이므로 보존합니다.
-        bool replaced = false;
         if (fg != IntPtr.Zero && IsOwnProcessWindow(fg) && !capturedPreferredTarget)
-        {
             fg = App.Services?.GetService<ProfileService>()?.LastExternalForegroundHwnd ?? IntPtr.Zero;
-            replaced = true;
-        }
 
         _previousForeground = fg;
         _capturedTargetIsScratchPad = capturedPreferredTarget;
         _capturedFocusTarget = capturedPreferredTarget ? IntPtr.Zero : fg;
         _capturedFocusWindow = capturedPreferredTarget ? IntPtr.Zero : GetThreadFocusedWindow(fg);
-        ClipboardTrace.Log($"CAPTURE ownFgReplaced={replaced} scratchPad={capturedPreferredTarget} result={_previousForeground} focusTarget={_capturedFocusTarget} focusHwnd={_capturedFocusWindow} {InputDiagnosticTrace.DescribeWindow(fg)}");
     }
 
     /// <summary>붙여넣기(Ctrl+V) 전송 전 호출 — 포그라운드를 외부 앱으로 복원합니다.
@@ -110,10 +96,7 @@ public partial class ClipboardPanelWindow : AnchoredPanelWindowBase
     internal bool RestoreInputForeground()
     {
         if (_previousForeground == IntPtr.Zero)
-        {
-            ClipboardTrace.Log("RESTORE skip: prev=Zero (외부 앱 미기록)");
             return false;
-        }
 
         var fg = GetForegroundWindow();
         bool currentIsOwn = fg != IntPtr.Zero && IsOwnProcessWindow(fg);
@@ -128,17 +111,11 @@ public partial class ClipboardPanelWindow : AnchoredPanelWindowBase
 
         // 외부 앱이 이미 포그라운드면 그 앱의 현재 포커스를 보존하고, 앱이 AltKey로 바뀐 경우에만 이전 포커스를 복원합니다.
         if (target == IntPtr.Zero)
-        {
-            ClipboardTrace.Log($"RESTORE skip: no valid target fg={fg} prev={_previousForeground}");
             return false;
-        }
 
         bool restored = EnsureForeground(target);
         if (!restored)
-        {
-            ClipboardTrace.Log($"RESTORE failed target={target} finalFg={GetForegroundWindow()}");
             return false;
-        }
 
         var focusTarget = currentIsOwn
             ? SelectCapturedFocusTarget(
@@ -149,7 +126,6 @@ public partial class ClipboardPanelWindow : AnchoredPanelWindowBase
                 hwnd => IsWindowValid(hwnd) && IsChildWindow(target, hwnd))
             : IntPtr.Zero;
         bool focusRestored = focusTarget == IntPtr.Zero || RestoreChildFocus(target, focusTarget);
-        ClipboardTrace.Log($"RESTORE setFg=True target={target} focusTarget={focusTarget} focusRestored={focusRestored} {InputDiagnosticTrace.DescribeWindow(target)} finalFg={GetForegroundWindow()}");
         _previousForeground = target;
         return focusRestored;
     }
@@ -258,7 +234,7 @@ public partial class ClipboardPanelWindow : AnchoredPanelWindowBase
     [DllImport("user32.dll", EntryPoint = "GetWindowThreadProcessId")]
     private static extern uint GetWindowThreadProcessId(IntPtr hwnd, out uint processId);
 
-    // [Win32 헬퍼] DescribeWindow·ForceForegroundViaThreadAttach·포그라운드 P/Invoke는
+    // [Win32 헬퍼] ForceForegroundViaThreadAttach·포그라운드 P/Invoke는
     // 공용 기반 클래스(AnchoredPanelWindowBase)로 이관 — 두 패널 간 분기를 막기 위함.
 
     protected override void OnSourceInitialized(EventArgs e)
@@ -278,7 +254,6 @@ public partial class ClipboardPanelWindow : AnchoredPanelWindowBase
     private void Window_PreviewKeyDown(object sender, WpfKeyEventArgs e)
     {
         if (e.Key != Key.Escape) return;
-        ClipboardTrace.Log("CLOSE requested (Esc)");
         OnCloseRequested?.Invoke();
         e.Handled = true;
     }
@@ -299,7 +274,6 @@ public partial class ClipboardPanelWindow : AnchoredPanelWindowBase
 
     private void CloseButton_Click(object sender, RoutedEventArgs e)
     {
-        ClipboardTrace.Log("CLOSE requested (✕ 버튼)");
         OnCloseRequested?.Invoke();
         PlayButtonSound();
     }
