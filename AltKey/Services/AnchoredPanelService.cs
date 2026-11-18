@@ -14,9 +14,10 @@ namespace AltKey.Services;
 public class AnchoredPanelService
 {
     // 패널 등록 정보 — id: 식별자, order: 복수 패널 한 줄 배치 시 표시 순서(왼쪽→오른쪽).
+    // [2026-11] Width/Height 필드 제거 — 크기의 SSOT은 각 XAML의 Width/Height(표준 높이 H=400)이고,
+    // 레이아웃(RelayoutAll)도 실제 창 치수를 읽는다. 등록 인자가 죽어 있는 중복 데이터였다.
     private sealed record PanelEntry(
-        string Id, int Order, double Width, double Height,
-        Func<Window> Factory, Action? OnBeforeShow, Action? OnShow, Action? OnHide);
+        string Id, int Order, Func<Window> Factory, Action? OnBeforeShow, Action? OnShow, Action? OnHide);
 
     private MainWindow? _host;
     private readonly List<PanelEntry> _panels = [];
@@ -28,10 +29,11 @@ public class AnchoredPanelService
     /// <summary>
     /// 패널을 등록합니다. onBeforeShow: Show() 직전 호출(포커스를 가져가기 전 외부 앱 기록 등),
     /// onShow: 열기 직후 호출(포커스 놓기 등), onHide: 숨기기 직전 호출(빠른 메모는 즉시 저장).
+    /// 크기(width/height) 인자는 없다 — 크기는 패널 창 XAML이 소유한다 (표준 높이 H=400).
     /// </summary>
-    public void Register(string id, int order, double width, double height, Func<Window> factory,
+    public void Register(string id, int order, Func<Window> factory,
         Action? onBeforeShow = null, Action? onShow = null, Action? onHide = null)
-        => _panels.Add(new PanelEntry(id, order, width, height, factory, onBeforeShow, onShow, onHide));
+        => _panels.Add(new PanelEntry(id, order, factory, onBeforeShow, onShow, onHide));
 
     /// <summary>
     /// 키보드 창(호스트)을 연결합니다 — 이동·크기 변경·숨김/보임·투명도 이벤트를 여기서 구독합니다.

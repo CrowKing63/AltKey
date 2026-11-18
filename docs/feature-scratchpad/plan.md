@@ -34,7 +34,7 @@
 ### 3.1 윈도우 스펙
 - `ScratchPadWindow`: 독립 top-level WPF Window, `Owner = MainWindow` (앱 종료 시 자동 정리, 작업표시줄에 안 보임: `ShowInTaskbar=False`).
 - `Topmost=True` — `WindowService.SetTopmost` 패턴 재사용. **NOACTIVATE 아님** (TextBox 타이핑에 키보드 포커스가 필요).
-- 고정 크기: 가로 600 × 세로 320 (키보드 900×350과 같은 "가로로 긴" 비율 계열, 리사이즈 없음 — 단순성·예측 가능성).
+- 고정 크기: 가로 600 × 세로 320 (키보드 900×350과 같은 "가로로 긴" 비율 계열, 리사이즈 없음 — 단순성·예측 가능성). → **높이는 표준 H=400로 통일됨** (`docs/feature-panel-size-consistency`), 폭 600 유지.
 - 내용: 상단 드래그 핸들 행(이동용, U3의 키보드 창 패턴 재사용) + 숏컷 버튼 4개 + 전체 면적 `TextBox` (멀티라인, 자동 줄바꿈, 큰 글자 `ScaledSettingsBodyLargeFontSize` 계열 배율).
 - 닫기: ✕ 버튼 → 숨김(종료 아님). MainWindow가 트레이로 숨겨지면 패드도 함께 숨김(동기화 명시 처리 — owned 창은 owner Hide에 자동 숨기지 않음).
 
@@ -123,7 +123,7 @@ PlacePad(keyboardRect, workArea, padSize):   # 열기 시 / 키보드 이동 시
 ## 10. 가정·오픈 질문
 
 - 멀티모니터: 주 모니터 WorkArea 기준(기존 코드들과 동일 가정). 부 모니터 지원은 이번 범위 밖.
-- 패드 고정 크기(600×320)는 첫 값 — 수동 검증 시 글자 가독성 기준으로 조정 가능.
+- 패드 고정 크기(600×320)는 첫 값 — 수동 검증 시 글자 가독성 기준으로 조정 가능. → **높이만 표준 H=400으로 통일됨** (`docs/feature-panel-size-consistency`).
 - Z-order: 배치가 위/아래로 분리되므로 양쪽 모두 Topmost여도 시각적 충돌 없음 — 특수 z-management 불필요.
 - 드래그 중 겹침 클램프(구 D9)는 **후순위** — 필요해지면 `ConstrainPadPosition` 순수 함수로 추가.
 - 패드 드래그 위치는 **임시 오프셋** — D4/D6에 따라 다음 키보드 이동·열기 시 계산 위치로 복귀 (영속화 없음). 커스텀 위치를 기억하는 기능이 필요해지면 그때 추가.

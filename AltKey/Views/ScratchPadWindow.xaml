@@ -12,10 +12,11 @@
         Topmost="True"
         ShowInTaskbar="False"
         ResizeMode="NoResize"
-        Width="600" Height="320"
+        Width="600" Height="400"
         MouseEnter="Window_MouseEnter"
         MouseLeave="Window_MouseLeave">
 
+    <!-- [표준 패널 높이] H=400은 ClipboardPanelWindow와 같은 값으로 유지 — 함께 열면 상·하 끝이 모두 일치한다 (docs/feature-panel-size-consistency). -->
     <local:AnchoredPanelWindowBase.Resources>
         <!-- 접근성/시각 일관성: 키보드 상단바 버튼과 같은 호버 대비를 써서
              패드 안에서도 "누를 수 있는 곳"이 예측되게 합니다. -->

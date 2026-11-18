@@ -294,7 +294,7 @@ public partial class MainViewModel : ObservableObject
         // 생성·Show/Hide·배치·트레이 동기화·투명도 연동은 서비스가 소유 — 여기는 도메인 훅만 배선합니다.
         // order = 복수 패널 한 줄 배치 시 좌→우 순서 (클립보드가 왼쪽).
         _anchoredPanels.Register(
-            "clipboard", order: 0, width: 360, height: 420,
+            "clipboard", order: 0,
             factory: () =>
             {
                 var w = _clipboardPanelWindow ??= new ClipboardPanelWindow(Clipboard);
@@ -314,7 +314,7 @@ public partial class MainViewModel : ObservableObject
             });
 
         _anchoredPanels.Register(
-            "scratchpad", order: 1, width: 600, height: 320,
+            "scratchpad", order: 1,
             factory: () =>
             {
                 var w = _scratchPadWindow ??= new ScratchPadWindow(_scratchPadVm);

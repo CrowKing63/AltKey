@@ -13,9 +13,9 @@ public class AnchoredPanelsLayoutTests
     // 작업 영역: 1920×1040 (하단 작업표시줄 40px 가정) — 주 모니터 기준.
     private static readonly Rect WorkArea = new(0, 0, 1920, 1040);
 
-    // 실제 등록 크기와 동일 (MainViewModel.Register).
-    private static AnchoredPanelsLayout.PanelSpec Clipboard() => new("clipboard", 0, 360, 420);
-    private static AnchoredPanelsLayout.PanelSpec ScratchPad() => new("scratchpad", 1, 600, 320);
+    // 패널 크기는 XAML이 소유(표준 높이 H=400) — 여기는 실제 치수를 그대로 반영한다.
+    private static AnchoredPanelsLayout.PanelSpec Clipboard() => new("clipboard", 0, 360, 400);
+    private static AnchoredPanelsLayout.PanelSpec ScratchPad() => new("scratchpad", 1, 600, 400);
 
     // ── 단일 패널 (기존 스크래치패드 규칙 유지) ────────────────────────────
 
@@ -38,7 +38,7 @@ public class AnchoredPanelsLayoutTests
 
         var (left, top) = result["scratchpad"];
         Assert.Equal(810, left, 2);
-        Assert.Equal(376, top, 2);    // 700 - 320 - Gap(4)
+        Assert.Equal(296, top, 2);    // 700 - 400 - Gap(4)
     }
 
     [Fact]
@@ -69,7 +69,7 @@ public class AnchoredPanelsLayoutTests
         var keyboard = new Rect(660, WorkArea.Top + WorkArea.Height / 2, 900, 350);
         var result = AnchoredPanelsLayout.PlacePanels(keyboard, WorkArea, [ScratchPad()]);
 
-        Assert.Equal(520 - 320 - 4, result["scratchpad"].top, 2);
+        Assert.Equal(520 - 400 - 4, result["scratchpad"].top, 2);
     }
 
     [Fact]
@@ -79,7 +79,7 @@ public class AnchoredPanelsLayoutTests
         var keyboard = new Rect(0, 250, 400, 100);
         var result = AnchoredPanelsLayout.PlacePanels(keyboard, tinyWorkArea, [ScratchPad()]);
 
-        // 패드(600×320)가 영역보다 커서 계산값이 벗어날 때 경계(0)로 붙습니다.
+        // 패드(600×400)가 영역보다 커서 계산값이 벗어날 때 경계(0)로 붙습니다.
         Assert.Equal(0, result["scratchpad"].left, 2);
         Assert.Equal(0, result["scratchpad"].top, 2);
     }
@@ -101,6 +101,11 @@ public class AnchoredPanelsLayoutTests
         Assert.Equal(rowTop, result["clipboard"].top, 2);
         Assert.Equal(rowTop, result["scratchpad"].top, 2);
 
+        // [높이 통일] 표준 높이(H=400)라 하단도 같은 선 — 함께 열면 양 끝이 모두 일치한다.
+        double rowBottom = rowTop + 400;
+        Assert.Equal(rowBottom, result["clipboard"].top + 400, 2);
+        Assert.Equal(rowBottom, result["scratchpad"].top + 400, 2);
+
         // 순서: order 0(클립보드)이 왼쪽.
         Assert.True(result["clipboard"].left < result["scratchpad"].left);
     }
@@ -116,21 +121,26 @@ public class AnchoredPanelsLayoutTests
 
         // 위 배치: 모든 패널 하단이 같은 선 (키보드 상단 - Gap).
         double rowBottom = keyboard.Top - 4;
-        Assert.Equal(rowBottom, result["clipboard"].top + 420, 2);
-        Assert.Equal(rowBottom, result["scratchpad"].top + 320, 2);
+        Assert.Equal(rowBottom, result["clipboard"].top + 400, 2);
+        Assert.Equal(rowBottom, result["scratchpad"].top + 400, 2);
+
+        // [높이 통일] 표준 높이(H=400)라 상단도 같은 선 — 함께 열면 양 끝이 모두 일치한다.
+        double rowTop = rowBottom - 400;
+        Assert.Equal(rowTop, result["clipboard"].top, 2);
+        Assert.Equal(rowTop, result["scratchpad"].top, 2);
     }
 
     [Fact]
     public void 복수_패널_총너비가_작업영역을_넘으면_폴백()
     {
-        // 좁은 모니터: 총 너비(968)가 작업 영역(900)보다 넓음 → 폴백 규칙.
+        // 좁은 모니터: 총 너비(964)가 작업 영역(900)보다 넓음 → 폴백 규칙.
         var narrowArea = new Rect(0, 0, 900, 1040);
         var keyboard = new Rect(300, 100, 500, 350);
         var result = AnchoredPanelsLayout.PlacePanels(keyboard, narrowArea, [Clipboard(), ScratchPad()]);
 
         // 1번째(order 0) 패널은 rowSide(아래), 나머지 패널은 반대편(위).
         Assert.Equal(keyboard.Bottom + 4, result["clipboard"].top, 2);
-        // 위 배치 계산값(100-320-4=-224)이 작업 영역을 벗어나 경계(0)로 붙습니다.
+        // 위 배치 계산값(100-400-4=-304)이 작업 영역을 벗어나 경계(0)로 붙습니다.
         Assert.Equal(0, result["scratchpad"].top, 2);
 
         // 각자 키보드 기준 수평 중앙.

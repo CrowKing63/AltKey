@@ -72,7 +72,7 @@ PlacePanels(keyboardRect, workArea, panels: [{id, width, height}, ...]) → {id:
 
 ### 5.1 윈도우 스펙 — `AltKey/Views/ClipboardPanelWindow.xaml(.cs)`
 
-- `ScratchPadWindow`와 같은 차원: top-level, `Owner=MainWindow`, Topmost, `ShowInTaskbar=False`, 고정 크기 **360×420** (리사이즈 없음 — 단순성·예측 가능성).
+- `ScratchPadWindow`와 같은 차원: top-level, `Owner=MainWindow`, Topmost, `ShowInTaskbar=False`, 고정 크기 **360×420** (리사이즈 없음 — 단순성·예측 가능성). → **높이는 표준 H=400로 통일됨** (`docs/feature-panel-size-consistency`), 폭 360 유지.
 - 내용(상→하):
   1. 헤더 행: **좌측 드래그 핸들** (SizeAll 커서 — 누르면 창 이동, 더블클릭 = 화면 수평 중앙; 빠른 메모와 동일) | 우측 [전체 삭제] [✕]. 제목 라벨 없음 (빠른 메모와 정합 — 사용자 요청)
   2. 검색 입력 (한 줄, 얇은 테두리, 비어 있으면 placeholder "검색". 텍스트가 있으면 ✕ 지우기 버튼 표시)
@@ -172,6 +172,6 @@ PlacePanels(keyboardRect, workArea, panels: [{id, width, height}, ...]) → {id:
 |---|---|---|
 | O1 | 타임스탬프(D4) 포함 | 기존 제안에 따라 포함. 원치 않으면 U3의 copiedAt 관련만 잘라도 자립적 (JSON 마이그레이션·행 우측 시간 라벨 제거) |
 | O2 | 행 삭제 버튼 신규 | 현재 서비스/UX에 없음. Win+V(…메뉴)와 달리 항상 보이는 별도 버튼으로 — D3(항상 표시) 원칙의 직접 파생. 재복사 시 재추가되는 동작은 허용 |
-| O3 | 창 크기 360×420 고정 | 추정치 — 구현 시 실제 가독성 확인 후 미세 조정 (스크래치패드처럼 리사이즈 없음) |
+| O3 | 창 크기 360×420 고정 | 추정치 — 구현 시 실제 가독성 확인 후 미세 조정 (스크래치패드처럼 리사이즈 없음). → **높이만 표준 H=400으로 통일됨** (`docs/feature-panel-size-consistency`) |
 | O4 | free-floating 미구현(D9) | 드래그 후 위치가 다음 재계산 시 복귀(현행 유지). 사용자 피드백이 있으면 순수 함수에 "detached" 플래그만 추가하면 되는 확장 지점 |
 | O5 | 설정 탭 배치 | **해결** — "동작 → 닫기/숨김" 섹션에 존재 ("클립보드 항목을 클릭/Enter로 붙여넣은 후 클립보드 패널을 자동으로 닫습니다") |
