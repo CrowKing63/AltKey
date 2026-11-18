@@ -30,8 +30,7 @@ Wiki/AltKey.wiki/
 ├── 키-반복.md                 # ✅ 작성 완료
 ├── 레이아웃-커스터마이징.md    # ✅ 작성 완료 (Update됨)
 ├── 앱별-레이아웃.md           # ✅ 작성 완료
-├── 액션-키.md                 # ✅ 작성 완료
-├── 이모지.md                  # ✅ 작성 완료
+├── 액션-키.md                # ✅ 작성 완료
 ├── 클립보드-히스토리.md       # ✅ 작성 완료
 ├── 설정.md                    # ✅ 작성 완료 (Update됨)
 ├── 테마와-외관.md             # ✅ 작성 완료 (Update됨)
@@ -110,8 +109,8 @@ Wiki/AltKey.wiki/
 | W09 | 레이아웃-커스터마이징 | ✅ 완료 | 레이아웃-커스터마이징.md | JSON 내 `english_label` 등 업데이트 완료 |
 | W10 | 앱별-레이아웃 | ✅ 완료 | 앱별-레이아웃.md | 프로필 자동 전환 설정 |
 | W11 | 액션-키 | ✅ 완료 | 액션-키.md | 10종 키 액션 종류별 설명 |
-| W12 | 이모지 | ✅ 완료 | 이모지.md | 카테고리, 전송 방식 |
-| W13 | 클립보드-히스토리 | ✅ 완료 | 클립보드-히스토리.md | 히스토리 패널, 붙여넣기 |
+| W12 | 이모지 | ⛔ 폐지 | — | 이모지 패널 기능 제거 (2026-11) |
+| W13 | 클립보드-히스토리 | ✅ 완료 | 클립보드-히스토리.md | 히스토리 패널, 붙여넣기 | 독립 창·정렬 토글·핀 칩 스트립 현재 상태로 갱신 (2026-11) |
 | W14 | 설정 | ✅ 완료 | 설정.md | 효과음, 접근성 탐색, 상단바 탭의 ✨(AI) 표시 관리 안내 업데이트 완료; 사용자 설정 백업·복원·초기화, 상단바 단축키 삭제 확인 추가 (2026-11) |
 | W15 | 테마와-외관 | ✅ 완료 | 테마와-외관.md | 테마 모드, 투명도, 효과음 업데이트 완료 |
 | W16 | 시스템-트레이 | ✅ 완료 | 시스템-트레이.md | 좌클릭 메뉴(더블클릭 창 복귀 제거), 자동 실행 업데이트 완료; 전역 단축키 섹션 제거 (기능 폐지, 2026-11) |
@@ -171,8 +170,7 @@ Wiki/AltKey.wiki/
 | W09 | 레이아웃-커스터마이징 | `Services/LayoutService.cs`, `Models/LayoutConfig.cs`, `Models/KeySlot.cs` (`english_label` 포함), `ViewModels/LayoutEditorViewModel.cs`, `layouts/Basic.json` |
 | W10 | 앱별-레이아웃 | `Services/ProfileService.cs`, `ViewModels/SettingsViewModel.cs` (Profiles), `ViewModels/MainViewModel.cs` (OnForegroundAppChanged) |
 | W11 | 액션-키 | `Models/KeyAction.cs`, `Services/InputService.cs` (HandleAction), `Services/KeyNotationParser.cs` |
-| W12 | 이모지 | `ViewModels/EmojiViewModel.cs`, `Views/EmojiPanel.xaml`, `Assets/emoji.json` |
-| W13 | 클립보드-히스토리 | `Services/ClipboardService.cs`, `ViewModels/ClipboardViewModel.cs`, `Views/ClipboardPanel.xaml` |
+| W13 | 클립보드-히스토리 | `Services/ClipboardService.cs`, `ViewModels/ClipboardViewModel.cs`, `Views/ClipboardPanelWindow.xaml` |
 | W14 | 설정 | `ViewModels/SettingsViewModel.cs`, `Services/ConfigService.cs`, `Models/AppConfig.cs` (신규 설정값 전반), `Controls/NumericAdjuster.xaml.cs` |
 | W15 | 테마와-외관 | `Services/ThemeService.cs`, `Services/SoundService.cs` (효과음), `ViewModels/SettingsViewModel.cs` (OpacityIdle, KeyFontScalePercent) |
 | W16 | 시스템-트레이 | `Services/TrayService.cs`, `Services/StartupService.cs` (자동 실행), `Services/HotkeyService.cs` |
