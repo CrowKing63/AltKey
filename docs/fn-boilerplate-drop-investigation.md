@@ -30,9 +30,45 @@
 - Fn 토글은 입력을 보내지 않음(상태만 변경). 상용구는 `SendUnicode` 단일 배치
   (`InputService.cs:489-500`) — 포커스 확인·재시도 없음.
 
+## 사용자 답변 (2026-11-20, 2차)
+- 실패 시: 비밀번호 칸에 **아무것도 안 나타남 + Fn 상태도 안 풀림**. 🗝️를 다시 눌러야 입력됨.
+- 실패 시점: 아이디 직후 / 다른 앱에서 넘어온 직후 **둘 다**.
+- 진단 로그 + 디버그 빌드 승인함.
+
+**핵심 추론**: Fn이 켜진 상태에서 🗝️ 탭이 KeyPressed까지 도달하면 전송 성공 여부와 무관하게
+Fn one-shot은 반드시 소모된다(`KeyboardViewModel.cs` Fn 분기 → FinalizeFunctionLayerKeypress).
+"Fn이 안 풀린다" = **첫 🗝️ 탭이 KeyPressed에 도달조차 못 했다** = 입력 전송 문제가 아니라
+버튼/제스처 계층에서 클릭이 삼켜진 것. H1/H2(포그라운드 settle)로는 설명 불가 → 순위 하향.
+
 ## 가설 (순위순, 각각 반증 가능한 예측 포함)
 
-### H1 (유력): 같은 창 안 필드 이동은 감지 못 함
+### H5 (최우선, 코드 수준 메커니즘 확인됨): stale `_suppressNextClick`가 첫 Fn 탭을 삼킴
+전제(전부 코드/설정에서 확인):
+- 자동완성 OFF → VirtualKey 모드(`App.xaml.cs:199`), `key_repeat_enabled: true`(런타임 설정).
+- Fn 꺼짐 상태의 ㅏ 키: SendKey VK_K → VirtualKey 모드에서 **LegacyRepeat**
+  (`KeyButton.ClassifyRepeatPolicy`) → `CanStartRepeat()=true`.
+- Fn 켜짐 상태의 🗝️: Boilerplate → VK 없음 → **Disabled** → 일반 Click 경로.
+
+메커니즘:
+1. 평소 ㅏ 탭(LegacyRepeat): MouseDown에서 즉시 실행 + `_suppressNextClick=true`
+   (`KeyButton.xaml.cs:398`). 정상적으로는 MouseUp 뒤 WPF Click이 와서 OnClick이
+   플래그를 소모하고 끝남(중복 실행 방지 — 코드 주석 394-397이 이 동작을 전제).
+2. 그런데 터치 드릴프트 등으로 버튼 밖에서 떼면 Click이 안 오고 **플래그가 true로 잔류**.
+   (플래그를 지우는 곳은 OnClick과 모드 변경 리셋뿐 — 캡처 손실/반복 취소는 안 지움.)
+3. 이후 Fn 무장 → 🗝️ 탭: 정책이 Disabled로 바뀌어 일반 Click 경로로 가는데,
+   **OnClick이 잔류 플래그에 걸려 첫 클릭을 무시** → KeyPressed 미발화 → 무전송 + Fn 유지.
+4. 두 번째 🗝️ 탭: 플래그 소모됨 → 정상 실행 → 비밀번호 입력 + Fn 소모.
+
+예측(로그로 검증):
+- 실패 탭에서 `CLICK suppress=True` 로그 후 KEYPRESSED/BOILERPLATE 라인 없음.
+- 직전 ㅏ 탭에서 DOWN(repeat=True) 후 CLICK 라인이 없거나 LOSTCAPTURE가 관측됨.
+- 자동완성 ON(Unicode 모드)에서는 ㅏ 키도 Disabled라 플래그가 안 세팅 → 재현 안 될 것.
+  (과거 디버그 검증이 자동완성 ON으로 이뤄졌다면 이 버그를 놓친 이유도 설명됨.)
+- 수정 방향(확정 후): 반복 불가 정책의 새 MouseDown에서 잔류 플래그 해제
+  (제스처 경계에서 리셋). 회귀 테스트: LegacyRepeat 탭 후 Click 미도달 상황 시뮬레이션
+  → Fn 무장 → 첫 탭이 반드시 실행되어야 함.
+
+### H1 (순위 하향 — H5가 증상 전체를 설명): 같은 창 안 필드 이동은 감지 못 함
 아이디를 치는 동안 매 키가 `SendUnicode`/`SendAtomicReplace`로 전송되며
 `_lastDispatchForegroundHwnd`를 브라우저 HWND로 갱신한다(`KoreanInputModule.cs:178,221`).
 이후 비밀번호 칸을 클릭해도 최상위 HWND는 그대로 → **대기 0ms**.
@@ -58,16 +94,18 @@ UIA `FocusedElement` 폴링(최대 ~1초) 필요"라는 교훈을 얻었다(스�
 `SendInput` 반환값 sent < requested (예: UIPI). 대상이 비elevated 브라우저라 가능성 낮음.
 - 예측: 로그에서 sent < requested 관측. 앱 수준 분실(sent == requested)과 구분됨.
 
-## 확정 계획 (사용자 승인 필요 — 조사와 로그 추가는 별개 승인)
-1. 임시 진단 로그 추가 (고유 마커 `[FN-DIAG]`, 검증 후 단일 grep으로 제거):
-   - `HandleAction` Boilerplate 분기: 텍스트 길이, Fn 상태
-   - `SendUnicode`: 요청 이벤트 수
-   - `DispatchInput`: requested/sent, 포그라운드 HWND/제목/PID, 대기 발생 여부
-   - `EnsureForegroundSettled`: last HWND vs 현재 HWND (H1 직접 검증)
-   - 위치: `PathResolver.DataDir\fn-boilerplate-diag.log` (lock + 예외 삼킴 — 로그가 입력을 방해하면 안 됨)
-2. 디버그 빌드 → 사용자가 로그인 흐름 1회 재현 (스토어판 먼저 종료 — 단일 인스턴스 뮤텍스)
-   → 에이전트가 로그 직접 확인 (사용자에게 결과 보고 요구하지 않음).
-3. 실패 시점의 전후 로그로 H1~H4 판별. 필요 시 UIA FocusedElement 프로브 추가.
+## 확정 계획 — 실행됨 (2026-11-20, 사용자 승인 완료)
+- [FN-DIAG] 마커 진단 로그 11곳 삽입 + `AltKey/Services/FnDiagLog.cs` (lock+예외 삼킴):
+  KeyButton DOWN/UP/CLICK/LOSTCAPTURE(플래그·정책·Fn 상태), KeyPressed 발화,
+  FN-TOGGLE/FN-CONSUMED, BOILERPLATE, SENDUNICODE, DISPATCH(req/sent/err/fg), SETTLE-WAIT.
+- 로그 위치: `PathResolver.DataDir\fn-boilerplate-diag.log`
+  (디버그 exe는 포터블 → `AltKey\bin\Debug\net8.0-windows\fn-boilerplate-diag.log`).
+- 디버그 데이터 폴더를 실제 환경과 동기화: config.json(백업 config.json.bak-fndiag) +
+  layouts/My.json 복사 — My 레이아웃, 자동완성 OFF, key_repeat ON.
+- 빌드 0오류, 관련 테스트 21개 통과(KeyButton/InputServiceDispatch/FunctionLayer).
+- 재현 절차: 스토어판 종료(단일 인스턴스 뮤텍스) → 디버그 exe 실행 → 평소 한글 입력
+  (ㅏ 포함) 몇 번 → 비밀번호 칸에서 Fn+🗝️ (실패/성공 모두 몇 회) → 에이전트가 로그 판독.
+- 검증 후 [FN-DIAG] 단일 grep으로 전체 제거.
 
 ## 수정 방향 (가설별, 아직 미적용)
 - **H1/H2**: 포그라운드 변경 '시각' 기록(`ProfileService.OnWinEvent`가 이미 이벤트
@@ -78,7 +116,7 @@ UIA `FocusedElement` 폴링(최대 ~1초) 필요"라는 교훈을 얻었다(스�
 - **H3**: Fn 소모 정책 변경은 접근성 트레이드오프가 있어 사용자 결정 필요
   (예: 상용구 전송 확인 전까지 one-shot 유지 — 전송 확인 자체가 어려우므로 대안 논의).
 
-## 미해결 질문 (사용자에게 전달 완료, 응답 대기)
-1. 실패 시 비밀번호 칸에 무엇이 나타나나: 아무것도 / 일부만 / ㅏ / 모름
-2. 주 실패 시점: 아이디 직후 / 다른 앱에서 넘어온 직후 / 둘 다
-3. 진단 로그 + 디버그 빌드 승인 여부
+## 질문 응답 (완료)
+1. 실패 시: 아무것도 안 나타남 + Fn 상태 유지 → 2차 답변으로 H5 수립.
+2. 둘 다 (포커스 타이밍 무관) → H1/H2 순위 하향 근거.
+3. 승인 완료 → 진단 빌드 제작 완료.
