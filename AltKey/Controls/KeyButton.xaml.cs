@@ -386,6 +386,15 @@ public class KeyButton : System.Windows.Controls.Button
             return;
         }
 
+        // 새 누름은 새 제스처의 시작이므로, 이전 제스처에서 남은 클릭 억제는 버린다.
+        // 반복 입력 경로는 누름/뗌 이벤트를 '처리 완료'(e.Handled=true)로 표시해서
+        // WPF 기본 Click이 발생하지 않는다(마우스/터치 무관, 구조적으로 항상).
+        // 그래서 플래그를 소모할 클릭이 오지 않고 true로 잔류하며, 이 잔류 플래그가
+        // 반복 불가 정책의 키(예: Fn 무장 후 상용구 키) 첫 일반 클릭을 삼키면
+        // 입력이 통째로 누락된다. 같은 제스처의 중복 억제는 아래 반복 분기에서
+        // 다시 세팅하므로 여기서 지워도 안전하다.
+        _suppressNextClick = false;
+
         if (CanStartRepeat())
         {
             e.Handled = true;
