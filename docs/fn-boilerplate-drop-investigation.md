@@ -42,7 +42,7 @@ Fn one-shot은 반드시 소모된다(`KeyboardViewModel.cs` Fn 분기 → Final
 
 ## 가설 (순위순, 각각 반증 가능한 예측 포함)
 
-### H5 (최우선, 코드 수준 메커니즘 확인됨): stale `_suppressNextClick`가 첫 Fn 탭을 삼킴
+### H5 (확정 — 로그 증거 아래): stale `_suppressNextClick`가 첫 Fn 탭을 삼킴
 전제(전부 코드/설정에서 확인):
 - 자동완성 OFF → VirtualKey 모드(`App.xaml.cs:199`), `key_repeat_enabled: true`(런타임 설정).
 - Fn 꺼짐 상태의 ㅏ 키: SendKey VK_K → VirtualKey 모드에서 **LegacyRepeat**
@@ -53,7 +53,9 @@ Fn one-shot은 반드시 소모된다(`KeyboardViewModel.cs` Fn 분기 → Final
 1. 평소 ㅏ 탭(LegacyRepeat): MouseDown에서 즉시 실행 + `_suppressNextClick=true`
    (`KeyButton.xaml.cs:398`). 정상적으로는 MouseUp 뒤 WPF Click이 와서 OnClick이
    플래그를 소모하고 끝남(중복 실행 방지 — 코드 주석 394-397이 이 동작을 전제).
-2. 그런데 터치 드릴프트 등으로 버튼 밖에서 떼면 Click이 안 오고 **플래그가 true로 잔류**.
+2. 반복 경로는 누름/뗌을 '처리 완료'(e.Handled=true)로 표시해 WPF 기본 Click 생성을
+   구조적으로 막는다(마우스/터치 무관 — ButtonBase는 처리되지 않은 누름/뗌에서만
+   Click을 만듦). Click이 안 오니 **플래그는 반복 탭 후 항상 잔류**.
    (플래그를 지우는 곳은 OnClick과 모드 변경 리셋뿐 — 캡처 손실/반복 취소는 안 지움.)
 3. 이후 Fn 무장 → 🗝️ 탭: 정책이 Disabled로 바뀌어 일반 Click 경로로 가는데,
    **OnClick이 잔류 플래그에 걸려 첫 클릭을 무시** → KeyPressed 미발화 → 무전송 + Fn 유지.
@@ -106,6 +108,29 @@ UIA `FocusedElement` 폴링(최대 ~1초) 필요"라는 교훈을 얻었다(스�
 - 재현 절차: 스토어판 종료(단일 인스턴스 뮤텍스) → 디버그 exe 실행 → 평소 한글 입력
   (ㅏ 포함) 몇 번 → 비밀번호 칸에서 Fn+🗝️ (실패/성공 모두 몇 회) → 에이전트가 로그 판독.
 - 검증 후 [FN-DIAG] 단일 grep으로 전체 제거.
+
+## 원인 확정 (2026-11-20, 진단 로그 증거)
+재현 10+회 중 실패 1회 포착. 실패 시퀀스(로그 그대로):
+1. 18:03:57.256 평소 ㅏ 탭: DOWN repeat=True(LegacyRepeat) → 즉시 실행,
+   UP suppress=True → LOSTCAPTURE 후 **CLICK 라인 없음** → 플래그 잔류.
+2. 18:04:00.387 FN-TOGGLE → OneShot.
+3. 18:04:01.137 첫 🗝️ 탭: DOWN policy=Disabled **suppress=True(잔류)** →
+   CLICK suppress=True → 삼킴. KEYPRESSED/BOILERPLATE 없음 = 무전송 + Fn 유지.
+4. 18:04:02.539 두 번째 🗝️ 탭: suppress=False → 정상 실행 → FN-CONSUMED.
+성공한 나머지 시도 전부 suppress=False로 시작. H1/H2/H4 기각(전송 경로 무관).
+추가 관찰(정정): LegacyRepeat 탭 후 CLICK이 안 오는 것은 터치 드릴프트 같은 우연이
+아니라 구조다 — 반복 경로가 누름/뗌을 e.Handled=true로 표시해 ButtonBase의 기본
+Click 생성을 막는다(2라운드 로그에서 반복 탭 100% CLICK 없음으로 확인. 초기의
+'터치 드리프트' 가설은 100% 비율로 기각). 디바이스 무관 → 평소 ㅏ 입력 직후의
+Fn+🗝️는 항상 실패했음. '간헐성'은 직전에 ㅏ를 보통 입력으로 쳤느냐에만 달렸음.
+
+## 수정 (적용됨, 수동 검증 대기)
+- `KeyButton.OnPreviewMouseLeftButtonDown` 시작(진단 로그 직후)에서
+  `_suppressNextClick = false` — 새 제스처 시작 시 이전 제스처의 잔류 억제 해제.
+  같은 제스처의 중복 억제는 반복 분기에서 재세팅되므로 안전.
+- 회귀 테스트: `KeyButtonRepeatPolicyTests.Stale_suppress_flag_does_not_swallow_first_click_of_new_gesture`
+  (RED 확인: Expected 1 / Actual 0 → 수정 후 GREEN). KeyButton 테스트 9개 통과.
+- 전체 스위트: **374개 전부 통과** (실패 0).
 
 ## 수정 방향 (가설별, 아직 미적용)
 - **H1/H2**: 포그라운드 변경 '시각' 기록(`ProfileService.OnWinEvent`가 이미 이벤트
