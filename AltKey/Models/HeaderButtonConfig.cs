@@ -299,7 +299,7 @@ public class HeaderButtonConfig
         IdClipboard => "클립보드 열기",
         IdAutoComplete => "자동완성 토글",
         IdOsIme => "OS IME 한영 전환",
-        IdOsk => "화면 키보드 열기",
+        IdOsk => "화면 키보드 열기/닫기",
         IdSettings => "설정 열기",
         IdAi => "AI 텍스트 처리",
         IdScratchPad => "빠른 메모 열기",

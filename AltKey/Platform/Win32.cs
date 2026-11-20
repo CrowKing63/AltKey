@@ -70,6 +70,13 @@ internal static class Win32
     [DllImport("user32.dll")]
     public static extern IntPtr GetForegroundWindow();
 
+    /// <summary>
+    /// 클래스 이름으로 최상위 창을 찾습니다. 창이 없으면 IntPtr.Zero를 돌려줍니다.
+    /// OSK(화면 키보드)가 열려 있는지 확인할 때 사용합니다 — OSK 창 클래스는 "OSKMainClass"입니다.
+    /// </summary>
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    public static extern IntPtr FindWindow(string lpClassName, string? lpWindowName);
+
     /// <summary>포커스를 지정 창으로 옮깁니다. (AI 복사/붙여넣기 전에 대상 앱으로 되돌릴 때 사용)</summary>
     [DllImport("user32.dll")]
     public static extern bool SetForegroundWindow(IntPtr hWnd);

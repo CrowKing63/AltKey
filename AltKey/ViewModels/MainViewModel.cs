@@ -599,14 +599,11 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void SendOsk()
     {
-        // 접근성 우선: 포커스를 옮길 수 없는 상황에서도 동작하도록 직접 실행을 먼저 시도합니다.
-        if (!_oskLauncher.TryLaunch())
-        {
-            // 일부 환경에서는 직접 실행이 막힐 수 있어, 기존 단축키 경로를 최후 보조 수단으로 남겨 둡니다.
-            _inputService.SendCombo([VirtualKeyCode.VK_LWIN, VirtualKeyCode.VK_LCONTROL, VirtualKeyCode.VK_O]);
-        }
+        // 토글: 열려 있으면 닫고, 닫혀 있으면 직접 실행 우선으로 엽니다 (결정은 OskLauncherService가 소유).
+        var result = _oskLauncher.Toggle(() =>
+            _inputService.SendCombo([VirtualKeyCode.VK_LWIN, VirtualKeyCode.VK_LCONTROL, VirtualKeyCode.VK_O]));
 
-        _liveRegion.Announce("화면 키보드 호출");
+        _liveRegion.Announce(result == OskToggleResult.Close ? "화면 키보드 닫기" : "화면 키보드 열기");
     }
 
     // ── AI 텍스트 처리 ───────────────────────────────────────────
@@ -880,7 +877,7 @@ public partial class MainViewModel : ObservableObject
                 HeaderButtonConfig.IdClipboard => "클립보드 패널을 엽니다.",
                 HeaderButtonConfig.IdAutoComplete => "자동완성을 켜거나 끕니다.",
                 HeaderButtonConfig.IdOsIme => "OS IME에 한영 전환 신호를 보냅니다.",
-                HeaderButtonConfig.IdOsk => "화면 키보드를 엽니다.",
+                HeaderButtonConfig.IdOsk => "화면 키보드를 열거나 닫습니다.",
                 HeaderButtonConfig.IdSettings => "설정 창을 엽니다.",
                 HeaderButtonConfig.IdAi => "선택한 텍스트를 AI로 가공합니다.",
                 HeaderButtonConfig.IdScratchPad => "빠른 메모를 엽니다.",
