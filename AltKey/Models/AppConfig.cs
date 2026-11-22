@@ -62,6 +62,10 @@ public class AppConfig
     
     // 앱의 테마 설정 ("light", "dark", "system" 중 선택).
     public string Theme             { get; set; } = "system";
+
+    // 앱의 재질(마감) 설정. "plastic" | "metal" | "wood".
+    // 플라스틱이 기본이라 기존 config.json 마이그레이션 없이 현재 모습 그대로 유지됩니다.
+    public string Material          { get; set; } = "plastic";
     
     // 실행 중인 프로그램에 따라 키보드 레이아웃을 자동으로 바꿀지 여부입니다.
     public bool   AutoProfileSwitch { get; set; } = true;

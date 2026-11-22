@@ -1,0 +1,25 @@
+<!-- 우드 재질(라이트) — 소재: 메이플 (가장 밝은 목재, pale cream).
+     꿀-오크보다 더 연하고 포화가 낮은 "깨끗한 크림" — 스칸디나비아 미니멀 느낌.
+     테마 사전(LightTheme.xaml) 뒤에 MergedDictionaries에 추가되어 같은 키만 이깁니다. -->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- 키보드 컨테이너: 페일 크림 메이플 — 플라스틱(E8E8EC)보다 확실히 따뜻, 오크(E6D9BE)보다 더 밝고 연함 -->
+    <SolidColorBrush x:Key="KeyboardBg"   Color="#CCF0E8D6"/>
+    <!-- 키캡 배경: 크림 화이트 -->
+    <SolidColorBrush x:Key="KeyBg"        Color="#FFFEFBF4"/>
+    <SolidColorBrush x:Key="KeyBgHover"   Color="#FFEFE7D5"/>
+    <SolidColorBrush x:Key="KeyBgPressed" Color="#FFE3D9C2"/>
+    <!-- 키 테두리: 따뜻한 탄 — α 23% (v11 수치 확인: 베이스 대비 약 1.9배 강화, "약화"가 아님) -->
+    <SolidColorBrush x:Key="KeyBorder"    Color="#3A342A12"/>
+    <!-- 상단 바 hover/pressed (패널도 공유) — 크림 톤 -->
+    <SolidColorBrush x:Key="HeaderBarHoverBg"   Color="#FFF2EBDD"/>
+    <SolidColorBrush x:Key="HeaderBarPressedBg" Color="#FFE5DAC4"/>
+    <!-- 액센트 키(사용자 지정 특수 키) — 같은 페일 크림 메이플로 재질 통일 -->
+    <SolidColorBrush x:Key="KeyBgAccent"        Color="#FFF4EDDD"/>
+    <SolidColorBrush x:Key="KeyBgAccentHover"   Color="#FFF3EBD8"/>
+    <SolidColorBrush x:Key="KeyBgAccentPressed" Color="#FFEBDFC6"/>
+    <!-- 액센트 키 글자: 따뜻한 거의-검정 -->
+    <SolidColorBrush x:Key="KeyFgAccent"        Color="#FF2A2418"/>
+    <!-- 액센트 키 테두리: 따뜻한 탄 — α 29% (베이스 라이트 액센트 테두리와 동일) -->
+    <SolidColorBrush x:Key="KeyBorderAccent"    Color="#4A54442E"/>
+</ResourceDictionary>

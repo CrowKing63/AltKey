@@ -266,21 +266,35 @@
                                 <RadioButton Content="고대비" Foreground="{DynamicResource SettingsFg}" IsChecked="{Binding ThemeIsHighContrast}" KeyboardNavigation.TabIndex="13" AutomationProperties.Name="테마 고대비"/>
                             </StackPanel>
 
+                            <!-- 재질(마감): 테마와 독립적으로 키보드 표면의 톤·테두리만 바꿉니다.
+                                 해결된 테마가 고대비면 전체 비활성 + 안내 문구 (IsMaterialEnabled). -->
+                            <TextBlock Text="재질" Style="{StaticResource SectionTitleStyle}"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,16" IsEnabled="{Binding IsMaterialEnabled}">
+                                <RadioButton Content="플라스틱" Foreground="{DynamicResource SettingsFg}" IsChecked="{Binding MaterialIsPlastic}" Margin="0,0,12,0" KeyboardNavigation.TabIndex="14" AutomationProperties.Name="재질 플라스틱"/>
+                                <RadioButton Content="메탈" Foreground="{DynamicResource SettingsFg}" IsChecked="{Binding MaterialIsMetal}" Margin="0,0,12,0" KeyboardNavigation.TabIndex="15" AutomationProperties.Name="재질 메탈"/>
+                                <RadioButton Content="우드" Foreground="{DynamicResource SettingsFg}" IsChecked="{Binding MaterialIsWood}" KeyboardNavigation.TabIndex="16" AutomationProperties.Name="재질 우드"/>
+                            </StackPanel>
+                            <TextBlock Text="고대비 모드에서는 재질 설정이 적용되지 않습니다."
+                                       Foreground="{DynamicResource SettingsFgHint}"
+                                       FontSize="{DynamicResource ScaledSettingsSubFontSize}"
+                                       Margin="0,0,0,16"
+                                       Visibility="{Binding IsMaterialEnabled, Converter={StaticResource InvBoolToVis}}"
+                                       AutomationProperties.Name="재질 비활성 안내"/>
+
                             <CheckBox Content="항상 위에 표시"
                                       Foreground="{DynamicResource SettingsFg}"
                                       IsChecked="{Binding AlwaysOnTop}"
                                       Margin="0,0,0,16"
-                                      KeyboardNavigation.TabIndex="14"
-                                      AutomationProperties.Name="항상 위에 표시"/>
+                                      KeyboardNavigation.TabIndex="17" AutomationProperties.Name="항상 위에 표시"/>
 
                             <TextBlock Text="창 크기 (%)" Foreground="{DynamicResource SettingsFgSub}" FontSize="{DynamicResource ScaledSettingsSubFontSize}" Margin="0,0,0,4"/>
                             <ctrl:NumericAdjuster Value="{Binding WindowScale}" Minimum="60" Maximum="200" Step="5" DecimalPlaces="0"
-                                                  Margin="0,0,0,16" KeyboardNavigation.TabIndex="15" AutomationProperties.Name="창 크기 백분율"/>
+                                                  Margin="0,0,0,16" KeyboardNavigation.TabIndex="18" AutomationProperties.Name="창 크기 백분율"/>
 
                             <TextBlock Text="글자 크기 (%)" Foreground="{DynamicResource SettingsFgSub}" FontSize="{DynamicResource ScaledSettingsSubFontSize}" Margin="0,0,0,4"/>
                             <!-- [접근성] 이 슬라이더는 키보드뿐 아니라 설정 창·편집기 텍스트까지 함께 배율합니다. -->
                             <ctrl:NumericAdjuster Value="{Binding KeyFontScalePercent}" Minimum="80" Maximum="220" Step="5" DecimalPlaces="0"
-                                                  Margin="0,0,0,16" KeyboardNavigation.TabIndex="16" AutomationProperties.Name="글자 크기 백분율"
+                                                  Margin="0,0,0,16" KeyboardNavigation.TabIndex="19" AutomationProperties.Name="글자 크기 백분율"
                                                   ToolTip="키보드와 설정 창 글자 크기를 함께 조절합니다."/>
 
                             <TextBlock Text="투명도 단계" Foreground="{DynamicResource SettingsFgSub}" FontSize="{DynamicResource ScaledSettingsSubFontSize}" Margin="0,0,0,4"/>
@@ -293,12 +307,11 @@
                                       Foreground="{DynamicResource SettingsFg}"
                                       IsChecked="{Binding ActiveOpacityEnabled}"
                                       Margin="0,0,0,8"
-                                      KeyboardNavigation.TabIndex="17"
-                                      AutomationProperties.Name="상시 투명도 사용"/>
+                                      KeyboardNavigation.TabIndex="20" AutomationProperties.Name="상시 투명도 사용"/>
                             <TextBlock Text="상시 투명도" Foreground="{DynamicResource SettingsFgSub}" FontSize="{DynamicResource ScaledSettingsSubFontSize}" Margin="16,0,0,4"/>
                             <ctrl:NumericAdjuster Value="{Binding OpacityActive}" Minimum="0.1" Maximum="1.0" Step="0.05" DecimalPlaces="2"
                                                   IsEnabled="{Binding ActiveOpacityEnabled}"
-                                                  Margin="16,0,0,16" KeyboardNavigation.TabIndex="18" AutomationProperties.Name="상시 투명도"/>
+                                                  Margin="16,0,0,16" KeyboardNavigation.TabIndex="21" AutomationProperties.Name="상시 투명도"/>
 
                             <TextBlock Text="유휴는 상시 투명도보다 더 진하게 설정할 수 없으며, 상시를 낮추면 유휴 최대치도 함께 내려갑니다."
                                        Foreground="{DynamicResource SettingsFgSub}"
@@ -311,32 +324,31 @@
                                       IsChecked="{Binding IdleOpacityEnabled}"
                                       IsEnabled="{Binding CanUseIdleOpacity}"
                                       Margin="0,0,0,8"
-                                      KeyboardNavigation.TabIndex="19"
-                                      AutomationProperties.Name="유휴 시 더 흐리게"/>
+                                      KeyboardNavigation.TabIndex="22" AutomationProperties.Name="유휴 시 더 흐리게"/>
                             <TextBlock Text="유휴 투명도" Foreground="{DynamicResource SettingsFgSub}" FontSize="{DynamicResource ScaledSettingsSubFontSize}" Margin="16,0,0,4"/>
                             <ctrl:NumericAdjuster Value="{Binding OpacityIdle}" Minimum="0.1" Maximum="{Binding IdleOpacityMaximum}" Step="0.05" DecimalPlaces="2"
                                                   IsEnabled="{Binding CanEditIdleOpacity}"
-                                                  Margin="16,0,0,8" KeyboardNavigation.TabIndex="20" AutomationProperties.Name="유휴 투명도"/>
+                                                  Margin="16,0,0,8" KeyboardNavigation.TabIndex="23" AutomationProperties.Name="유휴 투명도"/>
 
                             <TextBlock Text="유휴 전환 지연 (초)" Foreground="{DynamicResource SettingsFgSub}" FontSize="{DynamicResource ScaledSettingsSubFontSize}" Margin="16,0,0,4"/>
                             <ctrl:NumericAdjuster Value="{Binding FadeDelaySec}" Minimum="1" Maximum="30" Step="1" DecimalPlaces="0"
                                                   IsEnabled="{Binding CanEditIdleOpacity}"
-                                                  Margin="16,0,0,16" KeyboardNavigation.TabIndex="21" AutomationProperties.Name="유휴 전환 지연"/>
+                                                  Margin="16,0,0,16" KeyboardNavigation.TabIndex="24" AutomationProperties.Name="유휴 전환 지연"/>
 
                             <TextBlock Text="기본 레이아웃" Foreground="{DynamicResource SettingsFgSub}" FontSize="{DynamicResource ScaledSettingsSubFontSize}" Margin="0,0,0,4"/>
-                            <ComboBox ItemsSource="{Binding AvailableLayouts}" SelectedItem="{Binding SelectedLayout}" Margin="0,0,0,8" KeyboardNavigation.TabIndex="22" AutomationProperties.Name="기본 레이아웃 선택"/>
+                            <ComboBox ItemsSource="{Binding AvailableLayouts}" SelectedItem="{Binding SelectedLayout}" Margin="0,0,0,8" KeyboardNavigation.TabIndex="25" AutomationProperties.Name="기본 레이아웃 선택"/>
 
                             <Button Content="레이아웃 편집기 열기"
                                     Command="{Binding OpenLayoutEditorCommand}"
                                     Style="{StaticResource SettingsActionButtonStyle}"
                                     Margin="0,0,0,8"
-                                    KeyboardNavigation.TabIndex="23" AutomationProperties.Name="레이아웃 편집기 열기"/>
+                                    KeyboardNavigation.TabIndex="26" AutomationProperties.Name="레이아웃 편집기 열기"/>
 
                             <Button Content="사용자 단어 편집기 열기"
                                     Command="{Binding OpenUserDictionaryEditorCommand}"
                                     Style="{StaticResource SettingsActionButtonStyle}"
                                     Margin="0,0,0,8"
-                                    KeyboardNavigation.TabIndex="24" AutomationProperties.Name="사용자 단어 편집기 열기"
+                                    KeyboardNavigation.TabIndex="27" AutomationProperties.Name="사용자 단어 편집기 열기"
                                     ToolTip="자동완성에서 학습한 단어 목록을 확인하고 수정합니다."/>
                         </StackPanel>
                     </ScrollViewer>

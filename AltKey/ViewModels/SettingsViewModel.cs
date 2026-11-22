@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
@@ -51,6 +51,8 @@ public partial class SettingsViewModel : ObservableObject
     // 이 값들을 수정하면 화면에 즉시 반영되며, 설정 파일(config.json)에도 저장됩니다.
 
     [ObservableProperty] private string themeMode      = "system";
+    // 재질(마감) 선택 — 테마와 독립적으로 저장됩니다 (값: plastic/metal/wood).
+    [ObservableProperty] private string materialMode   = "plastic";
     [ObservableProperty] private bool   alwaysOnTop    = true;
     [ObservableProperty] private bool   activeOpacityEnabled;
     [ObservableProperty] private double opacityActive  = 1.0;
@@ -224,6 +226,16 @@ public partial class SettingsViewModel : ObservableObject
      public bool ThemeIsLight  { get => ThemeMode == "Light";  set { if (value) ThemeMode = "Light";  } }
      public bool ThemeIsDark   { get => ThemeMode == "Dark";   set { if (value) ThemeMode = "Dark";   } }
      public bool ThemeIsHighContrast { get => ThemeMode == "HighContrast"; set { if (value) ThemeMode = "HighContrast"; } }
+
+     // 라디오 버튼 바인딩용 (Material — 재질/마감)
+     public bool MaterialIsPlastic { get => MaterialMode == "plastic"; set { if (value) MaterialMode = "plastic"; } }
+     public bool MaterialIsMetal   { get => MaterialMode == "metal";   set { if (value) MaterialMode = "metal";   } }
+     public bool MaterialIsWood    { get => MaterialMode == "wood";    set { if (value) MaterialMode = "wood";    } }
+
+     // 재질 선택을 허용할지 여부: 해결된 테마가 고대비면 재질은 적용되지 않으므로 UI도 함께 비활성화합니다.
+     // 시스템 모드에서는 OS의 고대비 전환에 따라 실시간으로 바뀔 수 있습니다 (OnSystemPropertyChanged).
+     public bool IsMaterialEnabled =>
+         !(ThemeMode == "HighContrast" || (ThemeMode == "system" && SystemParameters.HighContrast));
      public double IdleOpacityMaximum => ActiveOpacityEnabled ? Math.Clamp(OpacityActive, 0.1, 1.0) : 1.0;
      public bool CanUseIdleOpacity => ActiveOpacityEnabled;
      public bool CanEditIdleOpacity => ActiveOpacityEnabled && IdleOpacityEnabled;
@@ -275,6 +287,9 @@ public partial class SettingsViewModel : ObservableObject
         _koreanDictionary = koreanDictionary;
         _englishDictionary = englishDictionary;
         _configService.ConfigChanged += OnConfigChanged;
+
+        // 시스템 고대비 전환 시 재질 선택의 비활성화 표시가 실시간으로 바뀔 수 있도록 감시합니다.
+        SystemParameters.StaticPropertyChanged += OnSystemPropertyChanged;
 
         // 로컬 모델 로드/언로드 신호 → 상태 표시 갱신 (배경 스레드에서 발생, 바인딩이 자동 마샬링).
         _localBackend.Unloaded += () => LocalAiStateText = "미로드";
@@ -338,6 +353,7 @@ public partial class SettingsViewModel : ObservableObject
         {
             var c = _configService.Current;
             ThemeMode      = c.Theme;
+            MaterialMode   = c.Material;
             AlwaysOnTop    = c.AlwaysOnTop;
             ActiveOpacityEnabled = c.ActiveOpacityEnabled;
             OpacityActive  = c.OpacityActive;
@@ -445,6 +461,26 @@ public partial class SettingsViewModel : ObservableObject
         OnPropertyChanged(nameof(ThemeIsSystem));
         OnPropertyChanged(nameof(ThemeIsLight));
         OnPropertyChanged(nameof(ThemeIsDark));
+        // 테마가 바뀌면 재질 선택의 비활성화 여부도 바뀔 수 있습니다.
+        OnPropertyChanged(nameof(IsMaterialEnabled));
+    }
+
+    partial void OnMaterialModeChanged(string value)
+    {
+        if (_isLoading) return;
+        // 순서 중요: 먼저 설정을 저장한 뒤 Apply를 호출해야 ThemeService가 새 재질을 읽어 옵니다.
+        _configService.Update(c => c.Material = value);
+        _themeService.Apply(ThemeMode);
+        OnPropertyChanged(nameof(MaterialIsPlastic));
+        OnPropertyChanged(nameof(MaterialIsMetal));
+        OnPropertyChanged(nameof(MaterialIsWood));
+    }
+
+    // OS의 고대비 상태가 바뀌면 재질 선택의 비활성화 표시를 갱신합니다 (시스템 테마 모드용).
+    private void OnSystemPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(SystemParameters.HighContrast))
+            OnPropertyChanged(nameof(IsMaterialEnabled));
     }
 
     partial void OnAlwaysOnTopChanged(bool value)
