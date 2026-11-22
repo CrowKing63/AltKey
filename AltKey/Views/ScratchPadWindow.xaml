@@ -12,9 +12,7 @@
         Topmost="True"
         ShowInTaskbar="False"
         ResizeMode="NoResize"
-        Width="600" Height="400"
-        MouseEnter="Window_MouseEnter"
-        MouseLeave="Window_MouseLeave">
+        Width="600" Height="400">
 
     <!-- [표준 패널 높이] H=400은 ClipboardPanelWindow와 같은 값으로 유지 — 함께 열면 상·하 끝이 모두 일치한다 (docs/feature-panel-size-consistency). -->
     <local:AnchoredPanelWindowBase.Resources>

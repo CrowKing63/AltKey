@@ -5,7 +5,6 @@ using System.Windows.Input;
 using AltKey.Services;
 using AltKey.Services.InputLanguage;
 using AltKey.ViewModels;
-using WpfMouseEventArgs = System.Windows.Input.MouseEventArgs;
 using WpfPoint = System.Windows.Point;
 
 namespace AltKey.Views;
@@ -147,18 +146,7 @@ public partial class ScratchPadWindow : AnchoredPanelWindowBase
     /// <summary>빠른 메모의 버튼 입력에 키보드와 같은 효과음을 재생합니다.</summary>
     private static void PlayButtonSound() => App.Services?.GetService<SoundService>()?.Play();
 
-    // ── 투명도 완전 연동: 패드에 마우스를 올리면 키보드 창처럼 타이머 초기화·기본 투명도로 복원 ──
-    // (2026-11-15 사용자 요청 — 패드 호버가 "키보드에 손이 닿은 것"으로 취급됨)
-
-    private void Window_MouseEnter(object sender, WpfMouseEventArgs e)
-    {
-        if (Owner is MainWindow mw)
-            mw.ResetIdleFade();
-    }
-
-    private void Window_MouseLeave(object sender, WpfMouseEventArgs e)
-    {
-        if (Owner is MainWindow mw)
-            mw.ResumeIdleFade();
-    }
+    // ── 투명도 연동(호버→복원)은 이제 공용 배선입니다:
+    //    AnchoredPanelService가 패널 창 생성 시 MouseEnter/Leave로 키보드 창의
+    //    ResetIdleFade()/ResumeIdleFade()를 호출해 모든 패널이 같은 동작을 합니다.
 }

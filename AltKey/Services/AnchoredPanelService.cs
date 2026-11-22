@@ -79,8 +79,21 @@ public class AnchoredPanelService
 
         var entry = FindEntry(id);
         var window = entry.Factory();
-        if (_host is { } host && window.Owner is null)
+        if (_host is not { } host)
+        {
+            // 호스트 연결 전에는 Owner·호버 배선 없이 창만 보관합니다 (실제로는 Toggle이 먼저 막아줍니다).
+            _windows[id] = window;
+            return window;
+        }
+
+        if (window.Owner is null)
             window.Owner = host; // Owner는 첫 Show 전에만 설정 가능 — 생성 시점에 연결합니다.
+
+        // 투명도 완전 연동(복원 방향): 패널에 마우스를 올리면 키보드 창처럼 유휴 타이머를 초기화하고
+        // 기본 투명도로 복원하며, 떠나면 다시 타이머를 시작합니다 (2026-11-22 — 클립보드 패널 호버 시
+        // 복원이 안 되던 문제를 모든 패널에 공통 배선으로 해결).
+        window.MouseEnter += (_, _) => host.ResetIdleFade();
+        window.MouseLeave += (_, _) => host.ResumeIdleFade();
 
         _windows[id] = window;
         return window;
