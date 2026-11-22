@@ -33,7 +33,7 @@
 
 ### 3.1 리소스 파일 추가
 
-재질은 테마 사전을 **이어서** 로드하는 오버라이드 사전이다. 같은 키만 포함하면 되므로 파일당 10개 브러시.
+재질은 테마 사전을 **이어서** 로드하는 오버라이드 사전이다. 같은 키만 포함하면 되므로 파일당 7개 브러시.
 
 - `Themes/LightMetalMaterial.xaml`
 - `DarkMetalMaterial.xaml`
@@ -42,18 +42,18 @@
 
 (플라스틱은 파일 없음 = 현재 값 유지)
 
-### 3.2 재질이 오버라이드하는 키 (테마 공통, 10개)
+### 3.2 재질이 오버라이드하는 키 (실제 사용 7개)
 
 키보드 창 표면이 대상이다. 클립보드·빠른 메모 패널은 별도 배경 키가 아니라 `KeyboardBg`(와 상단 바 hover/pressed 브러시)를 그대로 공유하므로, 아래 키만 오버라이드하면 자동으로 함께 적용된다. 설정 화면은 테마 전용으로 둔다 (v1 범위).
 
 | 키 | 역할 |
 |---|---|
-| `KeyboardBg` | 키보드 컨테이너 |
+| `KeyboardBg` | 키보드 컨테이너 (패널 배경과도 공유) |
 | `KeyBg` / `KeyBgHover` / `KeyBgPressed` | 키캡 배경 |
 | `KeyBorder` | 키 테두리 |
-| `KeyShadow` | 키 그림자 |
-| `HeaderBarBg` / `HeaderBarBorder` | 상단 바 |
-| `HeaderBarHoverBg` / `HeaderBarPressedBg` | 상단 바·클립보드 칩의 hover/pressed (패널도 공유) |
+| `HeaderBarHoverBg` / `HeaderBarPressedBg` | 상단 바 버튼·클립보드 칩의 hover/pressed (패널도 공유) |
+
+> 참고: 테마 파일에 있는 `KeyShadow`, `HeaderBarBg`, `HeaderBarBorder`는 현재 XAML에서 사용되지 않는 키라 오버라이드 대상에서 제외했다 — 키에는 그림자가 아니라 1px 테두리만 있고, 상단 바는 카드(KeyboardBg) 위에 투명한 구조다.
 
 ### 3.3 시작 색값 (수동 검증 시 조정 대상)
 
@@ -68,9 +68,6 @@
 | KeyBgHover | `#FFD4D4D8` | `#FFCFD5DC` |
 | KeyBgPressed | `#FFBCBCC4` | `#FFB6BAC3` |
 | KeyBorder | `#1E000000` | `#30000000` (강화) |
-| KeyShadow | `#1E000000` | `#26000000` (강화) |
-| HeaderBarBg | `#80FFFFFF` | `#80F2F4F8` |
-| HeaderBarBorder | `#22000000` | `#2A000000` |
 | HeaderBarHoverBg | `#FFE2E2E7` | `#FFDEE3EA` |
 | HeaderBarPressedBg | `#FFD4D4DC` | `#FFCBD1DA` |
 
@@ -83,9 +80,6 @@
 | KeyBgHover | `#CC505050` | `#CC4C5158` |
 | KeyBgPressed | `#FF2D2D2D` | `#FF2B2F36` |
 | KeyBorder | `#0FFFFFFF` | `#1AFFFFFF` (강화) |
-| KeyShadow | `#66000000` | `#73000000` |
-| HeaderBarBg | `#33111111` | `#3314171C` |
-| HeaderBarBorder | `#24FFFFFF` | `#2EFFFFFF` |
 | HeaderBarHoverBg | `#CC646464` | `#CC5A6069` |
 | HeaderBarPressedBg | `#CC727272` | `#CC686F79` |
 
@@ -98,9 +92,6 @@
 | KeyBgHover | `#FFD4D4D8` | `#FFE6DFD3` |
 | KeyBgPressed | `#FFBCBCC4` | `#FFD8CFC0` |
 | KeyBorder | `#1E000000` | `#194A3B28` (따뜻한 갈색, 약화) |
-| KeyShadow | `#1E000000` | `#164A3B28` |
-| HeaderBarBg | `#80FFFFFF` | `#80FBF7F0` |
-| HeaderBarBorder | `#22000000` | `#1E3A2E1C` |
 | HeaderBarHoverBg | `#FFE2E2E7` | `#FFEDE5D8` |
 | HeaderBarPressedBg | `#FFD4D4DC` | `#FFDFD4C2` |
 
@@ -113,9 +104,6 @@
 | KeyBgHover | `#CC505050` | `#CC4A443B` |
 | KeyBgPressed | `#FF2D2D2D` | `#FF2F2A23` |
 | KeyBorder | `#0FFFFFFF` | `#0BFFFFFF` (약화) |
-| KeyShadow | `#66000000` | `#5E3A2E1C` |
-| HeaderBarBg | `#33111111` | `#331A1712` |
-| HeaderBarBorder | `#24FFFFFF` | `#1EFFFFFF` |
 | HeaderBarHoverBg | `#CC646464` | `#CC5E574B` |
 | HeaderBarPressedBg | `#CC727272` | `#CC6E6659` |
 
@@ -173,10 +161,10 @@ public string Material { get; set; } = "plastic";
 
 | 파일 | 변경 |
 |---|---|
-| `AltKey/Themes/LightMetalMaterial.xaml` | 신규 — 메탈(라이트) 8개 브러시 |
-| `AltKey/Themes/DarkMetalMaterial.xaml` | 신규 — 메탈(다크) 8개 브러시 |
-| `AltKey/Themes/LightWoodMaterial.xaml` | 신규 — 우드(라이트) 8개 브러시 |
-| `AltKey/Themes/DarkWoodMaterial.xaml` | 신규 — 우드(다크) 8개 브러시 |
+| `AltKey/Themes/LightMetalMaterial.xaml` | 신규 — 메탈(라이트) 7개 브러시 |
+| `AltKey/Themes/DarkMetalMaterial.xaml` | 신규 — 메탈(다크) 7개 브러시 |
+| `AltKey/Themes/LightWoodMaterial.xaml` | 신규 — 우드(라이트) 7개 브러시 |
+| `AltKey/Themes/DarkWoodMaterial.xaml` | 신규 — 우드(다크) 7개 브러시 |
 | `AltKey/Services/ThemeService.cs` | 재질 사전 로드 + `ResolveResourceFiles` 순수 함수 + 안전망 |
 | `AltKey/Models/AppConfig.cs` | `Material` 속성 추가 (기본 "plastic") |
 | `AltKey/ViewModels/SettingsViewModel.cs` | `MaterialMode`·라디오 바인딩·변경 처리·고대비 비활성화 로직 |
@@ -201,7 +189,7 @@ public string Material { get; set; } = "plastic";
 사용자 직접 확인 (디버그 빌드, 자동완성 켜진 상태에서):
 
 1. 재질 기본값: 새로 설치(설정 없이) 시 현재 모습과 동일 — 플라스틱이 기본임을 확인.
-2. 라이트 + 메탈: 키보드 컨테이너·키캡이 차가운 회색, 테두리·그림자가 더 또렷해 보이는지.
+2. 라이트 + 메탈: 키보드 컨테이너·키캡이 차가운 회색, 테두리가 더 또렷해 보이는지.
 3. 다크 + 우드: 따뜻한 어두운 계열인지, 키 테두리가 현재보다 약한지.
 4. 재질 적용 상태에서 클립보드·빠른 메모 패널 열기: 키보드와 같은 재질(색)로 보이는지.
 5. 고대비 + 메탈(또는 우드) 설정 상태: 화면은 고대비 그대로 유지되는지. 설정 창에서 재질 라디오가 비활성 + 힌트 문구 표시되는지.
