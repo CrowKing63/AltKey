@@ -1268,7 +1268,7 @@ public partial class SettingsViewModel : ObservableObject
     {
         if (_settingsWindow is { } win)
         {
-            win.Activate();
+            ReactivateAuxiliaryWindow(win);
             return;
         }
 
@@ -1298,6 +1298,22 @@ public partial class SettingsViewModel : ObservableObject
     }
 
     /// <summary>
+    /// [접근성] 이미 열린 보조 창(설정, 스위치 스캔 상세, 포커스 탐색 상세)을 다시 여는 공용 경로.
+    /// WPF의 Activate()만으로는 최소화된 창이 복원되지 않는다 — 활성화 요청만 하고
+    /// WindowState를 바꾸지 않기 때문이다. 그래서 최소화 상태라면 먼저 Normal로 되돌리고
+    /// 그 다음에 활성화를 요청한다. (트레이 메뉴 '설정' 등으로 다시 열 때 동작)
+    /// </summary>
+    private static void ReactivateAuxiliaryWindow(Window window)
+    {
+        if (window.WindowState == WindowState.Minimized)
+        {
+            window.WindowState = WindowState.Normal;
+        }
+
+        window.Activate();
+    }
+
+    /// <summary>
     /// [접근성] 스위치 스캔 상세 설정 창을 엽니다.
     /// 사용자가 본 설정 창을 복잡하게 보지 않도록, 스위치 관련 세부 옵션은 별도 창에서 관리합니다.
     /// </summary>
@@ -1306,7 +1322,7 @@ public partial class SettingsViewModel : ObservableObject
     {
         if (_switchScanSettingsWindow is { } existing)
         {
-            existing.Activate();
+            ReactivateAuxiliaryWindow(existing);
             return;
         }
 
@@ -1327,7 +1343,7 @@ public partial class SettingsViewModel : ObservableObject
     {
         if (_focusA11ySettingsWindow is { } existing)
         {
-            existing.Activate();
+            ReactivateAuxiliaryWindow(existing);
             return;
         }
 
