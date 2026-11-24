@@ -142,6 +142,18 @@ public class ClipboardServiceTests : IDisposable
     }
 
     [Fact]
+    public void 히스토리_최대_200개만_로드된다()
+    {
+        // [2026-11] 50→200 — 저장 파일이 상한보다 많으면 초과분(가장 오래된 항목)은 버린다.
+        var items = string.Join(",", Enumerable.Range(1, 250).Select(i => $"\u0022h{i}\u0022"));
+        using var svc = NewService($"{{\"History\":[{items}],\"Favorites\":[]}}");
+
+        Assert.Equal(200, svc.History.Count);
+        Assert.True(svc.History.Contains("h1"), "최신 항목은 유지됨");
+        Assert.False(svc.History.Contains("h250"), "가장 오래된 항목은 제거됨");
+    }
+
+    [Fact]
     public void 핀_개수_제한이_없다()
     {
         // [2026-11] 한도(10) 제거 — 핀은 칩 스트립에서 가로 스크롤로 늘어나므로 전부 유지된다.
