@@ -77,7 +77,13 @@ public class ClipboardService : IDisposable
         _history.Remove(text);
         _history.Insert(0, text);
         if (_history.Count > MaxHistory)
+        {
+            var removed = _history[_history.Count - 1];
             _history.RemoveAt(_history.Count - 1);
+            // 제거된 항목의 시각 기록도 함께 버린다. 즐겨찾기라면 상대 시간 라벨이 필요하므로 유지한다.
+            if (!_favorites.Contains(removed))
+                _timestamps.Remove(removed);
+        }
         _timestamps[text] = DateTime.Now; // 복사 시각 기록 (상대 시간 표시용)
         HistoryChanged?.Invoke();
         Save();
@@ -276,6 +282,8 @@ public class ClipboardService : IDisposable
             {
                 foreach (var kv in data.Timestamps)
                 {
+                    // 히스토리/즐겨찾기에 없는 항목의 시각 기록은 버린다 (누수 정리)
+                    if (!_history.Contains(kv.Key) && !_favorites.Contains(kv.Key)) continue;
                     if (DateTime.TryParse(kv.Value, null, System.Globalization.DateTimeStyles.RoundtripKind, out var t))
                         _timestamps[kv.Key] = t;
                 }

@@ -154,6 +154,19 @@ public class ClipboardServiceTests : IDisposable
     }
 
     [Fact]
+    public void 로드_시_히스토리_즐겨찾기에_없는_시각_기록은_버린다()
+    {
+        // [2026-11] 시각 딕셔너리는 히스토리/즐겨찾기에 있는 항목만 들고 있어야 한다 — 고아 엔트리 누수 방지.
+        using var svc = NewService("""
+            {"History":["a"],"Favorites":["b"],"Timestamps":{"a":"2026-11-17T10:00:00","b":"2026-11-17T11:00:00","gone":"2026-11-17T12:00:00"}}
+            """);
+
+        Assert.True(svc.CopiedAt("a") is not null, "히스토리에 있는 항목은 유지됨");
+        Assert.True(svc.CopiedAt("b") is not null, "즐겨찾기에 있는 항목은 유지됨");
+        Assert.False(svc.CopiedAt("gone") is not null, "히스토리·즐겨찾기에 없는 항목은 버려짐");
+    }
+
+    [Fact]
     public void 핀_개수_제한이_없다()
     {
         // [2026-11] 한도(10) 제거 — 핀은 칩 스트립에서 가로 스크롤로 늘어나므로 전부 유지된다.
