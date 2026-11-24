@@ -36,7 +36,7 @@ Copy-Item (Join-Path $layoutsSrc "*.json") (Join-Path $staging "layouts") -Force
 # 실행 파일 옆에 config.json이 있으면 포터블 모드로 오인해 읽기 전용 설치 디렉터리에
 # 쓰려 앱 시작이 실패한다. (PathResolver.IsPortable이 스토어 판을 제외하는 것도 이중 방어)
 
-# 5. Assets — MSIX 로고(msix/Assets) + 앱 공용 에셋(icon.ico, emoji.json, Sounds/click.wav)
+# 5. Assets — MSIX 로고(msix/Assets) + 앱 공용 에셋(icon.ico, emoji.json, Sounds 프리셋 wav)
 $assetsOut = Join-Path $staging "Assets"
 New-Item -ItemType Directory -Force $assetsOut | Out-Null
 Copy-Item (Join-Path $root "msix/Assets/*.png") $assetsOut -Force
@@ -46,7 +46,8 @@ Copy-Item (Join-Path $root "AltKey/Assets/icon.ico") $assetsOut -Force
 Copy-Item (Join-Path $root "AltKey/Assets/emoji.json") $assetsOut -Force
 $soundsOut = Join-Path $assetsOut "Sounds"
 New-Item -ItemType Directory -Force $soundsOut | Out-Null
-Copy-Item (Join-Path $root "AltKey/Assets/Sounds/click.wav") $soundsOut -Force
+# 키 사운드 프리셋(1~5.wav) — 파일이 늘어나도 자동으로 포함되도록 확장자 기준으로 복사한다.
+Copy-Item (Join-Path $root "AltKey/Assets/Sounds/*.wav") $soundsOut -Force
 
 # 6. AppxManifest.xml — 태그 버전으로 Identity Version 치환 (4부 X.Y.Z.W)
 # Get-Content -Raw는 시스템 기본 코드페이지(CP949 등)로 한글을 깨뜨뜨므로,
