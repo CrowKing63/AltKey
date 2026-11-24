@@ -43,6 +43,8 @@ public class ConfigService
             try
             {
                 var json = File.ReadAllText(PathResolver.ConfigPath);
+                // 과거 문자열 프리셋("soft" 등)은 int로 역직렬화되지 않아, 숫자로 정규화합니다.
+                json = MigrateSoundPresetJson(json);
                 Current = JsonSerializer.Deserialize<AppConfig>(json, JsonOptions.Default) ?? new();
 
                 MigrateWindowConfig(json);
@@ -120,6 +122,42 @@ public class ConfigService
         }
         catch
         {
+        }
+    }
+
+    /// <summary>
+    /// config.json의 사운드 프리셋 키(sound_preset)를 숫자로 정규화합니다.
+    /// 과거 버전에선 문자열("clear"/"soft" 등)로 저장될 수 있는데, int 역직렬화가 실패하면
+    /// 설정 전체가 초기화되므로 값이 숫자가 아니면 기본값 1(조용)으로 바꿉니다.
+    /// </summary>
+    private static string MigrateSoundPresetJson(string json)
+    {
+        try
+        {
+            var node = JsonNode.Parse(json)?.AsObject();
+            if (node == null || !node.Any(k => string.Equals(k.Key, "sound_preset", StringComparison.OrdinalIgnoreCase)))
+                return json;
+
+            foreach (var pair in node)
+            {
+                if (!string.Equals(pair.Key, "sound_preset", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                if (pair.Value is JsonValue v && v.GetValueKind() == JsonValueKind.Number)
+                    return json; // 이미 숫자
+
+                int value = 1;
+                if (pair.Value is JsonValue s && s.GetValueKind() == JsonValueKind.String
+                    && int.TryParse(s.GetValue<string>(), out var parsed))
+                    value = parsed;
+                node[pair.Key] = JsonValue.Create(value);
+            }
+            return node.ToJsonString();
+        }
+        catch
+        {
+            // 파싱에 실패하면 그대로 두고, Load의 기존 폴백(기본값 재사용)이 처리합니다.
+            return json;
         }
     }
 

@@ -21,8 +21,10 @@ public class SoundService : IDisposable
     /// <summary>
     /// 사운드 재생 환경을 설정합니다. (켜기/끄기, 파일 경로 지정, 크기 조절)
     /// volumePercent: 0(무음)~100(전체). 기본값 100입니다.
+    /// preset: 키 사운드 스타일 — 1=조용(기본), 2=균형, 3=또렷(번들된 Assets/Sounds/{preset}.wav),
+    ///         0=사용자 지정 파일(customPath) 사용.
     /// </summary>
-    public void Configure(bool enabled, string? customPath, int volumePercent = 100)
+    public void Configure(bool enabled, string? customPath, int volumePercent = 100, int preset = 1)
     {
         _enabled = enabled;
         _mediaBroken = false;
@@ -31,7 +33,7 @@ public class SoundService : IDisposable
 
         if (!enabled) return;
 
-        var path = ResolvePath(customPath);
+        var path = ResolvePath(preset, customPath);
         if (path is null) return;
         _resolvedPath = path;
 
@@ -55,26 +57,22 @@ public class SoundService : IDisposable
     }
 
     /// <summary>
-    /// 실제 재생할 사운드 파일의 경로를 결정합니다.
-    /// 1. 사용자가 직접 지정한 파일
-    /// 2. Assets/Sounds/click.wav (기본 효과음)
-    /// 3. 해당 폴더 내의 아무 WAV 파일
+    /// 실제 재생할 사운드 파일의 경로를 결정합니다. 우선순위:
+    /// 1. 사용자가 직접 지정한 파일 — 기존 설정(사용자 WAV)이 새로 도입된 기본 스타일에 덮어쓰이지 않도록 최우선
+    /// 2. 번들된 스타일 프리셋 Assets/Sounds/{preset}.wav (1=조용(기본), 2=균형, 3=또렷, 4=밝은 클릭, 5=빠른 스냅)
+    /// 둘 다 없으면 null(무음)을 반환합니다.
     /// </summary>
-    private static string? ResolvePath(string? customPath)
+    internal static string? ResolvePath(int preset, string? customPath)
     {
+        // 1) 사용자 지정 파일
         if (!string.IsNullOrEmpty(customPath) && File.Exists(customPath))
             return customPath;
 
-        var soundsDir = Path.Combine(AppContext.BaseDirectory, "Assets", "Sounds");
-        // 기본 효과음 출처: OpenGameArt "Single Key Press Sounds" (eklee, qubodup) — CC-BY 3.0
-        // 기계식 키보드 단일 타건음을 현재 볼륨 수준에 맞춰 축소하여 포함했습니다.
-        var clickPath = Path.Combine(soundsDir, "click.wav");
-        if (File.Exists(clickPath)) return clickPath;
-
-        if (Directory.Exists(soundsDir))
+        // 2) 번들된 스타일 프리셋 (출처·라이선스는 Assets/Sounds/README.txt)
+        if (preset is >= 1 and <= 5)
         {
-            var first = Directory.GetFiles(soundsDir, "*.wav").FirstOrDefault();
-            if (first is not null) return first;
+            var presetPath = Path.Combine(AppContext.BaseDirectory, "Assets", "Sounds", $"{preset}.wav");
+            if (File.Exists(presetPath)) return presetPath;
         }
 
         return null;

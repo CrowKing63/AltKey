@@ -484,18 +484,28 @@
                                       Foreground="{DynamicResource SettingsFg}"
                                       IsChecked="{Binding SoundEnabled}"
                                       Margin="0,0,0,8" KeyboardNavigation.TabIndex="38"/>
+                            <!-- 사운드 스타일: 번들된 프리셋 3종(1/2/3). 사용자 지정 파일은 아래에서 선택 -->
+                            <TextBlock Text="사운드 스타일" Foreground="{DynamicResource SettingsFgSub}" FontSize="{DynamicResource ScaledSettingsSubFontSize}" Margin="16,0,0,4"
+                                       Visibility="{Binding SoundEnabled, Converter={StaticResource BoolToVis}}"/>
+                            <StackPanel Orientation="Horizontal" Margin="16,0,0,12" Visibility="{Binding SoundEnabled, Converter={StaticResource BoolToVis}}">
+                                <RadioButton Content="1" GroupName="SoundPreset" Foreground="{DynamicResource SettingsFg}" IsChecked="{Binding SoundIsOne}" Margin="0,0,12,0" KeyboardNavigation.TabIndex="39" AutomationProperties.Name="키 사운드 스타일: 1"/>
+                                <RadioButton Content="2" GroupName="SoundPreset" Foreground="{DynamicResource SettingsFg}" IsChecked="{Binding SoundIsTwo}" Margin="0,0,12,0" KeyboardNavigation.TabIndex="40" AutomationProperties.Name="키 사운드 스타일: 2"/>
+                                <RadioButton Content="3" GroupName="SoundPreset" Foreground="{DynamicResource SettingsFg}" IsChecked="{Binding SoundIsThree}" Margin="0,0,12,0" KeyboardNavigation.TabIndex="41" AutomationProperties.Name="키 사운드 스타일: 3"/>
+                                <RadioButton Content="4" GroupName="SoundPreset" Foreground="{DynamicResource SettingsFg}" IsChecked="{Binding SoundIsFour}" Margin="0,0,12,0" KeyboardNavigation.TabIndex="42" AutomationProperties.Name="키 사운드 스타일: 4"/>
+                                <RadioButton Content="5" GroupName="SoundPreset" Foreground="{DynamicResource SettingsFg}" IsChecked="{Binding SoundIsFive}" Margin="0,0,0,0" KeyboardNavigation.TabIndex="43" AutomationProperties.Name="키 사운드 스타일: 5"/>
+                            </StackPanel>
                             <StackPanel Orientation="Horizontal" Margin="16,0,0,16" Visibility="{Binding SoundEnabled, Converter={StaticResource BoolToVis}}">
                                 <TextBlock Text="사운드 파일:" VerticalAlignment="Center" Margin="0,0,6,0" Foreground="{DynamicResource SettingsFgSub}"/>
                                 <TextBlock VerticalAlignment="Center" Opacity="0.7" MaxWidth="220" Foreground="{DynamicResource SettingsFg}" TextTrimming="CharacterEllipsis" Text="{Binding SoundFilePath}"/>
-                                <Button Content="찾아보기" Command="{Binding BrowseSoundFileCommand}" Margin="8,0,0,0" Padding="8,4" KeyboardNavigation.TabIndex="39"
+                                <Button Content="찾아보기" Command="{Binding BrowseSoundFileCommand}" Margin="8,0,0,0" Padding="8,4" KeyboardNavigation.TabIndex="47"
                                         Style="{StaticResource FluentSecondaryButtonStyle}"/>
-                                <Button Content="초기화" Command="{Binding ResetSoundFileCommand}" Margin="4,0,0,0" Padding="8,4" KeyboardNavigation.TabIndex="40"
+                                <Button Content="초기화" Command="{Binding ResetSoundFileCommand}" Margin="4,0,0,0" Padding="8,4" KeyboardNavigation.TabIndex="48"
                                         Style="{StaticResource FluentSecondaryButtonStyle}"/>
                             </StackPanel>
                             <TextBlock Text="크기" Foreground="{DynamicResource SettingsFgSub}" FontSize="{DynamicResource ScaledSettingsSubFontSize}" Margin="16,0,0,4"/>
                             <ctrl:NumericAdjuster Value="{Binding SoundVolume}" Minimum="0" Maximum="100" Step="10" DecimalPlaces="0"
                                                 IsEnabled="{Binding SoundEnabled}"
-                                                Margin="16,0,0,16" KeyboardNavigation.TabIndex="41"/>
+                                                Margin="16,0,0,16" KeyboardNavigation.TabIndex="49"/>
                         </StackPanel>
                     </ScrollViewer>
                 </TabItem>

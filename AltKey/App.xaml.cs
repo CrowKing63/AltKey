@@ -168,7 +168,8 @@ public partial class App : System.Windows.Application
             soundService.Configure(
                 config.Current.SoundEnabled,
                 config.Current.SoundFilePath,
-                config.Current.SoundVolumePercent);
+                config.Current.SoundVolumePercent,
+                config.Current.SoundPreset);
 
             // 글꼴 배율 적용
             _configService = config;

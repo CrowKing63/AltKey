@@ -80,8 +80,17 @@ public partial class SettingsViewModel : ObservableObject
     // T-8.2: 키 클릭 사운드
     [ObservableProperty] private bool soundEnabled;
     [ObservableProperty] private string soundFilePath = "";
+    // 사운드 스타일 프리셋: 1=조용(기본), 2=균형, 3=또렷, 4=밝은 클릭, 5=빠른 스냅, 0=사용자 지정 파일(custom).
+    [ObservableProperty] private int soundPreset = 1;
     // 키 사운드 크기(퍼센트). 100이 기본이며, 설정 화면에서 0~100 사이로 조절할 수 있습니다.
     [ObservableProperty] private int soundVolume = 100;
+
+    // 사운드 스타일 라디오버튼 바인딩 (설정 화면: 1/2/3/4/5)
+    public bool SoundIsOne   { get => SoundPreset == 1; set { if (value) SoundPreset = 1; } }
+    public bool SoundIsTwo   { get => SoundPreset == 2; set { if (value) SoundPreset = 2; } }
+    public bool SoundIsThree { get => SoundPreset == 3; set { if (value) SoundPreset = 3; } }
+    public bool SoundIsFour  { get => SoundPreset == 4; set { if (value) SoundPreset = 4; } }
+    public bool SoundIsFive  { get => SoundPreset == 5; set { if (value) SoundPreset = 5; } }
 
 
 
@@ -373,6 +382,10 @@ public partial class SettingsViewModel : ObservableObject
             // T-8.2: 사운드
             SoundEnabled = c.SoundEnabled;
             SoundFilePath = c.SoundFilePath ?? "";
+            // 사용자 지정 파일이 있으면 0(custom, 라디오 미선택)으로 표시하고, 없으면 저장된 프리셋(없으면 기본 1=조용).
+            SoundPreset = string.IsNullOrEmpty(SoundFilePath)
+                ? (c.SoundPreset is >= 1 and <= 3 ? c.SoundPreset : 1)
+                : 0;
             SoundVolume = c.SoundVolumePercent;
 
 
@@ -448,7 +461,7 @@ public partial class SettingsViewModel : ObservableObject
 
         // T-8.2: _isLoading 가드 해제 후 사운드 초기 구성 적용
         // (OnSoundEnabledChanged / OnSoundFilePathChanged 는 _isLoading=true 중 호출되므로 직접 호출)
-        _soundService.Configure(SoundEnabled, string.IsNullOrEmpty(SoundFilePath) ? null : SoundFilePath, SoundVolume);
+        _soundService.Configure(SoundEnabled, string.IsNullOrEmpty(SoundFilePath) ? null : SoundFilePath, SoundVolume, SoundPreset);
     }
 
     // ── 속성 변경 시 자동 저장 ───────────────────────────────────────────────
@@ -621,21 +634,32 @@ public partial class SettingsViewModel : ObservableObject
     partial void OnSoundEnabledChanged(bool value)
     {
         if (_isLoading) return;
-        _soundService.Configure(value, string.IsNullOrEmpty(SoundFilePath) ? null : SoundFilePath, SoundVolume);
+        _soundService.Configure(value, string.IsNullOrEmpty(SoundFilePath) ? null : SoundFilePath, SoundVolume, SoundPreset);
         _configService.Update(c => c.SoundEnabled = value);
     }
 
+    // 사용자 지정 파일 선택 시에만 재생 대상이 바뀐다.
     partial void OnSoundFilePathChanged(string value)
     {
         if (_isLoading) return;
-        _soundService.Configure(SoundEnabled, string.IsNullOrEmpty(value) ? null : value, SoundVolume);
+        _soundService.Configure(SoundEnabled, string.IsNullOrEmpty(value) ? null : value, SoundVolume, SoundPreset);
         _configService.Update(c => c.SoundFilePath = string.IsNullOrEmpty(value) ? null : value);
+    }
+
+    // 스타일 프리셋 변경: 0(custom)이 아니면 사용자 지정 파일을 비워 새 소리가 바로 들리도록 한다.
+    partial void OnSoundPresetChanged(int value)
+    {
+        if (_isLoading) return;
+        if (value != 0)
+            SoundFilePath = ""; // 파일 저장은 OnSoundFilePathChanged가 처리한다
+        _soundService.Configure(SoundEnabled, string.IsNullOrEmpty(SoundFilePath) ? null : SoundFilePath, SoundVolume, value);
+        _configService.Update(c => c.SoundPreset = value);
     }
 
     partial void OnSoundVolumeChanged(int value)
     {
         if (_isLoading) return;
-        _soundService.Configure(SoundEnabled, string.IsNullOrEmpty(SoundFilePath) ? null : SoundFilePath, value);
+        _soundService.Configure(SoundEnabled, string.IsNullOrEmpty(SoundFilePath) ? null : SoundFilePath, value, SoundPreset);
         _configService.Update(c => c.SoundVolumePercent = value);
     }
 
@@ -648,18 +672,17 @@ public partial class SettingsViewModel : ObservableObject
         var dlg = new WpfDialog.OpenFileDialog { Filter = "WAV 파일|*.wav|모든 파일|*.*" };
         if (dlg.ShowDialog() == true)
         {
+            // 먼저 프리셋을 0(custom)으로 바꿔, 이후 Configure가 사용자 파일을 쓰도록 한다.
+            SoundPreset = 0;
             SoundFilePath = dlg.FileName;
-            _soundService.Configure(SoundEnabled, SoundFilePath, SoundVolume);
-            _configService.Update(c => c.SoundFilePath = SoundFilePath);
         }
     }
 
     [RelayCommand]
     private void ResetSoundFile()
     {
-        SoundFilePath = "";
-        _soundService.Configure(SoundEnabled, null, SoundVolume);
-        _configService.Update(c => c.SoundFilePath = null);
+        // 스타일을 기본(1=조용)으로 되돌리면 사용자 지정 파일도 함께 비워진다.
+        SoundPreset = 1;
     }
 
     // T-10: 키 반복 입력

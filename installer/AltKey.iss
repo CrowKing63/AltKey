@@ -66,6 +66,11 @@ Source: "..\AltKey\layouts\*"; DestDir: "{userappdata}\AltKey\layouts"; Flags: i
 ; 에셋 (아이콘, 이모지, 사운드) — exe 옆에 위치
 Source: "..\AltKey\Assets\*"; DestDir: "{app}\Assets"; Flags: ignoreversion recursesubdirs createallsubdirs
 
+[InstallDelete]
+; 업그레이드 시 이전 버전의 기본 소리(click.wav)를 삭제한다. 새 버전엔 1/2/3.wav 프리셋으로 대체됐고,
+; click.wav를 참조하는 코드가 없어져 파일만 설치 폴더에 남아도는 걸 정리한다. 없으면 그냥 건너뜀.
+Name: "{app}\Assets\Sounds\click.wav"; Type: files
+
 [Icons]
 Name: "{group}\{#AppName}";              Filename: "{app}\{#AppExeName}"
 Name: "{group}\{#AppName} 제거";         Filename: "{uninstallexe}"

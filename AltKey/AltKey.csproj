@@ -26,6 +26,11 @@
     <PackageReference Include="WPF-UI" Version="3.*" />
     <PackageReference Include="System.Speech" Version="8.*" />
   </ItemGroup>
+
+  <!-- 테스트 프로젝트가 SoundService의 internal 헬퍼(ResolvePath 등)를 검증할 수 있도록 열려 줍니다. -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="AltKey.Tests" />
+  </ItemGroup>
   
   <ItemGroup>
     <!-- config.json은 출력 폴더로 복사하지 않는다.
@@ -48,7 +53,20 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     
-    <Content Include="Assets\Sounds\click.wav">
+    <!-- 키 효과음 프리셋: 1=조용(기본), 2=균형, 3=또렷, 4=밝은 클릭, 5=빠른 스냅. 설정에서 번호로 고른다. -->
+    <Content Include="Assets\Sounds\1.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\Sounds\2.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\Sounds\3.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\Sounds\4.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\Sounds\5.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

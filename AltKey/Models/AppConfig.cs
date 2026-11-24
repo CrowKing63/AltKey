@@ -82,8 +82,12 @@ public class AppConfig
     // 키를 누를 때 소리를 낼지 여부입니다.
     public bool SoundEnabled        { get; set; } = true;
     
-    // 기본 소리 외에 사용하고 싶은 효과음 파일(.wav)의 경로입니다. 비어있으면 기본음이 나옵니다.
+    // 사용자가 직접 지정할 효과음 파일(.wav)의 경로입니다. 비어있으면 스타일 프리셋 소리가 나옵니다.
     public string? SoundFilePath    { get; set; } = null;
+
+    // 키 사운드 스타일: 1=조용(기본), 2=균형, 3=또렷, 4=밝은 클릭, 5=빠른 스냅. 0=사용자 지정 파일(SoundFilePath) 사용.
+    // 기존 설정엔 이 필드가 없는데, 있으면 기본값 1(조용)으로 간주한다.
+    public int SoundPreset          { get; set; } = 1;
 
     // 키 사운드 크기(퍼센트). 100이 기본이며, 설정 화면에서 0~100 사이로 조절할 수 있습니다.
     public int SoundVolumePercent   { get; set; } = 100;
