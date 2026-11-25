@@ -49,10 +49,7 @@
     <Content Include="Assets\tray-icon.ico" Condition="Exists('Assets\tray-icon.ico')">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Assets\emoji.json" Condition="Exists('Assets\emoji.json')">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    
+
     <!-- 키 효과음 프리셋: 1=또렷(기본), 2=균형, 3=빠른 스냅, 4=타자기, 5=타자기(깊은 타건), 6=옛날 레트로, 7=맥 레트로. 설정에서 번호로 고른다. -->
     <Content Include="Assets\Sounds\1.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
