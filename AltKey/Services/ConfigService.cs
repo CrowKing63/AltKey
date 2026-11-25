@@ -38,6 +38,7 @@ public class ConfigService
     public void Load()
     {
         var fileExists = File.Exists(PathResolver.ConfigPath);
+        var migratedSoundPreset = false;
         if (fileExists)
         {
             try
@@ -46,6 +47,15 @@ public class ConfigService
                 // 과거 문자열 프리셋("soft" 등)은 int로 역직렬화되지 않아, 숫자로 정규화합니다.
                 json = MigrateSoundPresetJson(json);
                 Current = JsonSerializer.Deserialize<AppConfig>(json, JsonOptions.Default) ?? new();
+
+                // 사운드 프리셋 번호 체계 변경(구 1=조용 ~ 9=맥 레트로 → 새 1=또렷 ~ 7=맥 레트로)의 1회성 마이그레이션.
+                // 마커가 없을 때만 변환하고, True로 저장하면 이후 다시 변환하지 않습니다.
+                if (!Current.SoundPresetMigratedV2)
+                {
+                    Current.SoundPreset = MigrateSoundPresetValue(Current.SoundPreset);
+                    Current.SoundPresetMigratedV2 = true;
+                    migratedSoundPreset = true;
+                }
 
                 MigrateWindowConfig(json);
                 MigrateLegacyLayoutNames();
@@ -63,6 +73,11 @@ public class ConfigService
         var changed = EnsureHeaderButtonDefaults();
 
         if (fileExists && NormalizeHeaderButtons())
+        {
+            changed = true;
+        }
+
+        if (migratedSoundPreset)
         {
             changed = true;
         }
@@ -128,7 +143,7 @@ public class ConfigService
     /// <summary>
     /// config.json의 사운드 프리셋 키(sound_preset)를 숫자로 정규화합니다.
     /// 과거 버전에선 문자열("clear"/"soft" 등)로 저장될 수 있는데, int 역직렬화가 실패하면
-    /// 설정 전체가 초기화되므로 값이 숫자가 아니면 기본값 1(조용)으로 바꿉니다.
+    /// 설정 전체가 초기화되므로 값이 숫자가 아니면 기본값 1(또렷)으로 바꿉니다.
     /// </summary>
     private static string MigrateSoundPresetJson(string json)
     {
@@ -160,6 +175,26 @@ public class ConfigService
             return json;
         }
     }
+
+    /// <summary>
+    /// 구 번호 체계(1=조용, 2=균형, 3=또렷, 4=밝은 클릭, 5=빠른 스냅, 6=타자기, 7=타자기(깊은 타건), 8=옛날 레트로, 9=맥 레트로)의
+    /// 사운드 프리셋 번호를 새 체계(1=또렷, 2=균형, 3=빠른 스냅, 4=타자기, 5=타자기(깊은 타건), 6=옛날 레트로, 7=맥 레트로)로 변환합니다.
+    /// 4(밝은 클릭)와 1(조용)은 새 체계에 없는 번호라 새 기본값(1=또렷)으로 둡니다.
+    /// 0(사용자 지정 파일)과 알 수 없는 값은 그대로 둡니다.
+    /// </summary>
+    private static int MigrateSoundPresetValue(int value) => value switch
+    {
+        1 => 1,  // 조용 → 기본(또렷)
+        2 => 2,  // 균형은 그대로
+        3 => 1,  // 또렷 → 기본(또렷)
+        4 => 1,  // 밝은 클릭(삭제) → 기본(또렷)
+        5 => 3,  // 빠른 스냅 → 3
+        6 => 4,  // 타자기 → 4
+        7 => 5,  // 타자기(깊은 타건) → 5
+        8 => 6,  // 옛날 레트로 → 6
+        9 => 7,  // 맥 레트로 → 7
+        _ => value
+    };
 
     /// <summary>
     /// 과거 Width/Height 기반 창 설정을 현재 Scale 기반 설정으로 옮깁니다.

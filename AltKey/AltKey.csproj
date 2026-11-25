@@ -53,7 +53,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     
-    <!-- 키 효과음 프리셋: 1=조용(기본), 2=균형, 3=또렷, 4=밝은 클릭, 5=빠른 스냅. 설정에서 번호로 고른다. -->
+    <!-- 키 효과음 프리셋: 1=또렷(기본), 2=균형, 3=빠른 스냅, 4=타자기, 5=타자기(깊은 타건), 6=옛날 레트로, 7=맥 레트로. 설정에서 번호로 고른다. -->
     <Content Include="Assets\Sounds\1.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -67,6 +67,12 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Assets\Sounds\5.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\Sounds\6.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\Sounds\7.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

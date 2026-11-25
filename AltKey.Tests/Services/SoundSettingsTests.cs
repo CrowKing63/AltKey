@@ -79,7 +79,7 @@ public class SoundSettingsTests
     }
 
     [Fact]
-    // 설정 파일에 sound_preset가 없으면 기본값 1(조용)이 적용되는지 확인합니다.
+    // 설정 파일에 sound_preset가 없으면 기본값 1(또렷)이 적용되는지 확인합니다.
     public void ConfigService_uses_default_sound_preset_when_field_is_missing()
     {
         var tempDir = CreateTempDataDir();
@@ -184,8 +184,8 @@ public class SoundSettingsTests
         var baseDir = AppContext.BaseDirectory;
         var soundsDir = Path.Combine(baseDir, "Assets", "Sounds");
 
-        // 프리셋 5종은 번들 파일로 해석된다.
-        foreach (var preset in new[] { 1, 2, 3, 4, 5 })
+        // 프리셋 7종은 번들 파일로 해석된다.
+        foreach (var preset in new[] { 1, 2, 3, 4, 5, 6, 7 })
         {
             var path = SoundService.ResolvePath(preset, null);
             Assert.NotNull(path);
@@ -200,6 +200,62 @@ public class SoundSettingsTests
         // custom(0)인데 지정 파일이 없거나 프리셋 값이 알 수 없으면 소리가 안 나도록 null을 반환한다.
         Assert.Null(SoundService.ResolvePath(0, null));
         Assert.Null(SoundService.ResolvePath(99, null));
+    }
+
+    // 4~7번 프리셋이 저장 값 그대로 라디오에 반영되는지 확인합니다. (4~5번이 기본값 1으로 덮어쓰이던 회귀 방지)
+    [Fact]
+    public void SettingsViewModel_loads_preset_four_to_seven_from_config()
+    {
+        var tempDir = CreateTempDataDir();
+
+        try
+        {
+            PathResolver.OverrideDataDir(tempDir);
+            var configService = new ConfigService();
+            configService.Update(config => config.SoundPreset = 7);
+
+            var viewModel = CreateSettingsViewModel(configService);
+
+            Assert.True(viewModel.SoundIsSeven);
+            Assert.False(viewModel.SoundIsSix);
+            Assert.False(viewModel.SoundIsOne);
+        }
+        finally
+        {
+            ResetDataDir(tempDir);
+        }
+    }
+
+    // 구 번호 체계(1=조용,2=균형,3=또렷,4=밝은 클릭,5=빠른 스냅,6=타자기,7=타자기(깊은 타건),8=옛날 레트로,9=맥 레트로)의 설정 파일을
+    // 새 번호(1=또렷,2=균형,3=빠른 스냅,4=타자기,5=타자기(깊은 타건),6=옛날 레트로,7=맥 레트로)로 변환해 불러오는지,
+    // 그리고 변환이 한 번만 적용되는지 확인합니다.
+    [Fact]
+    public void ConfigService_migrates_legacy_sound_preset_numbers_once()
+    {
+        var tempDir = CreateTempDataDir();
+
+        try
+        {
+            PathResolver.OverrideDataDir(tempDir);
+            File.WriteAllText(PathResolver.ConfigPath, """{"sound_preset": 8, "sound_volume_percent": 80}""");
+
+            var configService = new ConfigService();
+
+            // 구 번호 8(옛날 레트로) → 새 번호 6
+            Assert.Equal(6, configService.Current.SoundPreset);
+            Assert.True(configService.Current.SoundPresetMigratedV2);
+            // 무관한 설정은 그대로 유지된다.
+            Assert.Equal(80, configService.Current.SoundVolumePercent);
+
+            // 마이그레이션 결과가 파일에 저장돼 다시 읽어도 다시 변환되지 않는다(구 번호 8은 새 체계에서 존재하지 않으므로 6 유지).
+            var reloaded = new ConfigService();
+            Assert.Equal(6, reloaded.Current.SoundPreset);
+            Assert.True(reloaded.Current.SoundPresetMigratedV2);
+        }
+        finally
+        {
+            ResetDataDir(tempDir);
+        }
     }
 
     private static SettingsViewModel CreateSettingsViewModel(ConfigService configService)

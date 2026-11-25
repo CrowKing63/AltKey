@@ -80,17 +80,19 @@ public partial class SettingsViewModel : ObservableObject
     // T-8.2: 키 클릭 사운드
     [ObservableProperty] private bool soundEnabled;
     [ObservableProperty] private string soundFilePath = "";
-    // 사운드 스타일 프리셋: 1=조용(기본), 2=균형, 3=또렷, 4=밝은 클릭, 5=빠른 스냅, 0=사용자 지정 파일(custom).
+    // 사운드 스타일 프리셋: 1=또렷(기본), 2=균형, 3=빠른 스냅, 4=타자기, 5=타자기(깊은 타건), 6=옛날 레트로, 7=맥 레트로, 0=사용자 지정 파일(custom).
     [ObservableProperty] private int soundPreset = 1;
     // 키 사운드 크기(퍼센트). 100이 기본이며, 설정 화면에서 0~100 사이로 조절할 수 있습니다.
     [ObservableProperty] private int soundVolume = 100;
 
-    // 사운드 스타일 라디오버튼 바인딩 (설정 화면: 1/2/3/4/5)
+    // 사운드 스타일 라디오버튼 바인딩 (설정 화면: 1~7)
     public bool SoundIsOne   { get => SoundPreset == 1; set { if (value) SoundPreset = 1; } }
     public bool SoundIsTwo   { get => SoundPreset == 2; set { if (value) SoundPreset = 2; } }
     public bool SoundIsThree { get => SoundPreset == 3; set { if (value) SoundPreset = 3; } }
     public bool SoundIsFour  { get => SoundPreset == 4; set { if (value) SoundPreset = 4; } }
     public bool SoundIsFive  { get => SoundPreset == 5; set { if (value) SoundPreset = 5; } }
+    public bool SoundIsSix   { get => SoundPreset == 6; set { if (value) SoundPreset = 6; } }
+    public bool SoundIsSeven { get => SoundPreset == 7; set { if (value) SoundPreset = 7; } }
 
 
 
@@ -382,9 +384,9 @@ public partial class SettingsViewModel : ObservableObject
             // T-8.2: 사운드
             SoundEnabled = c.SoundEnabled;
             SoundFilePath = c.SoundFilePath ?? "";
-            // 사용자 지정 파일이 있으면 0(custom, 라디오 미선택)으로 표시하고, 없으면 저장된 프리셋(없으면 기본 1=조용).
+            // 사용자 지정 파일이 있으면 0(custom, 라디오 미선택)으로 표시하고, 없으면 저장된 프리셋(없으면 기본 1=또렷).
             SoundPreset = string.IsNullOrEmpty(SoundFilePath)
-                ? (c.SoundPreset is >= 1 and <= 3 ? c.SoundPreset : 1)
+                ? (c.SoundPreset is >= 1 and <= 7 ? c.SoundPreset : 1)
                 : 0;
             SoundVolume = c.SoundVolumePercent;
 
@@ -638,12 +640,16 @@ public partial class SettingsViewModel : ObservableObject
         _configService.Update(c => c.SoundEnabled = value);
     }
 
-    // 사용자 지정 파일 선택 시에만 재생 대상이 바뀐다.
+    // 사용자 지정 파일 변경 시에만 재생 대상이 바뀐다(고른 파일이 바로 들리도록 미리듣기 한 번 재생).
+    // 경로가 비워지는 경우(스타일 프리셋 선택, 초기화 등)는 프리셋 변경 경로가 곧바로 재생하므로
+    // 여기서는 설정만 저장하고 미리듣기를 하지 않는다.
     partial void OnSoundFilePathChanged(string value)
     {
         if (_isLoading) return;
-        _soundService.Configure(SoundEnabled, string.IsNullOrEmpty(value) ? null : value, SoundVolume, SoundPreset);
         _configService.Update(c => c.SoundFilePath = string.IsNullOrEmpty(value) ? null : value);
+        if (string.IsNullOrEmpty(value)) return;
+        _soundService.Configure(SoundEnabled, value, SoundVolume, SoundPreset);
+        _soundService.Preview();
     }
 
     // 스타일 프리셋 변경: 0(custom)이 아니면 사용자 지정 파일을 비워 새 소리가 바로 들리도록 한다.
@@ -654,6 +660,8 @@ public partial class SettingsViewModel : ObservableObject
             SoundFilePath = ""; // 파일 저장은 OnSoundFilePathChanged가 처리한다
         _soundService.Configure(SoundEnabled, string.IsNullOrEmpty(SoundFilePath) ? null : SoundFilePath, SoundVolume, value);
         _configService.Update(c => c.SoundPreset = value);
+        // 라디오를 고르면 바로 그 소리를 들어볼 수 있도록 미리듣기 한 번 재생한다.
+        if (value != 0) _soundService.Preview();
     }
 
     partial void OnSoundVolumeChanged(int value)
@@ -681,7 +689,7 @@ public partial class SettingsViewModel : ObservableObject
     [RelayCommand]
     private void ResetSoundFile()
     {
-        // 스타일을 기본(1=조용)으로 되돌리면 사용자 지정 파일도 함께 비워진다.
+        // 스타일을 기본(1=또렷)으로 되돌리면 사용자 지정 파일도 함께 비워진다.
         SoundPreset = 1;
     }
 
