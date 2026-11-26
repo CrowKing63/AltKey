@@ -2,8 +2,10 @@ using System.Globalization;
 using System.Runtime.InteropServices;
 using Microsoft.Extensions.DependencyInjection;
 using System.Windows;
+using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Input;
+using System.Windows.Interop;
 
 using AltKey.Services;
 using AltKey.ViewModels;
@@ -29,8 +31,11 @@ public partial class ClipboardPanelWindow : AnchoredPanelWindowBase
     // 붙여넣기 전 대상 앱과 원래 입력 컨트롤을 복원한다.
     private IntPtr _previousForeground = IntPtr.Zero;
     private bool _capturedTargetIsScratchPad;
+    // [2026-11] 캡처 당시 자기 프로세스(설정 창 등 사용자 창) 안의 마지막 입력 컨트롤 — 복원 시 다시 포커스한다.
+    private bool _capturedIsOwnUserTarget;
     private IntPtr _capturedFocusTarget = IntPtr.Zero;
     private IntPtr _capturedFocusWindow = IntPtr.Zero;
+    private System.Windows.Controls.Primitives.TextBoxBase? _capturedFocusElement;
 
     /// <summary>숨김 시 보존해야 하는 내부 입력 대상 창 핸들을 돌려줍니다 (예: 스크래치패드).</summary>
     public Func<IntPtr>? GetInputTargetToPreserveOnHide { get; set; }
@@ -75,20 +80,76 @@ public partial class ClipboardPanelWindow : AnchoredPanelWindowBase
         };
     }
 
-    /// <summary>Show() 전에 호출 — 이 창이 포커스를 가져가기 직전의 포그라운드(외부 앱)을 기억합니다.</summary>
+    /// <summary>Show() 전에 호출 — 이 창이 포커스를 가져가기 직전의 포그라운드(외부 앱 또는 설정 창 등 사용자 창)를 기억합니다.</summary>
     public void CapturePreviousForeground(IntPtr preferredOwnTarget = default)
     {
         var fg = GetForegroundWindow();
         bool capturedPreferredTarget = fg != IntPtr.Zero && fg == preferredOwnTarget;
-        // 화상 키보드 상단 버튼·Win+. 등 AltKey 자체에서 열면 일반적으로 외부 앱이 직전 입력 대상입니다.
-        // 다만 빠른 메모 창이 실제 포그라운드라면 그 창은 명시적 붙여넣기 대상이므로 보존합니다.
+
         if (fg != IntPtr.Zero && IsOwnProcessWindow(fg) && !capturedPreferredTarget)
-            fg = App.Services?.GetService<ProfileService>()?.LastExternalForegroundHwnd ?? IntPtr.Zero;
+        {
+            // chrome(메인 키보드 창·본 패널)은 사용자 입력 대상이 아님 — 복원 대상에서 뺀다.
+            // 설정 창·AI API 설정 창 등 실제 사용자 창이면 그대로 캡처해 붙여넣기 대상으로 되돌린다.
+            var ownerHandle = Owner is { } o ? new WindowInteropHelper(o).Handle : IntPtr.Zero;
+            var selfHandle = new WindowInteropHelper(this).Handle;
+            bool isChrome = fg == ownerHandle || fg == selfHandle;
+            if (isChrome)
+            {
+                // 헤더 버튼 클릭 등으로 포그라운드가 키보드 창으로 바뀐 뒤 호출되면 fg는 chrome이므로,
+                // 마지막에 입력 중이던 자체 창(설정 창 등)을 추적해서 대상으로 삼는다.
+                var ownUserWindow = ResolveLastOwnUserWindow();
+                if (ownUserWindow is { } userWindow)
+                {
+                    fg = new WindowInteropHelper(userWindow).Handle;
+                    _capturedIsOwnUserTarget = true;
+                    _capturedFocusElement = FocusTracker.LastFocused;
+                }
+                else
+                {
+                    // 마지막 자체 입력 대상 창이 없으면 외부 앱이 직전 입력 대상 — 기존 동작으로 폴백.
+                    fg = App.Services?.GetService<ProfileService>()?.LastExternalForegroundHwnd ?? IntPtr.Zero;
+                    _capturedIsOwnUserTarget = false;
+                    _capturedFocusElement = null;
+                }
+            }
+            else
+            {
+                // 설정 창 등 실제 사용자 창이 바로 포그라운드였던 경우 — 그대로 캡처.
+                _capturedIsOwnUserTarget = true;
+                _capturedFocusElement = FocusTracker.LastFocused;
+            }
+        }
+        else
+        {
+            _capturedIsOwnUserTarget = false;
+            _capturedFocusElement = null;
+        }
 
         _previousForeground = fg;
         _capturedTargetIsScratchPad = capturedPreferredTarget;
         _capturedFocusTarget = capturedPreferredTarget ? IntPtr.Zero : fg;
         _capturedFocusWindow = capturedPreferredTarget ? IntPtr.Zero : GetThreadFocusedWindow(fg);
+    }
+
+    /// <summary>마지막에 입력 중이던 텍스트박스의 소유 창이 사용자 창(설정 창 등, chrome 제외)이면 돌려줍니다.</summary>
+    private Window? ResolveLastOwnUserWindow()
+    {
+        var focused = FocusTracker.LastFocused;
+        if (focused is null) return null;
+
+        Window? owner = null;
+        try { owner = Window.GetWindow(focused); }
+        catch { return null; }
+        if (owner is null || !owner.IsVisible) return null;
+
+        // chrome(키보드 창·본 패널) 소유의 포커스는 사용자 입력 대상이 아니므로 제외한다.
+        var ownerHandle = Owner is { } o ? new WindowInteropHelper(o).Handle : IntPtr.Zero;
+        var selfHandle = new WindowInteropHelper(this).Handle;
+        var ownerWindowHandle = new WindowInteropHelper(owner).Handle;
+        if (ownerWindowHandle == ownerHandle || ownerWindowHandle == selfHandle)
+            return null;
+
+        return owner;
     }
 
     /// <summary>붙여넣기(Ctrl+V) 전송 전 호출 — 포그라운드를 외부 앱으로 복원합니다.
@@ -107,7 +168,8 @@ public partial class ClipboardPanelWindow : AnchoredPanelWindowBase
             latestExternal,
             _capturedTargetIsScratchPad,
             currentIsOwn,
-            IsWindowValid);
+            IsWindowValid,
+            _capturedIsOwnUserTarget);
 
         // 외부 앱이 이미 포그라운드면 그 앱의 현재 포커스를 보존하고, 앱이 AltKey로 바뀐 경우에만 이전 포커스를 복원합니다.
         if (target == IntPtr.Zero)
@@ -126,6 +188,19 @@ public partial class ClipboardPanelWindow : AnchoredPanelWindowBase
                 hwnd => IsWindowValid(hwnd) && IsChildWindow(target, hwnd))
             : IntPtr.Zero;
         bool focusRestored = focusTarget == IntPtr.Zero || RestoreChildFocus(target, focusTarget);
+
+        // [2026-11] 설정 창 등 사용자가 입력하던 자체 창이 복원된 경우, 마지막에 포커스였던 컨트롤로 다시 돌려준다.
+        if (_capturedIsOwnUserTarget && _capturedFocusElement is { } focusElement)
+        {
+            try
+            {
+                var focusWindow = Window.GetWindow(focusElement);
+                if (focusWindow is not null && new WindowInteropHelper(focusWindow).Handle == target)
+                    Keyboard.Focus(focusElement);
+            }
+            catch { /* 윈도우/컨트롤이 이미 종료됐으면 넘어간다 */ }
+        }
+
         _previousForeground = target;
         return focusRestored;
     }
@@ -137,10 +212,15 @@ public partial class ClipboardPanelWindow : AnchoredPanelWindowBase
         IntPtr latestExternalForeground,
         bool capturedIsScratchPad,
         bool isCurrentForegroundOwn,
-        Func<IntPtr, bool> isValidWindow)
+        Func<IntPtr, bool> isValidWindow,
+        bool capturedIsOwnUserTarget = false)
     {
         if (!isCurrentForegroundOwn && isValidWindow(currentForeground))
             return currentForeground;
+        // 자체 창(설정 창 등)이 캡처된 대상이면 그 창이 붙여넣기 대상이다 —
+        // 외부 앱 복원으로 덮어쓰면 사용자가 입력 중이던 컨트롤로 붙지 않는다.
+        if (capturedIsOwnUserTarget && isValidWindow(capturedForeground))
+            return capturedForeground;
         if (capturedIsScratchPad && isValidWindow(capturedForeground))
             return capturedForeground;
         if (isValidWindow(latestExternalForeground))

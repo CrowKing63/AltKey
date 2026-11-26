@@ -108,4 +108,40 @@ public class ClipboardPanelWindowTargetTests
 
         Assert.True(shouldRestore);
     }
+
+    [Fact]
+    public void 캡처된_자체_창이_유효하면_최근_외부_창보다_우선해_붙여넣기_대상이_된다()
+    {
+        // 설정 창(AI API 설정) 등 자기 창이 캡처된 경우 — 외부 앱보다 우선해야 한다.
+        IntPtr ownUserTarget = new(10);
+        IntPtr latestExternal = new(20);
+
+        var selected = ClipboardPanelWindow.SelectRestoreTarget(
+            currentForeground: new IntPtr(1),
+            capturedForeground: ownUserTarget,
+            latestExternalForeground: latestExternal,
+            capturedIsScratchPad: false,
+            isCurrentForegroundOwn: true,
+            isValidWindow: hwnd => hwnd != IntPtr.Zero,
+            capturedIsOwnUserTarget: true);
+
+        Assert.Equal(ownUserTarget, selected);
+    }
+
+    [Fact]
+    public void 캡처된_자체_창이_무효면_최근_외부_창으로_폴백한다()
+    {
+        IntPtr latestExternal = new(20);
+
+        var selected = ClipboardPanelWindow.SelectRestoreTarget(
+            currentForeground: new IntPtr(1),
+            capturedForeground: new IntPtr(10),
+            latestExternalForeground: latestExternal,
+            capturedIsScratchPad: false,
+            isCurrentForegroundOwn: true,
+            isValidWindow: hwnd => hwnd == latestExternal,
+            capturedIsOwnUserTarget: true);
+
+        Assert.Equal(latestExternal, selected);
+    }
 }
