@@ -31,6 +31,7 @@ public partial class MainViewModel : ObservableObject
     private readonly OskLauncherService _oskLauncher;
     private readonly LiveRegionService _liveRegion;
     private readonly AiService _aiService;
+    private readonly AiTextCaptureService _aiTextCaptureService; // UIA TextPattern 우선 텍스트 캡처
     private readonly SoundService _soundService;
     private readonly ScratchPadViewModel _scratchPadVm; // 스크래치패드 메모 (U1)
     private readonly AnchoredPanelService _anchoredPanels; // 키보드 창에 앵커되는 패널(빠른 메모·클립보드) 호스트
@@ -222,6 +223,7 @@ public partial class MainViewModel : ObservableObject
         OskLauncherService     oskLauncher,
         LiveRegionService      liveRegion,
         AiService              aiService,
+        AiTextCaptureService   aiTextCaptureService,
         SoundService           soundService,
         ScratchPadViewModel    scratchPadViewModel,
         AnchoredPanelService   anchoredPanels)
@@ -231,6 +233,7 @@ public partial class MainViewModel : ObservableObject
         _profileService = profileService;
         _liveRegion = liveRegion;
         _aiService = aiService;
+        _aiTextCaptureService = aiTextCaptureService;
         _soundService = soundService;
         _scratchPadVm = scratchPadViewModel;
         _anchoredPanels = anchoredPanels;
@@ -684,31 +687,50 @@ public partial class MainViewModel : ObservableObject
             await WpfApp.Current.Dispatcher.InvokeAsync(() =>
                 originalClipboard = ClipboardHelper.GetTextWithRetry());
 
-            // 선택 텍스트 캡처: 포커스 복원 → Ctrl+C → 읽기.
-            // [왜 재시도] 첫 시도가 타이밍에 안 맞으면(느린 앱/브라우저) 빈 값이 온다. 같은 순서를 반복하면
-            // 수동으로 두세 번 누르는 효과를 내부에서 얻는다.
+            // 선택 텍스트 캡처: 포커스 복원 → UIA 우선 → 실패 시 Ctrl+C 클립보드 폴백.
+            // [왜 UIA 우선] 합성 Ctrl+C는 브라우저(Chromium 계열)·Electron 앱에서 무시되는 경우가 많다.
+            // UIA TextPattern으로 직접 읽으면 합성키 없이 안정적으로 선택을 얻을 수 있다.
+            // [왜 폴백 유지] 일부 앱은 UIA 구현이 불완전해 읽을 수 없다 — UIA 실패 시만 합성 Ctrl+C로 복원.
             var target = _profileService.LastExternalForegroundHwnd;
             Win32.GetWindowThreadProcessId(target, out var targetPid);
 
             string? selectedText = null;
-            for (int attempt = 1; attempt <= CaptureMaxAttempts; attempt++)
+
+            TryFocusLastExternalTarget();
+            // [왜] 고정 80ms 대신 UIA로 "포커스가 대상 앱에 잡혔는지" 결정적으로 확인. 안 되면 폴백으로 진행.
+            if (target != IntPtr.Zero && Win32.IsWindow(target))
+                await WaitForFocusInTargetAsync(targetPid, ct);
+
+            // [왜 워커] UIA 쿼리를 Dispatcher에서 하면 브라우저 렌더러가 멈출 수 있어 워커에서 읽는다.
+            selectedText = await Task.Run(() => _aiTextCaptureService.CaptureSelectedText(), ct);
+
+            if (!string.IsNullOrWhiteSpace(selectedText))
             {
-                TryFocusLastExternalTarget();
-                // [왜] 고정 80ms 대신 UIA로 "포커스가 대상 앱에 잡혔는지" 결정적으로 확인. 안 되면 폴백으로 진행.
-                if (target != IntPtr.Zero && Win32.IsWindow(target))
-                    await WaitForFocusInTargetAsync(targetPid, ct);
+                Debug.WriteLine("[AI] 선택 텍스트 캡처 성공 (UIA 경로)");
+            }
+            else
+            {
+                // 클립보드 폴백: 포커스 재확인 → Ctrl+C → 읽기.
+                // [왜 재시도] 첫 시도가 타이밍에 안 맞으면(느린 앱/브라우저) 빈 값이 온다. 같은 순서를 반복하면
+                // 수동으로 두세 번 누르는 효과를 내부에서 얻는다.
+                for (int attempt = 1; attempt <= CaptureMaxAttempts; attempt++)
+                {
+                    TryFocusLastExternalTarget();
+                    if (target != IntPtr.Zero && Win32.IsWindow(target))
+                        await WaitForFocusInTargetAsync(targetPid, ct);
 
-                _inputService.SendCombo([VirtualKeyCode.VK_CONTROL, VirtualKeyCode.VK_C]);
-                await Task.Delay(220, ct);
+                    _inputService.SendCombo([VirtualKeyCode.VK_CONTROL, VirtualKeyCode.VK_C]);
+                    await Task.Delay(220, ct);
 
-                selectedText = null;
-                await WpfApp.Current.Dispatcher.InvokeAsync(() =>
-                    selectedText = ClipboardHelper.GetTextWithRetry());
+                    selectedText = null;
+                    await WpfApp.Current.Dispatcher.InvokeAsync(() =>
+                        selectedText = ClipboardHelper.GetTextWithRetry());
 
-                if (!string.IsNullOrWhiteSpace(selectedText))
-                    break;   // 캡처 성공
+                    if (!string.IsNullOrWhiteSpace(selectedText))
+                        break;   // 캡처 성공
 
-                Debug.WriteLine($"[AI] 선택 텍스트 캡처 실패 (시도 {attempt}/{CaptureMaxAttempts})");
+                    Debug.WriteLine($"[AI] 선택 텍스트 캡처 실패 (시도 {attempt}/{CaptureMaxAttempts})");
+                }
             }
 
             if (string.IsNullOrWhiteSpace(selectedText))
