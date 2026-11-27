@@ -370,6 +370,9 @@ public sealed class StubImeStateService : ImeStateService
     /// <summary>이 가짜가 QueryForegroundImeState()로 반환할 상태입니다.</summary>
     public ImeState StubbedState { get; set; } = ImeState.Unknown;
 
+    // 테스트는 상태 전환을 즉시 확인해야 하므로 실제 폴링 지연을 끈다.
+    protected override int RefreshThrottleMilliseconds => 0;
+
     public override ImeState QueryForegroundImeState() => StubbedState;
 }
 

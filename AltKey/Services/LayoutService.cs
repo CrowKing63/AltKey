@@ -29,8 +29,24 @@ public class LayoutService
     // 마이그레이션으로 "ToggleKoreanSubmode" 키를 SendKey VK_HANGUL로 바꾼 레이아웃을 기록하는 세션 표시입니다.
     private readonly HashSet<string> _migratedNames = new(StringComparer.OrdinalIgnoreCase);
 
-    /// <summary>이 레이아웃을 Load()에서 자동 마이그레이션했는지를 알려줍니다 (세션 범위).</summary>
-    public bool IsLayoutMigrated(string name) => _migratedNames.Contains(name);
+    /// <summary>
+    /// 이 레이아웃에 제거된 액션이 남아 자동 교체됐는지 알려줍니다.
+    /// 세션 기록이 지워져도 파일의 마커로 다시 판단해 편집기 경고가 사라지지 않게 합니다.
+    /// </summary>
+    public bool IsLayoutMigrated(string name)
+    {
+        if (_migratedNames.Contains(name)) return true;
+
+        // 캐시만 무효화된 경우 — 아직 저장 전이라 파일에 옛 액션이 남아 있으면 경고를 유지한다.
+        var path = Path.Combine(_layoutsDir, name + ".json");
+        if (!File.Exists(path)) return false;
+        try
+        {
+            return File.ReadAllText(path).Contains("ToggleKoreanSubmode", StringComparison.Ordinal);
+        }
+        catch (IOException) { return false; }
+        catch (UnauthorizedAccessException) { return false; }
+    }
 
     public event Action? LayoutsChanged;
 
@@ -150,7 +166,10 @@ public class LayoutService
         {
             case JsonObject obj:
                 // 이 객체가 키 액션 자체면 — type이 제거된 discriminator면 교체
-                if (obj["type"]?.GetValue<string>() == "ToggleKoreanSubmode")
+                // type 값이 문자열이 아닌 깨진 노드도 있다 — 이 경우 예외 대신 파싱 오류 경로에 맡긴다.
+                if (obj["type"] is JsonValue typeNode
+                    && typeNode.TryGetValue<string>(out var typeName)
+                    && typeName == "ToggleKoreanSubmode")
                 {
                     foreach (var key in obj.ToList().Select(p => p.Key).ToList())
                         obj.Remove(key);

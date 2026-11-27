@@ -31,6 +31,11 @@ public partial class App : Application
     // 워치독이 핸들을 열지 못했을 때 재시도할 메인 앱 PID입니다.
     private int _mainAppPid;
 
+    // 핸들을 못 여는 상태가 계속되면 이미 죽은 메인 앱일 수 있다.
+    // 2초 간격으로 최대 15번(30초) 기다린 뒤에는 Tools도 종료해 고아 프로세스를 남기지 않는다.
+    private const int MaxOpenProcessRetries = 15;
+    private int _openProcessRetries;
+
     // 단일 인스턴스 뮤텍스는 프로세스 수명 동안 소유해야 합니다.
     // OnStartup 스코프에서 using var로 만들면 시작이 끝나자마자 소유가 풀려
     // 두 번째 Tools 프로세스가 동시에 실행될 수 있습니다(파이프 이름 충돌).
@@ -350,6 +355,7 @@ public partial class App : Application
         {
             return;
         }
+        _openProcessRetries = 0;
 
         // PROCESS_QUERY_LIMITED_INFORMATION(0x1000): 종료 코드만 읽을 권한이면 충분합니다.
         _mainAppHandle = OpenProcess(0x1000, inheritHandle: false, _mainAppPid);
@@ -373,7 +379,13 @@ public partial class App : Application
         {
             _mainAppHandle = OpenProcess(0x1000, inheritHandle: false, _mainAppPid);
             if (_mainAppHandle == IntPtr.Zero)
-                return; // 아직 열리지 않음 — 다음 틱에 재시도
+            {
+                // 시작 타이밍/권한 문제일 수 있어 몇 번 기다리지만, 이미 끝난 프로세스라면 함께 종료한다.
+                if (++_openProcessRetries >= MaxOpenProcessRetries)
+                    Shutdown();
+                return;
+            }
+            _openProcessRetries = 0;
         }
 
         // GetExitCodeProcess가 STILL_ACTIVE(0x103 = 259)를 반환하면 아직 실행 중입니다.

@@ -51,18 +51,38 @@ public class ImeStateService
     /// <summary>OS IME 상태가 실제로 바뀔 때만 발화한다.</summary>
     public event Action<ImeState>? StateChanged;
 
+    // 400ms 타이머와 WinEvent가 거의 동시에 Refresh를 부를 수 있다.
+    // 아주 짧은 간격을 두면 창 후보 순회·SendMessageTimeout 중복을 줄일 수 있다.
+    // 값을 키우면 OS 조회는 줄지만 라벨 반영이 그만큼 늦어진다.
+    private const int RefreshThrottleMs = 100;
+    private DateTime _lastRefreshUtc = DateTime.MinValue;
+
+    /// <summary>테스트처럼 즉시 갱신이 필요하면 0으로 재정의한다.</summary>
+    protected virtual int RefreshThrottleMilliseconds => RefreshThrottleMs;
+
     /// <summary>
     /// 현재 OS IME 상태를 다시 조회하고, 이전과 다를 때만 StateChanged를 발화한다.
     /// 주기적 폴링에서 호출한다. 판별 실패(Unknown)도 상태 변화로 알리지만,
     /// 수신자가 Unknown이면 내부 상태를 바꾸지 않는다.
+    /// 같은 순간의 중복 호출은 위 간격 안에서 한 번만 실제 조회한다.
     /// </summary>
     public void Refresh()
     {
+        var now = DateTime.UtcNow;
+        if ((now - _lastRefreshUtc).TotalMilliseconds < RefreshThrottleMilliseconds) return;
+        _lastRefreshUtc = now;
+
         var next = QueryForegroundImeState();
         if (next == _currentState) return;
         _currentState = next;
         StateChanged?.Invoke(next);
     }
+
+    /// <summary>
+    /// 이미 조회한 상태를 캐시에만 반영한다. 한/영 토글 폴링처럼 다시 OS를 묻지 않아도 될 때 쓴다.
+    /// StateChanged는 발화하지 않는다 — 호출자가 내부 서브모드를 직접 동기화하기 때문이다.
+    /// </summary>
+    public void ObserveState(ImeState state) => _currentState = state;
 
     // ── 외부 진입점 ────────────────────────────────────────────────────────
 

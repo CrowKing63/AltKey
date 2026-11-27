@@ -182,10 +182,14 @@ public void SetInputLanguage(InputSubmode submode)
 - [ ] 빠른 메모 패드(포커스) → 한/영 키 → 항상 유니코드 분기(내부 토글만, OS IME 무관)
 - [ ] 헤더 상단바 — "한/영" 버튼이 없다 (마이그레이션)
 - [ ] 패드 한/영 버튼 — 항상 internal 서브모드 토글
-- [ ] 자동완성 ON/OFF 전환 시 OS IME가 어긋나지 않는지 확인
+- [ ] 자동완성 ON → 한글 모드로 시작 / OFF → OS IME 상태 반영 확인
 - [ ] AltKey.Tools — 헤더 버튼 편집기에서 OsIme 항목이 없는지 확인
+- [ ] 자동완성 ON 상태에서 외부 앱의 OS IME를 바꿔도 내부 조합 상태(문자 키 라벨)가 그대로인지 확인
+- [ ] 한/영 키를 누른 직후 자동완성 ON/OFF를 눌러도 라벨이 이전 상태로 돌아가지 않는지 확인
 
-> **후속(계획 범위 외, 2026-11-27 구현)**: OS IME를 직접 토글하거나 다른 창으로 포커스를 옮길 때도 문자 키 라벨이 따라가도록 `ImeStateService.Refresh()` + `StateChanged`와 400ms 백업 폴링, `EVENT_INPUTLANGCHANGE`/`EVENT_SYSTEM_FOREGROUND` WinEvent hook을 `KeyboardViewModel`에 연결했다. 위 체크리스트의 "자동완성 ON/OFF 전환 시 어긋남" 항목과 함께 확인한다.
+> **후속(계획 범위 외, 2026-11-27 구현)**: OS IME를 직접 토글하거나 다른 창으로 포커스를 옮길 때도 문자 키 라벨이 따라가도록 `ImeStateService.Refresh()` + `StateChanged`와 400ms 백업 폴링, `EVENT_INPUTLANGCHANGE`/`EVENT_SYSTEM_FOREGROUND` WinEvent hook을 `KeyboardViewModel`에 연결했다. 위 체크리스트의 "자동완성 ON/OFF 전환" 항목과 함께 확인한다.
+>
+> 외부 IME 이벤트 동기화는 **가상키 모드에서만** 적용한다(`SyncFromImeStateWhenVirtualKey`). 유니코드 모드는 OS IME를 우회하므로 외부 상태가 내부 조합을 덮어쓰지 않는다. 또한 한/영 토글 폴링 결과를 `ImeStateService.ObserveState()`로 캐시에 반영해, 토글 직후 자동완성 ON/OFF가 이전 OS 상태로 되돌아가지 않게 했다. 자동완성을 **켜는 순간**에는 한국어 자동완성이 핵심이므로 OS 상태와 무관하게 한글 모드로 시작하고, 끄는 순간에만 OS IME 상태를 반영한다.
 
 ## 오픈 질문
 

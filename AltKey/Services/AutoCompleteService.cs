@@ -152,7 +152,12 @@ public sealed class AutoCompleteService
         var pre = _imeState.QueryForegroundImeState();
         _inputService.SendKeyPress(VirtualKeyCode.VK_HANGUL);
 
-        switch (_imeState.QueryForegroundImeStateAfterToggle(pre))
+        var observed = _imeState.QueryForegroundImeStateAfterToggle(pre);
+        // 폴링에서 확인한 값을 캐시에 반영한다. 직후에 자동완성 ON/OFF를 누르면
+        // 이전 상태로 되돌아가 라벨과 실제 입력 모드가 어긋나는 것을 막는다.
+        _imeState.ObserveState(observed);
+
+        switch (observed)
         {
             case ImeState.Korean:
                 _module.SetInputLanguage(InputSubmode.HangulJamo);
@@ -165,6 +170,17 @@ public sealed class AutoCompleteService
                 _liveRegion?.Announce("OS IME 상태를 알 수 없음");
                 return;
         }
+    }
+
+    /// <summary>
+    /// OS IME 이벤트 전용 동기화 — 가상키 모드에서만 내부 서브모드를 바꾼다.
+    /// 유니코드 모드(자동완성 ON)는 OS IME를 우회하므로, 외부 상태가 내부 조합을 덮어쓰지 않는다.
+    /// 판별 불가(Unknown)는 내부 상태를 바꾸지 않는다.
+    /// </summary>
+    public void SyncFromImeStateWhenVirtualKey(ImeState state)
+    {
+        if (_inputService.Mode != InputMode.VirtualKey) return;
+        SyncFromImeState(state);
     }
 
     /// <summary>

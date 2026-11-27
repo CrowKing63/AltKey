@@ -194,6 +194,91 @@ public class LayoutServiceTests
         }
     }
 
+    /// 세션 기록이 지워져도 파일에 옛 액션이 남아 있으면 편집기 경고가 유지되는지 확인합니다.
+    /// 저장 후에는 파일이 정리되므로 경고가 사라지는지도 함께 확인합니다.
+    [Fact]
+    public void migration_warning_uses_file_marker_after_cache_invalidation()
+    {
+        var dir = CreateTempLayoutsDir();
+        try
+        {
+            var legacy = @"{
+  ""name"": ""My"",
+  ""language"": null,
+  ""columns"": [
+    {
+      ""gap"": 0.5,
+      ""rows"": [
+        {
+          ""keys"": [
+            { ""label"": ""가/A"", ""action"": { ""type"": ""ToggleKoreanSubmode"" } }
+          ]
+        }
+      ]
+    }
+  ]
+}";
+            File.WriteAllText(Path.Combine(dir, "My.json"), legacy);
+            var service = new LayoutService(dir);
+            service.Load("My");
+
+            service.InvalidateCache();
+            Assert.True(service.IsLayoutMigrated("My"));
+
+            var clean = new LayoutConfig(
+                "My", null,
+                [new KeyColumn(0.5, [new KeyRow([new KeySlot("가/A", null, new SendKeyAction("VK_HANGUL"))])])]);
+            service.Save("My", clean);
+
+            Assert.False(service.IsLayoutMigrated("My"));
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
+    /// type 값이 문자열이 아닌 노드가 있어도 예외 없이 로드되는지 확인합니다.
+    [Fact]
+    public void Load_does_not_throw_on_non_string_type_node()
+    {
+        var dir = CreateTempLayoutsDir();
+        try
+        {
+            var odd = @"{
+  ""name"": ""Odd"",
+  ""language"": null,
+  ""columns"": [
+    {
+      ""gap"": 0.5,
+      ""rows"": [
+        {
+          ""keys"": [
+            {
+              ""label"": ""ToggleKoreanSubmode"",
+              ""action"": { ""type"": ""SendKey"", ""vk"": ""VK_A"" },
+              ""extra"": { ""type"": 123 }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}";
+            File.WriteAllText(Path.Combine(dir, "Odd.json"), odd);
+
+            var layout = new LayoutService(dir).Load("Odd");
+
+            var action = Assert.IsType<SendKeyAction>(
+                layout.Columns!.Single().Rows!.Single().Keys!.Single().Action);
+            Assert.Equal("VK_A", action.Vk);
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
     private static string CreateTempLayoutsDir()
     {
         var dir = Path.Combine(Path.GetTempPath(), "altkey-layout-tests-" + Guid.NewGuid().ToString("N"));

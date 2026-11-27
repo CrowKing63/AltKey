@@ -1193,14 +1193,15 @@ public partial class KeyboardViewModel : ObservableObject, IDisposable
     }
 
     /// <summary>
-    /// OS IME 상태가 바뀌었을 때 내부 서브모드를 맞춘다.
+    /// OS IME 상태가 바뀌었을 때 가상키 모드에서만 내부 서브모드를 맞춘다.
+    /// 유니코드 모드에서는 AltKey가 OS IME를 우회하므로 외부 상태로 라벨·조합이 바뀌지 않는다.
     /// SetInputLanguage → SubmodeChanged → RefreshKeyLabels 순서로 라벨이 갱신된다.
     /// 판별 불가(Unknown)는 아무 것도 하지 않는다.
     /// </summary>
     private void OnImeStateChanged(ImeState state)
     {
         if (state == ImeState.Unknown) return;
-        _autoComplete.SyncFromImeState(state);
+        _autoComplete.SyncFromImeStateWhenVirtualKey(state);
     }
 
     private void RefreshKeyLabels(InputSubmode submode)

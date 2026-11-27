@@ -84,6 +84,28 @@ public class ToggleInputLanguageTests
         Assert.Equal(InputSubmode.QuietEnglish, module.ActiveSubmode);
     }
 
+    /// 가상키 모드에서는 OS IME 이벤트가 내부 서브모드를 바꿉니다.
+    [Fact]
+    public void ime_event_sync_applies_in_virtualkey_mode()
+    {
+        var (service, module, _, _) = BuildVirtualKey();
+
+        service.SyncFromImeStateWhenVirtualKey(ImeState.English);
+
+        Assert.Equal(InputSubmode.QuietEnglish, module.ActiveSubmode);
+    }
+
+    /// 유니코드 모드에서는 OS IME 이벤트가 내부 조합 상태를 덮어쓰지 않습니다.
+    [Fact]
+    public void ime_event_sync_is_ignored_in_unicode_mode()
+    {
+        var (service, module, _, _) = Build();
+
+        service.SyncFromImeStateWhenVirtualKey(ImeState.English);
+
+        Assert.Equal(InputSubmode.HangulJamo, module.ActiveSubmode);
+    }
+
     /// 가상키 모드 + 판별 "알 수 없음": 전송은 했지만 내부 상태는 유지한다.
     [Fact]
     public void virtualkey_unknown_keeps_internal_state()
@@ -103,7 +125,7 @@ public class ToggleInputLanguageTests
 /// </summary>
 public class ToggleInputLanguagePollTests
 {
-    private static (AutoCompleteService service, KoreanInputModule module) BuildVirtualKey(
+    private static (AutoCompleteService service, KoreanInputModule module, SequenceImeStateService ime) BuildVirtualKey(
         SequenceImeStateService ime)
     {
         var input = new FakeInputService { Mode = InputMode.VirtualKey };
@@ -112,7 +134,7 @@ public class ToggleInputLanguagePollTests
         var config = new ConfigService();
         var module = new KoreanInputModule(input, koDict, enDict, config);
         var service = new AutoCompleteService(module, koDict, enDict, config, input, ime);
-        return (service, module);
+        return (service, module, ime);
     }
 
     [Fact]
@@ -120,7 +142,7 @@ public class ToggleInputLanguagePollTests
     {
         // pre-send 조회: 영문 → 전송 후 폴링: 한국어(토글 확정)
         var ime = new SequenceImeStateService(ImeState.English, ImeState.Korean);
-        var (service, module) = BuildVirtualKey(ime);
+        var (service, module, _) = BuildVirtualKey(ime);
         module.SetInputLanguage(InputSubmode.QuietEnglish); // 내부를 영어로 둔다
 
         service.ToggleInputLanguage();
@@ -133,7 +155,7 @@ public class ToggleInputLanguagePollTests
     {
         // pre-send 조회: 알 수 없음 → 폴링도 알 수 없음 — 내부 상태는 유지한다
         var ime = new SequenceImeStateService(ImeState.Unknown, ImeState.Unknown, ImeState.Unknown);
-        var (service, module) = BuildVirtualKey(ime);
+        var (service, module, _) = BuildVirtualKey(ime);
 
         service.ToggleInputLanguage();
 
@@ -145,11 +167,23 @@ public class ToggleInputLanguagePollTests
     {
         // pre-send 조회: 한국어 → 전송 후 폴링: 영문 — 내부를 조용한 영어로 스냅
         var ime = new SequenceImeStateService(ImeState.Korean, ImeState.English);
-        var (service, module) = BuildVirtualKey(ime);
+        var (service, module, _) = BuildVirtualKey(ime);
         module.SetInputLanguage(InputSubmode.HangulJamo); // 내부를 한국어로 둔다
 
         service.ToggleInputLanguage();
 
         Assert.Equal(InputSubmode.QuietEnglish, service.ActiveSubmode);
+    }
+
+    /// 토글 직후 캐시가 갱신돼야 자동완성 전환 시 이전 상태로 되돌아가지 않습니다.
+    [Fact]
+    public void virtualkey_toggle_refreshes_cached_ime_state()
+    {
+        var ime = new SequenceImeStateService(ImeState.Korean, ImeState.English);
+        var (service, _, observedIme) = BuildVirtualKey(ime);
+
+        service.ToggleInputLanguage();
+
+        Assert.Equal(ImeState.English, observedIme.CurrentState);
     }
 }

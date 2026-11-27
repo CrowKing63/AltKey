@@ -121,9 +121,10 @@ public partial class MainViewModel : ObservableObject
             OnPropertyChanged();
 
             _autoCompleteService.ResetState();
-            // 자동완성 ON/OFF 전환 뒤에도 OS IME 상태와 라벨을 맞춘다.
-            // ResetState는 서브모드를 기본(한글)으로 되돌리므로, 여기서 현재 OS 상태를 다시 반영한다.
-            _autoCompleteService.SyncFromImeState(_imeState.CurrentState);
+            // 한국어 자동완성이 핵심이므로 켤 때는 항상 한글 모드로 시작한다.
+            // 끌 때는 가상키 모드 라벨이 OS IME와 맞도록 현재 상태를 반영한다.
+            if (!value)
+                _autoCompleteService.SyncFromImeState(_imeState.CurrentState);
             AutoComplete.IsVisible = _configService.Current.AutoCompleteEnabled;
 
             _liveRegion.Announce(value ? "자동완성 켜짐" : "자동완성 꺼짐");
