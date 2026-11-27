@@ -91,20 +91,20 @@ public class LayoutServiceTests
     }
 
     [Fact]
-    public void Constructor_does_not_overwrite_existing_builtin_layout()
+    public void Constructor_force_overwrites_existing_builtin_layout()
     {
         var source = CreateTempLayoutsDir();
         var target = CreateTempLayoutsDir();
         try
         {
-            File.WriteAllText(Path.Combine(source, "Basic.json"),
-                JsonSerializer.Serialize(new LayoutConfig("Basic", null, []), JsonOptions.Default));
-            // 데이터 폴더에 이미 있는 파일은 덮어써서 안 된다.
+            var sourceJson = JsonSerializer.Serialize(new LayoutConfig("Basic", null, []), JsonOptions.Default);
+            File.WriteAllText(Path.Combine(source, "Basic.json"), sourceJson);
+            // 데이터 폴더에 이미 있는 프리셋은 새 버전으로 덮어쓴다.
             File.WriteAllText(Path.Combine(target, "Basic.json"), "{\"existing\":true}");
 
             new LayoutService(target, source);
 
-            Assert.Equal("{\"existing\":true}", File.ReadAllText(Path.Combine(target, "Basic.json")));
+            Assert.Equal(sourceJson, File.ReadAllText(Path.Combine(target, "Basic.json")));
         }
         finally
         {

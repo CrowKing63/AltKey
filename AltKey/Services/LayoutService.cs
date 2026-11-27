@@ -13,7 +13,7 @@ public class LayoutService
 {
     /// <summary>
     /// [역할] 기본 제공(프리셋) 레이아웃 이름 목록입니다.
-    /// [기능] 프리셋은 사용자가 덮어쓰기/삭제할 수 없으며, 설치기가 업그레이드마다 갱신하는 대상입니다.
+    /// [기능] 프리셋은 수정 불가 파일이므로, 앱 시작 시 패키지의 최신 버전으로 항상 덮어쓰는 대상입니다.
     /// </summary>
     public static readonly HashSet<string> BuiltinNames = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -62,9 +62,8 @@ public class LayoutService
     }
 
     /// <summary>
-    /// [역할] 내장 레이아웃(Basic/Basic Plus)이 데이터 폴더에 없으면 소스 폴더에서 복사해 시드합니다.
-    /// [배포] MSIX 스토어 설치판은 설치기가 없으므로, 앱 시작 시 패키지에 번들된 layouts 폴더에서 채웁니다.
-    /// [보안] 이미 있는 파일(사용자가 수정한 프리셋 포함)은 덮어쓰지 않습니다.
+    /// [역할] 내장 레이아웃(Basic/Basic Plus)을 소스 폴더의 최신 버전으로 동기화합니다.
+    /// [배포] 설치판 포터블 모두 앱 시작 시 패키지에 번들된 layouts 폴더로 내장 레이아웃을 강제 동기화합니다.
     /// </summary>
     private void SeedBuiltinLayouts(string sourceDir)
     {
@@ -74,8 +73,12 @@ public class LayoutService
         {
             var target = Path.Combine(_layoutsDir, name + ".json");
             var source = Path.Combine(sourceDir, name + ".json");
-            if (!File.Exists(target) && File.Exists(source))
-                File.Copy(source, target);
+            if (!File.Exists(source)) continue;
+            // 포터블 모드에서는 데이터 폴더가 소스 폴더와 같으므로 같은 파일은 건너뛴다.
+            if (string.Equals(Path.GetFullPath(target), Path.GetFullPath(source), StringComparison.OrdinalIgnoreCase))
+                continue;
+            // 내장 레이아웃은 수정 불가 파일이므로 매번 소스(최신 버전)로 덮어쓴다.
+            File.Copy(source, target, overwrite: true);
         }
     }
 
