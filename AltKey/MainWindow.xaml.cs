@@ -60,6 +60,13 @@ public partial class MainWindow : Window
         _anchoredPanels = anchoredPanels;
         _anchoredPanels.AttachHost(this);
 
+        // 키보드 창 전체에서 일어나는 모든 누름(헤더 버튼·가상 키 포함)을 활동으로 보고
+        // 유휴 타이머를 리셋합니다 — 누름 경로 자체가 타이머를 초기화하지 않기 때문에,
+        // 창 표시 직후 외부에서 타이핑하다가 메모 버튼을 누르기 직전까지의 흐려진 상태가
+        // 패널 열림 순간에 그대로 복사되지 않도록 합니다.
+        AddHandler(UIElement.PreviewMouseLeftButtonDownEvent, new System.Windows.Input.MouseButtonEventHandler((_, _) => ResetIdleFade()), handledEventsToo: true);
+        AddHandler(UIElement.PreviewMouseRightButtonDownEvent, new System.Windows.Input.MouseButtonEventHandler((_, _) => ResetIdleFade()), handledEventsToo: true);
+
         // T-1.7: 자동 페이딩 타이머 — 생성자에서 먼저 만들어두면
         // Show() 중 IsVisibleChanged가 OnSourceInitialized보다 앞서 떠도 null이 아니어서 NRE를 피한다.
         SetupFadeTimer();
@@ -251,6 +258,25 @@ public partial class MainWindow : Window
     /// 스크래치패드 창이 같은 값으로 자신도 동기화하는 데 사용합니다 (2026-11-15 완전 연동).
     /// </summary>
     internal event Action<double, int>? OpacityStateApplied;
+
+    /// <summary>
+    /// 패널 열림 시 호스트의 목표 투명도로 패널도 함께 진행시킵니다.
+    /// 호스트가 유휴/진입/복원 애니메이션 중이면 <c>Opacity</c>는 중간값이 읽히므로
+    /// 패널이 중간값에서 멈춰 뜨는 것을 막기 위해 목표값으로 직접 진행시킵니다.
+    /// 같은 150ms 페이드 속도를 사용해 호스트와 동기화합니다.
+    /// </summary>
+    internal void SyncPanelOpacity(System.Windows.Window panel)
+    {
+        var target = GetCurrentTargetOpacity();
+        panel.BeginAnimation(
+            System.Windows.Window.OpacityProperty,
+            new DoubleAnimation
+            {
+                From = panel.Opacity,
+                To = target,
+                Duration = TimeSpan.FromMilliseconds(150)
+            });
+    }
 
     /// <summary>마우스가 이 창(또는 연동된 스크래치패드)에 들어온 것 같을 때 — 유휴 타이머를 초기화하고 기본 투명도로 되돌립니다.</summary>
     public void ResetIdleFade()

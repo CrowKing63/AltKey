@@ -99,11 +99,24 @@ public class AnchoredPanelService
         return window;
     }
 
-    private void ShowPanel(Window w, PanelEntry entry)
+    private void ShowPanel(Window w, PanelEntry entry, bool userActivity = true)
     {
-        // 키보드 창의 현재 투명도에서 시작합니다 — 유휴 페이딩 중인 동안에 패널이 갑자기 100%로 튀는 것을 방지 (2026-11-15).
+        // 패널 열림은 일반적으로(사용자가 버튼으로 여는 경우) 활동으로 보고 유휴 타이머를 리셋합니다 —
+        // 호스트는 지금 사용 중이므로 기본 투명도로 복원하고, 패널도 호스트의 목표값으로 함께 진행시켜
+        // 중간값에 멈추지 않게 합니다. 트레이 숨김 복원 경로는 사용 활동이 아니므로 호스트의 현재값만 그대로 복사합니다.
         if (_host is { } host)
-            w.Opacity = host.Opacity;
+        {
+            if (userActivity)
+            {
+                host.ResetIdleFade();
+                w.Opacity = host.Opacity; // Show() 직전 호스트의 현재 상태에서 시작 — 팝 방지
+                host.SyncPanelOpacity(w); // 목표값으로 150ms 함께 페이드 (같은 속도)
+            }
+            else
+            {
+                w.Opacity = host.Opacity; // 복원 경로: 호스트 상태 그대로 — 팝 방지
+            }
+        }
 
         entry.OnBeforeShow?.Invoke(); // Show() 전 — 이 창이 포커스를 가져가기 직전의 포그라운드(외부 앱)을 기록하는 등.
         w.Show();
@@ -148,7 +161,7 @@ public class AnchoredPanelService
                 if (_wasOpenBeforeTrayHide.GetValueOrDefault(entry.Id))
                 {
                     _wasOpenBeforeTrayHide[entry.Id] = false;
-                    ShowPanel(GetOrCreate(entry.Id), entry); // 포커스는 뺏지 않는다 — ShowPanel이 Activate()를 하지 않음
+                    ShowPanel(GetOrCreate(entry.Id), entry, userActivity: false); // 복원 경로 — 활동으로 세지 않음 — ShowPanel이 Activate()를 하지 않음
                 }
             }
         }
