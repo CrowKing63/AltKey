@@ -44,6 +44,7 @@ public partial class ActionBuilderViewModel : ObservableObject
         ["VK_F5"] = "F5", ["VK_F6"] = "F6", ["VK_F7"] = "F7", ["VK_F8"] = "F8",
         ["VK_F9"] = "F9", ["VK_F10"] = "F10", ["VK_F11"] = "F11", ["VK_F12"] = "F12",
         // 특수키
+        ["Fn"] = "Fn", // ToggleFunctionLayerAction — VK가 없어 표시명으로 처리
         ["VK_RETURN"] = "Enter", ["VK_SPACE"] = "Space", ["VK_TAB"] = "Tab",
         ["VK_BACK"] = "Backspace", ["VK_ESCAPE"] = "Esc",
         // 수식자
@@ -72,7 +73,7 @@ public partial class ActionBuilderViewModel : ObservableObject
     [
         "SendKey", "SendCombo", "ToggleSticky", "SwitchLayout",
         "RunApp", "Boilerplate", "ShellCommand", "VolumeControl", "ClipboardPaste",
-        "ToggleKoreanSubmode", "ToggleFunctionLayer", "Ai"
+        "ToggleFunctionLayer", "Ai"
     ];
 
     public static IReadOnlyList<string> ShellTypes  { get; } = ["cmd", "powershell"];
@@ -115,7 +116,6 @@ public partial class ActionBuilderViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(IsShellCommand))]
     [NotifyPropertyChangedFor(nameof(IsVolumeControl))]
     [NotifyPropertyChangedFor(nameof(IsClipboardPaste))]
-    [NotifyPropertyChangedFor(nameof(IsToggleKoreanSubmode))]
     [NotifyPropertyChangedFor(nameof(IsToggleFunctionLayer))]
     [NotifyPropertyChangedFor(nameof(IsAi))]
     private string selectedActionType = "SendKey";
@@ -130,7 +130,6 @@ public partial class ActionBuilderViewModel : ObservableObject
     public bool IsShellCommand         => SelectedActionType == "ShellCommand";
     public bool IsVolumeControl        => SelectedActionType == "VolumeControl";
     public bool IsClipboardPaste       => SelectedActionType == "ClipboardPaste";
-    public bool IsToggleKoreanSubmode  => SelectedActionType == "ToggleKoreanSubmode";
     public bool IsToggleFunctionLayer  => SelectedActionType == "ToggleFunctionLayer";
     public bool IsAi                   => SelectedActionType == "Ai";
 
@@ -215,9 +214,6 @@ public partial class ActionBuilderViewModel : ObservableObject
                 SelectedActionType = "ClipboardPaste";
                 ClipboardText = a.Text;
                 break;
-            case ToggleKoreanSubmodeAction:
-                SelectedActionType = "ToggleKoreanSubmode";
-                break;
             case ToggleFunctionLayerAction:
                 SelectedActionType = "ToggleFunctionLayer";
                 break;
@@ -245,7 +241,6 @@ public partial class ActionBuilderViewModel : ObservableObject
         "ShellCommand" => new ShellCommandAction(ShellCmd.Trim(), SelectedShell),
         "VolumeControl"=> new VolumeControlAction(VolumeDirection, VolumeStep),
         "ClipboardPaste"      => new ClipboardPasteAction(ClipboardText),
-        "ToggleKoreanSubmode" => new ToggleKoreanSubmodeAction(),
         "ToggleFunctionLayer" => new ToggleFunctionLayerAction(),
         "Ai"                  => new AiAction(AiPrompt),
         _                     => null

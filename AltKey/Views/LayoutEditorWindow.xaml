@@ -152,6 +152,14 @@
                             <Run Text="편집 중 파일: "/>
                             <Run Text="{Binding CurrentFileName, TargetNullValue=''}"/>
                         </TextBlock>
+                        <!-- 마이그레이션 안내: 제거된 ToggleKoreanSubmode 키가 SendKey(VK_HANGUL)로 자동 교체됨 -->
+                        <TextBlock Foreground="{DynamicResource ElevatedWarningFg}"
+                                   FontSize="{DynamicResource ScaledSettingsSubFontSize}"
+                                   TextWrapping="Wrap"
+                                   Visibility="{Binding MigrationWarning,
+                                       Converter={StaticResource BoolToVis}}">
+                            <Run Text="이 레이아웃은 제거된 ToggleKoreanSubmode 키를 SendKey(VK_HANGUL)로 자동 교체했습니다."/>
+                        </TextBlock>
                         <!-- 프리셋 레이아웃 안내: 덮어쓰기/삭제 불가, 새 이름으로 저장 유도 -->
                         <TextBlock Foreground="{DynamicResource ElevatedWarningFg}"
                                    FontSize="{DynamicResource ScaledSettingsSubFontSize}"

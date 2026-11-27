@@ -330,7 +330,6 @@ public partial class HeaderShortcutEditorWindow : Window, INotifyPropertyChanged
         ShellCommandAction shell => new ShellCommandAction(shell.Command, shell.Shell),
         VolumeControlAction volume => new VolumeControlAction(volume.Direction, volume.Step),
         ClipboardPasteAction clipboard => new ClipboardPasteAction(clipboard.Text),
-        ToggleKoreanSubmodeAction => new ToggleKoreanSubmodeAction(),
         ToggleFunctionLayerAction => new ToggleFunctionLayerAction(),
         AiAction ai => new AiAction(ai.Prompt),
         _ => null

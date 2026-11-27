@@ -176,6 +176,13 @@ public partial class LayoutEditorViewModel : ObservableObject
     };
 
     // ── 현재 편집 중인 파일명 ────────────────────────────────────────────────
+    /// <summary>
+    /// 로드된 레이아웃에 "제거된 ToggleKoreanSubmode 키가 SendKey VK_HANGUL로 자동 교체됨" 경고입니다.
+    /// 편집기에서 메시지만 표시합니다 — 레이아웃 본문은 JSON 파싱 전 자동 마이그레이션으로 이미 교체되었습니다.
+    /// </summary>
+    [ObservableProperty]
+    private bool migrationWarning;
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsExistingLayout))]
     [NotifyPropertyChangedFor(nameof(CanDeleteLayout))]
@@ -341,6 +348,7 @@ public partial class LayoutEditorViewModel : ObservableObject
     public void LoadLayout(string fileName)
     {
         var config = _layoutRepository.TryLoad(fileName);
+        MigrationWarning = config is not null && _layoutRepository.IsLayoutMigrated(fileName);
         if (config is null) return;
         ApplySnapshot(new LayoutEditorSnapshot(fileName, CloneLayoutConfig(config)), resetUndoHistory: true);
         StatusMessage  = $"'{config.Name}' 불러옴";
@@ -417,6 +425,8 @@ public partial class LayoutEditorViewModel : ObservableObject
             return;
         }
 
+        // ActionBuilder에서 편집 중인 값을 우선 사용한다. SelectedKey.FunctionAction은
+        // 편집기가 커밋한 뒤에만 갱신되므로, 방금 액션을 고르고 자동 채우기를 누르면 비어 있다.
         var action = SelectedKey.FunctionAction ?? FunctionActionBuilder.BuildAction();
         StatusMessage = TryApplyLabelsFromVk(
             action,
@@ -757,6 +767,7 @@ public partial class LayoutEditorViewModel : ObservableObject
             ResetUndoHistory(new LayoutEditorSnapshot(CurrentFileName, CloneLayoutConfig(layoutToSave)));
 
             var verification = _layoutRepository.TryLoad(CurrentFileName);
+            MigrationWarning = verification is not null && _layoutRepository.IsLayoutMigrated(CurrentFileName);
             var accentKeyCount = verification is null ? 0 : CountSoftAccentKeys(verification);
             var currentLayoutHint = IsEditingCurrentLayout
                 ? "현재 메인 키보드에 적용되는 레이아웃입니다."
@@ -979,11 +990,12 @@ public partial class LayoutEditorViewModel : ObservableObject
         string? vk = action switch
         {
             SendKeyAction sendKey => sendKey.Vk,
+            ToggleFunctionLayerAction => "Fn",
             _ => null
         };
 
         if (vk is null)
-            return "SendKey 액션이 아닙니다";
+            return "자동 채울 라벨이 없는 액션입니다";
 
         if (VkLabelMap.TryGetValue(vk, out var mapping))
         {
@@ -1278,7 +1290,6 @@ public partial class LayoutEditorViewModel : ObservableObject
         ShellCommandAction shell => new ShellCommandAction(shell.Command, shell.Shell),
         VolumeControlAction volume => new VolumeControlAction(volume.Direction, volume.Step),
         ClipboardPasteAction clipboard => new ClipboardPasteAction(clipboard.Text),
-        ToggleKoreanSubmodeAction => new ToggleKoreanSubmodeAction(),
         ToggleFunctionLayerAction => new ToggleFunctionLayerAction(),
         AiAction ai => new AiAction(ai.Prompt),
         _ => action

@@ -55,6 +55,11 @@ internal static class Win32
     public delegate void WinEventDelegate(IntPtr hWinEventHook, uint eventType,
         IntPtr hwnd, int idObject, int idChild, uint dwEventThread, uint dwmsEventTime);
 
+    // IME 상태/포그라운드 변경 감지용 이벤트 상수 (winuser.h)
+    public const uint EVENT_SYSTEM_FOREGROUND = 0x0003;
+    public const uint EVENT_INPUTLANGCHANGE  = 0x0011;
+    public const uint WINEVENT_OUTOFCONTEXT  = 0x0000;
+
     [DllImport("user32.dll")]
     public static extern IntPtr SetWinEventHook(uint eventMin, uint eventMax,
         IntPtr hmodWinEventProc, WinEventDelegate lpfnWinEventProc,
@@ -274,4 +279,83 @@ internal static class Win32
 
     // AltKey가 SendInput으로 생성한 이벤트 식별용 태그
     public const ulong INPUT_EXTRAINFO_ALTKEY = 0xA17A11UL;
+
+    // ── OS IME 상태 판별용 Win32 ──────────────────────────────────────────
+    // docs/feature-ime-detection/plan.md 참조. TASK-02가 제거한 선언을 복구한다.
+    public const uint WM_IME_CONTROL = 0x0283;
+    public const int IMC_GETOPENSTATUS = 0x0005;      // 열림 상태 조회
+    public const int IMC_GETCONVERSIONMODE = 0x0001;  // 변환 모드 조회
+    public const uint SMTO_BLOCK = 0x0001;
+    public const uint SMTO_ABORTIFHUNG = 0x0002;
+
+    // 변환 모드 상수 (IME conversion mode) — 비트마스크. Windows SDK 기준.
+    // 네이티브(한글 조합) 비트는 bit 0. 알파누메릭(영문)은 이 비트가 0인 상태다.
+    public const int IME_CMODE_ALPHANUMERIC = 0x00000000;  // 영문자 모드 (네이티브 비트 없음)
+    public const int IME_CMODE_NATIVE = 0x00000001;       // 한국어/일본어 등 조합 모드
+
+    [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+    public struct GUITHREADINFO
+    {
+        public uint cbSize;
+        public uint flags;
+        public IntPtr hwndActive;
+        public IntPtr hwndFocus;
+        public IntPtr hwndCapture;
+        public IntPtr hwndMenuOwner;
+        public IntPtr hwndMoveSize;
+        public IntPtr hwndCaret;
+        public int caretLeft;
+        public int caretTop;
+        public int caretRight;
+        public int caretBottom;
+    }
+
+    [DllImport("user32.dll", EntryPoint = "GetGUIThreadInfo")]
+    public static extern bool GetGUIThreadInfo(uint threadId, ref GUITHREADINFO info);
+
+    [DllImport("user32.dll")]
+    public static extern IntPtr GetParent(IntPtr hWnd);
+
+    [DllImport("user32.dll")]
+    public static extern IntPtr GetAncestor(IntPtr hWnd, uint gaFlags);
+
+    public const uint GA_ROOT = 0x00000001;
+    public const uint GA_ROOTOWNER = 0x00000002;
+
+    // 자손 창 열거 콜백. EnumChildWindows가 콜백을 동기 호출하므로 로컬 람다로 전달해도 안전하다.
+    public delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
+
+    [DllImport("user32.dll")]
+    public static extern bool EnumChildWindows(IntPtr hWndParent, EnumWindowsProc lpEnumFunc, IntPtr lParam);
+
+    [DllImport("user32.dll", EntryPoint = "SendMessageTimeout")]
+    public static extern bool SendMessageTimeout(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam,
+        uint fuFlags, uint uTimeout, out IntPtr lpdwResult);
+
+    [DllImport("imm32.dll", ExactSpelling = true)]
+    public static extern IntPtr ImmGetDefaultIMEWnd(IntPtr hWnd);
+
+    // IMM32 선언은 Windows SDK 시그니처를 따른다.
+    // 예전 2인자 bool 선언은 실제 API와 어긋나 ImmGetContext가 항상 실패했다.
+    // 실제: HIMC ImmGetContext(HWND) — 컨텍스트를 반환값으로 받는다.
+    [DllImport("imm32.dll", ExactSpelling = true)]
+    public static extern IntPtr ImmGetContext(IntPtr hWnd);
+
+    // 실제: BOOL ImmGetOpenStatus(HIMC) — 반환값 자체가 열림 상태.
+    [DllImport("imm32.dll", ExactSpelling = true)]
+    public static extern bool ImmGetOpenStatus(IntPtr contextId);
+
+    // 실제: BOOL ImmGetConversionStatus(HIMC, LPDWORD conversion, LPDWORD sentence).
+    [DllImport("imm32.dll", ExactSpelling = true)]
+    public static extern bool ImmGetConversionStatus(IntPtr contextId, out int conversion, out int sentence);
+
+    [DllImport("imm32.dll", ExactSpelling = true)]
+    public static extern int ImmGetLanguageID(IntPtr contextId);
+
+    [DllImport("user32.dll")]
+    public static extern IntPtr GetKeyboardLayout(uint threadId);
+
+    // 실제: BOOL ImmReleaseContext(HWND, HIMC) — 창 핸들도 함께 넘겨야 한다.
+    [DllImport("imm32.dll", ExactSpelling = true)]
+    public static extern bool ImmReleaseContext(IntPtr hWnd, IntPtr contextId);
 }

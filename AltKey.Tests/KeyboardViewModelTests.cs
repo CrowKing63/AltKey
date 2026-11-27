@@ -76,7 +76,7 @@ public class KeyboardViewModelTests
 
     private static KeySlotVm CreateSlotVm(KeySlot slot)
     {
-        var autoComplete = new AutoCompleteService(new FakeInputLanguageModule(), new KoreanDictionaryTestable(), new EnglishDictionaryTestable(), new ConfigService());
+        var autoComplete = new AutoCompleteService(new FakeInputLanguageModule(), new KoreanDictionaryTestable(), new EnglishDictionaryTestable(), new ConfigService(), new FakeInputService(), new StubImeStateService());
         var vm = new KeySlotVm(slot, autoComplete);
         vm.RefreshDisplay();
         return vm;
@@ -85,7 +85,7 @@ public class KeyboardViewModelTests
     private sealed class FakeInputLanguageModule : IInputLanguageModule
     {
         public string LanguageCode => "ko";
-        public InputSubmode ActiveSubmode => InputSubmode.HangulJamo;
+        public InputSubmode ActiveSubmode { get; private set; } = InputSubmode.HangulJamo;
         public string ComposeStateLabel => "가";
         public string CurrentWord => "";
         public event Action<IReadOnlyList<string>>? SuggestionsChanged { add { } remove { } }
@@ -96,6 +96,7 @@ public class KeyboardViewModelTests
         public string? LastCommittedWord => null;
         public void NotifyWordCommitted(string word) { }
         public void ToggleSubmode() { }
+        public void SetInputLanguage(InputSubmode submode) => ActiveSubmode = submode;
         public void OnSeparator() { }
         public void Reset() { }
         public void CommitCurrentWord() { }

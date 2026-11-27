@@ -31,6 +31,9 @@ public sealed class FakeInputService : InputService
 
     public override void SendKeyPress(VirtualKeyCode vk) => KeyPresses.Add(vk);
 
+    // 테스트에서 입력 모드를 명시적으로 지정할 수 있도록 한다 (기본은 테스트가 지정).
+    public override InputMode Mode { get; set; } = InputMode.VirtualKey;
+
     public override void SendBackspace(int count) => BackspaceCounts.Add(count);
 
     // [꼬리 공백] 테스트에서 포그라운드 창을 임의로 설정할 수 있게.
@@ -316,6 +319,9 @@ internal static class TestSlotFactory
 
         public override void SendKeyPress(VirtualKeyCode vk) => KeyPresses.Add(vk);
 
+    // 테스트에서 입력 모드를 명시적으로 지정할 수 있도록 한다 (기본은 테스트가 지정).
+    public override InputMode Mode { get; set; } = InputMode.VirtualKey;
+
         public override void ReleaseAllModifiers(string reason = "manual")
         {
             ReleaseAllReasons.Add(reason);
@@ -354,4 +360,33 @@ internal static class TestSlotFactory
 
         public Win32.INPUT[] LastDispatch => Dispatches.Last();
     }
+}
+
+/// <summary>
+/// 테스트용 가짜 ImeStateService — QueryForegroundImeState를 고정된 값으로 대체한다.
+/// </summary>
+public sealed class StubImeStateService : ImeStateService
+{
+    /// <summary>이 가짜가 QueryForegroundImeState()로 반환할 상태입니다.</summary>
+    public ImeState StubbedState { get; set; } = ImeState.Unknown;
+
+    public override ImeState QueryForegroundImeState() => StubbedState;
+}
+
+/// <summary>
+/// 순차 상태 가짜 ImeStateService — QueryForegroundImeState()를 순서대로 반환한다
+/// (pre-send 조회 후, 폴링 반복으로). 마지막 값은 반복된다.
+/// </summary>
+public sealed class SequenceImeStateService : ImeStateService
+{
+    private readonly List<ImeState> _states;
+    private int _i;
+
+    public SequenceImeStateService(params ImeState[] states)
+    {
+        _states = new List<ImeState>(states);
+    }
+
+    public override ImeState QueryForegroundImeState() =>
+        _i < _states.Count ? _states[_i++] : _states[^1];
 }

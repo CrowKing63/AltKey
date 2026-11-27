@@ -1056,7 +1056,6 @@ public partial class SettingsViewModel : ObservableObject
         ShellCommandAction shell => new ShellCommandAction(shell.Command, shell.Shell),
         VolumeControlAction volume => new VolumeControlAction(volume.Direction, volume.Step),
         ClipboardPasteAction clipboard => new ClipboardPasteAction(clipboard.Text),
-        ToggleKoreanSubmodeAction => new ToggleKoreanSubmodeAction(),
         ToggleFunctionLayerAction => new ToggleFunctionLayerAction(),
         AiAction ai => new AiAction(ai.Prompt),
         _ => null
@@ -1092,7 +1091,6 @@ public partial class SettingsViewModel : ObservableObject
             ShellCommandAction => "셸 명령 실행",
             VolumeControlAction volume => $"볼륨 {volume.Direction}",
             ClipboardPasteAction => "클립보드 붙여넣기",
-            ToggleKoreanSubmodeAction => "한국어/영어 모드 전환",
             ToggleFunctionLayerAction => "Fn 레이어 전환",
             AiAction => "AI 텍스트 처리",
             _ => "액션 미지정"
@@ -1466,7 +1464,9 @@ public partial class SettingsViewModel : ObservableObject
             var toolArgument = string.IsNullOrWhiteSpace(toolName) ? "" : $"--tool {toolName}";
             var extraArgument = string.IsNullOrWhiteSpace(extraArguments) ? "" : extraArguments.Trim();
             var dataDirArgument = $"--data-dir \"{PathResolver.DataDir}\"";
-            var argumentParts = new[] { toolArgument, extraArgument, dataDirArgument }
+            // 폴백 직접 실행도 워치독에 메인 PID를 넘겨, 메인 종료 시 함께 꺼지게 한다.
+            var mainPidArgument = $"--main-pid {Environment.ProcessId}";
+            var argumentParts = new[] { toolArgument, extraArgument, dataDirArgument, mainPidArgument }
                 .Where(part => !string.IsNullOrWhiteSpace(part));
             var arguments = string.Join(" ", argumentParts);
             var process = Process.Start(new ProcessStartInfo

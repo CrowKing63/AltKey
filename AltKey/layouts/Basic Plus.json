@@ -1136,7 +1136,7 @@
                 "type": "ToggleSticky",
                 "vk": "VK_LWIN"
               },
-              "width": 1,
+              "width": 1.4,
               "height": 1,
               "style_key": "soft_accent",
               "gap_before": 0,
@@ -1168,12 +1168,13 @@
               "fn_english_shift_label": null
             },
             {
-              "label": "Fn",
+              "label": "한자",
               "shift_label": null,
               "action": {
-                "type": "ToggleFunctionLayer"
+                "type": "SendKey",
+                "vk": "VK_HANJA"
               },
-              "width": 1.4,
+              "width": 1,
               "height": 1,
               "style_key": "soft_accent",
               "gap_before": 0,
@@ -1205,10 +1206,11 @@
               "fn_english_shift_label": null
             },
             {
-              "label": "가",
+              "label": "한/영",
               "shift_label": null,
               "action": {
-                "type": "ToggleKoreanSubmode"
+                "type": "SendKey",
+                "vk": "VK_HANGUL"
               },
               "width": 1.4,
               "height": 1,
@@ -1311,11 +1313,10 @@
               "fn_english_shift_label": null
             },
             {
-              "label": "한/영",
+              "label": "Fn",
               "shift_label": null,
               "action": {
-                "type": "SendKey",
-                "vk": "VK_HANGUL"
+                "type": "ToggleFunctionLayer"
               },
               "width": 0.9,
               "height": 1,
@@ -1323,11 +1324,8 @@
               "gap_before": 0,
               "english_label": null,
               "english_shift_label": null,
-              "fn_action": {
-                "type": "SendKey",
-                "vk": "VK_HANJA"
-              },
-              "fn_label": "한자",
+              "fn_action": null,
+              "fn_label": null,
               "fn_shift_label": null,
               "fn_english_label": null,
               "fn_english_shift_label": null

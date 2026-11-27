@@ -55,6 +55,12 @@ public interface IInputLanguageModule
     /// "가/A" 토글 버튼이 호출. 이전 조합 상태는 플러시하고 Submode 반전.
     void ToggleSubmode();
 
+    /// <summary>
+    /// 내부 서브모드를 외부 판별 결과(OS IME 상태)로 동기화합니다.
+    /// ToggleSubmode()와 동일한 선행 처리를 거치며, 동일 상태면 no-op입니다.
+    /// </summary>
+    void SetInputLanguage(InputSubmode submode);
+
     /// 단어 구분자(공백/엔터/탭) 도달 시 호출.
     void OnSeparator();
 

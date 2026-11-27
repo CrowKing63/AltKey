@@ -74,11 +74,11 @@ public class HeaderButtonEnsureBuiltInsTests
         var result = HeaderButtonConfig.EnsureAllBuiltIns(buttons);
 
         // 누락된 기본 버튼(이모지·자동완성)은 설정 바로 앞에 채워지고, 새 기능은 맨 앞입니다.
-        // 이모지(😊)는 기능이 사라져 더 이상 채워지지 않습니다 — 누락 기본 버튼(AutoComplete·OsIme·Osk)만 설정 앞에 추가.
+        // 이모지(😊)는 기능이 사라져 더 이상 채워지지 않습니다 — 누락 기본 버튼(AutoComplete·Osk)만 설정 앞에 추가.
         Assert.Equal(
             [HeaderButtonConfig.IdScratchPad, HeaderButtonConfig.IdAi,
              HeaderButtonConfig.IdClipboard, HeaderButtonConfig.IdOsk,
-             HeaderButtonConfig.IdAutoComplete, HeaderButtonConfig.IdOsIme,
+             HeaderButtonConfig.IdAutoComplete,
              HeaderButtonConfig.IdSettings],
             result.Select(b => b.Id).ToArray());
     }
@@ -111,27 +111,28 @@ public class HeaderButtonEnsureBuiltInsTests
         var clipboard = BuiltIn(HeaderButtonConfig.IdClipboard);
         var custom = Custom("Custom-1");
         // 기존 설치에 있던 기본 버튼(숨김 상태) — 상대 순서·표시 유지 검증용 (이모지는 기능이 사라져 제거됨).
-        var osIme = new HeaderButtonConfig
+        var hiddenBuiltIn = new HeaderButtonConfig
         {
-            Id = HeaderButtonConfig.IdOsIme,
+            Id = HeaderButtonConfig.IdOsk,
             Kind = HeaderButtonKind.BuiltIn,
             Visible = false
         };
 
-        var buttons = new List<HeaderButtonConfig> { clipboard, custom, osIme };
+        var buttons = new List<HeaderButtonConfig> { clipboard, custom, hiddenBuiltIn };
         var result = HeaderButtonConfig.EnsureAllBuiltIns(buttons);
 
         // 새 기능 기본 버튼 2개(빠른 메모 → AI)가 맨 앞에 추가되고, 나머지는 상대 순서 그대로입니다.
-        Assert.Equal(3 + (HeaderButtonConfig.CreateDefaults().Count - 2), result.Count);
+        // 누락 기본 버튼(ScratchPad·Ai·AutoComplete·Settings) 4개가 설정 앞에 채워집니다.
+        Assert.Equal(7, result.Count);
         Assert.Equal([HeaderButtonConfig.IdScratchPad, HeaderButtonConfig.IdAi], [result[0].Id, result[1].Id]);
 
         int clipIdx = result.FindIndex(b => b.Id == clipboard.Id);
         int customIdx = result.FindIndex(b => b.Id == custom.Id);
-        int osImeIdx = result.FindIndex(b => b.Id == osIme.Id);
-        Assert.True(clipIdx < customIdx && customIdx < osImeIdx, "기존 상대 순서 유지");
+        int hiddenIdx = result.FindIndex(b => b.Id == hiddenBuiltIn.Id);
+        Assert.True(clipIdx < customIdx && customIdx < hiddenIdx, "기존 상대 순서 유지");
 
         Assert.True(result[clipIdx].Visible);          // 표시 여부는 그대로
-        Assert.False(result[osImeIdx].Visible);        // 숨김 설정도 그대로
+        Assert.False(result[hiddenIdx].Visible);       // 숨김 설정도 그대로
         Assert.Equal(HeaderButtonKind.Custom, result[customIdx].Kind);
     }
 
@@ -157,6 +158,30 @@ public class HeaderButtonEnsureBuiltInsTests
         // 두 번 호출해도 이모지가 다시 생기지 않는지(멱등) 확인합니다.
         var twice = HeaderButtonConfig.EnsureAllBuiltIns(result);
         Assert.DoesNotContain(twice, b => b.Id == "Emoji");
+    }
+
+    [Fact]
+    // 기존 설치 설정에 남아 있는 한/영(OsIme) 버튼 항목이 제거되고, 커스텀 버튼 순서는 그대로 유지되는지 확인합니다.
+    public void legacy_os_ime_entry_is_removed_and_custom_order_preserved()
+    {
+        var legacyOscime = new HeaderButtonConfig
+        {
+            Id = "OsIme", // 구버전 설치 설정에 저장된 한/영 기본 버튼 (2026-11 제거됨)
+            Kind = HeaderButtonKind.BuiltIn,
+            Visible = true
+        };
+        var custom = Custom("Custom-1");
+
+        var buttons = new List<HeaderButtonConfig> { BuiltIn(HeaderButtonConfig.IdSettings), legacyOscime, custom };
+        var result = HeaderButtonConfig.EnsureAllBuiltIns(buttons);
+
+        Assert.DoesNotContain(result, b => b.Id == "OsIme"); // OsIme 항목은 사라짐
+        int setIdx = result.FindIndex(b => b.Id == HeaderButtonConfig.IdSettings);
+        Assert.True(setIdx < result.FindIndex(b => b.Id == "Custom-1"), "커스텀 버튼 상대 순서 유지");
+
+        // 두 번 호출해도 OsIme가 다시 생기지 않는지(멱등) 확인합니다.
+        var twice = HeaderButtonConfig.EnsureAllBuiltIns(result);
+        Assert.DoesNotContain(twice, b => b.Id == "OsIme");
     }
 
     [Fact]

@@ -14,7 +14,7 @@ public class SwitchScanSuggestionTests
         var module = new FakeInputLanguageModule();
         var config = new ConfigService();
         config.Current.AutoCompleteEnabled = true;
-        var autoComplete = new AutoCompleteService(module, new KoreanDictionaryTestable(), new EnglishDictionaryTestable(), config);
+        var autoComplete = new AutoCompleteService(module, new KoreanDictionaryTestable(), new EnglishDictionaryTestable(), config, new FakeInputService(), new StubImeStateService());
         var vm = new SuggestionBarViewModel(
             autoComplete,
             new FakeInputService(),
@@ -37,7 +37,7 @@ public class SwitchScanSuggestionTests
         var module = new FakeInputLanguageModule();
         var config = new ConfigService();
         config.Current.AutoCompleteEnabled = false;
-        var autoComplete = new AutoCompleteService(module, new KoreanDictionaryTestable(), new EnglishDictionaryTestable(), config);
+        var autoComplete = new AutoCompleteService(module, new KoreanDictionaryTestable(), new EnglishDictionaryTestable(), config, new FakeInputService(), new StubImeStateService());
         var vm = new SuggestionBarViewModel(
             autoComplete,
             new FakeInputService(),
@@ -54,7 +54,7 @@ public class SwitchScanSuggestionTests
     private sealed class FakeInputLanguageModule : IInputLanguageModule
     {
         public string LanguageCode => "ko";
-        public InputSubmode ActiveSubmode => InputSubmode.HangulJamo;
+        public InputSubmode ActiveSubmode { get; private set; } = InputSubmode.HangulJamo;
         public string ComposeStateLabel => "가";
         public string CurrentWord { get; private set; } = "";
 
@@ -73,6 +73,7 @@ public class SwitchScanSuggestionTests
         public string? LastCommittedWord => null;
         public void NotifyWordCommitted(string word) { }
         public void ToggleSubmode() { }
+        public void SetInputLanguage(InputSubmode submode) => ActiveSubmode = submode;
         public void OnSeparator() { }
         public void Reset() { }
         public void CommitCurrentWord() { }

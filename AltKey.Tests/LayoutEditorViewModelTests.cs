@@ -305,6 +305,35 @@ public class LayoutEditorViewModelTests
             throw captured;
     }
 
+    /// Fn 키 자체(ToggleFunctionLayer)에도 기본 라벨 자동 채우기가 동작해야 합니다.
+    [Fact]
+    public void AutoFillBaseLabels_on_function_layer_key_sets_fn_label()
+    {
+        RunSta(() =>
+        {
+            var repo = new FakeLayoutRepository();
+            repo.Seed("fn-key", new LayoutConfig("fn-key", null,
+            [
+                new KeyColumn(0,
+                [
+                    new KeyRow([
+                        new KeySlot("", null, new ToggleFunctionLayerAction(), 1.0, 1.0, "", 0.0)
+                    ])
+                ])
+            ]));
+
+            var vm = new LayoutEditorViewModel(repo, new ConfigService());
+            vm.LoadLayout("fn-key");
+            vm.SelectedKey = vm.Columns[0].Rows[0].Keys[0];
+            vm.ActionBuilder.LoadFromAction(new ToggleFunctionLayerAction());
+
+            vm.AutoFillBaseLabelsCommand.Execute(null);
+
+            Assert.NotNull(vm.SelectedKey);
+            Assert.Equal("Fn", vm.SelectedKey!.EditLabel);
+        });
+    }
+
     private sealed class FakeLayoutRepository : ILayoutRepository
     {
         private readonly Dictionary<string, LayoutConfig> _layouts = new(StringComparer.OrdinalIgnoreCase);
@@ -323,6 +352,8 @@ public class LayoutEditorViewModelTests
             _layouts.TryGetValue(name, out var config)
                 ? JsonSerializer.Deserialize<LayoutConfig>(JsonSerializer.Serialize(config, JsonOptions.Default), JsonOptions.Default)
                 : null;
+
+        public bool IsLayoutMigrated(string name) => false;
 
         public void Save(string name, LayoutConfig config)
         {

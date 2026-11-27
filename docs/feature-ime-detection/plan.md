@@ -106,14 +106,14 @@ AltKey는 Windows 가상 키보드다. 초기 개발 때 **OS IME의 한/영 상
 
 ## 향후 과제 (리팩토링) — 중요
 
-> **기존에 OS IME 상태를 못 읽어서** "IME를 우회하고 한글을 유니코드로 직접 조립"하는 방식으로 구현된 부분이 있다. 위 설계의 판별 로직이 신뢰할 수 있게 동작한다면, 이 우회 구조를 더 단순하게 리팩토링할 여지가 생긴다 — 그게 향후 과제다.
+> **기존에 OS IME 상태를 못 읽어서** "IME를 우회하고 한글을 유니코드로 직접 조립"하는 방식으로 구현된 부분이 있다. 위 설계의 판별 로직이 신뢰할 수 있게 동작한다면, 이 우회 구조를 더 단순하게 리팩토링할 여지가 생긴다 — 그게 향후 과제다. (관련 스펙: [feature-input-toggle-unification/plan.md](../feature-input-toggle-unification/plan.md) — OS IME 토글 방식의 가/A·한/영 통합 계획)
 
 ### 현재 왜 복잡한가
 - AltKey는 IME에 VK 코드를 보내고 IME가 조합을 하도록 하는 대신, **IME를 우회해 한글 자모를 `HangulComposer`로 유니코드로 조립**해서 직접 송신한다(`KoreanInputModule`). 입력은 두 가지 모드로 나뉜다:
   - `InputMode.VirtualKey`: OS IME에 VK 코드를 보내 IME가 조합 (관리자 모드).
   - `InputMode.Unicode`: IME를 우회해 유니코드로 직접 조립·송신 (비관리자 모드).
 - 이유: 초기에 IME 상태를 신뢰할 수 없어서 "지금 무엇을 조합 중인지"를 AltKey가 스스로 확신해야 했고, 그 조합 상태로 자동완성 제안을 만들었다. 이 선택이 `SendAtomicReplace`의 원자성(백스페이스+재전송) 같은 복잡한 메커니즘을 만들어냈다.
-- 영어는 QuietEnglish 서브모드로 분리되어 있고("가/A" 토글), OS IME 한/영은 상단바 VK_HANGUL 버튼이 담당 — 세 층위가 독립적으로 얽혀 있다.
+- 영어는 QuietEnglish 서브모드로 분리되어 있고("가/A" 맥락), OS IME 한/영은 상단바 VK_HANGUL 버튼이 담당 — 세 층위가 독립적으로 얽혀 있다. 통합 스펙 [feature-input-toggle-unification/plan.md](../feature-input-toggle-unification/plan.md)가 이 셋을 한 경로로 묶는다.
 
 ### 리팩토링 방향 (아직 결정 안 함)
 - IME 상태를 신뢰할 수 있으니, **IME를 우회하지 않고 VK 코드를 보내 IME가 조합을 하도록** 하는 경로로 갈 수 있을지 검토.

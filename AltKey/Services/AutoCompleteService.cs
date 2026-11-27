@@ -13,13 +13,20 @@ public sealed class AutoCompleteService
     private readonly KoreanDictionary _koDict; // 한글 사전 (기록·제안 경로)
     private readonly EnglishDictionary _enDict; // 영어 사전 (기록·제안 경로)
     private readonly ConfigService _config; // 설정 서비스 (AutoCompleteEnabled 확인용)
+    private readonly InputService _inputService; // 입력 모드/키 전송
+    private readonly ImeStateService _imeState; // OS IME 판별 (가상키 모드 동기화용)
+    private readonly LiveRegionService? _liveRegion; // 접근성 안내 (판별 실패 시)
 
-    public AutoCompleteService(IInputLanguageModule module, KoreanDictionary koDict, EnglishDictionary enDict, ConfigService config)
+    public AutoCompleteService(IInputLanguageModule module, KoreanDictionary koDict, EnglishDictionary enDict, ConfigService config,
+        InputService inputService, ImeStateService imeState, LiveRegionService? liveRegion = null)
     {
         _module = module;
         _koDict = koDict;
         _enDict = enDict;
         _config = config;
+        _inputService = inputService;
+        _imeState = imeState;
+        _liveRegion = liveRegion;
         // 엔진에서 추천 단어가 바뀌면 UI에도 알림을 보냅니다. (기본 일반 모드)
         _module.SuggestionsChanged += list => SuggestionsChanged?.Invoke(list, SuggestionMode.Normal);
         _module.SubmodeChanged += OnSubmodeChanged;
@@ -122,8 +129,61 @@ public sealed class AutoCompleteService
     /// 레이아웃이 바뀌거나 리셋이 필요할 때 호출합니다.
     public void ResetState() => _module.Reset();
 
-    /// "가/A" 버튼을 눌러 한글/영어 입력 모드를 전환합니다.
-    public void ToggleKoreanSubmode() => _module.ToggleSubmode();
+    /// <summary>
+    /// 가/A·한/영 통합 키의 전환 처리입니다 (docs/feature-input-toggle-unification/plan.md).
+    /// 유니코드 모드(자동완성 ON 또는 패드 포커스) → 내부 서브모드 토글.
+    /// 가상키 모드 → OS IME를 토글하고, 판별 결과로 내부 서브모드를 동기화한다.
+    /// forceUnicode는 패드 버튼이 외부 모드 추측과 무관하게 항상 유니코드 분기로 들어가기 위해 쓴다.
+    /// </summary>
+    public void ToggleInputLanguage(bool forceUnicode = false)
+    {
+        var effectiveMode = (forceUnicode || _inputService.Mode == InputMode.Unicode)
+            ? InputMode.Unicode
+            : InputMode.VirtualKey;
+
+        if (effectiveMode == InputMode.Unicode)
+        {
+            _module.ToggleSubmode();
+            return;
+        }
+
+        // 가상키 모드: OS IME를 토글한 뒤, 변화가 반영될 때까지 폴링해 현재 상태로 동기화한다.
+        // 즉시 한 번만 조회하면 토글 처리 전의 이전 상태를 읽어 내부 서브모드가 동기화되지 않는다.
+        var pre = _imeState.QueryForegroundImeState();
+        _inputService.SendKeyPress(VirtualKeyCode.VK_HANGUL);
+
+        switch (_imeState.QueryForegroundImeStateAfterToggle(pre))
+        {
+            case ImeState.Korean:
+                _module.SetInputLanguage(InputSubmode.HangulJamo);
+                return;
+            case ImeState.English:
+                _module.SetInputLanguage(InputSubmode.QuietEnglish);
+                return;
+            default:
+                // 판별 불가 — 내부 상태를 바꾸지 않고 접근성 안내만 발화
+                _liveRegion?.Announce("OS IME 상태를 알 수 없음");
+                return;
+        }
+    }
+
+    /// <summary>
+    /// OS IME 상태 변경을 내부 서브모드에 반영한다.
+    /// 사용자가 한/영 키를 직접 누르거나 다른 창으로 포커스를 옮긴 경우 문자 키 라벨을 맞춘다.
+    /// 판별 불가(Unknown)는 내부 상태를 바꾸지 않는다.
+    /// </summary>
+    public void SyncFromImeState(ImeState state)
+    {
+        switch (state)
+        {
+            case ImeState.Korean:
+                _module.SetInputLanguage(InputSubmode.HangulJamo);
+                break;
+            case ImeState.English:
+                _module.SetInputLanguage(InputSubmode.QuietEnglish);
+                break;
+        }
+    }
 
     /// 현재 입력 중인 단어를 확정 짓습니다.
     public void CommitCurrentWord() => _module.CommitCurrentWord();

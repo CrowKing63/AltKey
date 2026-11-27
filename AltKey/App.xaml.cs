@@ -132,6 +132,7 @@ public partial class App : System.Windows.Application
             services.AddSingleton<IUserDictionaryRepository, UserDictionaryRepository>();
             services.AddSingleton<KoreanInputModule>();
             services.AddSingleton<IInputLanguageModule>(sp => sp.GetRequiredService<KoreanInputModule>());
+            services.AddSingleton<ImeStateService>();
             services.AddSingleton<AutoCompleteService>();
             // 08: 접근성 LiveRegion 서비스
             services.AddSingleton<LiveRegionService>();

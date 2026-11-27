@@ -28,6 +28,7 @@ public partial class MainViewModel : ObservableObject
     private readonly ProfileService _profileService;
     private readonly AutoCompleteService _autoCompleteService;
     private readonly InputService _inputService;
+    private readonly ImeStateService _imeState;
     private readonly OskLauncherService _oskLauncher;
     private readonly LiveRegionService _liveRegion;
     private readonly AiService _aiService;
@@ -120,6 +121,9 @@ public partial class MainViewModel : ObservableObject
             OnPropertyChanged();
 
             _autoCompleteService.ResetState();
+            // 자동완성 ON/OFF 전환 뒤에도 OS IME 상태와 라벨을 맞춘다.
+            // ResetState는 서브모드를 기본(한글)으로 되돌리므로, 여기서 현재 OS 상태를 다시 반영한다.
+            _autoCompleteService.SyncFromImeState(_imeState.CurrentState);
             AutoComplete.IsVisible = _configService.Current.AutoCompleteEnabled;
 
             _liveRegion.Announce(value ? "자동완성 켜짐" : "자동완성 꺼짐");
@@ -226,7 +230,8 @@ public partial class MainViewModel : ObservableObject
         AiTextCaptureService   aiTextCaptureService,
         SoundService           soundService,
         ScratchPadViewModel    scratchPadViewModel,
-        AnchoredPanelService   anchoredPanels)
+        AnchoredPanelService   anchoredPanels,
+        ImeStateService        imeState)
     {
         _configService  = configService;
         _layoutService  = layoutService;
@@ -244,6 +249,7 @@ public partial class MainViewModel : ObservableObject
         AutoComplete = suggestionBarViewModel;
         _autoCompleteService = autoCompleteService;
         _inputService = inputService;
+        _imeState = imeState;
         _oskLauncher = oskLauncher;
 
         // [스크래치패드] AltKey의 전역 입력 모드를 유지한다. VirtualKey 모드에서는 메모 TextBox의 OS IME가 조합을 맡는다.
@@ -593,13 +599,6 @@ public partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void SendOsImeHangul()
-    {
-        _inputService.SendKeyPress(VirtualKeyCode.VK_HANGUL);
-        _liveRegion.Announce("OS IME 한영 전환 신호 전송됨");
-    }
-
-    [RelayCommand]
     private void SendOsk()
     {
         // 토글: 열려 있으면 닫고, 닫혀 있으면 직접 실행 우선으로 엽니다 (결정은 OskLauncherService가 소유).
@@ -824,7 +823,6 @@ public partial class MainViewModel : ObservableObject
         {
             HeaderButtonConfig.IdClipboard => CreateBuiltInHeaderButtonVm(config, ToggleClipboardPanelCommand),
             HeaderButtonConfig.IdAutoComplete => CreateBuiltInHeaderButtonVm(config, command: null, isToggle: true),
-            HeaderButtonConfig.IdOsIme => CreateBuiltInHeaderButtonVm(config, SendOsImeHangulCommand, width: 40, fontSize: 10),
             HeaderButtonConfig.IdOsk => CreateBuiltInHeaderButtonVm(config, SendOskCommand),
             HeaderButtonConfig.IdSettings => CreateBuiltInHeaderButtonVm(config, Settings.OpenSettingsCommand),
             // AI ✨ 버튼은 상단바 설정의 Visible만으로 표시됩니다.
@@ -881,9 +879,10 @@ public partial class MainViewModel : ObservableObject
         if (action is null)
             return;
 
-        if (action is ToggleKoreanSubmodeAction)
+        // 통합 한/영 키 — 유니코드 분기/가상키 분기를 AutoCompleteService가 모드별로 처리한다.
+        if (action is SendKeyAction { Vk: "VK_HANGUL" })
         {
-            _autoCompleteService.ToggleKoreanSubmode();
+            _autoCompleteService.ToggleInputLanguage();
             return;
         }
 
@@ -898,7 +897,6 @@ public partial class MainViewModel : ObservableObject
             {
                 HeaderButtonConfig.IdClipboard => "클립보드 패널을 엽니다.",
                 HeaderButtonConfig.IdAutoComplete => "자동완성을 켜거나 끕니다.",
-                HeaderButtonConfig.IdOsIme => "OS IME에 한영 전환 신호를 보냅니다.",
                 HeaderButtonConfig.IdOsk => "화면 키보드를 열거나 닫습니다.",
                 HeaderButtonConfig.IdSettings => "설정 창을 엽니다.",
                 HeaderButtonConfig.IdAi => "선택한 텍스트를 AI로 가공합니다.",
@@ -918,7 +916,6 @@ public partial class MainViewModel : ObservableObject
             ShellCommandAction => "셸 명령을 실행합니다.",
             VolumeControlAction volume => $"볼륨을 {volume.Direction} 방향으로 조절합니다.",
             ClipboardPasteAction => "지정한 텍스트를 클립보드로 붙여넣습니다.",
-            ToggleKoreanSubmodeAction => "AltKey 내부 한국어/영어 입력 모드를 전환합니다.",
             ToggleFunctionLayerAction => "Fn 레이어 상태를 전환합니다.",
             AiAction => "선택한 텍스트를 AI로 가공합니다.",
             _ => ""

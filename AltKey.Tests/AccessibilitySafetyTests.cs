@@ -104,8 +104,8 @@ public class AccessibilitySafetyTests
                 HeaderButtons = HeaderButtonConfig.CreateDefaults()
             };
 
-            // 기본 우측 버튼(표시 ON 5개) + 커스텀 4개 = 9 > 한도 8 — 넘친 것을 ConfigService가 숨기는지 검증.
-            for (int i = 0; i < 4; i++)
+            // 기본 우측 버튼(표시 ON 4개) + 커스텀 5개 = 9 > 한도 8 — 넘친 것을 ConfigService가 숨기는지 검증.
+            for (int i = 0; i < 5; i++)
             {
                 config.HeaderButtons.Add(new HeaderButtonConfig
                 {
@@ -185,8 +185,21 @@ public class AccessibilitySafetyTests
             "..", "..", "..", "..",
             "AltKey", "layouts", "Basic.json"));
 
-        var json = File.ReadAllText(layoutPath);
-        var layout = JsonSerializer.Deserialize<LayoutConfig>(json, JsonOptions.Default);
+        // 실제 앱이 쓰는 LayoutService 로드 경로(제거된 ToggleKoreanSubmode → SendKey VK_HANGUL 마이그레이션 포함)로 읽는다.
+        var tempDir = Path.Combine(Path.GetTempPath(), $"AltKey-BasicLayout-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(tempDir);
+        LayoutConfig? layout = null;
+        try
+        {
+            File.Copy(layoutPath, Path.Combine(tempDir, "Basic.json"));
+            var layoutService = new LayoutService(tempDir);
+            layout = layoutService.Load("Basic");
+        }
+        finally
+        {
+            if (Directory.Exists(tempDir))
+                Directory.Delete(tempDir, true);
+        }
 
         Assert.NotNull(layout);
         var allKeys = layout!.Columns!

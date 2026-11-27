@@ -1,5 +1,6 @@
 using System.IO;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using AltKey.Models;
 
 namespace AltKey.Services;
@@ -25,6 +26,11 @@ public class LayoutService
 
     private readonly string _layoutsDir; // 레이아웃 파일들이 저장된 폴더 경로입니다.
     private readonly Dictionary<string, LayoutConfig> _cache = []; // 한 번 읽어온 레이아웃을 빠르게 다시 쓰기 위해 저장해두는 공간(캐시)입니다.
+    // 마이그레이션으로 "ToggleKoreanSubmode" 키를 SendKey VK_HANGUL로 바꾼 레이아웃을 기록하는 세션 표시입니다.
+    private readonly HashSet<string> _migratedNames = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>이 레이아웃을 Load()에서 자동 마이그레이션했는지를 알려줍니다 (세션 범위).</summary>
+    public bool IsLayoutMigrated(string name) => _migratedNames.Contains(name);
 
     public event Action? LayoutsChanged;
 
@@ -85,6 +91,10 @@ public class LayoutService
             throw new InvalidDataException($"레이아웃 파일 읽기 실패: {name}", ex);
         }
 
+        // 마이그레이션: 제거된 ToggleKoreanSubmode 액션을 SendKey(VK_HANGUL)로 교체합니다.
+        // 파싱 전에 구조적 JSON 레벨에서 바꾸므로 라벨/그리드/그 외 속성은 그대로 유지됩니다.
+        json = MigrateLegacyLayoutJson(json, name);
+
         LayoutConfig layout;
         try
         {
@@ -99,6 +109,70 @@ public class LayoutService
 
         _cache[name] = layout;
         return layout;
+    }
+
+    /// <summary>
+    /// 제거된 ToggleKoreanSubmode 액션을 정적 JSON 노드로 찾아 SendKey(VK_HANGUL)로 교체한다.
+    /// 교체에 성공하면 세션의 _migratedNames에 이름을 기록해 편집기가 경고를 표시하게 한다.
+    /// 파싱 실패 JSON은 원문 그대로 반환 — 메인 파싱 예외 경로가 처리한다.
+    /// </summary>
+    private string MigrateLegacyLayoutJson(string json, string name)
+    {
+        // 마커가 없으면 빠르게 종료
+        if (!json.Contains("ToggleKoreanSubmode", StringComparison.Ordinal))
+            return json;
+
+        JsonNode? root;
+        try
+        {
+            root = JsonNode.Parse(json);
+        }
+        catch (JsonException)
+        {
+            return json;
+        }
+
+        if (root is null)
+            return json;
+
+        bool migrated = false;
+        MigrateTree(root, ref migrated);
+        if (!migrated)
+            return json;
+
+        _migratedNames.Add(name);
+        return root.ToJsonString();
+    }
+
+    private static void MigrateTree(JsonNode node, ref bool migrated)
+    {
+        switch (node)
+        {
+            case JsonObject obj:
+                // 이 객체가 키 액션 자체면 — type이 제거된 discriminator면 교체
+                if (obj["type"]?.GetValue<string>() == "ToggleKoreanSubmode")
+                {
+                    foreach (var key in obj.ToList().Select(p => p.Key).ToList())
+                        obj.Remove(key);
+                    obj["type"] = "SendKey";
+                    obj["vk"] = "VK_HANGUL";
+                    migrated = true;
+                    return; // 교체된 노드는 하위까지 스캔할 필요가 없다
+                }
+                foreach (var prop in obj.ToList())
+                {
+                    if (prop.Value is not null)
+                        MigrateTree(prop.Value, ref migrated);
+                }
+                break;
+            case JsonArray arr:
+                foreach (var child in arr)
+                {
+                    if (child is not null)
+                        MigrateTree(child, ref migrated);
+                }
+                break;
+        }
     }
 
     /// <summary>T-6.7: 레이아웃 로드를 시도하고 실패 시 null 반환 (UI에서 폴백 처리)</summary>
@@ -136,7 +210,11 @@ public class LayoutService
     }
 
     /// <summary>config 변경 시 캐시 무효화</summary>
-    public void InvalidateCache() => _cache.Clear();
+    public void InvalidateCache()
+    {
+        _cache.Clear();
+        _migratedNames.Clear();
+    }
 
     /// <summary>
     /// [역할] 외부 프로세스(AltKey.Tools)에서 레이아웃 파일을 바꾼 뒤,

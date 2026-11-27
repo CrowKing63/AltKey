@@ -33,8 +33,8 @@ AltKey는 Windows 가상 키보드다. 한국어를 입력할 때 OS IME에 VK �
 4. **`KoreanDictionary` + `EnglishDictionary` + `WordFrequencyStore`** (`AltKey/Services/`)
    내장 빈도 사전(리소스 txt) + 사용자별 JSON 저장소. 언어별로 파일이 분리되어 있고 한글은 `UnsafeRelaxedJsonEscaping`으로 저장해야 `\uXXXX` 이스케이프를 피한다.
 
-5. **"가/A" 토글 버튼 → `ToggleKoreanSubmodeAction`** (`AltKey/Models/KeyAction.cs`)
-   이 액션만이 `KoreanInputModule.ToggleSubmode()`를 호출할 수 있는 유일한 경로다. OS IME의 한/영은 상단바 VK_HANGUL 비상 버튼이 담당하고, AltKey 내부 서브모드와는 **독립적**이다.
+5. **통합 한/영 전환 키 → `SendKey VK_HANGUL`** (`AltKey/Services/AutoCompleteService.ToggleInputLanguage()`)
+   가/A와 한/영을 하나의 키로 통합한다. 유니코드 모드(자동완성/패드)에서는 내부 서브모드를 토글하고, 가상키 모드에서는 OS IME를 전환한 뒤 판별 결과로 내부 서브모드를 동기화한다. OS IME 토글이 내부 서브모드와 독립적이었던 구구조는 [feature-input-toggle-unification/plan.md](../feature-input-toggle-unification/plan.md)에서 통합됐다.
 
 ---
 
@@ -53,7 +53,7 @@ AltKey는 Windows 가상 키보드다. 한국어를 입력할 때 OS IME에 VK �
 | `AutoCompleteService`가 **`IInputLanguageModule`에 단순 위임**만 하는 얇은 래퍼라는 사실 | 과거에는 여기에 `_isHangulMode`, `_hangul`, `OnHangulInput`/`OnKeyInput` 분기가 섞여 있었음. 다시 합치지 말 것. |
 | `KoreanInputModule` 내부에서 `InputService.SendAtomicReplace` / `SendUnicode` / `SendBackspace`(꼬리 공백 환원 전용)만 호출하는 규율 | 모듈이 `SendKeyPress`를 직접 쏘면 Unicode 모드의 TrackedOnScreenLength와 어긋난다. `SendBackspace`는 TrackedOnScreenLength·modifier를 건드리지 않는 전용 경로로, 제안 수락 꼬리 공백 환원에만 쓴다 (TASK-11). |
 | `KeyboardViewModel.IsSeparatorKey`가 SPACE/RETURN/TAB **세 개만** 보는 것 | 구두점은 모듈 내부(`KoreanInputModule.IsSeparator`)에서 별개로 처리한다. 두 곳을 합치려 하지 말 것. |
-| `qwerty-ko.json`의 "가" 버튼 슬롯 `ToggleKoreanSubmode` 액션 | VK_HANGUL이 아닌 별도 액션이다. OS IME에 VK_HANGUL을 보내는 것은 상단바 비상 버튼의 몫. |
+| `qwerty-ko.json`의 "가" 버튼 슬롯 | 통합 설계상 제거된 `ToggleKoreanSubmode` 액션은 더 이상 만들지 않는다 — 자동 교체로 `SendKey VK_HANGUL`로 바뀐다. OS IME 한/영 전환과 내부 서브모드 동기화는 한 경로(`ToggleInputLanguage`)로 묶인다. |
 | 자동완성이 **기본값 OFF**라는 사실 (`AppConfig.AutoCompleteEnabled`) | 관리자 모드로 실행되는 사용자가 켜는 순간 Unicode 모드로 전환을 못 해서 기능이 깨지는 케이스를 막는다. |
 
 ---
@@ -68,7 +68,7 @@ AltKey는 Windows 가상 키보드다. 한국어를 입력할 때 OS IME에 VK �
 | 단일 자모 학습 방지 같은 품질 필터 | `KoreanDictionary.RecordWord`·`IsBigramEligible`는 **완성 음절 1개 이상 + 독립 자모 없음** 기준(사용자 결정으로 2음절에서 완화, 자모 혼입 거부 추가). "ㄱ가" 같은 미완성 조합이 사전에 들어가는 것은 여전히 금지. |
 | 제안 수락(`AcceptSuggestion`) 이후의 `TrackedOnScreenLength` 처리 | 해결 완료 — `SuggestionBarViewModel.AcceptSuggestion`이 Unicode 모드에서 `SendAtomicReplace` 후 `ResetTrackedLength()`를 호출한다(TASK-01 해결). 회귀 방지 테스트 `AcceptSuggestion_then_new_jamo_preserves_accepted_word_on_screen` 유지. |
 | `IsImeKorean()` / IMM32 호출 경로 | 이미 제거됨(TASK-02 해결). 관련 P/Invoke도 동반 삭제. 재도입 금지. |
-| UI 라벨·ARIA·제안 바 표시 규칙 | `KeySlotVm.RefreshDisplay` 계열은 자유롭게 수정 가능. 단, `ToggleKoreanSubmode` 액션 라벨 "가/A"는 접근성 announcement와 동기화되어야 한다. |
+| UI 라벨·ARIA·제안 바 표시 규칙 | `KeySlotVm.RefreshDisplay` 계열은 자유롭게 수정 가능. 단, "가/A" 문자 키 라벨은 OS IME·내부 서브모드 동기화 결과와 동기화되어야 한다(통합 한/영 키와 함께 갱신된다). |
 | bigram 기록 호출부(`KoreanInputModule.FinalizeComposition`·`AcceptSuggestion`) | **런타임 bigram 기록은 사전 경유 단일 경로** — `KoreanDictionary.RecordBigram`/`EnglishDictionary.RecordBigram`만 사용. `BigramFrequencyStore.Record`에 직접 접근하는 우회 경로는 금지(과거 `AutoCompleteService.OnSeparator` 직접 Record가 빈도를 2배로 세던 버그). `_lastCommittedWord`는 모듈이 유일한 소유자 — 서비스는 `IInputLanguageModule.LastCommittedWord`로만 읽는다. |
 
 ---
@@ -136,18 +136,21 @@ User taps "해달" 제안 버튼
 ### 4.4 서브모드 토글 ("가/A")
 
 ```
-User taps "가" 버튼
+User taps "한/영"(SendKey VK_HANGUL) 버튼
   → KeyboardViewModel.KeyPressed
-     · slot.Action is ToggleKoreanSubmodeAction
-     · AutoCompleteService.ToggleKoreanSubmode()
-        → KoreanInputModule.ToggleSubmode()
-           · FinalizeComposition()                                ← 기존 조합 먼저 확정·학습
-           · _submode 반전
-           · SuggestionsChanged(empty) + SubmodeChanged
+     · effectiveAction is SendKeyAction { Vk: "VK_HANGUL" }
+     · scratchPadBox 계산 → forceUnicode(패드면 true)
+     · AutoCompleteService.ToggleInputLanguage(forceUnicode)
+        · 유니코드 모드 → KoreanInputModule.ToggleSubmode()
+            · FinalizeComposition()                              ← 기존 조합 먼저 확정·학습
+            · _submode 반전
+            · SuggestionsChanged(empty) + SubmodeChanged
+        · 가상키 모드 → InputService.SendKeyPress(VK_HANGUL)
+            · ImeStateService 판별 → KoreanInputModule.SetInputLanguage(판별된 상태)
      · UpdateModifierState() → 라벨 갱신
 ```
 
-OS IME 한/영과는 완전히 독립. 이 사이에 `VK_HANGUL`을 끼워 넣지 말 것.
+유니코드(자동완성/패드) 모드에서는 내부 토글만 한다. 가상키(외부 앱 포커스) 모드에서는 OS IME 전환 자체가 한/영 전환이다 — 통합된 수단으로 양쪽이 동일하게 동작한다.
 
 ---
 
@@ -156,7 +159,7 @@ OS IME 한/영과는 완전히 독립. 이 사이에 `VK_HANGUL`을 끼워 넣�
 - [ ] `AltKey.Tests`의 `HangulComposerTests`와 `KoreanInputModuleTests` 전체 녹색?
 - [ ] "해+ㅆ → 했", "ㄷㅏㄹㄱ → 닭", "화사에서 BS 3회 → 빈 필드", "엔터 조합 중 → 다음 줄 정상" 네 가지 수동 시나리오 재현?
 - [ ] Unicode 모드(비관리자)와 VirtualKey 모드(관리자) 둘 다 재현 확인?
-- [ ] `qwerty-ko.json`의 "가" 슬롯 액션이 `ToggleKoreanSubmode`이고 상단바 VK_HANGUL과 섞이지 않았는지 확인?
+- [ ] `qwerty-ko.json`의 "가" 슬롯 액션이 제거된 `ToggleKoreanSubmode`가 아닌 `SendKey VK_HANGUL`(또는 사용자 편집 상태)로 교체되어 통합 경로를 타는지 확인?
 - [ ] `WordFrequencyStore.Save`의 JSON 옵션이 바뀌지 않았는지 확인? 저장된 `user-words.ko.json`을 열어 한글이 그대로 보이는지?
 - [ ] `SendAtomicReplace`가 여전히 **단일 `SendInput` 호출**인지?
 
@@ -165,7 +168,7 @@ OS IME 한/영과는 완전히 독립. 이 사이에 `VK_HANGUL`을 끼워 넣�
 ## 6. 회귀 위험 냄새 (리뷰 시 레드 플래그)
 
 - `HangulComposer`에 public setter가 새로 생겼다 → 상태 일관성 깨짐 위험.
-- `_isHangulMode`, `_isKoreanInput`, `_layoutSupportsKorean`, `_lastImeKorean` 같은 **제거된 이름이 다시 등장** → 과거 설계로 회귀 중.
+- `_isHangulMode`, `_isKoreanInput`, `_layoutSupportsKorean`, `_lastImeKorean` 같은 **제거된 이름이 다시 등장** → 과거 설계로 회귀 중. 마찬가지로 `ToggleKoreanSubmodeAction`/`ToggleKoreanSubmode`가 다시 등장하면 통합 설계로 회귀한다.
 - `AutoCompleteService`가 `HangulComposer`를 직접 소유 → 모듈 경계 파괴.
 - `KoreanInputModule.HandleKey` 내부에서 `_input.SendKeyPress(...)`를 직접 호출 → VirtualKey 경로와 뒤섞임.
 - `KeyboardViewModel.IsSeparatorKey`에 구두점/마침표 추가 → 모듈 내부 `IsSeparator`와 이중 플러시.

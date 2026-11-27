@@ -129,7 +129,8 @@ public partial class ScratchPadWindow : AnchoredPanelWindowBase
     private void KoreanSubmodeButton_Click(object sender, RoutedEventArgs e)
     {
         PlayButtonSound();
-        _autoComplete?.ToggleKoreanSubmode();
+        // 패드는 항상 유니코드(내부 조합) 경로 — 자기 창 모드 추측과 무관하게 강제 유니코드 분기로 진입한다.
+        _autoComplete?.ToggleInputLanguage(forceUnicode: true);
     }
 
     private void OnSubmodeChanged(InputSubmode submode) => UpdateKoreanSubmodeLabel(submode);

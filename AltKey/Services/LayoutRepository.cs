@@ -31,5 +31,7 @@ public sealed class LayoutRepository : ILayoutRepository
     public void Save(string name, LayoutConfig config) => _layoutService.Save(name, config);
 
     public bool Delete(string name) => _layoutService.Delete(name);
+
+    public bool IsLayoutMigrated(string name) => _layoutService.IsLayoutMigrated(name);
 }
 

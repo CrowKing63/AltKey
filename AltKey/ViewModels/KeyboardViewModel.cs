@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows.Threading;
 using AltKey.Models;
+using AltKey.Platform;
 using AltKey.Services;
 using AltKey.Services.InputLanguage;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -50,7 +51,6 @@ public class KeySlotVm(KeySlot slot, AutoCompleteService autoComplete) : Observa
     private bool _isLocked;
     private bool _isA11yFocused;
     private FunctionLayerState _functionLayerState;
-    private string? _autoCompleteComposeStateLabel;
     private bool _showShiftLabels;
     private bool _isCapsLockOn;
     public bool IsSticky { get => _isSticky; set => SetProperty(ref _isSticky, value); }
@@ -65,7 +65,6 @@ public class KeySlotVm(KeySlot slot, AutoCompleteService autoComplete) : Observa
         Enum.TryParse<VirtualKeyCode>(ta.Vk, ignoreCase: true, out var vk)
             ? vk : null;
 
-    public bool IsKoreanSubmodeToggle => Slot.Action is ToggleKoreanSubmodeAction;
     public bool IsFunctionLayerToggle => Slot.Action is ToggleFunctionLayerAction;
 
     private InputSubmode _activeSubmode = InputSubmode.HangulJamo;
@@ -86,9 +85,6 @@ public class KeySlotVm(KeySlot slot, AutoCompleteService autoComplete) : Observa
     /// </summary>
     public string GetLabel(InputSubmode submode)
     {
-        if (IsKoreanSubmodeToggle)
-            return _autoCompleteComposeStateLabel ?? "가";
-
         if (submode == InputSubmode.QuietEnglish && Slot.EnglishLabel is { Length: > 0 } eng)
         {
             string baseLabel = ShouldUppercaseEnglishLabel()
@@ -124,7 +120,7 @@ public class KeySlotVm(KeySlot slot, AutoCompleteService autoComplete) : Observa
 
     private void ApplyFunctionLayerDisplay()
     {
-        if (_functionLayerState == FunctionLayerState.Inactive || IsFunctionLayerToggle || IsKoreanSubmodeToggle)
+        if (_functionLayerState == FunctionLayerState.Inactive || IsFunctionLayerToggle)
             return;
 
         if (_activeSubmode == InputSubmode.QuietEnglish && Slot.FunctionEnglishLabel is { Length: > 0 } fnEnglish)
@@ -166,16 +162,6 @@ public class KeySlotVm(KeySlot slot, AutoCompleteService autoComplete) : Observa
         RefreshDisplay();
     }
 
-    public void SetComposeStateLabel(string? label)
-    {
-        if (_autoCompleteComposeStateLabel != label)
-        {
-            _autoCompleteComposeStateLabel = label;
-            if (IsKoreanSubmodeToggle)
-                RefreshDisplay();
-        }
-    }
-
     public void SetFunctionLayerState(FunctionLayerState state)
     {
         if (_functionLayerState == state)
@@ -189,9 +175,6 @@ public class KeySlotVm(KeySlot slot, AutoCompleteService autoComplete) : Observa
 
     public string GetSubLabel()
     {
-        if (IsKoreanSubmodeToggle)
-            return "";
-
         if (Slot.EnglishLabel is { Length: > 0 } eng)
         {
             if (_activeSubmode == InputSubmode.HangulJamo)
@@ -256,7 +239,7 @@ public class KeySlotVm(KeySlot slot, AutoCompleteService autoComplete) : Observa
         if (_functionLayerState != FunctionLayerState.Inactive && !string.IsNullOrWhiteSpace(DisplayLabel))
             return $"{DisplayLabel} 키";
 
-        if (Slot.Action is ToggleKoreanSubmodeAction)
+        if (Slot.Action is SendKeyAction { Vk: "VK_HANGUL" })
         {
             return autoComplete.ActiveSubmode == InputSubmode.HangulJamo
                 ? "한국어 입력 중, 누르면 영어로 전환"
@@ -360,7 +343,7 @@ public class KeySlotVm(KeySlot slot, AutoCompleteService autoComplete) : Observa
 /// [역할] AltKey의 메인 키보드 화면을 제어하는 핵심 엔진입니다.
 /// [기능] 레이아웃 로딩, 키 입력 이벤트 처리, 입력 모드 전환, 접근성 내비게이션 등을 총괄합니다.
 /// </summary>
-public partial class KeyboardViewModel : ObservableObject
+public partial class KeyboardViewModel : ObservableObject, IDisposable
 {
     private readonly InputService _inputService;
     private readonly SoundService _soundService;
@@ -381,6 +364,14 @@ public partial class KeyboardViewModel : ObservableObject
     }
 
     private readonly DispatcherTimer _capsLockTimer;
+
+    // OS IME 상태 폴링 — 포커스 이동 같은 이벤트 놓침을 보완하는 백업 경로다.
+    // 한/영 전환·포그라운드 변경은 아래 WinEvent hook이 즉시 처리한다.
+    private readonly ImeStateService _imeState;
+    private readonly DispatcherTimer _imePollTimer;
+    private IntPtr _imeEventHookLang;
+    private IntPtr _imeEventHookForeground;
+    private Win32.WinEventDelegate? _imeEventProc;
 
     // L3: 스위치 스캔 입력 모드 타이머
     private DispatcherTimer? _scanTimer;
@@ -492,7 +483,8 @@ public partial class KeyboardViewModel : ObservableObject
 
     public KeyboardViewModel(InputService inputService, SoundService soundService,
         AutoCompleteService autoComplete, ConfigService configService, LiveRegionService liveRegion,
-        AccessibilityService accessibilityService, SuggestionBarViewModel suggestionBar)
+        AccessibilityService accessibilityService, SuggestionBarViewModel suggestionBar,
+        ImeStateService imeState)
     {
         _inputService = inputService;
         _soundService = soundService;
@@ -501,12 +493,14 @@ public partial class KeyboardViewModel : ObservableObject
         _liveRegion = liveRegion;
         _accessibilityService = accessibilityService;
         _suggestionBar = suggestionBar;
+        _imeState = imeState;
         _inputService.StickyStateChanged += UpdateModifierState;
         _inputService.ElevatedAppDetected += OnElevatedAppDetected;
         _configService.ConfigChanged += OnConfigChanged;
         _suggestionBar.ScanTargetsChanged += OnSuggestionScanTargetsChanged;
 
         _autoComplete.SubmodeChanged += OnSubmodeChanged;
+        _imeState.StateChanged += OnImeStateChanged;
 
         _liveRegion.Announced += msg =>
         {
@@ -517,6 +511,32 @@ public partial class KeyboardViewModel : ObservableObject
         _capsLockTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(100) };
         _capsLockTimer.Tick += OnTimerTick;
         _capsLockTimer.Start();
+
+        // OS IME 상태를 주기적으로 확인하는 백업 폴링.
+        _imePollTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(400) };
+        _imePollTimer.Tick += (_, _) => _imeState.Refresh();
+        _imePollTimer.Start();
+
+        // 한/영 전환·포그라운드 변경은 이벤트로 즉시 반영한다 (400ms 대기 없이).
+        // 콜백은 임의 스레드에서 오므로 Dispatcher로 UI 스레드에 넘겨 Refresh한다.
+        _imeEventProc = (_, _, _, _, _, _, _) =>
+            System.Windows.Application.Current?.Dispatcher.BeginInvoke(_imeState.Refresh);
+        _imeEventHookLang = Win32.SetWinEventHook(
+            Win32.EVENT_INPUTLANGCHANGE, Win32.EVENT_INPUTLANGCHANGE,
+            IntPtr.Zero, _imeEventProc, 0, 0, Win32.WINEVENT_OUTOFCONTEXT);
+        _imeEventHookForeground = Win32.SetWinEventHook(
+            Win32.EVENT_SYSTEM_FOREGROUND, Win32.EVENT_SYSTEM_FOREGROUND,
+            IntPtr.Zero, _imeEventProc, 0, 0, Win32.WINEVENT_OUTOFCONTEXT);
+    }
+
+    public void Dispose()
+    {
+        _imePollTimer.Stop();
+        _capsLockTimer.Stop();
+        if (_imeEventHookLang != IntPtr.Zero) Win32.UnhookWinEvent(_imeEventHookLang);
+        if (_imeEventHookForeground != IntPtr.Zero) Win32.UnhookWinEvent(_imeEventHookForeground);
+        _imeState.StateChanged -= OnImeStateChanged;
+        GC.SuppressFinalize(this);
     }
 
     public event Action? LiveRegionChanged;
@@ -632,9 +652,12 @@ public partial class KeyboardViewModel : ObservableObject
         bool isFunctionToggleKey = slot.Action is ToggleFunctionLayerAction;
         bool shouldConsumeFunctionLayer = false;
 
-        if (effectiveAction is ToggleKoreanSubmodeAction)
+        // 통합 한/영 키 — OS IME 전환과 내부 서브모드 동기화는 한 곳으로 묶는다.
+        // 스크래치패드가 포그라운드면 패드 경로이므로 반드시 유니코드(내부 토글) 분기로 들어간다.
+        var scratchPadBox = ScratchPadForegroundBox?.Invoke();
+        if (effectiveAction is SendKeyAction { Vk: "VK_HANGUL" })
         {
-            _autoComplete.ToggleKoreanSubmode();
+            _autoComplete.ToggleInputLanguage(forceUnicode: scratchPadBox is not null);
             UpdateModifierState();
             KeyTapped?.Invoke();
             return;
@@ -652,7 +675,7 @@ public partial class KeyboardViewModel : ObservableObject
         }
 
         // [스크래치패드] 포그라운드가 스크래치패드면 자기 창 브랜치를 건너뛰고 아래 외부 앱 경로(내부 조합)를 쓴다.
-        var scratchPadBox = ScratchPadForegroundBox?.Invoke();
+        // (scratchPadBox는 통합 한/영 키 분기에서 이미 계산함)
 
         if (_inputService.IsForegroundOwnWindow() && scratchPadBox is null)
         {
@@ -1169,6 +1192,17 @@ public partial class KeyboardViewModel : ObservableObject
             : "영어 입력 상태");
     }
 
+    /// <summary>
+    /// OS IME 상태가 바뀌었을 때 내부 서브모드를 맞춘다.
+    /// SetInputLanguage → SubmodeChanged → RefreshKeyLabels 순서로 라벨이 갱신된다.
+    /// 판별 불가(Unknown)는 아무 것도 하지 않는다.
+    /// </summary>
+    private void OnImeStateChanged(ImeState state)
+    {
+        if (state == ImeState.Unknown) return;
+        _autoComplete.SyncFromImeState(state);
+    }
+
     private void RefreshKeyLabels(InputSubmode submode)
     {
         foreach (var col in Columns)
@@ -1176,7 +1210,6 @@ public partial class KeyboardViewModel : ObservableObject
                 foreach (var keyVm in row.Keys)
                 {
                     keyVm.ActiveSubmode = submode;
-                    keyVm.SetComposeStateLabel(_autoComplete.ComposeStateLabel);
                     keyVm.SetFunctionLayerState(_inputService.FunctionLayerState);
                 }
     }

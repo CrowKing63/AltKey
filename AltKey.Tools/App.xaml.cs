@@ -25,6 +25,12 @@ public partial class App : Application
     // PID 폴링 대신 핸들로 확인하면, 같은 PID를 다시 사용한 새 프로세스와 혼동하지 않습니다.
     private IntPtr _mainAppHandle;
 
+    // Win32 GetExitCodeProcess의 STILL_ACTIVE 값 (0x103 = 259).
+    private const uint StillActive = 259;
+
+    // 워치독이 핸들을 열지 못했을 때 재시도할 메인 앱 PID입니다.
+    private int _mainAppPid;
+
     // 단일 인스턴스 뮤텍스는 프로세스 수명 동안 소유해야 합니다.
     // OnStartup 스코프에서 using var로 만들면 시작이 끝나자마자 소유가 풀려
     // 두 번째 Tools 프로세스가 동시에 실행될 수 있습니다(파이프 이름 충돌).
@@ -45,6 +51,9 @@ public partial class App : Application
 
             var rawArgs = e.Args ?? Array.Empty<string>();
             var isResident = rawArgs.Contains("--resident", StringComparer.OrdinalIgnoreCase);
+            // 메인 PID가 넘어오면 상주 여부와 무관하게 워치독을 켠다.
+            // (설정에서 직접 실행된 편집기도 메인 종료 시 함께 꺼져야 한다)
+            var mainPidArg = GetArgumentValue(rawArgs, "--main-pid");
 
             // 단일 인스턴스: 이미 실행 중인 프로세스가 있으면 요청을 전달하고 즉시 종료합니다.
             // 뮤텍스는 프로세스 수명 동안 소유해야 하므로 필드로 유지하고 OnExit에서 해제합니다.
@@ -94,7 +103,7 @@ public partial class App : Application
             {
                 ShutdownMode = System.Windows.ShutdownMode.OnExplicitShutdown;
                 StartIpcServer();
-                StartMainAppWatchdog(GetArgumentValue(rawArgs, "--main-pid"));
+                StartMainAppWatchdog(mainPidArg);
                 return;
             }
 
@@ -109,12 +118,14 @@ public partial class App : Application
                 MainWindow = window;
                 window.Show();
                 window.Activate();
+                StartMainAppWatchdog(mainPidArg);
                 return;
             }
 
             var mainWindow = new MainWindow();
             MainWindow = mainWindow;
             mainWindow.Show();
+            StartMainAppWatchdog(mainPidArg);
         }
         catch (Exception ex)
         {
@@ -335,23 +346,21 @@ public partial class App : Application
     /// </summary>
     private void StartMainAppWatchdog(string? mainPidText)
     {
-        if (!int.TryParse(mainPidText, out var pid))
+        if (!int.TryParse(mainPidText, out _mainAppPid))
         {
             return;
         }
 
         // PROCESS_QUERY_LIMITED_INFORMATION(0x1000): 종료 코드만 읽을 권한이면 충분합니다.
-        _mainAppHandle = OpenProcess(0x1000, inheritHandle: false, pid);
-        if (_mainAppHandle == IntPtr.Zero)
-        {
-            // 핸들 열기 실패 — 메인 앱이 이미 종료된 것입니다.
-            Shutdown();
-            return;
-        }
+        _mainAppHandle = OpenProcess(0x1000, inheritHandle: false, _mainAppPid);
+        // 핸들을 못 열어도 즉시 종료하지 않는다 — 메인이 아직 시작 중이거나
+        // 권한 타이밍 문제일 수 있으므로 아래 틱에서 다시 시도한다.
 
+        // 메인 앱 종료를 빠르게 따라가도록 짧은 간격으로 확인한다.
+        // IPC "exit" 신호가 놓쳐도 최대 2초 안에 정리된다 (고아 프로세스 방지).
         _watchdogTimer = new DispatcherTimer(DispatcherPriority.Background)
         {
-            Interval = TimeSpan.FromSeconds(10),
+            Interval = TimeSpan.FromSeconds(2),
         };
         _watchdogTimer.Tick += (_, _) => CheckMainAppAlive();
         _watchdogTimer.Start();
@@ -359,13 +368,19 @@ public partial class App : Application
 
     private void CheckMainAppAlive()
     {
-        // GetExitCodeProcess가 STILL_ACTIVE(255)를 반환하면 아직 실행 중입니다.
+        // 아직 핸들이 없으면 다시 연다 (시작 타이밍/권한 문제 대비).
+        if (_mainAppHandle == IntPtr.Zero)
+        {
+            _mainAppHandle = OpenProcess(0x1000, inheritHandle: false, _mainAppPid);
+            if (_mainAppHandle == IntPtr.Zero)
+                return; // 아직 열리지 않음 — 다음 틱에 재시도
+        }
+
+        // GetExitCodeProcess가 STILL_ACTIVE(0x103 = 259)를 반환하면 아직 실행 중입니다.
         // 프로세스가 종료돼도 핸들은 유효한데, PID는 새 프로세스에 재사용될 수 있어
         // PID로만 확인하면 죽은 메인 앱을 살아 있는 것으로 오인할 수 있습니다.
-        if (GetExitCodeProcess(_mainAppHandle, out var exitCode) && exitCode != 255)
-        {
+        if (GetExitCodeProcess(_mainAppHandle, out var exitCode) && exitCode != StillActive)
             Shutdown();
-        }
     }
 
     [DllImport("kernel32.dll", SetLastError = true)]

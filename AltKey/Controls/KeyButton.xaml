@@ -318,12 +318,6 @@
                             <Setter TargetName="FunctionLockIcon" Property="Visibility"
                                     Value="Visible"/>
                         </MultiTrigger>
-
-                        <!-- 07: 가/A 서브모드 토글 키 강조 -->
-                        <DataTrigger Binding="{Binding Slot.IsKoreanSubmodeToggle, RelativeSource={RelativeSource TemplatedParent}}" Value="True">
-                            <Setter TargetName="Root" Property="Background"
-                                    Value="{DynamicResource AccentBrush}"/>
-                        </DataTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>

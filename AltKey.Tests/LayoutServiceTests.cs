@@ -129,6 +129,71 @@ public class LayoutServiceTests
         }
     }
 
+    [Fact]
+    public void Load_migrates_legacy_toggle_korean_submode_to_sendkey_hangul()
+    {
+        var dir = CreateTempLayoutsDir();
+        try
+        {
+            var legacy = @"{
+  ""name"": ""My"",
+  ""language"": null,
+  ""columns"": [
+    {
+      ""gap"": 0.5,
+      ""rows"": [
+        {
+          ""keys"": [
+            {
+              ""label"": ""가/A"",
+              ""action"": { ""type"": ""ToggleKoreanSubmode"" }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}";
+            File.WriteAllText(Path.Combine(dir, "My.json"), legacy);
+
+            var service = new LayoutService(dir);
+            var layout = service.Load("My");
+
+            var key = layout.Columns!.Single().Rows!.Single().Keys!.Single();
+            var action = Assert.IsType<SendKeyAction>(key.Action);
+            Assert.Equal("VK_HANGUL", action.Vk);
+            Assert.Equal("가/A", key.Label); // 라벨/그리드 등 나머지는 유지
+            Assert.True(service.IsLayoutMigrated("My"));
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void Load_marks_only_layouts_that_were_actually_migrated()
+    {
+        var dir = CreateTempLayoutsDir();
+        try
+        {
+            var clean = JsonSerializer.Serialize(new LayoutConfig(
+                "Clean", null,
+                [new KeyColumn(0.5, [new KeyRow([new KeySlot("A", null, new SendKeyAction("VK_A"))])])]),
+                JsonOptions.Default);
+            File.WriteAllText(Path.Combine(dir, "Clean.json"), clean);
+
+            var service = new LayoutService(dir);
+            service.Load("Clean");
+
+            Assert.False(service.IsLayoutMigrated("Clean"));
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
     private static string CreateTempLayoutsDir()
     {
         var dir = Path.Combine(Path.GetTempPath(), "altkey-layout-tests-" + Guid.NewGuid().ToString("N"));

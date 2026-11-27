@@ -123,7 +123,6 @@ public class HeaderButtonConfig
     // ── 기본 버튼 ID 상수 ─────────────────────────────────────────────────
     public const string IdClipboard = "Clipboard";
     public const string IdAutoComplete = "AutoComplete";
-    public const string IdOsIme = "OsIme";
     public const string IdOsk = "Osk";
     public const string IdSettings = "Settings";
     public const string IdAi = "Ai";
@@ -149,7 +148,6 @@ public class HeaderButtonConfig
         CreateBuiltIn(IdAi, visible: false, position: "Right"),
         CreateBuiltIn(IdClipboard, visible: true, position: "Right"),
         CreateBuiltIn(IdAutoComplete, visible: true, position: "Right"),
-        CreateBuiltIn(IdOsIme, visible: true, position: "Right"),
         CreateBuiltIn(IdOsk, visible: true, position: "Right"),
         CreateBuiltIn(IdSettings, visible: true, position: "Right"),
     ];
@@ -173,6 +171,7 @@ public class HeaderButtonConfig
         //     커스텀 버튼 ID는 "custom-..."으로 자동 생성되므로 Id가 정확히 "Emoji"인 항목은
         //     사용자 커스텀일 수 없습니다 (Kind와 무관하게 제거 — 멱등).
         result.RemoveAll(b => b.Id == LegacyIdEmoji);
+        result.RemoveAll(b => b.Id == LegacyIdOsIme);
 
         // 0) 자가치유: 구버전 앱이 같은 ID의 기본 버튼을 Custom으로 강등해 저장한 경우 보정합니다.
         //    구버전은 아직 모르는 BuiltIn ID를 "Custom"으로 내리고 커스텀 기본값을 채워 저장하는데,
@@ -264,17 +263,20 @@ public class HeaderButtonConfig
     };
 
     public static bool IsBuiltInId(string id) => id is
-        IdClipboard or IdAutoComplete or IdOsIme or IdOsk or IdSettings or IdAi or IdScratchPad;
+        IdClipboard or IdAutoComplete or IdOsk or IdSettings or IdAi or IdScratchPad;
 
     // [마이그레이션] 이모지 버튼은 2026-11에 제거됐지만, 기존 설치 설정 파일에는 항목이 남아 있습니다.
     // EnsureAllBuiltIns가 그 항목을 지울 때 쓰는 레거시 ID — 새 코드에선 다른 용도로 쓰지 않습니다.
     private const string LegacyIdEmoji = "Emoji";
 
+    // [마이그레이션] OS IME 한/영 전용 버튼은 한/영 통합 설계로 제거됐지만, 기존 설치 설정 파일에는 항목이 남아 있습니다.
+    // EnsureAllBuiltIns가 그 항목을 지울 때 쓰는 레거시 ID — 새 코드에선 다른 용도로 쓰지 않습니다.
+    private const string LegacyIdOsIme = "OsIme";
+
     public static string GetDisplayName(string id) => id switch
     {
         IdClipboard => "클립보드",
         IdAutoComplete => "자동완성",
-        IdOsIme => "OS IME 한영",
         IdOsk => "화면 키보드",
         IdSettings => "설정",
         IdAi => "AI",
@@ -286,7 +288,6 @@ public class HeaderButtonConfig
     {
         IdClipboard => "📋",
         IdAutoComplete => "제안",
-        IdOsIme => "한/영",
         IdOsk => "⌨",
         IdSettings => "⚙",
         IdAi => "✨",
@@ -298,7 +299,6 @@ public class HeaderButtonConfig
     {
         IdClipboard => "클립보드 열기",
         IdAutoComplete => "자동완성 토글",
-        IdOsIme => "OS IME 한영 전환",
         IdOsk => "화면 키보드 열기/닫기",
         IdSettings => "설정 열기",
         IdAi => "AI 텍스트 처리",
@@ -310,7 +310,6 @@ public class HeaderButtonConfig
     {
         IdClipboard => "클립보드 버튼",
         IdAutoComplete => "자동완성 토글 버튼",
-        IdOsIme => "OS IME 한영 전환 버튼",
         IdOsk => "화면 키보드 버튼",
         IdSettings => "설정 버튼",
         IdAi => "AI 텍스트 처리 버튼",

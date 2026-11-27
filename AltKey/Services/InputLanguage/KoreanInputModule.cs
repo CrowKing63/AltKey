@@ -103,7 +103,7 @@ public sealed class KoreanInputModule : IInputLanguageModule
         if (jamo is null)
         {
             // 실제로 화면에 텍스트를 보내는 키(숫자·기호 등 SendKey)에만 조합을 확정한다.
-            // ToggleSticky(Shift/Ctrl/Win/Alt), ToggleKoreanSubmode 등은 텍스트를 만들지 않으므로
+            // ToggleSticky(Shift/Ctrl/Win/Alt), 통합 한/영 전환(SendKey VK_HANGUL) 등은 텍스트를 만들지 않으므로
             // 조합 상태를 건드리지 않는다. (쌍받침 회귀 방지)
             if (slot.Action is SendKeyAction && ctx.InputMode == InputMode.Unicode)
                 FinalizeComposition();
@@ -386,6 +386,30 @@ public sealed class KoreanInputModule : IInputLanguageModule
     }
 
     /// <summary>
+    /// 서브모드를 토글하지 않고 특정 상태로 설정합니다.
+    /// 외부 판별(OS IME) 결과를 내부 모드와 맞추는 동기화 경로입니다.
+    /// 토글과 동일한 선행 처리(FinalizeComposition, 문맥 초기화, 꼬리 공백 플래그 정리)를 거친 뒤
+    /// 이미 동일 상태면 no-op 입니다.
+    /// </summary>
+    public void SetInputLanguage(InputSubmode submode)
+    {
+        if (_submode == submode)
+            return;
+
+        _pendingTrailingSpace = false;
+
+        FinalizeComposition();
+
+        _lastCommittedWord = null;
+        _suggestionContext = null;
+
+        _submode = submode;
+
+        SuggestionsChanged?.Invoke(Array.Empty<string>());
+        SubmodeChanged?.Invoke(_submode);
+    }
+
+    /// <summary>
     /// 외부(AutoCompleteService)에서 단어가 확정되었음을 알립니다.
     /// 엔진 내부의 _lastCommittedWord를 갱신하여 bigram 컨텍스트를 동기화합니다.
     /// </summary>
@@ -412,11 +436,14 @@ public sealed class KoreanInputModule : IInputLanguageModule
 
     /// <summary>
     /// 모든 입력 상태를 초기값으로 되돌립니다.
+    /// 서브모드가 한글로 돌아가면 변경을 알려 라벨도 따라오게 합니다
+    /// (자동완성 ON 전환 시 내부는 한글인데 라벨이 영어로 남는 불일치 방지).
     /// </summary>
     public void Reset()
     {
         _composer.Reset();
         _englishPrefix = "";
+        bool submodeChanged = _submode != InputSubmode.HangulJamo;
         _submode = InputSubmode.HangulJamo;
         _lastCommittedWord = null;
         _suggestionContext = null;
@@ -425,6 +452,8 @@ public sealed class KoreanInputModule : IInputLanguageModule
         // [꼬리 공백] 전체 리셋 시 pending 플래그 정리.
         _pendingTrailingSpace = false;
         SuggestionsChanged?.Invoke(Array.Empty<string>());
+        if (submodeChanged)
+            SubmodeChanged?.Invoke(_submode);
     }
 
     /// <summary>

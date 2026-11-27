@@ -59,7 +59,8 @@ public class InputService
         TaskManager
     }
 
-    public InputMode Mode { get; private set; }
+    // virtual: 테스트가 Mode를 강제 지정할 수 있도록 (기본은 권한 판별 결과).
+    public virtual InputMode Mode { get; set; }
     public bool IsElevated => _isElevated;
     public int TrackedOnScreenLength { get; set; }
     public FunctionLayerState FunctionLayerState => _functionLayerState;

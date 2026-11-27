@@ -19,6 +19,12 @@ public interface ILayoutRepository
 
     LayoutConfig? TryLoad(string name, Action<Exception>? onError = null);
 
+    /// <summary>
+    /// 해당 레이아웃을 Load/TryLoad에서 자동 마이그레이션했는지(제거된 ToggleKoreanSubmode → SendKey VK_HANGUL).
+    /// 세션 범위이며, 로드 직후 파일을 다시 읽을 때 갱신됩니다.
+    /// </summary>
+    bool IsLayoutMigrated(string name);
+
     void Save(string name, LayoutConfig config);
 
     bool Delete(string name);
