@@ -90,40 +90,6 @@ public class AccessibilitySafetyTests
     }
 
     [Fact]
-    public void ConfigService_migrates_legacy_default_layout_names()
-    {
-        var tempDir = Path.Combine(Path.GetTempPath(), $"AltKey-ConfigMigration-{Guid.NewGuid():N}");
-        Directory.CreateDirectory(tempDir);
-
-        try
-        {
-            PathResolver.OverrideDataDir(tempDir);
-            var legacyJson = """
-                {
-                  "DefaultLayout": "Bagic",
-                  "Profiles": {
-                    "notepad.exe": "Bagic Plus",
-                    "calc.exe": "Bagic"
-                  }
-                }
-                """;
-            File.WriteAllText(PathResolver.ConfigPath, legacyJson);
-
-            var service = new ConfigService();
-
-            Assert.Equal("Basic", service.Current.DefaultLayout);
-            Assert.Equal("Basic Plus", service.Current.Profiles["notepad.exe"]);
-            Assert.Equal("Basic", service.Current.Profiles["calc.exe"]);
-        }
-        finally
-        {
-            PathResolver.OverrideDataDir(null);
-            if (Directory.Exists(tempDir))
-                Directory.Delete(tempDir, true);
-        }
-    }
-
-    [Fact]
     public void ConfigService_hides_header_buttons_that_exceed_side_limit()
     {
         var tempDir = Path.Combine(Path.GetTempPath(), $"AltKey-HeaderButtons-{Guid.NewGuid():N}");

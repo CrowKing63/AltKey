@@ -12,11 +12,6 @@ namespace AltKey.Services;
 /// </summary>
 public class ConfigService
 {
-    private const string LegacyDefaultLayoutName = "Bagic";
-    private const string LegacyDefaultLayoutPlusName = "Bagic Plus";
-    private const string CurrentDefaultLayoutName = "Basic";
-    private const string CurrentDefaultLayoutPlusName = "Basic Plus";
-
     /// <summary>현재 앱에 적용 중인 설정 데이터입니다.</summary>
     public AppConfig Current { get; private set; } = new();
 
@@ -58,7 +53,6 @@ public class ConfigService
                 }
 
                 MigrateWindowConfig(json);
-                MigrateLegacyLayoutNames();
                 MigrateAiBackend(json);
             }
             catch
@@ -217,37 +211,6 @@ public class ConfigService
         catch
         {
         }
-    }
-
-    /// <summary>
-    /// 과거 기본 레이아웃 이름(Bagic)을 현재 이름(Basic)으로 맞춥니다.
-    /// 사용자 커스텀 이름은 건드리지 않고, 기본 이름에만 보정 규칙을 적용합니다.
-    /// </summary>
-    private void MigrateLegacyLayoutNames()
-    {
-        Current.DefaultLayout = MigrateLegacyLayoutName(Current.DefaultLayout);
-
-        if (Current.Profiles.Count == 0)
-            return;
-
-        var migratedProfiles = new Dictionary<string, string>(Current.Profiles.Count, StringComparer.OrdinalIgnoreCase);
-        foreach (var pair in Current.Profiles)
-            migratedProfiles[pair.Key] = MigrateLegacyLayoutName(pair.Value);
-
-        Current.Profiles = migratedProfiles;
-    }
-
-    /// <summary>
-    /// 기본 레이아웃 이름만 현재 표기로 교정하고, 사용자가 만든 다른 이름은 그대로 둡니다.
-    /// </summary>
-    private static string MigrateLegacyLayoutName(string? layoutName)
-    {
-        return layoutName switch
-        {
-            LegacyDefaultLayoutName => CurrentDefaultLayoutName,
-            LegacyDefaultLayoutPlusName => CurrentDefaultLayoutPlusName,
-            _ => layoutName ?? CurrentDefaultLayoutName
-        };
     }
 
     /// <summary>
