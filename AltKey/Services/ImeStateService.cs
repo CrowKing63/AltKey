@@ -61,9 +61,21 @@ public class ImeStateService
     protected virtual int RefreshThrottleMilliseconds => RefreshThrottleMs;
 
     /// <summary>
-    /// 현재 OS IME 상태를 다시 조회하고, 이전과 다를 때만 StateChanged를 발화한다.
-    /// 주기적 폴링에서 호출한다. 판별 실패(Unknown)도 상태 변화로 알리지만,
-    /// 수신자가 Unknown이면 내부 상태를 바꾸지 않는다.
+    /// 상태가 전환되었다고 인정하기 위해 연속으로 확인되어야 하는 폴링 횟수.
+    /// 포커스 이동 중 GUITHREADINFO의 포커스/캐럿/활성 창 핸들이 일시적으로 흔들리면서
+    /// 실제로 고정된 OS IME 상태가 Korean/English로 반복 전환되어 보이는 현상을 막는 안전망이다.
+    /// 기본 2: 실제가 안정된 상태가 두 번 연속 일치하면 전환을 인정한다.
+    /// </summary>
+    protected virtual int StabilityMatchesRequired => 2;
+
+    // 현재까지 연속으로 관찰한 후보 상태와 그 일치 횟수.
+    private ImeState _pendingState = ImeState.Unknown;
+    private int _consecutivePending = 0;
+
+    /// <summary>
+    /// 현재 OS IME 상태를 다시 조회하고, 이후 상태가 충분히 안정될 때만 StateChanged를 발화한다.
+    /// 주기적 폴링에서 호출한다. Unknown은 즉시 반영한다 — 상태가 바뀐 것이 아니라 아직 못 읽은 것이라
+    /// 수신자가 Unknown이면 내부 상태를 바꾸지 않는다. 한글/영문은 연속된 동일 결과가 쌓여야 인정한다.
     /// 같은 순간의 중복 호출은 위 간격 안에서 한 번만 실제 조회한다.
     /// </summary>
     public void Refresh()
@@ -73,16 +85,53 @@ public class ImeStateService
         _lastRefreshUtc = now;
 
         var next = QueryForegroundImeState();
-        if (next == _currentState) return;
+
+        // 판별 불가는 즉시 반영하고 이벤트를 발화한다. 수신자가 Unknown이면 내부 상태를 바꾸지 않는다.
+        if (next == ImeState.Unknown)
+        {
+            _pendingState = ImeState.Unknown;
+            _consecutivePending = 0;
+            if (next == _currentState) return;
+            _currentState = next;
+            StateChanged?.Invoke(next);
+            return;
+        }
+
+        if (next == _currentState)
+        {
+            _pendingState = next;
+            _consecutivePending = 1;
+            return;
+        }
+
+        // 아직 인정 전 한글/영문 후보를 추적한다. 진동 중에는 아무것도 발화하지 않아 라벨이 흔들리지 않는다.
+        if (next == _pendingState)
+            _consecutivePending++;
+        else
+        {
+            _pendingState = next;
+            _consecutivePending = 1;
+        }
+
+        if (_consecutivePending < StabilityMatchesRequired) return;
+
         _currentState = next;
+        _consecutivePending = 0;
         StateChanged?.Invoke(next);
     }
 
     /// <summary>
     /// 이미 조회한 상태를 캐시에만 반영한다. 한/영 토글 폴링처럼 다시 OS를 묻지 않아도 될 때 쓴다.
     /// StateChanged는 발화하지 않는다 — 호출자가 내부 서브모드를 직접 동기화하기 때문이다.
+    /// Pending 안정화 추적은 비운다. 토글이 조회해 확정한 상태는 지금 반영해야 하며,
+    /// 이전 추적이 다음 안정화를 늦추면 라벨이 어긋난다.
     /// </summary>
-    public void ObserveState(ImeState state) => _currentState = state;
+    public void ObserveState(ImeState state)
+    {
+        _pendingState = ImeState.Unknown;
+        _consecutivePending = 0;
+        _currentState = state;
+    }
 
     // ── 외부 진입점 ────────────────────────────────────────────────────────
 

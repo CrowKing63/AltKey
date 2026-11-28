@@ -373,6 +373,9 @@ public sealed class StubImeStateService : ImeStateService
     // 테스트는 상태 전환을 즉시 확인해야 하므로 실제 폴링 지연을 끈다.
     protected override int RefreshThrottleMilliseconds => 0;
 
+    // 첫 폴링에서 즉시 인정하도록 안정화 임계값도 1로 둔다.
+    protected override int StabilityMatchesRequired => 1;
+
     public override ImeState QueryForegroundImeState() => StubbedState;
 }
 

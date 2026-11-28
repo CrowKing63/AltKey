@@ -94,3 +94,88 @@ public class ImeStateServiceTests
         Assert.Equal(ImeState.Unknown, ImeStateService.DeriveState(true, null, null));
     }
 }
+
+public class ImeStateServiceStabilizationTests
+{
+    // 임계값을 1로 끌어올려 안정화 대기 로직을 검사하는 가짜.
+    private sealed class DelayedStubImeStateService : ImeStateService
+    {
+        public ImeState StubbedState { get; set; } = ImeState.Unknown;
+        protected override int RefreshThrottleMilliseconds => 0;
+        protected override int StabilityMatchesRequired => 2;
+        public override ImeState QueryForegroundImeState() => StubbedState;
+    }
+
+    [Fact]
+    public void refresh_waits_for_consecutive_matches_before_firing()
+    {
+        var stub = new DelayedStubImeStateService { StubbedState = ImeState.Korean };
+        var seen = new List<ImeState>();
+        stub.StateChanged += s => seen.Add(s);
+
+        stub.Refresh(); // 1차 — 아직 인정 안 함
+        Assert.Empty(seen);
+        stub.Refresh(); // 2차 — 같은 상태가 연속으로 나왔으므로 인정
+        Assert.Equal(new[] { ImeState.Korean }, seen);
+
+        stub.Refresh(); // 이미 반영된 상태 — 다시 발화하지 않음
+        Assert.Single(seen); // 이미 반영된 상태 — 다시 발화하지 않음
+        Assert.Equal(ImeState.Korean, seen[0]);
+    }
+
+    [Fact]
+    public void refresh_does_not_fire_while_flapping_and_fires_after_agreement()
+    {
+        var stub = new DelayedStubImeStateService { StubbedState = ImeState.Korean };
+        var seen = new List<ImeState>();
+        stub.StateChanged += s => seen.Add(s);
+
+        stub.Refresh(); // Korean 1차
+        stub.StubbedState = ImeState.English;
+        stub.Refresh(); // English 1차 — pending 초기화
+        stub.StubbedState = ImeState.Korean;
+        stub.Refresh(); // Korean 1차 — pending 초기화
+        Assert.Empty(seen);
+
+        stub.StubbedState = ImeState.English; // English로 안정 전환
+        stub.Refresh();
+        stub.Refresh();
+        Assert.Equal(new[] { ImeState.English }, seen);
+    }
+
+    [Fact]
+    public void refresh_fires_unknown_immediately_when_transitions_to_unknown()
+    {
+        var stub = new DelayedStubImeStateService { StubbedState = ImeState.Korean };
+        var seen = new List<ImeState>();
+        stub.StateChanged += s => seen.Add(s);
+
+        stub.Refresh(); // pending Korean 1차
+        stub.Refresh(); // 인정 → Korean 발화
+        Assert.Equal(new[] { ImeState.Korean }, seen);
+
+        stub.StubbedState = ImeState.Unknown;
+        stub.Refresh(); // 안정화 대기 없이 즉시 발화
+        Assert.Equal(new[] { ImeState.Korean, ImeState.Unknown }, seen);
+    }
+
+    [Fact]
+    public void observe_state_clears_pending_so_next_stable_state_fires_after_stabilization()
+    {
+        var stub = new DelayedStubImeStateService { StubbedState = ImeState.Korean };
+        var seen = new List<ImeState>();
+        stub.StateChanged += s => seen.Add(s);
+
+        stub.Refresh(); // pending Korean 1차
+        Assert.Empty(seen);
+
+        // 토글 경로는 캐시만 반영하고 추적을 비운다 — 이전 pending이 남아 찌그러지지 않게 한다.
+        stub.ObserveState(ImeState.English);
+        // 포그라운드가 한글 상태로 안정화되면 안정화 대기(1차 인정까지 필요하므로) 끝에 발화한다.
+        stub.StubbedState = ImeState.Korean;
+        stub.Refresh();
+        Assert.Empty(seen);
+        stub.Refresh();
+        Assert.Equal(new[] { ImeState.Korean }, seen);
+    }
+}
